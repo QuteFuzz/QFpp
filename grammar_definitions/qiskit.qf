@@ -77,6 +77,11 @@ gate_op = circuit_name "." gate_name "(" gate_op_args ")";
 
 subroutine_op = circuit_name ".append(" subroutine ",[" subroutine_op_args "])";
 
+subroutine_op_arg = 
+    qubit    
+    | qubit_list
+    ;
+
 # Redefine measure gate application to fit Qiskit: circuit.measure(qbit, cbit)
 gate_name = h
     | x
