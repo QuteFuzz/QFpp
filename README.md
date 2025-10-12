@@ -3,7 +3,7 @@
 <p align="center" width="100%">
     <img width="25%" src="etc/qutefuzz.png">
 
-A tool for fuzzing quantum compilers.
+Generating programs for circuit-based programming languages by leveraging a BNF-style meta-language, which is used to describe the program. The tool takes this as input, generates an AST from it, then outputs a program. 
 
 See wiki for more details.
 
