@@ -1,0 +1,98 @@
+# Cirq
+
+# TODO: Measure gates
+# TODO: Control flow
+# TODO: compiler_call
+
+x = "cirq.X";
+y = "cirq.Y";
+z = "cirq.Z";
+h = "cirq.H";
+s = "cirq.S";
+t = "cirq.T";
+cx = "cirq.CNOT";
+cy = "cirq.Y.controlled()";
+cz = "cirq.CZ";
+ch = "cirq.H.controlled()";
+ccx = "cirq.TOFFOLI";
+rx = "cirq.rx";
+ry = "cirq.ry";
+rz = "cirq.rz";
+measure = "cirq.measure";
+
+
+program = imports NEWLINE subroutine_defs NEWLINE block NEWLINE compiler_call;
+
+block = circuit_def_header NEWLINE body NEWLINE;
+
+body = EXTERNAL::qubit_defs NEWLINE compound_stmts;
+
+EXTERNAL {
+
+    qubit_defs = (qubit_def NEWLINE)+;
+
+
+    singular_qubit_def =
+        qubit_def_name " = cirq.NamedQubit('" qubit_def_name "')";
+
+    register_qubit_def =
+        # qubit_def_name " = [cirq.NamedQubit('" qubit_def_name "') for _ in range(" qubit_def_size ")]";
+        qubit_def_name " = cirq.NamedQubit.range(" qubit_def_size ", prefix='" qubit_def_name "')";
+}
+
+imports =
+    "import cirq" NEWLINE
+    swarm_testing_imports NEWLINE
+    "from diff_testing.lib import cirqTesting"
+    ;
+
+
+subroutine_def_footer = circuit_name " = cirq.CircuitOperation(" circuit_name ".freeze())" NEWLINE;
+
+circuit_def_header = circuit_name " = cirq.Circuit()";
+
+compound_stmts = (compound_stmt NEWLINE)+;
+
+compound_stmt =
+      qubit_op
+    #| measure_op
+    # | if_stmt
+    ;
+
+# Cirq has append strategies, currently just default
+gate_op = circuit_name ".append(" gate_name gate_op_args ")";
+
+gate_op_args = "(" qubit_list ")"
+    | "(" float_list ")(" qubit_list ")"
+    ;
+
+subroutine_op = circuit_name ".append(" subroutine "(" subroutine_op_args "))";
+
+subroutine_op_arg =
+      qubit
+    | qubit_list
+    ;
+
+# Measurement in Cirq appends a measure operation with a string key
+# measure_op = circuit_name ".append(" measure "(" qubit_list ", key='" qubit_list "'))";
+
+gate_name = rx 
+            | ry 
+            | rz 
+            | h 
+            | x 
+            | y 
+            | z 
+            | s 
+            | t 
+            | cx 
+            | cy 
+            | cz 
+            | ccx 
+            | ch;
+
+singular_qubit = qubit_name;
+
+register_qubit = qubit_name "[" qubit_index "]";
+
+compiler_call = ;
