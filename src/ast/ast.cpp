@@ -78,9 +78,15 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 			return context.get_compound_stmt(parent);
 
 		case Token::IF_STMT:
+			// Bridging solution for IF_STMT without defining it as a gate
+			context.reset(Context::Level::QUBIT_OP);
+			
 			return context.get_nested_stmt(str, kind, parent);
 
 		case Token::ELIF_STMT: case Token::ELSE_STMT:
+			// Bridging solution for IF_STMT without defining it as a gate
+			context.reset(Context::Level::QUBIT_OP);
+
 			return context.get_nested_branch(str, kind, parent);
 
 		case Token::DISJUNCTION:
@@ -109,6 +115,8 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 
 		case Token::QUBIT_DEF_SIZE:
 			return context.get_current_qubit_definition_size();
+
+		/// TODO: Add Token::QUBIT_DEF_SIZE handling since currently its just giving dummy nodes
 
 		case Token::QUBIT_DEF_NAME:
 			return context.get_current_qubit_definition_name();

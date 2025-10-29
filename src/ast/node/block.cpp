@@ -2,8 +2,16 @@
 
 std::shared_ptr<Resource::Qubit> Block::get_random_qubit(const U8& scope){
     size_t total_qubits = qubits.get_num_of(scope);
+    //Iterate through all qubits and see if there is at least one valid bit to prevent infinite loop
+    bool valid_qubit_exists = false;
+    for (auto qubit : qubits) {
+        if (!qubit->is_used() && scope_matches(qubit->get_scope(), scope)) {
+            valid_qubit_exists = true;
+            break;
+        }
+    }
     
-    if(total_qubits){
+    if(total_qubits && valid_qubit_exists){
 
         #ifdef DEBUG
         INFO("Getting random qubit");
@@ -22,14 +30,23 @@ std::shared_ptr<Resource::Qubit> Block::get_random_qubit(const U8& scope){
         return qubit;
     
     } else {
+        ERROR("No more available qubits!");
         return dummy_qubit;
     }
 }
 
 std::shared_ptr<Resource::Bit> Block::get_random_bit(const U8& scope){
     size_t total_bits = bits.get_num_of(scope);
+    //Iterate through all bits and see if there is at least one valid bit to prevent infinite loop
+    bool valid_bit_exists = false;
+    for (auto bit : bits) {
+        if (!bit->is_used() && scope_matches(bit->get_scope(), scope)) {
+            valid_bit_exists = true;
+            break;
+        }
+    }
     
-    if(total_bits){
+    if(total_bits && valid_bit_exists){
 
         #ifdef DEBUG
         INFO("Getting random bit");
@@ -46,6 +63,7 @@ std::shared_ptr<Resource::Bit> Block::get_random_bit(const U8& scope){
         return bit;
     
     } else {
+        ERROR("No more available bits!");
         return dummy_bit;
     }
 }

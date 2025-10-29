@@ -80,7 +80,7 @@ else_stmt =
     'else' ':' NEWLINE INDENT compound_stmts DEDENT;
 
 # The expressions below are from https://docs.python.org/3/reference/grammar.html
-# Bits have been commented out / removed / modified to remove unnecessary complexity
+# Parts have been commented out / removed / modified to remove unnecessary complexity
 
 # EXPRESSIONS
 # -----------
