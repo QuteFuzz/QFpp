@@ -40,16 +40,20 @@ EXTERNAL {
 
     # Qiskit registers are defined by size and name, not individually
     singular_qubit_def = 
-        qubit_def_name " = QuantumRegister(1, '" qubit_def_name "')";
+        qubit_def_name " = QuantumRegister(1, '" qubit_def_name "')" NEWLINE
+                        circuit_name ".add_register(" qubit_def_name ")";
 
     register_qubit_def = 
-        qubit_def_name " = QuantumRegister(" qubit_def_size ", '" qubit_def_name "')";
+        qubit_def_name " = QuantumRegister(" qubit_def_size ", '" qubit_def_name "')" NEWLINE
+                        circuit_name ".add_register(" qubit_def_name ")";
 
     singular_bit_def = 
-        bit_def_name " = ClassicalRegister(1, '" bit_def_name "')";
+        bit_def_name " = ClassicalRegister(1, '" bit_def_name "')" NEWLINE
+                        circuit_name ".add_register(" bit_def_name ")";
 
     register_bit_def = 
-        bit_def_name " = ClassicalRegister(" bit_def_size ", '" bit_def_name "')";
+        bit_def_name " = ClassicalRegister(" bit_def_size ", '" bit_def_name "')" NEWLINE
+                        circuit_name ".add_register(" bit_def_name ")";
 }
 
 
@@ -66,7 +70,7 @@ circuit_def_header = circuit_name " = QuantumCircuit(0)";
 
 compound_stmt = 
     qubit_op
-    # | if_stmt
+    | if_stmt
     ;
 
 # Redefine compound_stmt and related rules
@@ -82,7 +86,16 @@ subroutine_op_arg =
     | qubit_list
     ;
 
-# Redefine measure gate application to fit Qiskit: circuit.measure(qbit, cbit)
+if_stmt =
+    'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_:' NEWLINE INDENT compound_stmts DEDENT elif_stmt
+    | 'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_:' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
+# Elif statements seems impossible for qiskit?
+elif_stmt = ;       
+else_stmt =
+    'with else_' ':' NEWLINE INDENT compound_stmts DEDENT;
+
+branch_condition = '1' | '0';
+
 gate_name = h
     | x
     | y
@@ -112,4 +125,6 @@ singular_bit = bit_name "[0]";
 
 register_bit = bit_name "[" bit_index "]";
 
-compiler_call = ;
+compiler_call = "qt = qiskitTesting()" NEWLINE testing_method;
+
+testing_method = "qt.ks_diff_test(main_circuit" COMMA circuit_id RPAREN NEWLINE;
