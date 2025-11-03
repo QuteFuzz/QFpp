@@ -99,7 +99,16 @@ namespace Context {
     /// Qubit comparison needed because `set_can_apply_subroutines` only tells you that there's at least one block that can be picked
     /// @return 
     std::shared_ptr<Block> Context::get_random_block(){
-        if(blocks.size()){
+        
+        bool valid_block_exists = false;
+        for (const auto& block : blocks) {
+            if (can_apply_as_subroutine(block)) {
+                valid_block_exists = true;
+                break;
+            }
+        }
+        
+        if(blocks.size() && valid_block_exists){
 
             std::shared_ptr<Block> block = blocks.at(random_int(blocks.size()-1));
 
@@ -114,6 +123,7 @@ namespace Context {
             return block;
         
         } else {
+            ERROR("No available blocks to use as subroutines!");
             return dummy_block;
         }
     }
