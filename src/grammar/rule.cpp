@@ -12,9 +12,17 @@ void Rule::add(const Branch& branch){
 }
 
 Branch Rule::pick_branch(std::shared_ptr<Node> parent){
+    
     size_t size = branches.size();
+    bool valid_branch_exists = false;
+    for (const auto& branch : branches) {
+        if (parent->branch_satisfies_constraint(branch)) {
+            valid_branch_exists = true;
+            break;
+        }
+    }
 
-    if(size > 0){
+    if(size > 0 && valid_branch_exists){
         Branch branch = branches[random_int(size - 1)];
 
         #ifdef DEBUG
