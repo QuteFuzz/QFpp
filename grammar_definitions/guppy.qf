@@ -12,24 +12,31 @@ cz = "cz";
 rx = "rx";
 ry = "ry";
 rz = "rz";
+t = "t";
+h = "h";
+s = "s";
 v = "v";
 vdg = "vdg";
 tdg = "tdg";
-t = "t";
 sdg = "sdg";
-h = "h";
-t = "t";
-s = "s";
-measure = "measure";
-cnot = "cnot";
+# measure = "measure"; # Taking out measure for now since using it requires structural rework
+
+gate_name += phased_x | measure_and_reset | toffoli | crz; # | project_z | barrier;
+
+measure_and_reset = "measure_and_reset"; 
+#barrier = "barrier"; # Taken out for now until new strctural changes are made
+phased_x = "phased_x";
+# project_z = "project_z"; # Taken out for now until new strctural changes are made
+toffoli = "toffoli";
+crz = "crz";
 
 INTERNAL OWNED {
 
 qubit_defs = (qubit_def NEWLINE)*;
 
-singular_qubit_def = qubit_def_name "= qubit()";
+singular_qubit_def = qubit_def_name " = qubit()";
 
-register_qubit_def = qubit_def_name "=array(qubit() for _ in range(" qubit_def_size "))";
+register_qubit_def = qubit_def_name " = array(qubit() for _ in range(" qubit_def_size "))";
 
 }
 
@@ -50,8 +57,7 @@ guppy_decorator = "@guppy";
 decorator = comptime_decorator | guppy_decorator;
 
 
-
-block = circuit_def_header NEWLINE INDENT body "    return" DEDENT NEWLINE;
+block = circuit_def_header NEWLINE INDENT body DEDENT NEWLINE;
 
 circuit_def_header = "@guppy.comptime" NEWLINE "def " circuit_name "() -> None:";
 
@@ -59,7 +65,6 @@ circuit_def_header = "@guppy.comptime" NEWLINE "def " circuit_name "() -> None:"
 # circuit_def_header->program = "@guppy.comptime" NEWLINE "def " circuit_name "() -> None:";
 
 # circuit_def_header->subroutine_defs = "@guppy" NEWLINE "def " circuit_name "(" EXTERNAL::qubit_defs "):";
-
 
 body  = INTERNAL::qubit_defs NEWLINE compound_stmts;
 
@@ -75,17 +80,14 @@ measure_and_record_single_qubit = "result(" DOUBLE_QUOTE qubit_def_name DOUBLE_Q
 
 gate_op = gate_name "(" gate_op_args ")";
 
+gate_op_args = qubit_list
+    | qubit_list ", " bit_list
+    | qubit_list ", " float_list
+    ;
+
 subroutine_op = subroutine "(" subroutine_op_args ")";
 
-gate_name += phasedxpowgate | project_z | measure_and_reset | u | barrier | toffoli | crz | cnot;
 
-
-measure_and_reset = "measure_and_reset";
-barrier = "barrier";
-phasedxpowgate = "phasedxpowgate";
-project_z = "project_z";
-toffoli = "toffoli";
-crz = "crz";
 
 singular_qubit = qubit_name;
 
@@ -97,8 +99,7 @@ imports = "from guppylang.decorator import guppy " NEWLINE
         "from guppylang.std.builtins import array, owned, py, comptime, result, owned, barrier" NEWLINE
         "from guppylang.std.quantum import * " NEWLINE
         "from guppylang.std.qsystem import * " NEWLINE
-        "from diff_testing.lib import guppyTesting " NEWLINE
-        "from pathlib import Path " NEWLINE;
+        "from diff_testing.lib import guppyTesting " NEWLINE;
 
 compiler_call = "gt = guppyTesting()" NEWLINE testing_method;
 

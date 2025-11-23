@@ -224,7 +224,7 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 		case Token::U1: case Token::RX: case Token::RY: case Token::RZ:
 			return context.new_gate(str, kind, 1, 0, 1);
 
-		case Token::U2:
+		case Token::U2: case Token::PHASED_X:
 			return context.new_gate(str, kind, 1, 0, 2);
 
 		case Token::U3: case Token::U:

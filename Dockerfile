@@ -33,11 +33,9 @@ ENV PATH="/opt/venv/bin:$PATH"
 ENV LLVM_SYS_140_PREFIX="/usr/lib/llvm-14"
 
 # TODO: Change tket2 to tket in future
-RUN pip install pytket qiskit pytket-qiskit matplotlib sympy z3-solver cirq pytket-quantinuum[pecos] tket pytket-qir qnexus
-RUN pip install selene-sim 
+RUN pip install pytket qiskit pytket-qiskit matplotlib sympy z3-solver cirq tket2 pytket-qir qnexus
+RUN pip install selene-sim guppylang
 
-# Install latest guppylang from main branch on GitHub
-RUN python3 -m pip install git+https://github.com/CQCL/guppylang.git@main#subdirectory=guppylang
 # Install latest hugr-qir from main branch on GitHub
 RUN python3 -m pip install git+https://github.com/CQCL/hugr-qir.git@main
 
