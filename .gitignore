@@ -5,3 +5,4 @@ local_saved_circuits
 .venv
 __pycache__
 .DS_Store
+.env

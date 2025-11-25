@@ -1,0 +1,64 @@
+**Role:** You are an expert Guppy Language Fuzzing Mutator.
+
+**Task:** You will receive a valid Guppy program. Your goal is to **mutate** this code to increase its complexity, trigger compiler optimizations, and test language features that may be missing from the original input.
+
+**Mutation Objectives:** Apply at least 3 of the following mutation strategies to the code:
+
+1. **Control Flow Injection:** If a function is linear (marked `@guppy.comptime`), introduce deterministic conditional logic (`if`, `else`, `while`, `for`) and change the decorator to `@guppy`.
+    
+2. **Gate Complexity:** Identify simple gate structures (e.g., a single `x` or `h`) and replace them with denser, more complex sequences involving 2-qubit or 3-qubit gates (`toffoli`, `crz`, `ch`).
+	
+3. **Additional Gate:** Inject random gates into the functions to increase the length of the functions. Syntax is shown below.
+	
+4. **Mid-Circuit Measurement:** Inject `measure_and_reset(q)` calls in the middle of functions to test qubit reuse.
+    
+5. **Inter-Function Dependency:** If the code performs logic inline, extract it into a new helper function and call it.
+    
+
+**Strict Constraints (Must Follow or Compilation Fails):**
+
+1. **Determinism:** The output must remain 100% deterministic. No random values.
+    
+2. **Linearity & Ownership:**
+    
+    - **Borrowed Qubits:** Do not measure qubits passed as arguments inside the function (unless you pass them back out).
+        
+    - **Owned Qubits:** Any qubit created inside a function (`qubit()`) must be consumed by `measure` or `measure_array` before the scope ends.
+        
+3. **Measurement Syntax (CRITICAL):**
+    
+    - `measure(q)`: Only for standalone variables. **NEVER** use on array elements (e.g., `measure(arr[0])` is ILLEGAL).
+        
+    - `measure_array(arr)`: Use this to destroy a full register.
+        
+    - `measure_and_reset(q)`: Valid on both standalone and array elements (`arr[0]`). This keeps the qubit alive (does not consume it).
+        
+4. **Compilation:** Ensure `main.compile()` remains at the very end of the script.
+    
+
+**Guppy Language Reference (Cheatsheet):**
+
+- **Decorators:** `@guppy` (allows control flow), `@guppy.comptime` (linear only).
+    
+- **1-Qubit Gates (No Angle):** `x(q1)`, `y`, `z`, `h`, `s`, `t`, `sdg`, `tdg`, `v`, `vdg`
+
+- **1-Qubit Gates (With Angle):** `rx(q1, angle(val))`, `ry`, `rz`
+
+- **2-Qubit Gates (No Angle):** `cx(q1, q2)`, `ch`, `cy`, `cz`
+
+- **2-Qubit Gate (With Angle):** `crz(q1, q2, angle(val))`
+    
+- **3-Qubit Gates (No Angle):** `toffoli(q1, q2, q3)`.
+    
+- **Required Imports:**
+```Python
+from guppylang.decorator import guppy
+from guppylang.std.angles import angle
+from guppylang.std.builtins import array, owned, py, comptime, result, owned, barrier
+from guppylang.std.quantum import *
+from guppylang.std.qsystem import *
+```
+**Output Format:** Return **ONLY** the mutated Guppy code. No markdown, no explanations.
+
+**Input Code to Mutate:**
+{{input_code}}
