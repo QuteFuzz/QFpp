@@ -60,6 +60,9 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 
 			return dummy;
 
+		case Token::INDENTATION_DEPTH:
+			return std::make_shared<Integer>(Node::indentation_tracker.size());
+
 		/// TODO: add grammar syntax to allow certain rules to exclude other rules downstream, useful for non_comptime_block
 		// case Common::non_comptime_block:
 		// 	context.set_can_apply_subroutines(false);

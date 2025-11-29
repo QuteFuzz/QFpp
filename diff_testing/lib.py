@@ -414,6 +414,7 @@ class qiskitTesting(Base):
         backend = AerSimulator()
         
         # Get original circuit shots
+        circuit.measure_all()
         uncompiled_circ = transpile(circuit, backend, optimization_level=0)
         counts1 = self.preprocess_counts(backend.run(uncompiled_circ, shots=10000).result().get_counts())
 

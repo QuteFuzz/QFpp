@@ -45,7 +45,7 @@ namespace Context {
         unsigned int num_block_bits = block->num_bits_of(EXTERNAL_SCOPE);
 
         bool has_enough_qubits = (num_block_qubits >= 1 && num_block_qubits <= num_dest_qubits);
-        bool has_enough_bits = (num_block_bits >= 1 && num_block_bits <= num_dest_bits);
+        bool has_enough_bits = (num_block_bits >= 0 && num_block_bits <= num_dest_bits);
 
         return has_enough_qubits && has_enough_bits;
     }

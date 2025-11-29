@@ -109,6 +109,7 @@ namespace Token {
         SUBROUTINE_OP_ARG,
         COMPOUND_STMT,
         COMPOUND_STMTS,
+        INDENTATION_DEPTH,
         /*
             these aren't used in the lexer, but in the AST node creation. maybe will be used in the lexer if these rules are needed later
         */
@@ -296,6 +297,7 @@ namespace Lexer {
         Token::Rule(R"(subroutine_op_arg)", Token::SUBROUTINE_OP_ARG),
         Token::Rule(R"(compound_stmt)", Token::COMPOUND_STMT),
         Token::Rule(R"(compound_stmts)", Token::COMPOUND_STMTS),
+        Token::Rule(R"(indentation_depth)", Token::INDENTATION_DEPTH),
 
         Token::Rule(R"(h)", Token::H),
         Token::Rule(R"(x)", Token::X),

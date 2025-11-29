@@ -40,9 +40,9 @@ EXTERNAL {
 
 qubit_defs = qubit_def (COMMA qubit_def)*;
 
-singular_qubit_def = qubit_def_name COLON "qubit";
+singular_qubit_def = qubit_def_name ":qubit ";
 
-register_qubit_def = qubit_def_name ":array[qubit, " qubit_def_size "]";
+register_qubit_def = qubit_def_name ":array[qubit, " qubit_def_size "] ";
 
 }
 
@@ -55,7 +55,7 @@ decorator = comptime_decorator | guppy_decorator;
 
 block = circuit_def_header NEWLINE INDENT body DEDENT NEWLINE;
 
-circuit_def_header = "@guppy.comptime" NEWLINE "def " circuit_name "() -> None:";
+circuit_def_header = "@guppy.comptime" NEWLINE "def " circuit_name "(" EXTERNAL::qubit_defs ") -> None:";
 
 # TODO: maybe some feature like this, where different defs can be specified depending on node parent
 # circuit_def_header->program = "@guppy.comptime" NEWLINE "def " circuit_name "() -> None:";

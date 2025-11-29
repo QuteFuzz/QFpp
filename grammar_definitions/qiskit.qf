@@ -91,12 +91,12 @@ subroutine_op_arg =
     ;
 
 if_stmt =
-    'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_:' NEWLINE INDENT compound_stmts DEDENT elif_stmt
-    | 'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_:' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
+    'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT elif_stmt
+    | 'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
 # Elif statements seems impossible for qiskit?
 elif_stmt = ;       
 else_stmt =
-    'with else_' ':' NEWLINE INDENT compound_stmts DEDENT;
+    'with else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT;
 
 branch_condition = '1' | '0';
 
