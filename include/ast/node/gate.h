@@ -44,8 +44,11 @@ class Gate : public Node {
 
         std::shared_ptr<Qubit_definition> get_next_qubit_def();
 
+        std::shared_ptr<Qubit_definition> get_current_qubit_def();
+
     private:
         Collection<Qubit_definition> external_qubit_defs;
+        std::shared_ptr<Qubit_definition> current_qubit_def;
         unsigned int qubit_def_pointer = 0;
 
         unsigned int num_external_qubits = 0;

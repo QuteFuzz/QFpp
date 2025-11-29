@@ -153,7 +153,7 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 			unsigned int num_qubits;
 
 			if(*parent == Token::SUBROUTINE_OP_ARG){
-				num_qubits = context.get_current_gate()->get_next_qubit_def()->get_size()->get_num();
+				num_qubits = context.get_current_gate()->get_current_qubit_def()->get_size()->get_num();
 			} else {
 				num_qubits = context.get_current_gate()->get_num_external_qubits();
 			}

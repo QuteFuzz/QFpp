@@ -24,7 +24,12 @@ Gate::Gate(const std::string& str, const Token::Kind& kind, const Collection<Qub
 }
 
 std::shared_ptr<Qubit_definition> Gate::get_next_qubit_def(){
-    return external_qubit_defs.at(qubit_def_pointer++ % external_qubit_defs.size());
+    current_qubit_def = external_qubit_defs.at(qubit_def_pointer++ % external_qubit_defs.size());
+    return current_qubit_def;
+}
+
+std::shared_ptr<Qubit_definition> Gate::get_current_qubit_def(){
+    return current_qubit_def;
 }
 
 unsigned int Gate::get_num_external_qubits(){
