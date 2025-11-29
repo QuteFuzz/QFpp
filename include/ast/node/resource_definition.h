@@ -3,6 +3,7 @@
 
 #include <register_resource_definition.h>
 #include <singular_resource_definition.h>
+#include <lex.h>
 
 class Resource_definition : public Node {
 
@@ -70,22 +71,30 @@ class Qubit_definition : public Resource_definition {
     public:
         Qubit_definition() : Resource_definition() {}
 
-        Qubit_definition(const Register_resource_definition& def, const U8& scope):
+        Qubit_definition(const Register_resource_definition& def, const U8& scope, bool def_discard = false):
             Resource_definition(
                 def, 
                 scope
             )
         {
-            add_constraint(Token::REGISTER_QUBIT_DEF, 1);
+            if (def_discard) {
+                add_constraint(Token::REGISTER_QUBIT_DEF_DISCARD, 1);
+            } else {
+                add_constraint(Token::REGISTER_QUBIT_DEF, 1);
+            }
         }
 
-        Qubit_definition(const Singular_resource_definition& def, const U8& scope):
+        Qubit_definition(const Singular_resource_definition& def, const U8& scope, bool def_discard = false):
             Resource_definition(
                 def, 
                 scope
             )
         {
-            add_constraint(Token::SINGULAR_QUBIT_DEF, 1);
+            if (def_discard) {
+                add_constraint(Token::SINGULAR_QUBIT_DEF_DISCARD, 1);
+            } else {
+                add_constraint(Token::SINGULAR_QUBIT_DEF, 1);
+            }
         }
 
     private:

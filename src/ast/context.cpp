@@ -179,6 +179,21 @@ namespace Context {
         return std::make_shared<Qubit_defs>(num_defs);
     }
 
+    std::shared_ptr<Qubit_defs> Context::get_qubit_defs_discard_node(U8& scope){
+        std::shared_ptr<Block> current_block = get_current_block();
+
+        unsigned int num_defs;
+
+        if(can_copy_dag){
+            num_defs = current_block->make_resource_definitions(genome->dag, scope, Resource::QUBIT, true);
+        
+        } else {
+            num_defs = current_block->make_resource_definitions(scope, Resource::QUBIT, true);
+        }
+        
+        return std::make_shared<Qubit_defs>(num_defs, true);
+    }
+
     std::shared_ptr<Bit_defs> Context::get_bit_defs_node(U8& scope){
         std::shared_ptr<Block> current_block = get_current_block();
 

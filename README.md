@@ -23,10 +23,10 @@ docker build -t qutefuzz-env .
 
 2. Run docker container
 ```
-docker run -it --rm -v "$PWD":/qutefuzz qutefuzz-env
+docker run -it --rm -v "$PWD":/qutefuzz --user $(id -u):$(id -g) qutefuzz-env
 ```
 
-This will drop you into a shell within the environment where all dependencies are installed
+This will drop you into a shell within the environment where all dependencies are installed using your **current** user
 
 3. Compile project
 

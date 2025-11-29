@@ -83,6 +83,20 @@ std::shared_ptr<Qubit_definition> Block::get_next_qubit_def(const U8& scope){
     }
 }
 
+std::shared_ptr<Qubit_definition> Block::get_next_qubit_def_discard(const U8& scope){
+    auto maybe_def = qubit_defs_discard.at(qubit_def_discard_pointer++);
+
+    while((maybe_def != nullptr) && !scope_matches(maybe_def->get_scope(), scope)){
+        maybe_def = qubit_defs_discard.at(qubit_def_discard_pointer++);
+    }
+
+    if(maybe_def == nullptr){
+        return dummy_qubit_def;
+    } else {
+        return maybe_def;
+    }
+}
+
 std::shared_ptr<Bit_definition> Block::get_next_bit_def(const U8& scope){
     auto maybe_def = bit_defs.at(bit_def_pointer++);
 
@@ -119,6 +133,7 @@ unsigned int Block::make_register_resource_definition(unsigned int max_size, U8&
         def.make_resources(qubits, scope);
 
         qubit_defs.add(Qubit_definition(def, scope));
+        qubit_defs_discard.add(Qubit_definition(def, scope, true)); //Add qubit defs with discard flag set to true for later traversal if needed
 
     } else {
         Register_bit_definition def(
@@ -150,6 +165,7 @@ unsigned int Block::make_singular_resource_definition(U8& scope, Resource::Class
         def.make_resources(qubits, scope);
 
         qubit_defs.add(Qubit_definition(def, scope));
+        qubit_defs_discard.add(Qubit_definition(def, scope, true));
 
     } else {
         Singular_bit_definition def (
@@ -166,49 +182,62 @@ unsigned int Block::make_singular_resource_definition(U8& scope, Resource::Class
     return 1;
 }
 
-unsigned int Block::make_resource_definitions(U8& scope, Resource::Classification classification){
+unsigned int Block::make_resource_definitions(U8& scope, Resource::Classification classification, bool discard_defs){
 
-    unsigned int target_num_resources = 0, total_num_definitions = 0;
-
-    bool scope_is_external = (scope & EXTERNAL_SCOPE);
-    bool classificaton_is_qubit = (classification == Resource::QUBIT);
-    
-    switch((scope_is_external << 1) | classificaton_is_qubit){
-        case 0b00: target_num_resources = target_num_bits_internal; break;
-        case 0b01: target_num_resources = target_num_qubits_internal; break;
-        case 0b10: target_num_resources = target_num_bits_external; break;
-        case 0b11: target_num_resources = target_num_qubits_external; break;
-        default: ERROR("Scope and classification failed to pick target num of resources!");
-    }
-
-    while(target_num_resources > 0){
-        /*
-            Use singular qubit or qubit register
-        */
-        if(random_int(1)){
-            target_num_resources -= make_singular_resource_definition(scope, classification, total_num_definitions);
-
+    if (discard_defs) {
+        //Simply report back how many qubit defs are there
+        if (classification == Resource::QUBIT) {
+            return qubit_defs.get_num_of(scope);
         } else {
-            target_num_resources -= make_register_resource_definition(target_num_resources, scope, classification, total_num_definitions);
+            return bit_defs.get_num_of(scope);
         }
-    }
+    } else {
 
-    return total_num_definitions;
+        unsigned int target_num_resources = 0, total_num_definitions = 0;
+        bool scope_is_external = (scope & EXTERNAL_SCOPE);
+        bool classificaton_is_qubit = (classification == Resource::QUBIT);
+        
+        switch((scope_is_external << 1) | classificaton_is_qubit){
+            case 0b00: target_num_resources = target_num_bits_internal; break;
+            case 0b01: target_num_resources = target_num_qubits_internal; break;
+            case 0b10: target_num_resources = target_num_bits_external; break;
+            case 0b11: target_num_resources = target_num_qubits_external; break;
+            default: ERROR("Scope and classification failed to pick target num of resources!");
+        }
+
+        while(target_num_resources > 0){
+            /*
+                Use singular qubit or qubit register
+            */
+            if(random_int(1)){
+                target_num_resources -= make_singular_resource_definition(scope, classification, total_num_definitions);
+
+            } else {
+                target_num_resources -= make_register_resource_definition(target_num_resources, scope, classification, total_num_definitions);
+            }
+        }
+
+        return total_num_definitions;
+    }
 }
 
-unsigned int Block::make_resource_definitions(const Dag::Dag& dag, const U8& scope, Resource::Classification classification){
+unsigned int Block::make_resource_definitions(const Dag::Dag& dag, const U8& scope, Resource::Classification classification, bool discard_defs){
 
-    if(classification == Resource::QUBIT){
-        qubits = dag.get_qubits();
-        qubit_defs = dag.get_qubit_defs();   
-
+    if (discard_defs) {
         return qubit_defs.get_num_of(scope);
-
     } else {
-        bits = dag.get_bits();
-        bit_defs = dag.get_bit_defs();
+        if(classification == Resource::QUBIT){
+            qubits = dag.get_qubits();
+            qubit_defs = dag.get_qubit_defs();   
 
-        return bit_defs.get_num_of(scope);
+            return qubit_defs.get_num_of(scope);
+
+        } else {
+            bits = dag.get_bits();
+            bit_defs = dag.get_bit_defs();
+
+            return bit_defs.get_num_of(scope);
+        }
     }
 }
  

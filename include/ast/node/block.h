@@ -154,15 +154,17 @@ class Block : public Node {
 
         std::shared_ptr<Qubit_definition> get_next_qubit_def(const U8& scope);
 
+        std::shared_ptr<Qubit_definition> get_next_qubit_def_discard(const U8& scope);
+
         std::shared_ptr<Bit_definition> get_next_bit_def(const U8& scope);
 
         unsigned int make_register_resource_definition(unsigned int max_size, U8& scope, Resource::Classification classification, unsigned int& total_definitions);
 
         unsigned int make_singular_resource_definition(U8& scope, Resource::Classification classification, unsigned int& total_definitions);
 
-        unsigned int make_resource_definitions(U8& scope, Resource::Classification classification);
+        unsigned int make_resource_definitions(U8& scope, Resource::Classification classification, bool discard_defs = false);
 
-        unsigned int make_resource_definitions(const Dag::Dag& dag, const U8& scope, Resource::Classification classification);
+        unsigned int make_resource_definitions(const Dag::Dag& dag, const U8& scope, Resource::Classification classification, bool discard_defs = false);
 
         void print_info() const;
 
@@ -178,11 +180,13 @@ class Block : public Node {
 
         Collection<Resource::Qubit> qubits;
         Collection<Qubit_definition> qubit_defs;
+        Collection<Qubit_definition> qubit_defs_discard;
 
         Collection<Resource::Bit> bits;
         Collection<Bit_definition> bit_defs;
 
         unsigned int qubit_def_pointer = 0;
+        unsigned int qubit_def_discard_pointer = 0;
         unsigned int bit_def_pointer = 0;
 
         std::shared_ptr<Resource::Qubit> dummy_qubit = std::make_shared<Resource::Qubit>();

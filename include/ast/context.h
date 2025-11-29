@@ -49,6 +49,8 @@ namespace Context {
             
 			std::shared_ptr<Qubit_defs> get_qubit_defs_node(U8& scope);
 
+			std::shared_ptr<Qubit_defs> get_qubit_defs_discard_node(U8& scope);
+
 			std::shared_ptr<Bit_defs> get_bit_defs_node(U8& scope);
 
 			std::optional<std::shared_ptr<Block>> get_block(std::string owner);
@@ -79,6 +81,11 @@ namespace Context {
 
 			inline std::shared_ptr<Qubit_definition> new_qubit_definition(const U8& scope){
 				current_qubit_definition = get_current_block()->get_next_qubit_def(scope);
+				return current_qubit_definition;
+			}
+
+			inline std::shared_ptr<Qubit_definition> new_qubit_def_discard(const U8& scope){
+				current_qubit_definition = get_current_block()->get_next_qubit_def_discard(scope);
 				return current_qubit_definition;
 			}
 

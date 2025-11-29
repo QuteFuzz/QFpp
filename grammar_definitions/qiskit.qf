@@ -1,8 +1,5 @@
 # qiskit
 
-# TODO: control flow
-
-
 x = "x";
 y = "y";
 z = "z";
@@ -82,7 +79,7 @@ gate_op = circuit_name "." gate_name "(" gate_op_args ")";
 subroutine_op = circuit_name ".append(" subroutine ",[" subroutine_op_args "])";
 
 subroutine_op_arg = 
-    qubit    
+    qubit
     | qubit_list
     ;
 
