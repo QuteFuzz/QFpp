@@ -1,6 +1,6 @@
 # guppy
 
-# WORK IN PROGRESS: Circuits will not be well-formed
+gate_name += phased_x | measure_and_reset | crz | t | s | v | vdg | tdg | sdg ; # | project_z | barrier;
 
 x = "x";
 y = "y";
@@ -19,15 +19,11 @@ v = "v";
 vdg = "vdg";
 tdg = "tdg";
 sdg = "sdg";
-# measure = "measure"; # Taking out measure for now since using it requires structural rework
-
-gate_name += phased_x | measure_and_reset | toffoli | crz; # | project_z | barrier;
-
+ccx = "toffoli";
 measure_and_reset = "measure_and_reset"; 
 #barrier = "barrier"; # Taken out for now until new strctural changes are made
 phased_x = "phased_x";
 # project_z = "project_z"; # Taken out for now until new strctural changes are made
-toffoli = "toffoli";
 crz = "crz";
 
 INTERNAL OWNED {
