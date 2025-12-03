@@ -13,6 +13,8 @@
 4. **Mid-Circuit Measurement:** Inject `measure_and_reset(q)` calls in the middle of functions to test qubit reuse.
     
 5. **Inter-Function Dependency:** If the code performs logic inline, extract it into a new helper function and call it.
+
+6. **Additional non-quantum code:** Inject deterministic variables and use them throughout the program (e.g. conditional logic, make equations) to increase the complexity of the program. 
     
 
 **Strict Constraints (Must Follow or Compilation Fails):**
@@ -34,21 +36,36 @@
     - `measure_and_reset(q)`: Valid on both standalone and array elements (`arr[0]`). This keeps the qubit alive (does not consume it).
         
 4. **Compilation:** Ensure `main.compile()` remains at the very end of the script.
+
+5. **Decorator, Typing & Control Flow Rules:**
+	- **Pi Usage:** Any function that uses `pi` (from `math.pi`) **must** be decorated with `@guppy.comptime`.
+
+	- **Conditional Logic:** If you use `if`, `else`, or loops, and do **not** use `pi`, the function must be decorated with `@guppy`.
+
+	- **Strict Typing:** `bool`s cannot be equated with `int`s. Guppy enforces strict typing. (e.g., `if True == 1` is illegal; never compare Boolean expressions to integers).
     
 
 **Guppy Language Reference (Cheatsheet):**
 
 - **Decorators:** `@guppy` (allows control flow), `@guppy.comptime` (linear only).
     
-- **1-Qubit Gates (No Angle):** `x(q1)`, `y`, `z`, `h`, `s`, `t`, `sdg`, `tdg`, `v`, `vdg`
+- **1-Qubit Gates (No Angle):** 
+	- Example format: `x(q1)`
+	- `x`, `y`, `z`, `h`, `s`, `t`, `sdg`, `tdg`, `v`, `vdg`
 
-- **1-Qubit Gates (With Angle):** `rx(q1, angle(val))`, `ry`, `rz`
+- **1-Qubit Gates (With Angle):** 
+	- Example format: `rx(q1, angle(val)`
+	- `rx`, `ry`, `rz`
 
-- **2-Qubit Gates (No Angle):** `cx(q1, q2)`, `ch`, `cy`, `cz`
+- **2-Qubit Gates (No Angle):** 
+	- Example format: `cx(q1, q2)`
+	- `cx`, `ch`, `cy`, `cz`
 
-- **2-Qubit Gate (With Angle):** `crz(q1, q2, angle(val))`
+- **2-Qubit Gate (With Angle):**
+	- `crz(q1, q2, angle(val)`
     
-- **3-Qubit Gates (No Angle):** `toffoli(q1, q2, q3)`.
+- **3-Qubit Gates (No Angle):** 
+	- `toffoli(q1, q2, q3)`.
     
 - **Required Imports:**
 ```Python
@@ -57,8 +74,12 @@ from guppylang.std.angles import angle
 from guppylang.std.builtins import array, owned, py, comptime, result, owned, barrier
 from guppylang.std.quantum import *
 from guppylang.std.qsystem import *
+from math import pi
+import guppylang
+guppylang.enable_experimental_features()
 ```
-**Output Format:** Return **ONLY** the mutated Guppy code. No markdown, no explanations.
+
+**Output Format (IMPORTANT):** Return **ONLY** the mutated Guppy code. No markdown, no explanations.
 
 **Input Code to Mutate:**
 {{input_code}}

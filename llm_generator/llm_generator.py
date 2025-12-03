@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 import sys
 import time
+import shutil
 
 
 # Setup your keys (You can also set these in your OS environment variables)
@@ -18,6 +19,21 @@ def get_dynamic_prompt(template_path, **kwargs) -> str:
         template_str = f.read()
     template = Template(template_str)
     return template.render(**kwargs)
+
+def save_text_to_file(text, file_path):
+    """
+    Saves the given text content to a file at the specified path.
+    Creates directories if they don't exist.
+    """
+    text = strip_markdown_syntax(text) # Strip markdown syntax before saving
+
+    directory = os.path.dirname(file_path)
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory)
+    
+    with open(file_path, "w") as f:
+        f.write(text)
+    print(f"Saved content to {file_path}")
 
 def ask_any_model(model_name, prompt):
     print(f"Sending to {model_name}...")
@@ -123,34 +139,99 @@ def run_generated_program(program_code: str) -> str:
     except Exception as e:
         return f"ERROR: Failed to execute program: {str(e)}"
 
+def clear_directory(path):
+    if os.path.exists(path):
+        shutil.rmtree(path)
+    os.makedirs(path, exist_ok=True)
 
-generation_prompt = get_dynamic_prompt("./generation_prompt.txt")
+### START OF MAIN LOGIC ###
 
-# Format: provider/model-name
-generated_program = ask_any_model("gemini/gemini-2.5-pro", generation_prompt)
-print("Program Generated Successfully")
+# Clear all previous saved programs
+clear_directory("../local_saved_circuits/generated_first_try")
+clear_directory("../local_saved_circuits/generated_fixed_1_cycle")
+clear_directory("../local_saved_circuits/mutated_first_try")
+clear_directory("../local_saved_circuits/mutated_fixed_1_cycle")
 
-# Run the generated python program to get the error message
-error_message = run_generated_program(generated_program)
-print("Error Message:", error_message)
+# Loop to generate programs, comprised of half freshly generated ones and half mutated ones. All non-working
+# programs will have to be put through the fixing generation flow once to attempt to fix them.
+cycles = 1
 
-if error_message.strip() == "":
-    mutation_prompt = get_dynamic_prompt("mutation_prompt.txt", input_code=generated_program)
-    mutated_code = ask_any_model("gemini/gemini-2.5-flash", mutation_prompt)
-    print("Mutated Code:\n", mutated_code)
-    print("Running mutated code...")
-    mutated_error = run_generated_program(mutated_code)
-    if mutated_error.strip() == "":
-        print("Mutated code ran successfully with no errors.")
+for i in range(cycles):
+    print(f"\n\n=== PROGRAM GENERATION CYCLE {i+1}/{cycles} ===")
+    
+    # Get the generation prompt from file
+    generation_prompt = get_dynamic_prompt("./generation_prompt.txt")
+    generated_program = ask_any_model("gemini/gemini-2.5-flash", generation_prompt)
+    print("Program Generated Successfully")
+
+    # Run the generated python program to get the error message
+    error_message = run_generated_program(generated_program)
+
+    ########### Mutation and Fixing Logic ###########
+    if error_message.strip() == "":
+        print("Generated code ran successfully with no errors.")
+        # If no error, save the program first, then mutate it
+        save_text_to_file(generated_program, f"../local_saved_circuits/generated_first_try/output{i+1}.py")
+
+        mutation_prompt = get_dynamic_prompt("mutate_prompt_template.txt", input_code=generated_program)
+        mutated_code = ask_any_model("gemini/gemini-2.5-flash", mutation_prompt)
+        print("Running mutated code...")
+        mutated_error = run_generated_program(mutated_code)
+
+        if mutated_error.strip() == "":
+            print("Mutated code ran successfully with no errors.")
+            # Save the mutated code to a file
+            save_text_to_file(mutated_code, f"../local_saved_circuits/mutated_first_try/output{i+1}.py")
+        else:
+            print("Mutated Code Had An Error")
+            # Now attempt to fix the mutated code
+            fixing_prompt = get_dynamic_prompt("fixing_prompt_template.txt", faulty_code=mutated_code, error_message=mutated_error)
+            fixed_code = ask_any_model("gemini/gemini-2.5-flash", fixing_prompt)
+            # Now save the code to a file
+            save_text_to_file(fixed_code, f"../local_saved_circuits/mutated_fixed_1_cycle/output{i+1}.py")
+
     else:
-        print("Mutated Code Error Message:", mutated_error)
-else:
-    fixing_prompt = get_dynamic_prompt("fixing_prompt_template.txt", faulty_code=generated_program, error_message=error_message)
-    fixed_code = ask_any_model("gemini/gemini-2.5-flash", fixing_prompt)
-    print("Fixed Code:\n", fixing_prompt)
-    print("Running fixed code...")
-    fixed_error = run_generated_program(fixed_code)
-    if fixed_error.strip() == "":
-        print("Fixed code ran successfully with no errors.")
-    else:
-        print("Fixed Code Error Message:", fixed_error)
+        fixing_prompt = get_dynamic_prompt("fixing_prompt_template.txt", faulty_code=generated_program, error_message=error_message)
+        fixed_code = ask_any_model("gemini/gemini-2.5-flash", fixing_prompt)
+        # Now save the code to a file
+        save_text_to_file(fixed_code, f"../local_saved_circuits/generated_fixed_1_cycle/output{i+1}.py")
+
+        # Now mutate the fixed code and save it
+        mutation_prompt = get_dynamic_prompt("mutate_prompt_template.txt", input_code=fixed_code)
+        mutated_code = ask_any_model("gemini/gemini-2.5-flash", mutation_prompt)
+        print("Running mutated fixed generated code...")
+        mutated_error = run_generated_program(mutated_code)
+
+        if mutated_error.strip() == "":
+            print("Mutated fixed generated code ran successfully with no errors.")
+            # Save the mutated code to a file
+            save_text_to_file(mutated_code, f"../local_saved_circuits/mutated_first_try/output{i+1}.py")
+        else:
+            print("Mutated fixed generated code Had An Error")
+            # Now attempt to fix the mutated code
+            fixing_prompt = get_dynamic_prompt("fixing_prompt_template.txt", faulty_code=mutated_code, error_message=mutated_error)
+            fixed_code = ask_any_model("gemini/gemini-2.5-flash", fixing_prompt)
+            # Now save the code to a file
+            save_text_to_file(fixed_code, f"../local_saved_circuits/mutated_fixed_1_cycle/output{i+1}.py")
+
+
+# Now run the saved programs and log their outputs in local_saved_circuits/ as a text file
+for dir_name in ["generated_first_try", "generated_fixed_1_cycle", "mutated_first_try", "mutated_fixed_1_cycle"]:
+    # Create or overwrite the log file
+    os.makedirs(f"../local_saved_circuits/{dir_name}", exist_ok=True)
+    logfile_path = f"../local_saved_circuits/{dir_name}/execution_log.txt"
+    
+    with open(logfile_path, "w") as logfile:
+        logfile.write(f"Execution Log for programs in {dir_name}\n\n")
+        saved_programs_path = f"../local_saved_circuits/{dir_name}/"
+        for filename in os.listdir(saved_programs_path):
+            logfile.write(f"--- Running {filename} ---\n")
+            if filename.endswith(".py"):
+                file_path = os.path.join(saved_programs_path, filename)
+                with open(file_path, "r") as f:
+                    program_code = f.read()
+                run_error = run_generated_program(program_code)
+                if run_error.strip() == "":
+                    logfile.write(f"{filename} ran successfully with no errors.\n")
+                else:
+                    logfile.write(f"{filename} Error Message:\n{run_error}\n")
