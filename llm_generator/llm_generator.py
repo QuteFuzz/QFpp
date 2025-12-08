@@ -191,12 +191,14 @@ for i in range(cycles):
             save_text_to_file(fixed_code, f"../local_saved_circuits/mutated_fixed_1_cycle/output{i+1}.py")
 
     else:
+        print("Generated code Had An Error, attempting fix...")
         fixing_prompt = get_dynamic_prompt("fixing_prompt_template.txt", faulty_code=generated_program, error_message=error_message)
         fixed_code = ask_any_model("gemini/gemini-2.5-flash", fixing_prompt)
         # Now save the code to a file
         save_text_to_file(fixed_code, f"../local_saved_circuits/generated_fixed_1_cycle/output{i+1}.py")
 
         # Now mutate the fixed code and save it
+        print("Mutating fixed generated code...")
         mutation_prompt = get_dynamic_prompt("mutate_prompt_template.txt", input_code=fixed_code)
         mutated_code = ask_any_model("gemini/gemini-2.5-flash", mutation_prompt)
         print("Running mutated fixed generated code...")
@@ -207,7 +209,7 @@ for i in range(cycles):
             # Save the mutated code to a file
             save_text_to_file(mutated_code, f"../local_saved_circuits/mutated_first_try/output{i+1}.py")
         else:
-            print("Mutated fixed generated code Had An Error")
+            print("Mutated fixed generated code Had An Error, attempting fix...")
             # Now attempt to fix the mutated code
             fixing_prompt = get_dynamic_prompt("fixing_prompt_template.txt", faulty_code=mutated_code, error_message=mutated_error)
             fixed_code = ask_any_model("gemini/gemini-2.5-flash", fixing_prompt)
