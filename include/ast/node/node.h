@@ -3,6 +3,7 @@
 
 #include <utils.h>
 #include <lex.h>
+#include <lex.h>
 #include <branch.h>
 #include <lex.h>
 
