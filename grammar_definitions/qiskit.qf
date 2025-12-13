@@ -1,6 +1,17 @@
 # qiskit
 
-gates += s
+# Overwrites from meta-grammar
+if_stmt =
+    'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT elif_stmt
+    | 'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
+# Elif statements seems impossible for qiskit?
+elif_stmt = ;       
+else_stmt =
+    'with else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT;
+
+branch_condition = '1' | '0';
+
+gate_name += s
         | sdg
         | t
         | tdg
@@ -29,11 +40,12 @@ s = "s";
 measure = "measure";
 
 # Redefine base program structure to fit Qiskit
-program = imports NEWLINE subroutine_defs NEWLINE block NEWLINE compiler_call;
+program = imports NEWLINE subroutine_defs[0<EXTERNAL::bit_defs>][0<if_stmt>] NEWLINE block NEWLINE compiler_call;
 
-block = circuit_def_header NEWLINE body NEWLINE;
+block = circuit_def_header NEWLINE body NEWLINE
 
-body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
+body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts
+        | EXTERNAL::qubit_defs NEWLINE compound_stmts;
 
 # Redefine EXTERNAL scope for Qiskit register and circuit definitions
 EXTERNAL {

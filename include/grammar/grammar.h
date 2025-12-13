@@ -2,6 +2,8 @@
 #define PARSER_H
 
 #include <lex.h>
+#include "node.h"
+#include "term.h"
 #include <errno.h>
 #include <math.h>
 #include <unordered_map>
@@ -10,6 +12,13 @@
 #include <algorithm>
 
 class Grammar{
+
+    enum Constraint_def_states {
+        READY_DEFINE_CONSTRAINT = 0,
+        READY_DEFINE_RULE_OCCURANCE = 1,
+        READY_DEFINE_RULE = 2,
+        FINISH_DEFINE_CONSTRAINT = 3,
+    };
 
     public:
         Grammar(){}
@@ -110,6 +119,9 @@ class Grammar{
 
         unsigned int nesting_depth_base = 0;
         unsigned int nesting_depth = nesting_depth_base;
+
+        Constraint_def_states constraint_mode_state = READY_DEFINE_CONSTRAINT;
+        unsigned int constraint_occurances = 0;
 
         std::vector<std::shared_ptr<Rule>> rule_pointers;
         

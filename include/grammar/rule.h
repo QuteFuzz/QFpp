@@ -2,6 +2,8 @@
 #define RULE_H
 
 #include <branch.h>
+#include "node.h"
+#include "utils.h"
 
 class Node;
 
@@ -27,11 +29,15 @@ class Rule {
 
         U8 get_scope() const {return scope;}
 
+        std::optional<Node_constraint> get_constraint() const {return constraint;}
+
         bool get_recursive_flag() const {return recursive;}
                 
         std::vector<Branch> get_branches(){return branches;}
 
         void add(const Branch& b);
+
+        void add_constraint(const Token_kind& rule_kind, unsigned int n_occurances);
 
         inline size_t size(){return branches.size();}
 
@@ -67,6 +73,7 @@ class Rule {
         U8 scope = NO_SCOPE;
 
         std::vector<Branch> branches;
+        std::optional<Node_constraint> constraint;
 
         bool recursive = false;
     
