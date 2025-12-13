@@ -123,32 +123,35 @@ enum Token_kind {
     */
     RULE_KINDS_BOTTOM,
 
-    GRAMMAR_SYNTAX_TOP,
-    /*
-        Tokens that aren't special rule types, but rather, are syntax used in the language
-        Add new syntax below
-    */
-    SEPARATOR,
-    RULE_START,
-    RULE_APPEND,
-    RULE_END,
-    SYNTAX,
-    LPAREN,
-    LBRACK,
-    LBRACE,
-    RPAREN,
-    RBRACK,
-    RBRACE,
-    ZERO_OR_MORE,
-    ONE_OR_MORE,
-    OPTIONAL,
-    ARROW,
-    INTERNAL,
-    EXTERNAL,
-    OWNED,
-    COMMENT,
-    MULTI_COMMENT_START,
-    MULTI_COMMENT_END,
+        GRAMMAR_SYNTAX_TOP,
+        /*
+            Tokens that aren't special rule types, but rather, are syntax used in the language
+            Add new syntax below
+        */
+        SEPARATOR,
+        RULE_START,
+        RULE_APPEND,
+        RULE_END,
+        SYNTAX,
+        LPAREN,
+        LBRACK,
+        LBRACE,
+        RPAREN,
+        RBRACK,
+        RBRACE,
+        LANGLE_BRACKET,
+        RANGLE_BRACKET,
+        INTEGER,
+        ZERO_OR_MORE,
+        ONE_OR_MORE,
+        OPTIONAL,
+        ARROW,
+        INTERNAL,
+        EXTERNAL,
+        OWNED,
+        COMMENT,
+        MULTI_COMMENT_START,
+        MULTI_COMMENT_END,
 
     /*
         Grammar syntax end, add new syntax above
@@ -175,8 +178,6 @@ inline bool is_quiet(const Token_kind& kind){
     return 
         (kind == MULTI_COMMENT_START)|| 
         (kind == MULTI_COMMENT_END) || 
-        (kind == LBRACK) || 
-        (kind == RBRACK) ||
         (kind == LBRACE) ||
         (kind == COMMENT) || 
         (kind == ARROW);
@@ -340,6 +341,7 @@ const std::vector<Regex_matcher> TOKEN_RULES = {
     Regex_matcher(R"(OWNED(::)?)", OWNED, false),
 
     Regex_matcher(R"([a-zA-Z_]+)", RULE, false),
+    Regex_matcher(R"([0-9]+)", INTEGER, false),
 
     Regex_matcher(R"(\(\*)", MULTI_COMMENT_START, false),
     Regex_matcher(R"(\*\))", MULTI_COMMENT_END, false),
@@ -357,6 +359,8 @@ const std::vector<Regex_matcher> TOKEN_RULES = {
     Regex_matcher(R"(\?)", OPTIONAL, false),
     Regex_matcher(R"(\+)", ONE_OR_MORE, false),
     Regex_matcher(R"(\-\>)", ARROW, false),
+    Regex_matcher(R"(<)", LANGLE_BRACKET, false),
+    Regex_matcher(R"(>)", RANGLE_BRACKET, false),
     Regex_matcher(R"(#)", COMMENT, false),
 };
 

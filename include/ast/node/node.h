@@ -2,6 +2,7 @@
 #define NODE_H
 
 #include <utils.h>
+#include <lex.h>
 #include <branch.h>
 #include <lex.h>
 
@@ -20,6 +21,9 @@ enum Node_kind {
 struct Node_constraint {
 
     public:
+
+        Node_constraint(){}
+
         Node_constraint(Token_kind rule, unsigned int _occurances):
             rule_kinds({rule}),
             occurances({_occurances})
@@ -92,7 +96,31 @@ class Node {
 
         virtual ~Node() = default;
 
-        inline void add_child(const std::shared_ptr<Node> child){
+        /// @brief // Adds child to parent node, along with any constraint from parent only if child doesn't have the same constraint already on that Rule
+        /// @param child 
+        /// @param child_constraint 
+        inline void add_child(const std::shared_ptr<Node> child, const std::optional<Node_constraint>& child_constraint = std::nullopt){
+            INFO("Adding child node: " + child->resolved_name() + " to parent node: " + this->resolved_name());
+            // Apply union of child_constraint and parent constraint to child
+            if (constraint.has_value() && child_constraint.has_value()) {
+                for (size_t i = 0; i < constraint->size(); i++) {
+                    bool constraint_exists = false;
+                    for (size_t j = 0; j < child_constraint->size(); j++) {
+                        if (constraint->get_rule_kind_at(i) == child_constraint->get_rule_kind_at(j)) {
+                            constraint_exists = true;
+                            break;
+                        }
+                    }
+                    if (!constraint_exists) {
+                        child->add_constraint(constraint->get_rule_kind_at(i), constraint->get_occurances_at(i));
+                    }
+                }
+            } else if (!constraint.has_value() && child_constraint.has_value()) { //If parent has no constraints, just add child's constraints
+                for (size_t i = 0; i < child_constraint->size(); i++) {
+                    child->add_constraint(child_constraint->get_rule_kind_at(i), child_constraint->get_occurances_at(i));
+                }
+            }
+
             children.push_back(child);
         }
 
