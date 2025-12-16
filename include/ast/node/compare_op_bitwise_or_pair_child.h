@@ -12,7 +12,7 @@
 class Compare_op_bitwise_or_pair_child : public Node {
 
     public:
-        Compare_op_bitwise_or_pair_child(const std::string& content, const Token::Kind& kind) :
+        Compare_op_bitwise_or_pair_child(const std::string& content, const Token_kind& kind) :
             Node(content, kind)
         {}
 

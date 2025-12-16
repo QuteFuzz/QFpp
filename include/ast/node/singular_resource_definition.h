@@ -16,7 +16,7 @@ class Singular_resource_definition : public Node {
         {}
 
         Singular_resource_definition(const Variable& _name) : 
-            Node("singular_resource_def", Token::SINGULAR_RESOURCE_DEF),
+            Node("singular_resource_def", SINGULAR_RESOURCE_DEF),
             name(_name)
         {}
 

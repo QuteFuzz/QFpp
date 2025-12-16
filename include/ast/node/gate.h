@@ -20,13 +20,13 @@ class Gate : public Node {
         /// @param _qubits 
         /// @param _bits 
         /// @param _floats 
-        Gate(const std::string& str, const Token::Kind& kind, unsigned int qubits, unsigned int bits, unsigned int floats);
+        Gate(const std::string& str, const Token_kind& kind, unsigned int qubits, unsigned int bits, unsigned int floats);
         
         /// @brief Use for subroutines
         /// @param str 
         /// @param kind
         /// @param qubit_defs 
-        Gate(const std::string& str, const Token::Kind& kind, const Collection<Qubit_definition>& qubit_defs);
+        Gate(const std::string& str, const Token_kind& kind, const Collection<Qubit_definition>& qubit_defs);
 
         std::string get_id_as_str(){
             return std::to_string(id);

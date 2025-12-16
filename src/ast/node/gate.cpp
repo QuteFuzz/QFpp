@@ -2,17 +2,17 @@
 #include <resource_definition.h>
 #include "assert.h"
 
-Gate::Gate(const std::string& str, const Token::Kind& kind, unsigned int qubits, unsigned int bits, unsigned int floats) :
+Gate::Gate(const std::string& str, const Token_kind& kind, unsigned int qubits, unsigned int bits, unsigned int floats) :
     Node(str, kind),
     num_external_qubits(qubits),
     num_external_bits(bits),
     num_floats(floats)
 {}
 
-Gate::Gate(const std::string& str, const Token::Kind& kind, const Collection<Qubit_definition>& qubit_defs) :
+Gate::Gate(const std::string& str, const Token_kind& kind, const Collection<Qubit_definition>& qubit_defs) :
     Node(str, kind)
 {
-    assert(kind == Token::SUBROUTINE);
+    assert(kind == SUBROUTINE);
 
     // filter out external qubit defs
     for(const auto& qubit_def : qubit_defs){

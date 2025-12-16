@@ -10,7 +10,7 @@ class Rule {
     public:
         Rule(){}
         
-        Rule(const Token::Token& _token, const U8& _scope) :
+        Rule(const Token& _token, const U8& _scope) :
             token(_token),
             scope(_scope)
         {}
@@ -23,7 +23,7 @@ class Rule {
 
         std::string get_name() const {return token.value;}
 
-        Token::Token get_token() const {return token;}
+        Token get_token() const {return token;}
 
         U8 get_scope() const {return scope;}
 
@@ -63,7 +63,7 @@ class Rule {
         }
 
     private:
-        Token::Token token;
+        Token token;
         U8 scope = NO_SCOPE;
 
         std::vector<Branch> branches;

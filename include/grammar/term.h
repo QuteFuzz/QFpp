@@ -10,9 +10,9 @@ class Term {
     public:
         Term(){}
 
-        Term(const std::shared_ptr<Rule> rule, const Token::Kind& _kind, unsigned int _branch_nesting_depth = 0);
+        Term(const std::shared_ptr<Rule> rule, const Token_kind& _kind, unsigned int _branch_nesting_depth = 0);
 
-        Term(const std::string& syntax, const Token::Kind& _kind, unsigned int _branch_nesting_depth = 0);
+        Term(const std::string& syntax, const Token_kind& _kind, unsigned int _branch_nesting_depth = 0);
         
         ~Term() = default;
 
@@ -32,13 +32,13 @@ class Term {
 
         bool operator==(const Term& other) const;
 
-        Token::Kind get_kind() const {return kind;} 
+        Token_kind get_kind() const {return kind;} 
 
         unsigned int get_branch_nesting_depth() const { return branch_nesting_depth; }
 
     private:
         std::variant<std::shared_ptr<Rule>, std::string> value;
-        Token::Kind kind;
+        Token_kind kind;
 
         unsigned int branch_nesting_depth = 0;
 };

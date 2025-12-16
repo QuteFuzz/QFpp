@@ -8,9 +8,9 @@ class Subroutine_defs : public Node {
     public:
 
         Subroutine_defs(unsigned int n_blocks):
-            Node("subroutine defs", Token::SUBROUTINE_DEFS)
+            Node("subroutine defs", SUBROUTINE_DEFS)
         {
-            add_constraint(Token::BLOCK, n_blocks);
+            add_constraint(BLOCK, n_blocks);
         }
 
     private:

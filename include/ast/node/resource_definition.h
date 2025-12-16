@@ -11,18 +11,18 @@ class Resource_definition : public Node {
 
         /// @brief Dummy definition
         Resource_definition() : 
-            Node("resource_def", Token::RESOURCE_DEF),
+            Node("resource_def", RESOURCE_DEF),
             value(Register_resource_definition())
         {}
 
         Resource_definition(const Register_resource_definition& def, const U8& _scope) :
-            Node("register_resource_def", Token::REGISTER_RESOURCE_DEF),
+            Node("register_resource_def", REGISTER_RESOURCE_DEF),
             value(def),
             scope(_scope)
         {}
 
         Resource_definition(const Singular_resource_definition& def, const U8& _scope) :
-            Node("singular_resource_def", Token::SINGULAR_RESOURCE_DEF),
+            Node("singular_resource_def", SINGULAR_RESOURCE_DEF),
             value(def), 
             scope(_scope)
         {}
@@ -78,9 +78,9 @@ class Qubit_definition : public Resource_definition {
             )
         {
             if (def_discard) {
-                add_constraint(Token::REGISTER_QUBIT_DEF_DISCARD, 1);
+                add_constraint(REGISTER_QUBIT_DEF_DISCARD, 1);
             } else {
-                add_constraint(Token::REGISTER_QUBIT_DEF, 1);
+                add_constraint(REGISTER_QUBIT_DEF, 1);
             }
         }
 
@@ -91,9 +91,9 @@ class Qubit_definition : public Resource_definition {
             )
         {
             if (def_discard) {
-                add_constraint(Token::SINGULAR_QUBIT_DEF_DISCARD, 1);
+                add_constraint(SINGULAR_QUBIT_DEF_DISCARD, 1);
             } else {
-                add_constraint(Token::SINGULAR_QUBIT_DEF, 1);
+                add_constraint(SINGULAR_QUBIT_DEF, 1);
             }
         }
 
@@ -112,7 +112,7 @@ class Bit_definition : public Resource_definition {
                 scope
             )
         {
-            add_constraint(Token::REGISTER_BIT_DEF, 1);
+            add_constraint(REGISTER_BIT_DEF, 1);
         }
 
         Bit_definition(const Singular_resource_definition& def, const U8& scope):
@@ -121,7 +121,7 @@ class Bit_definition : public Resource_definition {
                 scope
             )
         {
-            add_constraint(Token::SINGULAR_BIT_DEF, 1);
+            add_constraint(SINGULAR_BIT_DEF, 1);
         }
 
     private:

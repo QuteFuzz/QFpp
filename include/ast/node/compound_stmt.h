@@ -13,7 +13,7 @@ class Compound_stmt : public Node {
             Compound_stmt stmt;
             
             if(nested_depth == 0){
-                stmt.add_constraint(Token::QUBIT_OP, 1);
+                stmt.add_constraint(QUBIT_OP, 1);
             }
 
             return std::make_shared<Compound_stmt>(stmt);
@@ -26,14 +26,14 @@ class Compound_stmt : public Node {
                 /*
                     make qubit op
                 */
-                stmt.add_constraint(Token::QUBIT_OP, 1);
+                stmt.add_constraint(QUBIT_OP, 1);
             
             } else {
                 /*
                     use nesting block, target is > 1 
                 */
                 stmt.make_partition(target_num_qubit_ops, 1);
-                stmt.add_constraint(Token::QUBIT_OP, 0);
+                stmt.add_constraint(QUBIT_OP, 0);
             }
 
             return std::make_shared<Compound_stmt>(stmt);
@@ -41,7 +41,7 @@ class Compound_stmt : public Node {
 
     private:
         Compound_stmt():
-            Node("compound_stmt", Token::COMPOUND_STMT, indentation_tracker)
+            Node("compound_stmt", COMPOUND_STMT, indentation_tracker)
         {}
 };
 

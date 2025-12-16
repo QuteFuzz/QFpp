@@ -12,11 +12,11 @@ class Nested_branch : public Node {
 
     public:
 
-        Nested_branch(const std::string& str, const Token::Kind& kind, unsigned int target_num_qubit_ops):
+        Nested_branch(const std::string& str, const Token_kind& kind, unsigned int target_num_qubit_ops):
             Node(str, kind, indentation_tracker)
         {
 
-            if(kind == Token::ELIF_STMT){
+            if(kind == ELIF_STMT){
                 /*
                     control flow branch with just compound stmts, or control flow branch with compound stmts and control flow branch
                 */
@@ -24,13 +24,13 @@ class Nested_branch : public Node {
                 
                 make_control_flow_partition(target_num_qubit_ops, n_children);
             
-            } else if (kind == Token::ELSE_STMT){
+            } else if (kind == ELSE_STMT){
                 // only one child we're interested in, which is compound stmts
                 make_control_flow_partition(target_num_qubit_ops, 1);
             }
         }
 
-        Nested_branch(const std::string& str, const Token::Kind& kind):
+        Nested_branch(const std::string& str, const Token_kind& kind):
             Node(str, kind, indentation_tracker)
         {}
 

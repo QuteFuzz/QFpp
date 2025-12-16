@@ -19,12 +19,12 @@ enum Node_kind {
 struct Node_constraint {
 
     public:
-        Node_constraint(Token::Kind rule, unsigned int _occurances):
+        Node_constraint(Token_kind rule, unsigned int _occurances):
             rule_kinds({rule}),
             occurances({_occurances})
         {}
 
-        Node_constraint(std::vector<Token::Kind> _rule_kinds, std::vector<unsigned int> _occurances): 
+        Node_constraint(std::vector<Token_kind> _rule_kinds, std::vector<unsigned int> _occurances): 
             rule_kinds(std::move(_rule_kinds)),
             occurances(std::move(_occurances))
         {}
@@ -39,7 +39,7 @@ struct Node_constraint {
             return true;
         }
 
-        Token::Kind get_rule_kind_at(unsigned int index) const {
+        Token_kind get_rule_kind_at(unsigned int index) const {
             return rule_kinds[index];
         }
 
@@ -51,13 +51,13 @@ struct Node_constraint {
             return rule_kinds.size();
         }
 
-        void add(const Token::Kind& rule, unsigned int n_occurances){
+        void add(const Token_kind& rule, unsigned int n_occurances){
             rule_kinds.push_back(rule);
             occurances.push_back(n_occurances);    
         }
 
     private:
-        std::vector<Token::Kind> rule_kinds;
+        std::vector<Token_kind> rule_kinds;
         std::vector<unsigned int> occurances = {0};
 
 };
@@ -72,7 +72,7 @@ class Node {
 
         Node(){}
 
-        Node(std::string _content, Token::Kind _kind = Token::SYNTAX, const std::string _indentation_str = ""):
+        Node(std::string _content, Token_kind _kind = SYNTAX, const std::string _indentation_str = ""):
             content(_content),
             kind(_kind),
             indentation_str(_indentation_str)
@@ -80,7 +80,7 @@ class Node {
             id = node_counter++;
         }
 
-        Node(std::string _content, Token::Kind _kind, const std::optional<Node_constraint>& _constraint, const std::string _indentation_str = ""):
+        Node(std::string _content, Token_kind _kind, const std::optional<Node_constraint>& _constraint, const std::string _indentation_str = ""):
             content(_content),
             kind(_kind),
             indentation_str(_indentation_str),
@@ -120,7 +120,7 @@ class Node {
         // Node_kind get_node_kind() const {return kind;}
 
         virtual void print(std::ostream& stream) const {
-            if(kind == Token::SYNTAX){
+            if(kind == SYNTAX){
                 stream << content;
             } else {
 
@@ -161,7 +161,7 @@ class Node {
             return children.size();
         }
 
-        bool operator==(const Token::Kind& other_kind){
+        bool operator==(const Token_kind& other_kind){
             return kind == other_kind;
         }
 
@@ -173,7 +173,7 @@ class Node {
             return !constraint.has_value() || constraint.value().passed(branch);
         }
 
-        void set_constraint(std::vector<Token::Kind> rule_kinds, std::vector<unsigned int> occurances){
+        void set_constraint(std::vector<Token_kind> rule_kinds, std::vector<unsigned int> occurances){
             if(rule_kinds.size() != occurances.size()){
                 ERROR("Hashes vector must be the same size as occurances vector!");
             }
@@ -181,7 +181,7 @@ class Node {
             constraint = std::make_optional<Node_constraint>(rule_kinds, occurances);
         }
 
-        void add_constraint(const Token::Kind& rule_kind, unsigned int n_occurances){
+        void add_constraint(const Token_kind& rule_kind, unsigned int n_occurances){
             if(constraint.has_value()){
                 constraint.value().add(rule_kind, n_occurances);
             } else {
@@ -205,7 +205,7 @@ class Node {
 
     protected:
         std::string content;
-        Token::Kind kind;
+        Token_kind kind;
 
         int id;
 
