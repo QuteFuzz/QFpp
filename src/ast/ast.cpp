@@ -21,7 +21,6 @@
 #include <compare_op_bitwise_or_pair_child.h>
 #include <expression.h>
 #include <gate_name.h>
-
 #include <generator.h>
 
 std::string Node::indentation_tracker = "";
@@ -64,7 +63,7 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 			return std::make_shared<Integer>(Node::indentation_tracker.size());
 
 		/// TODO: add grammar syntax to allow certain rules to exclude other rules downstream, useful for non_comptime_block
-		// case Common::non_comptime_block:
+		// case QuteFuzz::non_comptime_block:
 		// 	context.set_can_apply_subroutines(false);
 		// 	return std::make_shared<Node>(str, hash);
 
@@ -82,13 +81,13 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 
 		case IF_STMT:
 			// Bridging solution for IF_STMT without defining it as a gate
-			context.reset(Context::Level::QUBIT_OP);
+			context.reset(RL_QUBIT_OP);
 			
 			return context.get_nested_stmt(str, kind, parent);
 
 		case ELIF_STMT: case ELSE_STMT:
 			// Bridging solution for IF_STMT without defining it as a gate
-			context.reset(Context::Level::QUBIT_OP);
+			context.reset(RL_QUBIT_OP);
 
 			return context.get_nested_branch(str, kind, parent);
 
@@ -105,7 +104,7 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 			return context.get_circuit_id();
 
 		case MAIN_CIRCUIT_NAME:				
-			return std::make_shared<Variable>(Common::TOP_LEVEL_CIRCUIT_NAME);
+			return std::make_shared<Variable>(QuteFuzz::TOP_LEVEL_CIRCUIT_NAME);
 
 		case SUBROUTINE_DEFS:
 			return context.new_subroutines_node();	
@@ -158,13 +157,13 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 				num_qubits = context.get_current_gate()->get_num_external_qubits();
 			}
 
-			context.reset(Context::Level::QUBIT_OP);
+			context.reset(RL_QUBIT_OP);
 
 			return std::make_shared<Qubit_list>(num_qubits);
 		}
 
 		case BIT_LIST:
-			context.reset(Context::Level::QUBIT_OP);
+			context.reset(RL_QUBIT_OP);
 
 			return std::make_shared<Bit_list>(context.get_current_gate()->get_num_external_bits());
 
@@ -293,7 +292,7 @@ Result<Node> Ast::build(const std::optional<Genome>& genome, std::optional<Node_
 
 		swarm_testing_gateset = _swarm_testing_gateset;
 
-		context.reset(Context::PROGRAM);
+		context.reset(RL_PROGRAM);
 		context.set_genome(genome);
 
 		Term entry_term(entry, entry->get_token().kind);

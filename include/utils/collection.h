@@ -1,18 +1,16 @@
 #ifndef COLLECTION_H
 #define COLLECTION_H
 
-namespace Resource {
-    class Qubit;
-    class Bit;
-}
+class Qubit;
+class Bit;
 
 class Qubit_definition;
 class Bit_definition;
 
 template<typename T>
 concept Allowed_Type = 
-    std::is_same_v<T, Resource::Qubit> ||
-    std::is_same_v<T, Resource::Bit> || 
+    std::is_same_v<T, Qubit> ||
+    std::is_same_v<T, Bit> || 
     std::is_same_v<T, Qubit_definition> || 
     std::is_same_v<T, Bit_definition>;
 
@@ -52,7 +50,7 @@ struct Collection {
         }
 
         void reset(){
-            if constexpr (std::is_same_v<T, Resource::Qubit> || std::is_same_v<T, Resource::Bit>){
+            if constexpr (std::is_same_v<T, Qubit> || std::is_same_v<T, Bit>){
                 for(auto& elem : coll){
                     elem->reset();
                 }

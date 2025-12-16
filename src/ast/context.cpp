@@ -5,7 +5,7 @@
 
 void Context::reset(Reset_level l){
 
-    if(l == PROGRAM){
+    if(l == RL_PROGRAM){
         subroutine_counter = 0;
         Node::node_counter = 0;
         can_copy_dag = false;
@@ -15,10 +15,10 @@ void Context::reset(Reset_level l){
         subroutines_node = std::nullopt;
         genome = std::nullopt;
 
-    } else if (l == BLOCK){
+    } else if (l == RL_BLOCK){
         nested_depth = QuteFuzz::NESTED_MAX_DEPTH;
 
-    } else if (l == QUBIT_OP){
+    } else if (l == RL_QUBIT_OP){
         get_current_block()->qubit_flag_reset();
         get_current_block()->bit_flag_reset();
 
@@ -131,7 +131,7 @@ std::shared_ptr<Block> Context::get_random_block(){
 std::shared_ptr<Block> Context::new_block_node(){
     std::shared_ptr<Block> current_block;
 
-    reset(BLOCK);
+    reset(RL_BLOCK);
 
     if(current_block_is_subroutine()){
 
@@ -170,10 +170,10 @@ std::shared_ptr<Qubit_defs> Context::get_qubit_defs_node(U8& scope){
     unsigned int num_defs;
 
     if(can_copy_dag){
-        num_defs = current_block->make_resource_definitions(genome->dag, scope, Resource::QUBIT);
+        num_defs = current_block->make_resource_definitions(genome->dag, scope, RK_QUBIT);
     
     } else {
-        num_defs = current_block->make_resource_definitions(scope, Resource::QUBIT);
+        num_defs = current_block->make_resource_definitions(scope, RK_QUBIT);
     }
     
     return std::make_shared<Qubit_defs>(num_defs);
@@ -185,10 +185,10 @@ std::shared_ptr<Qubit_defs> Context::get_qubit_defs_discard_node(U8& scope){
     unsigned int num_defs;
 
     if(can_copy_dag){
-        num_defs = current_block->make_resource_definitions(genome->dag, scope, Resource::QUBIT, true);
+        num_defs = current_block->make_resource_definitions(genome->dag, scope, RK_QUBIT, true);
     
     } else {
-        num_defs = current_block->make_resource_definitions(scope, Resource::QUBIT, true);
+        num_defs = current_block->make_resource_definitions(scope, RK_QUBIT, true);
     }
     
     return std::make_shared<Qubit_defs>(num_defs, true);
@@ -200,9 +200,9 @@ std::shared_ptr<Bit_defs> Context::get_bit_defs_node(U8& scope){
     unsigned int num_defs;
     
     if(can_copy_dag){
-        num_defs = current_block->make_resource_definitions(genome->dag, scope, Resource::BIT);
+        num_defs = current_block->make_resource_definitions(genome->dag, scope, RK_BIT);
     } else {
-        num_defs = current_block->make_resource_definitions(scope, Resource::BIT);
+        num_defs = current_block->make_resource_definitions(scope, RK_BIT);
     }
 
     return std::make_shared<Bit_defs>(num_defs);
@@ -218,8 +218,8 @@ std::optional<std::shared_ptr<Block>> Context::get_block(std::string owner){
     return std::nullopt;
 }
 
-std::shared_ptr<Resource::Qubit> Context::new_qubit(){
-    // U8 scope = (*current_gate == Common::Measure) ? OWNED_SCOPE : ALL_SCOPES;
+std::shared_ptr<Qubit> Context::new_qubit(){
+    // U8 scope = (*current_gate == QuteFuzz::Measure) ? OWNED_SCOPE : ALL_SCOPES;
 
     auto random_qubit = get_current_block()->get_random_qubit(ALL_SCOPES); 
     
@@ -239,7 +239,7 @@ std::shared_ptr<Integer> Context::get_current_qubit_index(){
     }
 }
 
-std::shared_ptr<Resource::Bit> Context::new_bit(){
+std::shared_ptr<Bit> Context::new_bit(){
     auto random_bit = get_current_block()->get_random_bit(ALL_SCOPES);
     current_bit = random_bit;
     

@@ -5,6 +5,7 @@
 #include <resource_definition.h>
 #include <resource.h>
 #include <collection.h>
+#include <params.h>
 
 /*
     Blocks contain external and internal qubits, external and internal bits, which are set targets that must be satisfied
@@ -54,10 +55,10 @@ class Block : public Node {
         Block(std::string owner_name) :
             Node("block", BLOCK),
             owner(owner_name), 
-            target_num_qubits_external(random_int(Common::MAX_QUBITS, Common::MIN_QUBITS)),
-            target_num_qubits_internal(random_int(Common::MAX_QUBITS, Common::MIN_QUBITS)),
-            target_num_bits_external(random_int(Common::MAX_BITS, Common::MIN_BITS)),
-            target_num_bits_internal(random_int(Common::MAX_BITS, Common::MIN_BITS)) 
+            target_num_qubits_external(random_int(QuteFuzz::MAX_QUBITS, QuteFuzz::MIN_QUBITS)),
+            target_num_qubits_internal(random_int(QuteFuzz::MAX_QUBITS, QuteFuzz::MIN_QUBITS)),
+            target_num_bits_external(random_int(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)),
+            target_num_bits_internal(random_int(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)) 
         {}
 
         /// @brief Generating a block with a specific number of external qubits (generating from DAG)
@@ -65,9 +66,9 @@ class Block : public Node {
             Node("block", BLOCK),
             owner(owner_name), 
             target_num_qubits_external(num_external_qubits),
-            target_num_qubits_internal(random_int(Common::MAX_QUBITS, Common::MIN_QUBITS)),
-            target_num_bits_external(random_int(Common::MAX_BITS, Common::MIN_BITS)),
-            target_num_bits_internal(random_int(Common::MAX_BITS, Common::MIN_BITS)) 
+            target_num_qubits_internal(random_int(QuteFuzz::MAX_QUBITS, QuteFuzz::MIN_QUBITS)),
+            target_num_bits_external(random_int(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)),
+            target_num_bits_internal(random_int(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)) 
         {}
 
         inline bool owned_by(std::string other){return other == owner;}
@@ -116,7 +117,7 @@ class Block : public Node {
             bit_def_pointer = 0;
         }
 
-        inline std::shared_ptr<Resource::Qubit> qubit_at(size_t index){
+        inline std::shared_ptr<Qubit> qubit_at(size_t index){
             if(index < qubits.get_num_of(ALL_SCOPES)){
                 return qubits.at(index);
             } else {
@@ -124,7 +125,7 @@ class Block : public Node {
             }
         }
 
-        inline std::shared_ptr<Resource::Bit> bit_at(size_t index){
+        inline std::shared_ptr<Bit> bit_at(size_t index){
             if(index < bits.get_num_of(ALL_SCOPES)){
                 return bits.at(index);
             } else {
@@ -132,11 +133,11 @@ class Block : public Node {
             }
         }
 
-        inline Collection<Resource::Qubit> get_qubits(){
+        inline Collection<Qubit> get_qubits(){
             return qubits;
         }
 
-        inline Collection<Resource::Bit> get_bits(){
+        inline Collection<Bit> get_bits(){
             return bits;
         }
 
@@ -148,9 +149,9 @@ class Block : public Node {
             return bit_defs;
         }
 
-        std::shared_ptr<Resource::Qubit> get_random_qubit(const U8& scope);
+        std::shared_ptr<Qubit> get_random_qubit(const U8& scope);
         
-        std::shared_ptr<Resource::Bit> get_random_bit(const U8& scope);
+        std::shared_ptr<Bit> get_random_bit(const U8& scope);
 
         std::shared_ptr<Qubit_definition> get_next_qubit_def(const U8& scope);
 
@@ -158,39 +159,39 @@ class Block : public Node {
 
         std::shared_ptr<Bit_definition> get_next_bit_def(const U8& scope);
 
-        unsigned int make_register_resource_definition(unsigned int max_size, U8& scope, Resource::Classification classification, unsigned int& total_definitions);
+        unsigned int make_register_resource_definition(unsigned int max_size, U8& scope, Resource_kind rk, unsigned int& total_definitions);
 
-        unsigned int make_singular_resource_definition(U8& scope, Resource::Classification classification, unsigned int& total_definitions);
+        unsigned int make_singular_resource_definition(U8& scope, Resource_kind rk, unsigned int& total_definitions);
 
-        unsigned int make_resource_definitions(U8& scope, Resource::Classification classification, bool discard_defs = false);
+        unsigned int make_resource_definitions(U8& scope, Resource_kind rk, bool discard_defs = false);
 
-        unsigned int make_resource_definitions(const Dag::Dag& dag, const U8& scope, Resource::Classification classification, bool discard_defs = false);
+        unsigned int make_resource_definitions(const Dag::Dag& dag, const U8& scope, Resource_kind rk, bool discard_defs = false);
 
         void print_info() const;
 
     private:
         std::string owner;
 
-        unsigned int target_num_qubits_external = Common::MIN_QUBITS;
+        unsigned int target_num_qubits_external = QuteFuzz::MIN_QUBITS;
         unsigned int target_num_qubits_internal = 0;
-        unsigned int target_num_bits_external = Common::MIN_BITS;
+        unsigned int target_num_bits_external = QuteFuzz::MIN_BITS;
         unsigned int target_num_bits_internal = 0;
         
         bool can_apply_subroutines = true;
 
-        Collection<Resource::Qubit> qubits;
+        Collection<Qubit> qubits;
         Collection<Qubit_definition> qubit_defs;
         Collection<Qubit_definition> qubit_defs_discard;
 
-        Collection<Resource::Bit> bits;
+        Collection<Bit> bits;
         Collection<Bit_definition> bit_defs;
 
         unsigned int qubit_def_pointer = 0;
         unsigned int qubit_def_discard_pointer = 0;
         unsigned int bit_def_pointer = 0;
 
-        std::shared_ptr<Resource::Qubit> dummy_qubit = std::make_shared<Resource::Qubit>();
-        std::shared_ptr<Resource::Bit> dummy_bit = std::make_shared<Resource::Bit>();
+        std::shared_ptr<Qubit> dummy_qubit = std::make_shared<Qubit>();
+        std::shared_ptr<Bit> dummy_bit = std::make_shared<Bit>();
 
         std::shared_ptr<Qubit_definition> dummy_qubit_def = std::make_shared<Qubit_definition>();
         std::shared_ptr<Bit_definition> dummy_bit_def = std::make_shared<Bit_definition>();

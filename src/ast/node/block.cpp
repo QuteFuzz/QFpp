@@ -124,7 +124,7 @@ unsigned int Block::make_register_resource_definition(unsigned int max_size, U8&
     if(max_size > 1) size = random_int(max_size, 1);
     else size = max_size;
 
-    if (rk == QUBIT) {
+    if (rk == RK_QUBIT) {
         Register_qubit_definition def(
             Variable("qreg" + std::to_string(qubit_defs.get_num_of(ALL_SCOPES))),
             Integer(size)
@@ -157,7 +157,7 @@ unsigned int Block::make_register_resource_definition(unsigned int max_size, U8&
 /// @param total_definitions 
 /// @return 1, since there's one qubit created from a singular resource definition
 unsigned int Block::make_singular_resource_definition(U8& scope, Resource_kind rk, unsigned int& total_definitions){
-    if (rk == QUBIT) {
+    if (rk == RK_QUBIT) {
         Singular_qubit_definition def (
             Variable("qubit" + std::to_string(qubit_defs.get_num_of(ALL_SCOPES)))
         );
@@ -186,7 +186,7 @@ unsigned int Block::make_resource_definitions(U8& scope, Resource_kind rk, bool 
 
     if (discard_defs) {
         //Simply report back how many qubit defs are there
-        if (rk == QUBIT) {
+        if (rk == RK_QUBIT) {
             return qubit_defs.get_num_of(scope);
         } else {
             return bit_defs.get_num_of(scope);
@@ -195,7 +195,7 @@ unsigned int Block::make_resource_definitions(U8& scope, Resource_kind rk, bool 
 
         unsigned int target_num_resources = 0, total_num_definitions = 0;
         bool scope_is_external = (scope & EXTERNAL_SCOPE);
-        bool classificaton_is_qubit = (rk == QUBIT);
+        bool classificaton_is_qubit = (rk == RK_QUBIT);
         
         switch((scope_is_external << 1) | classificaton_is_qubit){
             case 0b00: target_num_resources = target_num_bits_internal; break;
@@ -226,7 +226,7 @@ unsigned int Block::make_resource_definitions(const Dag::Dag& dag, const U8& sco
     if (discard_defs) {
         return qubit_defs.get_num_of(scope);
     } else {
-        if(rk == QUBIT){
+        if(rk == RK_QUBIT){
             qubits = dag.get_qubits();
             qubit_defs = dag.get_qubit_defs();   
 
@@ -259,7 +259,7 @@ void Block::print_info() const {
     std::cout << std::endl;
     std::cout << "Qubit definitions " << std::endl;
 
-    if(owner == Common::TOP_LEVEL_CIRCUIT_NAME){
+    if(owner == QuteFuzz::TOP_LEVEL_CIRCUIT_NAME){
         std::cout << YELLOW("Qubit defs may not match target if block is built to match DAG") << std::endl;
     }
 

@@ -16,9 +16,9 @@
 
 
 enum Reset_level {
-	PROGRAM,
-	BLOCK,
-	QUBIT_OP,
+	RL_PROGRAM,
+	RL_BLOCK,
+	RL_QUBIT_OP,
 };
 
 struct Context {
@@ -54,13 +54,13 @@ struct Context {
 
 		std::optional<std::shared_ptr<Block>> get_block(std::string owner);
 
-		std::shared_ptr<Resource::Qubit> new_qubit();
+		std::shared_ptr<Qubit> new_qubit();
 
 		std::shared_ptr<Variable> get_current_qubit_name();
 
 		std::shared_ptr<Integer> get_current_qubit_index();
 
-		std::shared_ptr<Resource::Bit> new_bit();
+		std::shared_ptr<Bit> new_bit();
 
 		std::shared_ptr<Variable> get_current_bit_name();
 
@@ -130,7 +130,7 @@ struct Context {
 		std::shared_ptr<Subroutine_defs> new_subroutines_node();
 
 		std::shared_ptr<Qubit_op> new_qubit_op_node(){
-			reset(QUBIT_OP);
+			reset(RL_QUBIT_OP);
 
 			current_qubit_op = can_copy_dag ? genome.value().dag.get_next_node() : std::make_shared<Qubit_op>(get_current_block());
 
@@ -170,8 +170,8 @@ struct Context {
 	
 		std::shared_ptr<Qubit_definition> current_qubit_definition;
 		std::shared_ptr<Bit_definition> current_bit_definition;
-		std::shared_ptr<Resource::Qubit> current_qubit;
-		std::shared_ptr<Resource::Bit> current_bit;
+		std::shared_ptr<Qubit> current_qubit;
+		std::shared_ptr<Bit> current_bit;
 		std::shared_ptr<Gate> current_gate;
 		std::shared_ptr<Qubit_op> current_qubit_op;
 		std::shared_ptr<Subroutine_op_arg> current_subroutine_op_arg;

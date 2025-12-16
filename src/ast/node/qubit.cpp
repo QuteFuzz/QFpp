@@ -1,6 +1,6 @@
 #include <resource.h>
 
-void Resource::Qubit::extend_flow_path(const std::shared_ptr<Qubit_op> qubit_op, unsigned int current_port){
+void Qubit::extend_flow_path(const std::shared_ptr<Qubit_op> qubit_op, unsigned int current_port){
 
     Dag::Edge edge;
 
@@ -16,7 +16,7 @@ void Resource::Qubit::extend_flow_path(const std::shared_ptr<Qubit_op> qubit_op,
     flow_path.push_back(edge);
 }
 
-void Resource::Qubit::extend_dot_string(std::ostringstream& ss) const {
+void Qubit::extend_dot_string(std::ostringstream& ss) const {
     std::string input_node = "\"Input: " + resolved_name() + "\"";
     std::string output_node = "\"Output: " + resolved_name()+ "\"";
 
@@ -47,7 +47,7 @@ void Resource::Qubit::extend_dot_string(std::ostringstream& ss) const {
     }
 }
 
-void Resource::Qubit::add_path_to_dag(Dag::Dag& dag) const {
+void Qubit::add_path_to_dag(Dag::Dag& dag) const {
 
     if(flow_path_length >= 2){
 

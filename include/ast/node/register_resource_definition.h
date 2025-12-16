@@ -50,19 +50,19 @@ class Register_qubit_definition : public Register_resource_definition {
             )
         {}
 
-        Register_qubit_definition(const Resource::Qubit& qubit) :
+        Register_qubit_definition(const Qubit& qubit) :
             Register_resource_definition(
                 *qubit.get_name(),
                 Integer(1)
             )
         {}
 
-        void make_resources(Collection<Resource::Qubit>& output, const U8& scope) const {
+        void make_resources(Collection<Qubit>& output, const U8& scope) const {
 
             for(size_t i = 0; i < (size_t)size.get_num(); i++){
                 Register_qubit reg_qubit(name, Integer(std::to_string(i)));
 
-                output.add(Resource::Qubit(reg_qubit, scope));
+                output.add(Qubit(reg_qubit, scope));
             }
         }
 
@@ -80,18 +80,18 @@ class Register_bit_definition : public Register_resource_definition {
             )
         {}
 
-        Register_bit_definition(const Resource::Bit& bit) :
+        Register_bit_definition(const Bit& bit) :
             Register_resource_definition(
                 *bit.get_name(),
                 Integer(1)
             )
         {}
 
-        void make_resources(Collection<Resource::Bit>& output, const U8& scope) const {
+        void make_resources(Collection<Bit>& output, const U8& scope) const {
             for(size_t i = 0; i < (size_t)size.get_num(); i++){
                 Register_bit reg_bit(name, Integer(std::to_string(i)));
 
-                output.add(Resource::Bit(reg_bit, scope));
+                output.add(Bit(reg_bit, scope));
             }
         }
 
