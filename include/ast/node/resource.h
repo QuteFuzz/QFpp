@@ -18,17 +18,17 @@ namespace Resource {
 
             /// @brief Dummy resource
             Resource() :
-                Node("dummy", Token::SINGULAR_RESOURCE),
+                Node("dummy", SINGULAR_RESOURCE),
                 value(Singular_resource())
             {}
 
-            Resource(const std::string& str, const Token::Kind& kind, const Register_resource& resource, const U8& _scope) :
+            Resource(const std::string& str, const Token_kind& kind, const Register_resource& resource, const U8& _scope) :
                 Node(str, kind),
                 value(resource),
                 scope(_scope)
             {}
 
-            Resource(const std::string& str, const Token::Kind& kind, const Singular_resource& resource, const U8& _scope) :
+            Resource(const std::string& str, const Token_kind& kind, const Singular_resource& resource, const U8& _scope) :
                 Node(str, kind),
                 value(resource),
                 scope(_scope)
@@ -92,15 +92,15 @@ namespace Resource {
             Qubit() : Resource() {}
 
             Qubit(const Register_qubit& qubit, const U8& scope) :
-                Resource("qubit", Token::QUBIT, qubit, scope)
+                Resource("qubit", QUBIT, qubit, scope)
             {
-                add_constraint(Token::REGISTER_QUBIT, 1);
+                add_constraint(REGISTER_QUBIT, 1);
             }
 
             Qubit(const Singular_qubit& qubit, const U8& scope) :
-                Resource("qubit", Token::QUBIT, qubit, scope)
+                Resource("qubit", QUBIT, qubit, scope)
             {
-                add_constraint(Token::SINGULAR_QUBIT, 1);
+                add_constraint(SINGULAR_QUBIT, 1);
             }
 
             void extend_flow_path(const std::shared_ptr<Qubit_op> qubit_op, unsigned int current_port);
@@ -127,15 +127,15 @@ namespace Resource {
             Bit() : Resource() {}
 
             Bit(const Register_bit& bit, const U8& scope) :
-                Resource("bit", Token::BIT, bit, scope)
+                Resource("bit", BIT, bit, scope)
             {
-                add_constraint(Token::REGISTER_BIT, 1);
+                add_constraint(REGISTER_BIT, 1);
             }
 
             Bit(const Singular_bit& bit, const U8& scope) :
-                Resource("bit", Token::BIT, bit, scope)
+                Resource("bit", BIT, bit, scope)
             {
-                add_constraint(Token::SINGULAR_BIT, 1);
+                add_constraint(SINGULAR_BIT, 1);
             }
 
         private:

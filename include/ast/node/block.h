@@ -46,13 +46,13 @@ class Block : public Node {
     public:
 
         Block() : 
-            Node("block", Token::BLOCK),
+            Node("block", BLOCK),
             owner("kendrick lamar")
         {}
 
         /// @brief Generating a random block from scratch
         Block(std::string owner_name) :
-            Node("block", Token::BLOCK),
+            Node("block", BLOCK),
             owner(owner_name), 
             target_num_qubits_external(random_int(Common::MAX_QUBITS, Common::MIN_QUBITS)),
             target_num_qubits_internal(random_int(Common::MAX_QUBITS, Common::MIN_QUBITS)),
@@ -62,7 +62,7 @@ class Block : public Node {
 
         /// @brief Generating a block with a specific number of external qubits (generating from DAG)
         Block(std::string owner_name, unsigned int num_external_qubits) :
-            Node("block", Token::BLOCK),
+            Node("block", BLOCK),
             owner(owner_name), 
             target_num_qubits_external(num_external_qubits),
             target_num_qubits_internal(random_int(Common::MAX_QUBITS, Common::MIN_QUBITS)),

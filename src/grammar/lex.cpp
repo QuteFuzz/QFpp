@@ -1,8 +1,8 @@
 #include <lex.h>
 
-void Lexer::Lexer::lex(){
+void Lexer::lex(){
     std::string input, matched_string;
-    std::vector<Token::Token> tokens;
+    std::vector<Token> tokens;
     std::ifstream stream(_filename);
     
     std::regex full_pattern(FULL_REGEX, std::regex::icase);
@@ -30,14 +30,14 @@ void Lexer::Lexer::lex(){
 
             } else {
             
-                for(const Token::Rule& tr : TOKEN_RULES){
-                    if(string_is(matched_string, tr.pattern)){
+                for(const Regex_matcher rm : TOKEN_RULES){
+                    if(string_is(matched_string, rm.pattern)){
 
-                        if(tr.kind == Token::SYNTAX){
-                            tokens.push_back(Token::Token{remove_outer_quotes(tr.value.value_or(matched_string)), tr.kind});                        
+                        if(rm.kind == SYNTAX){
+                            tokens.push_back(Token{remove_outer_quotes(rm.value.value_or(matched_string)), rm.kind});                        
                         
                         } else {
-                            tokens.push_back(Token::Token{tr.value.value_or(matched_string), tr.kind});                        
+                            tokens.push_back(Token{rm.value.value_or(matched_string), rm.kind});                        
                         }
 
                         break;
@@ -47,17 +47,17 @@ void Lexer::Lexer::lex(){
         }
     }
 
-    tokens.push_back(Token::Token{.value = "", .kind = Token::_EOF});        
+    tokens.push_back(Token{.value = "", .kind = _EOF});        
     result.set_ok(tokens);
 }
 
-void Lexer::Lexer::print_tokens() const {
+void Lexer::print_tokens() const {
 
     if(result.is_error()){
         ERROR(result.get_error()); 
         
     } else {
-        std::vector<Token::Token> tokens = result.get_ok();
+        std::vector<Token> tokens = result.get_ok();
 
         for(size_t i = 0; i < tokens.size(); ++i){
             std::cout << tokens[i] << std::endl;

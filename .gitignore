@@ -6,3 +6,4 @@ local_saved_circuits
 __pycache__
 .DS_Store
 .env
+.devcontainer

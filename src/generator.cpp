@@ -91,8 +91,8 @@ std::pair<Genome&, Genome&> Generator::pick_parents(){
 
 /// @brief Get defined gates in grammar, filtering out measure gates
 /// @return 
-std::vector<Token::Kind> Generator::get_available_gates(){
-    std::vector<Token::Kind> out;
+std::vector<Token_kind> Generator::get_available_gates(){
+    std::vector<Token_kind> out;
 
     std::shared_ptr<Rule> gate_name = grammar->get_rule_pointer_if_exists("gate_name");
     
@@ -105,7 +105,7 @@ std::vector<Token::Kind> Generator::get_available_gates(){
             std::vector<Term> terms = b.get_terms();
 
             for (const Term& t : terms) {
-                if ((t.get_kind() != Token::MEASURE) && (t.get_kind() != Token::MEASURE_AND_RESET)) {
+                if ((t.get_kind() != MEASURE) && (t.get_kind() != MEASURE_AND_RESET)) {
                     out.push_back(t.get_kind());
                 }
             }
@@ -116,11 +116,11 @@ std::vector<Token::Kind> Generator::get_available_gates(){
 }
 
 Node_constraint Generator::get_swarm_testing_gateset(){
-    std::vector<Token::Kind> gates = get_available_gates();
+    std::vector<Token_kind> gates = get_available_gates();
 
     size_t n_gates = std::min((size_t)Common::SWARM_TESTING_GATESET_SIZE, gates.size());
 
-    std::vector<Token::Kind> selected_gates(n_gates);
+    std::vector<Token_kind> selected_gates(n_gates);
     
     #ifdef DEBUG
     if (n_gates == gates.size()) {

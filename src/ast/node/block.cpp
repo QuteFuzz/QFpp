@@ -1,6 +1,6 @@
 #include <block.h>
 
-std::shared_ptr<Resource::Qubit> Block::get_random_qubit(const U8& scope){
+std::shared_ptr<Qubit> Block::get_random_qubit(const U8& scope){
     size_t total_qubits = qubits.get_num_of(scope);
     //Iterate through all qubits and see if there is at least one valid bit to prevent infinite loop
     bool valid_qubit_exists = false;
@@ -19,7 +19,7 @@ std::shared_ptr<Resource::Qubit> Block::get_random_qubit(const U8& scope){
 
         // std::cout << *this << std::endl;
 
-        std::shared_ptr<Resource::Qubit> qubit = qubits.at(random_int(total_qubits - 1));
+        std::shared_ptr<Qubit> qubit = qubits.at(random_int(total_qubits - 1));
 
         while(qubit->is_used() || !scope_matches(qubit->get_scope(), scope)){
             qubit = qubits.at(random_int(total_qubits - 1));
@@ -35,7 +35,7 @@ std::shared_ptr<Resource::Qubit> Block::get_random_qubit(const U8& scope){
     }
 }
 
-std::shared_ptr<Resource::Bit> Block::get_random_bit(const U8& scope){
+std::shared_ptr<Bit> Block::get_random_bit(const U8& scope){
     size_t total_bits = bits.get_num_of(scope);
     //Iterate through all bits and see if there is at least one valid bit to prevent infinite loop
     bool valid_bit_exists = false;
@@ -52,7 +52,7 @@ std::shared_ptr<Resource::Bit> Block::get_random_bit(const U8& scope){
         INFO("Getting random bit");
         #endif
 
-        std::shared_ptr<Resource::Bit> bit = bits.at(random_int(total_bits - 1));
+        std::shared_ptr<Bit> bit = bits.at(random_int(total_bits - 1));
 
         while(bit->is_used() || !scope_matches(bit->get_scope(), scope)){
             bit = bits.at(random_int(total_bits - 1));
@@ -114,17 +114,17 @@ std::shared_ptr<Bit_definition> Block::get_next_bit_def(const U8& scope){
 /// @brief Make a register resource definition, whose size is bounded by `max_size`
 /// @param max_size 
 /// @param scope 
-/// @param classification 
+/// @param rk 
 /// @param total_definitions 
 /// @return number of resources created from this definition
-unsigned int Block::make_register_resource_definition(unsigned int max_size, U8& scope, Resource::Classification classification, unsigned int& total_definitions){
+unsigned int Block::make_register_resource_definition(unsigned int max_size, U8& scope, Resource_kind rk, unsigned int& total_definitions){
 
     unsigned int size;
 
     if(max_size > 1) size = random_int(max_size, 1);
     else size = max_size;
 
-    if (classification == Resource::QUBIT) {
+    if (rk == QUBIT) {
         Register_qubit_definition def(
             Variable("qreg" + std::to_string(qubit_defs.get_num_of(ALL_SCOPES))),
             Integer(size)
@@ -153,11 +153,11 @@ unsigned int Block::make_register_resource_definition(unsigned int max_size, U8&
 
 /// @brief Make singular resource definition 
 /// @param scope 
-/// @param classification 
+/// @param rk 
 /// @param total_definitions 
 /// @return 1, since there's one qubit created from a singular resource definition
-unsigned int Block::make_singular_resource_definition(U8& scope, Resource::Classification classification, unsigned int& total_definitions){
-    if (classification == Resource::QUBIT) {
+unsigned int Block::make_singular_resource_definition(U8& scope, Resource_kind rk, unsigned int& total_definitions){
+    if (rk == QUBIT) {
         Singular_qubit_definition def (
             Variable("qubit" + std::to_string(qubit_defs.get_num_of(ALL_SCOPES)))
         );
@@ -182,11 +182,11 @@ unsigned int Block::make_singular_resource_definition(U8& scope, Resource::Class
     return 1;
 }
 
-unsigned int Block::make_resource_definitions(U8& scope, Resource::Classification classification, bool discard_defs){
+unsigned int Block::make_resource_definitions(U8& scope, Resource_kind rk, bool discard_defs){
 
     if (discard_defs) {
         //Simply report back how many qubit defs are there
-        if (classification == Resource::QUBIT) {
+        if (rk == QUBIT) {
             return qubit_defs.get_num_of(scope);
         } else {
             return bit_defs.get_num_of(scope);
@@ -195,14 +195,14 @@ unsigned int Block::make_resource_definitions(U8& scope, Resource::Classificatio
 
         unsigned int target_num_resources = 0, total_num_definitions = 0;
         bool scope_is_external = (scope & EXTERNAL_SCOPE);
-        bool classificaton_is_qubit = (classification == Resource::QUBIT);
+        bool classificaton_is_qubit = (rk == QUBIT);
         
         switch((scope_is_external << 1) | classificaton_is_qubit){
             case 0b00: target_num_resources = target_num_bits_internal; break;
             case 0b01: target_num_resources = target_num_qubits_internal; break;
             case 0b10: target_num_resources = target_num_bits_external; break;
             case 0b11: target_num_resources = target_num_qubits_external; break;
-            default: ERROR("Scope and classification failed to pick target num of resources!");
+            default: ERROR("Scope and rk failed to pick target num of resources!");
         }
 
         while(target_num_resources > 0){
@@ -210,10 +210,10 @@ unsigned int Block::make_resource_definitions(U8& scope, Resource::Classificatio
                 Use singular qubit or qubit register
             */
             if(random_int(1)){
-                target_num_resources -= make_singular_resource_definition(scope, classification, total_num_definitions);
+                target_num_resources -= make_singular_resource_definition(scope, rk, total_num_definitions);
 
             } else {
-                target_num_resources -= make_register_resource_definition(target_num_resources, scope, classification, total_num_definitions);
+                target_num_resources -= make_register_resource_definition(target_num_resources, scope, rk, total_num_definitions);
             }
         }
 
@@ -221,12 +221,12 @@ unsigned int Block::make_resource_definitions(U8& scope, Resource::Classificatio
     }
 }
 
-unsigned int Block::make_resource_definitions(const Dag::Dag& dag, const U8& scope, Resource::Classification classification, bool discard_defs){
+unsigned int Block::make_resource_definitions(const Dag::Dag& dag, const U8& scope, Resource_kind rk, bool discard_defs){
 
     if (discard_defs) {
         return qubit_defs.get_num_of(scope);
     } else {
-        if(classification == Resource::QUBIT){
+        if(rk == QUBIT){
             qubits = dag.get_qubits();
             qubit_defs = dag.get_qubit_defs();   
 

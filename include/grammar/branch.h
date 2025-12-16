@@ -44,7 +44,7 @@ class Branch {
 
         Term& at(size_t index) {return terms.at(index);}
 
-        unsigned int count_rule_occurances(const Token::Kind& kind) const {
+        unsigned int count_rule_occurances(const Token_kind& kind) const {
 
             unsigned int out = 0;
 

@@ -18,7 +18,7 @@ class Register_resource_definition : public Node {
         {}
 
         Register_resource_definition(const Variable& _name, const Integer& _size): 
-            Node("register_resource_def", Token::REGISTER_RESOURCE_DEF),
+            Node("register_resource_def", REGISTER_RESOURCE_DEF),
             name(_name),
             size(_size)
         {}

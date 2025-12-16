@@ -14,17 +14,17 @@ class Grammar{
     public:
         Grammar(){}
 
-        Grammar(const fs::path& filename, std::vector<Token::Token>& meta_grammar_tokens);
+        Grammar(const fs::path& filename, std::vector<Token>& meta_grammar_tokens);
 
         void consume(int n);
 
-        void consume(const Token::Kind kind);
+        void consume(const Token_kind kind);
 
         void peek();
 
         std::shared_ptr<Rule> get_rule_pointer_if_exists(const std::string& name, const U8& scope = NO_SCOPE);
 
-        std::shared_ptr<Rule> get_rule_pointer(const Token::Token& token, const U8& scope = NO_SCOPE);
+        std::shared_ptr<Rule> get_rule_pointer(const Token& token, const U8& scope = NO_SCOPE);
 
         inline void reset_current_branches(){current_branches.clear();}
         
@@ -60,11 +60,11 @@ class Grammar{
             }
         }
 
-        void extend_current_branches(const Token::Token& wildcard);
+        void extend_current_branches(const Token& wildcard);
 
-        void add_term_to_current_branches(const Token::Token& tokens);
+        void add_term_to_current_branches(const Token& tokens);
 
-        void add_term_to_branch(const Token::Token& token, Branch& branch);
+        void add_term_to_branch(const Token& token, Branch& branch);
 
         void build_grammar();
 
@@ -93,12 +93,12 @@ class Grammar{
         inline std::string get_path(){return path.string();}
     
     private:
-        std::vector<Token::Token> tokens;
+        std::vector<Token> tokens;
         size_t num_tokens = 0;
         size_t token_pointer = 0;
-        Result<Token::Token> curr_token;
-        Result<Token::Token> next_token;
-        Token::Token prev_token;
+        Result<Token> curr_token;
+        Result<Token> next_token;
+        Token prev_token;
 
         std::string range_start = "", range_end = "";
 
@@ -113,10 +113,9 @@ class Grammar{
 
         std::vector<std::shared_ptr<Rule>> rule_pointers;
         
-        Lexer::Lexer lexer;
+        Lexer lexer;
         std::string name;
         fs::path path;
 };
-
 
 #endif

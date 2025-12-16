@@ -38,7 +38,7 @@ struct Generator {
 
         std::pair<Genome&, Genome&> pick_parents();
 
-        std::vector<Token::Kind> get_available_gates();
+        std::vector<Token_kind> get_available_gates();
 
         Node_constraint get_swarm_testing_gateset();
 

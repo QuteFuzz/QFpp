@@ -37,25 +37,6 @@ int Node::get_next_child_target(){
     }
 }
 
-// std::shared_ptr<Node> Node::find(const U64 _hash) const {
-
-//     std::shared_ptr<Node> node;
-
-//     for(const std::shared_ptr<Node>& child : children){
-//         if(*child == _hash){
-//             return child;
-//         }
-
-//         node = child->find(_hash);
-        
-//         if(node != nullptr){
-//             return node;
-//         }
-//     }
-
-//     return nullptr;
-// }
-
 /// @brief Create a random partition of `target` over `n_children`. Final result contains +ve ints
 /// @param target 
 /// @param n_children 
@@ -127,14 +108,14 @@ void Node::make_control_flow_partition(int target, int n_children){
     make_partition(target, n_children);
     
     if(n_children == 1){
-        add_constraint(Token::ELSE_STMT, 0);
-        add_constraint(Token::ELIF_STMT, 0);
+        add_constraint(ELSE_STMT, 0);
+        add_constraint(ELIF_STMT, 0);
 
     } else if (random_int(1)) {
-        add_constraint(Token::ELSE_STMT, 1);
+        add_constraint(ELSE_STMT, 1);
         
     } else {
-        add_constraint(Token::ELIF_STMT, 1);
+        add_constraint(ELIF_STMT, 1);
    
     }
 }

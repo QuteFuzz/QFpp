@@ -41,26 +41,26 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 	U8 scope = term.get_scope();
 
 	std::string str = term.get_string();
-	Token::Kind kind = term.get_kind();
+	Token_kind kind = term.get_kind();
 	
-	if(*parent == Token::COMPARE_OP_BITWISE_OR_PAIR){
+	if(*parent == COMPARE_OP_BITWISE_OR_PAIR){
 		return std::make_shared<Compare_op_bitwise_or_pair_child>(str, kind);
 	}
 	
 	switch(kind){
 
-		case Token::INDENT:
+		case INDENT:
 			Node::indentation_tracker += "\t";
 			return dummy;
 
-		case Token::DEDENT:
+		case DEDENT:
 			if(Node::indentation_tracker.size()){
 				Node::indentation_tracker.pop_back();
 			}
 
 			return dummy;
 
-		case Token::INDENTATION_DEPTH:
+		case INDENTATION_DEPTH:
 			return std::make_shared<Integer>(Node::indentation_tracker.size());
 
 		/// TODO: add grammar syntax to allow certain rules to exclude other rules downstream, useful for non_comptime_block
@@ -68,91 +68,91 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 		// 	context.set_can_apply_subroutines(false);
 		// 	return std::make_shared<Node>(str, hash);
 
-		case Token::BLOCK:
+		case BLOCK:
 			return context.new_block_node();
 
-		case Token::BODY:
+		case BODY:
 			return std::make_shared<Node>(str, kind);
 
-		case Token::COMPOUND_STMTS:
+		case COMPOUND_STMTS:
 			return context.get_compound_stmts(parent);
 		
-		case Token::COMPOUND_STMT:
+		case COMPOUND_STMT:
 			return context.get_compound_stmt(parent);
 
-		case Token::IF_STMT:
+		case IF_STMT:
 			// Bridging solution for IF_STMT without defining it as a gate
 			context.reset(Context::Level::QUBIT_OP);
 			
 			return context.get_nested_stmt(str, kind, parent);
 
-		case Token::ELIF_STMT: case Token::ELSE_STMT:
+		case ELIF_STMT: case ELSE_STMT:
 			// Bridging solution for IF_STMT without defining it as a gate
 			context.reset(Context::Level::QUBIT_OP);
 
 			return context.get_nested_branch(str, kind, parent);
 
-		case Token::DISJUNCTION:
+		case DISJUNCTION:
 			return std::make_shared<Disjunction>();
 
-		case Token::CONJUNCTION:
+		case CONJUNCTION:
 			return std::make_shared<Conjunction>();
 
-		case Token::EXPRESSION:
+		case EXPRESSION:
 			return std::make_shared<Expression>();
 		
-		case Token::CIRCUIT_ID:
+		case CIRCUIT_ID:
 			return context.get_circuit_id();
 
-		case Token::MAIN_CIRCUIT_NAME:				
+		case MAIN_CIRCUIT_NAME:				
 			return std::make_shared<Variable>(Common::TOP_LEVEL_CIRCUIT_NAME);
 
-		case Token::SUBROUTINE_DEFS:
+		case SUBROUTINE_DEFS:
 			return context.new_subroutines_node();	
 
-		case Token::QUBIT_OP:
+		case QUBIT_OP:
 			return context.new_qubit_op_node();
 	
-		case Token::CIRCUIT_NAME:
+		case CIRCUIT_NAME:
 			return std::make_shared<Variable>(context.get_current_block_owner());
 
-		case Token::QUBIT_DEF_SIZE:
+		case QUBIT_DEF_SIZE:
 			return context.get_current_qubit_definition_size();
 
-		/// TODO: Add Token::QUBIT_DEF_SIZE handling since currently its just giving dummy nodes
+		/// TODO: Add QUBIT_DEF_SIZE handling since currently its just giving dummy nodes
 
-		case Token::QUBIT_DEF_NAME:
+		case QUBIT_DEF_NAME:
 			return context.get_current_qubit_definition_name();
 
-		case Token::QUBIT_DEFS:
+		case QUBIT_DEFS:
 			return context.get_qubit_defs_node(scope);
 
-		case Token::QUBIT_DEFS_DISCARD:
+		case QUBIT_DEFS_DISCARD:
 			return context.get_qubit_defs_discard_node(scope);
 
-		case Token::BIT_DEFS:
+		case BIT_DEFS:
 			return context.get_bit_defs_node(scope);
 
-		case Token::QUBIT_DEF:
+		case QUBIT_DEF:
 			return context.new_qubit_definition(scope);
 
-		case Token::QUBIT_DEF_DISCARD:
+		case QUBIT_DEF_DISCARD:
 			return context.new_qubit_def_discard(scope);
 
-		case Token::BIT_DEF:
+		case BIT_DEF:
 			return context.new_bit_definition(scope);
 
-		case Token::BIT_DEF_SIZE:
+		case BIT_DEF_SIZE:
 			return context.get_current_bit_definition_size();
 
-		case Token::BIT_DEF_NAME:
+		case BIT_DEF_NAME:
 			return context.get_current_bit_definition_name();
 
-		case Token::QUBIT_LIST: {
+		case QUBIT_LIST: {
 
 			unsigned int num_qubits;
 
-			if(*parent == Token::SUBROUTINE_OP_ARG){
+			if(*parent == SUBROUTINE_OP_ARG){
 				num_qubits = context.get_current_gate()->get_current_qubit_def()->get_size()->get_num();
 			} else {
 				num_qubits = context.get_current_gate()->get_num_external_qubits();
@@ -163,42 +163,42 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 			return std::make_shared<Qubit_list>(num_qubits);
 		}
 
-		case Token::BIT_LIST:
+		case BIT_LIST:
 			context.reset(Context::Level::QUBIT_OP);
 
 			return std::make_shared<Bit_list>(context.get_current_gate()->get_num_external_bits());
 
-		case Token::FLOAT_LIST:
+		case FLOAT_LIST:
 			return std::make_shared<Float_list>(context.get_current_gate()->get_num_floats());
 
-		case Token::QUBIT_INDEX:
+		case QUBIT_INDEX:
 			return context.get_current_qubit_index();
 
-		case Token::QUBIT_NAME:
+		case QUBIT_NAME:
 			return context.get_current_qubit_name();
 
-		case Token::QUBIT:
+		case QUBIT:
 			return context.new_qubit(); 
 
-		case Token::BIT_INDEX:
+		case BIT_INDEX:
 			return context.get_current_bit_index();
 
-		case Token::BIT_NAME:
+		case BIT_NAME:
 			return context.get_current_bit_name();
 
-		case Token::BIT:
+		case BIT:
 			return context.new_bit();
 		
-		case Token::FLOAT_LITERAL:
+		case FLOAT_LITERAL:
 			return std::make_shared<Float>();
 
-		case Token::NUMBER:
+		case NUMBER:
 			return std::make_shared<Integer>();
 
-		case Token::GATE_MAME:
+		case GATE_MAME:
 			return std::make_shared<Gate_name>(parent, context.get_current_block(), swarm_testing_gateset);
 
-		case Token::SUBROUTINE: {
+		case SUBROUTINE: {
 			std::shared_ptr<Block> subroutine_block = context.get_random_block();
 
 			subroutine_block->print_info();
@@ -209,40 +209,40 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 			return subroutine_gate;
 		}
 
-		case Token::SUBROUTINE_OP_ARGS:
+		case SUBROUTINE_OP_ARGS:
 			return std::make_shared<Subroutine_op_args>(context.get_current_gate()->get_num_external_qubit_defs());
 
-		case Token::SUBROUTINE_OP_ARG:
+		case SUBROUTINE_OP_ARG:
 			return context.new_arg();
 	
-		case Token::H: case Token::X: case Token::Y: case Token::Z: case Token::T:
-		case Token::TDG: case Token::S: case Token::SDG: case Token::PROJECT_Z: case Token::MEASURE_AND_RESET:
-		case Token::V: case Token::VDG:
+		case H: case X: case Y: case Z: case T:
+		case TDG: case S: case SDG: case PROJECT_Z: case MEASURE_AND_RESET:
+		case V: case VDG:
 			return context.new_gate(str, kind, 1, 0, 0);
 
-		case Token::CX : case Token::CY: case Token::CZ: case Token::CNOT:
-		case Token::CH:
+		case CX : case CY: case CZ: case CNOT:
+		case CH:
 			return context.new_gate(str, kind, 2, 0, 0);
 
-		case Token::CRZ:
+		case CRZ:
 			return context.new_gate(str, kind, 2, 0, 1);
 
-		case Token::CCX: case Token::CSWAP: case Token::TOFFOLI:
+		case CCX: case CSWAP: case TOFFOLI:
 			return context.new_gate(str, kind, 3, 0, 0);
 
-		case Token::U1: case Token::RX: case Token::RY: case Token::RZ:
+		case U1: case RX: case RY: case RZ:
 			return context.new_gate(str, kind, 1, 0, 1);
 
-		case Token::U2: case Token::PHASED_X:
+		case U2: case PHASED_X:
 			return context.new_gate(str, kind, 1, 0, 2);
 
-		case Token::U3: case Token::U:
+		case U3: case U:
 			return context.new_gate(str, kind, 1, 0, 3);
 		
-		case Token::MEASURE:
+		case MEASURE:
 			return context.new_gate(str, kind, 1, 1, 0);
 		
-		case Token::BARRIER: {
+		case BARRIER: {
 			std::shared_ptr<Block> current_block = context.get_current_block();
 
 			unsigned int n_qubits = std::min((unsigned int)WILDCARD_MAX, (unsigned int)current_block->num_qubits_of(ALL_SCOPES));
@@ -251,7 +251,7 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 			return context.new_gate(str, kind, random_barrier_width, 0, 0);
 		}
 
-		case Token::GATE_OP_ARGS:
+		case GATE_OP_ARGS:
 			return std::make_shared<Gate_op_args>(context.get_current_gate());
 
 		default:

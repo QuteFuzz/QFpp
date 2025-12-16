@@ -8,10 +8,10 @@ class Singular_resource : public Node {
     public:
         /// @brief Dummy resource
         Singular_resource() :
-            Node("Singular_resource", Token::SINGULAR_RESOURCE)
+            Node("Singular_resource", SINGULAR_RESOURCE)
         {}
 
-        Singular_resource(std::string str, Token::Kind kind, const Variable& _name) : 
+        Singular_resource(std::string str, Token_kind kind, const Variable& _name) : 
             Node(str, kind),
             name(_name)
         {}
@@ -35,7 +35,7 @@ class Singular_qubit : public Singular_resource {
 
     public:
         Singular_qubit(const Variable& _name):
-            Singular_resource("singular_qubit", Token::SINGULAR_QUBIT, _name)
+            Singular_resource("singular_qubit", SINGULAR_QUBIT, _name)
         {}
 
     private:
@@ -46,7 +46,7 @@ class Singular_bit : public Singular_resource {
 
     public:
         Singular_bit(const Variable& _name):
-            Singular_resource("singular_bit", Token::SINGULAR_BIT, _name)
+            Singular_resource("singular_bit", SINGULAR_BIT, _name)
         {}
 
     private:

@@ -12,9 +12,9 @@ class Conjunction : public Node {
 
     public:
         Conjunction() :
-            Node("conjuction", Token::CONJUNCTION)         
+            Node("conjuction", CONJUNCTION)         
         {
-            add_constraint(Token::INVERSION, 2);
+            add_constraint(INVERSION, 2);
         }
 
         void print(std::ostream& stream) const override {

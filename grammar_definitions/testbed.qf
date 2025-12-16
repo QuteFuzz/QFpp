@@ -1,7 +1,0 @@
-hello = "my" NEWLINE dw;
-
-dw = "wife";
-
-compound_stmt = qubit_op;
-
-program += "my bed is kewl";

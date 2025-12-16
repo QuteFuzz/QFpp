@@ -1,13 +1,13 @@
 #include <term.h>
 #include <rule.h>
 
-Term::Term(const std::shared_ptr<Rule> rule, const Token::Kind& _kind, unsigned int _branch_nesting_depth){
+Term::Term(const std::shared_ptr<Rule> rule, const Token_kind& _kind, unsigned int _branch_nesting_depth){
     value = rule;
     kind = _kind;
     branch_nesting_depth = _branch_nesting_depth;
 }
 
-Term::Term(const std::string& syntax, const Token::Kind& _kind, unsigned int _branch_nesting_depth){
+Term::Term(const std::string& syntax, const Token_kind& _kind, unsigned int _branch_nesting_depth){
     value = syntax;
     kind = _kind;
     branch_nesting_depth = _branch_nesting_depth; 

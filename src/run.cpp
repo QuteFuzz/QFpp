@@ -5,7 +5,7 @@
 
 Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
 
-    std::vector<Token::Token> meta_grammar_tokens;
+    std::vector<Token> meta_grammar_tokens;
     
     // build all grammars
     try{
