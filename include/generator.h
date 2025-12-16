@@ -5,6 +5,7 @@
 #include <ast.h>
 #include <genome.h>
 #include <dag.h>
+#include <term.h>
 
 struct Generator {
 

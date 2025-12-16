@@ -52,7 +52,7 @@ class Resource_definition : public Node {
             return std::holds_alternative<Register_resource_definition>(value);
         }
 
-        inline bool defines(const Resource::Resource& resource) const {
+        inline bool defines(const Resource& resource) const {
             return get_name()->get_content() == resource.get_name()->get_content();
         }
 

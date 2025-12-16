@@ -40,7 +40,7 @@ class Ast{
         std::shared_ptr<Rule> entry = nullptr;
         std::shared_ptr<Node> dummy = std::make_shared<Node>("");
         
-        Context::Context context;
+        Context context;
         std::optional<Node_constraint> swarm_testing_gateset = std::nullopt;
         Dag::Dag dag;
 };

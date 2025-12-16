@@ -36,13 +36,13 @@ class Singular_qubit_definition : public Singular_resource_definition {
             Singular_resource_definition(_name)
         {}
 
-        Singular_qubit_definition(const Resource::Qubit& qubit) :
+        Singular_qubit_definition(const Qubit& qubit) :
             Singular_resource_definition(*qubit.get_name())
         {}
 
-        void make_resources(Collection<Resource::Qubit>& output, U8& scope) const {
+        void make_resources(Collection<Qubit>& output, U8& scope) const {
             Singular_qubit singular_qubit(name);
-            output.add(Resource::Qubit(singular_qubit, scope));
+            output.add(Qubit(singular_qubit, scope));
         }
 
     private:
@@ -56,13 +56,13 @@ class Singular_bit_definition : public Singular_resource_definition {
             Singular_resource_definition(_name)
         {}
 
-        Singular_bit_definition(const Resource::Bit& bit) :
+        Singular_bit_definition(const Bit& bit) :
             Singular_resource_definition(*bit.get_name())
         {}
 
-        void make_resources(Collection<Resource::Bit>& output, U8& scope) const {
+        void make_resources(Collection<Bit>& output, U8& scope) const {
             Singular_bit singular_bit(name);
-            output.add(Resource::Bit(singular_bit, scope));
+            output.add(Bit(singular_bit, scope));
         }
 
     private:

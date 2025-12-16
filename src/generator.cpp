@@ -23,7 +23,7 @@ void Generator::ast_to_program(fs::path output_dir, int build_counter, std::opti
 
     std::optional<Node_constraint> gateset;
 
-    if (Common::swarm_testing) {
+    if (swarm_testing) {
         gateset = get_swarm_testing_gateset();
     } else {
         gateset = std::nullopt;
@@ -37,7 +37,7 @@ void Generator::ast_to_program(fs::path output_dir, int build_counter, std::opti
         std::ofstream stream(program_path.string());
 
         // render dag (main block)
-        if (Common::render_dags) {
+        if (render_dags) {
             builder->render_dag(current_circuit_dir);
         }
 
@@ -118,7 +118,7 @@ std::vector<Token_kind> Generator::get_available_gates(){
 Node_constraint Generator::get_swarm_testing_gateset(){
     std::vector<Token_kind> gates = get_available_gates();
 
-    size_t n_gates = std::min((size_t)Common::SWARM_TESTING_GATESET_SIZE, gates.size());
+    size_t n_gates = std::min((size_t)QuteFuzz::SWARM_TESTING_GATESET_SIZE, gates.size());
 
     std::vector<Token_kind> selected_gates(n_gates);
     
@@ -165,7 +165,7 @@ void Generator::run_genetic(fs::path output_dir, int population_size){
 
         std::optional<Node_constraint> gateset;
 
-        if (Common::swarm_testing) {
+        if (swarm_testing) {
             gateset = get_swarm_testing_gateset();
         } else {
             gateset = std::nullopt;

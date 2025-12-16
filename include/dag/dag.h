@@ -76,11 +76,11 @@ namespace Dag {
                 return bit_defs;
             }
 
-            inline Collection<Resource::Qubit> get_qubits() const {
+            inline Collection<Qubit> get_qubits() const {
                 return qubits;
             }
 
-            inline Collection<Resource::Bit> get_bits() const {
+            inline Collection<Bit> get_bits() const {
                 return bits;
             }
 
@@ -154,10 +154,10 @@ namespace Dag {
             std::vector<std::shared_ptr<Node>> subroutine_gates;
             unsigned int sub_pointer = 0;
 
-            Collection<Resource::Qubit> qubits;
+            Collection<Qubit> qubits;
             Collection<Qubit_definition> qubit_defs;
             
-            Collection<Resource::Bit> bits;
+            Collection<Bit> bits;
             Collection<Bit_definition> bit_defs;
 
             std::shared_ptr<Node> dummy_node = std::make_shared<Node>("");
