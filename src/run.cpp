@@ -1,7 +1,7 @@
 #include <run.h>
 #include <ast.h>
 #include <lex.h>
-
+#include <params.h>
 
 Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
 
@@ -16,8 +16,8 @@ Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
             */
             for(auto& file : fs::directory_iterator(grammars_dir)){
 
-                if(file.is_regular_file() && (file.path().stem() == Common::META_GRAMMAR_NAME)){                    
-                    Lexer::Lexer lexer(file.path().string());
+                if(file.is_regular_file() && (file.path().stem() == QuteFuzz::META_GRAMMAR_NAME)){                    
+                    Lexer lexer(file.path().string());
                     meta_grammar_tokens = std::move(lexer.get_tokens());
                     
                     // remove EOF from meta grammar's tokens
@@ -31,7 +31,7 @@ Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
             */
             for(auto& file : fs::directory_iterator(grammars_dir)){
 
-                if(file.is_regular_file() && (file.path().extension() == ".qf") && (file.path().stem() != Common::META_GRAMMAR_NAME)){
+                if(file.is_regular_file() && (file.path().extension() == ".qf") && (file.path().stem() != QuteFuzz::META_GRAMMAR_NAME)){
 
                     Grammar grammar(file, meta_grammar_tokens);
                     grammar.build_grammar();
@@ -46,7 +46,7 @@ Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
             /* 
                 prepare directories
             */
-            output_dir = grammars_dir.parent_path() / Common::OUTPUTS_FOLDER_NAME;
+            output_dir = grammars_dir.parent_path() / QuteFuzz::OUTPUTS_FOLDER_NAME;
             
             if(!fs::exists(output_dir)){
                 fs::create_directory(output_dir);
@@ -152,7 +152,7 @@ void Run::run_tests(){
             results_file << "Running test: " << entry.path().filename() << std::endl;
             
             fs::path program_path = entry.path() / ("circuit.py");
-            std::string command = "python3 " + program_path.string() + (Common::plot ? " --plot" : "") + " 2>&1";
+            std::string command = "python3 " + program_path.string() + (plot ? " --plot" : "") + " 2>&1";
             
             results_file << pipe_from_command(command) << std::endl;
 
@@ -193,32 +193,32 @@ void Run::loop(){
                 current_generator->print_tokens();
             
             } else if (current_command == "plot"){
-                Common::plot = !Common::plot;
-                INFO("Plot mode is now " + FLAG_STATUS(Common::plot));
+                plot = !plot;
+                INFO("Plot mode is now " + FLAG_STATUS(plot));
             
             } else if (current_command == "verbose"){
-                Common::verbose = !Common::verbose;
-                INFO("Verbose mode is now " + FLAG_STATUS(Common::verbose));
+                verbose = !verbose;
+                INFO("Verbose mode is now " + FLAG_STATUS(verbose));
 
             } else if (current_command == "render_dags"){
-                Common::render_dags = !Common::render_dags;
-                INFO("DAG render " + FLAG_STATUS(Common::render_dags));
+                render_dags = !render_dags;
+                INFO("DAG render " + FLAG_STATUS(render_dags));
 
             } else if (current_command == "run_tests"){
                 run_tests();
                 
             } else if (current_command == "swarm_testing") {
-                Common::swarm_testing = !Common::swarm_testing;
-                INFO("Swarm testing mode " + FLAG_STATUS(Common::swarm_testing));
+                swarm_testing = !swarm_testing;
+                INFO("Swarm testing mode " + FLAG_STATUS(swarm_testing));
 
             } else if (current_command == "genetic"){
-                Common::run_genetic = !Common::run_genetic;
-                INFO("Genetic generation mode " + FLAG_STATUS(Common::run_genetic));
+                run_genetic = !run_genetic;
+                INFO("Genetic generation mode " + FLAG_STATUS(run_genetic));
 
             } else if ((n_programs = safe_stoi(current_command))){
                 remove_all_in_dir(output_dir);
 
-                if(Common::run_genetic){
+                if(run_genetic){
                     current_generator->run_genetic(output_dir, n_programs.value_or(0));
 
                 } else {
