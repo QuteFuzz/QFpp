@@ -15,8 +15,14 @@ EXTERNAL {
 
 program       = imports NEWLINE subroutine_defs NEWLINE block NEWLINE compiler_call;
 
-subroutine_defs = (block NEWLINE subroutine_def_footer)*;
+subroutine_defs = (subroutine_block NEWLINE subroutine_def_footer)*;
 
+# all subroutines have just qubit ops
+subroutine_body = EXTERNAL::qubit_defs NEWLINE (qubit_op NEWLINE)+;
+
+body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
+
+subroutine_block = circuit_def_header NEWLINE subroutine_body NEWLINE;
 
 compound_stmts = (compound_stmt NEWLINE)+;
 

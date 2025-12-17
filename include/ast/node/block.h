@@ -48,7 +48,7 @@ class Block : public Node {
 
         Block() : 
             Node("block", BLOCK),
-            owner("kendrick lamar")
+            owner("dummy_block")
         {}
 
         /// @brief Generating a random block from scratch
@@ -177,7 +177,7 @@ class Block : public Node {
         unsigned int target_num_bits_external = QuteFuzz::MIN_BITS;
         unsigned int target_num_bits_internal = 0;
         
-        bool can_apply_subroutines = true;
+        bool can_apply_subroutines = false;
 
         Collection<Qubit> qubits;
         Collection<Qubit_definition> qubit_defs;

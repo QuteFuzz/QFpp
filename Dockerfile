@@ -25,10 +25,6 @@ RUN apt update && apt install -y \
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:$PATH"
 
-# Create and activate virtual environment
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
 # Set LLVM environment variable for Rust packages
 ENV LLVM_SYS_140_PREFIX="/usr/lib/llvm-14"
 

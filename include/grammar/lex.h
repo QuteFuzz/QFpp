@@ -228,8 +228,8 @@ struct Regex_matcher {
 const std::vector<Regex_matcher> TOKEN_RULES = {
 
     Regex_matcher(R"(subroutine_defs)", SUBROUTINE_DEFS),
-    Regex_matcher(R"(block)", BLOCK),
-    Regex_matcher(R"(body)", BODY),
+    Regex_matcher(R"(block|subroutine_block)", BLOCK, false),
+    Regex_matcher(R"(body|subroutine_body)", BODY, false),
     Regex_matcher(R"(qubit_defs)", QUBIT_DEFS),
     Regex_matcher(R"(qubit_defs_discard)", QUBIT_DEFS_DISCARD),
     Regex_matcher(R"(bit_defs)", BIT_DEFS),
