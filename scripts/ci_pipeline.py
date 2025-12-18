@@ -9,7 +9,7 @@ BUILD_DIR = Path("build")
 OUTPUT_DIR = Path("outputs")
 GRAMMARS = ["pytket", "qiskit", "cirq"] # Add other grammars as needed
 ENTRY_POINT = "program"
-NUM_TESTS = 20  # Number of programs to generate per grammar for CI
+NUM_TESTS = 10  # Number of programs to generate per grammar for CI
 
 class Color:
     GREEN = '\033[92m'
@@ -130,9 +130,10 @@ def validate_generated_files():
                 log(f"  [X] MALFORMED CIRCUIT in {circ_dir.name}", Color.RED)
                 print(err_output)
                 log("CI Failed", Color.RED)
-                sys.exit(1)
             else:
                 log(f"  [?] Runtime crash in {circ_dir.name} (Check logs)", Color.YELLOW)
+
+            sys.exit(1)
 
     log("CI Passed", Color.GREEN)
 

@@ -62,8 +62,6 @@ extern bool render_dags;
 extern bool run_genetic;
 extern bool swarm_testing;
 
-U64 hash_rule_name(std::string rule_name);
-
 void lower(std::string& str);
 
 std::mt19937& seed();
