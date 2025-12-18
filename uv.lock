@@ -1989,7 +1989,7 @@ wheels = [
 [[package]]
 name = "qutefuzz"
 version = "0.1.0"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
     { name = "cirq" },
     { name = "guppylang" },
@@ -2006,6 +2006,11 @@ dependencies = [
     { name = "tket" },
     { name = "tket2" },
     { name = "z3-solver" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "qutefuzz" },
 ]
 
 [package.metadata]
@@ -2026,6 +2031,9 @@ requires-dist = [
     { name = "tket2", specifier = ">=0.12.0" },
     { name = "z3-solver", specifier = ">=4.15.4.0" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "qutefuzz", virtual = "." }]
 
 [[package]]
 name = "qwasm"
