@@ -31,7 +31,7 @@ members = [
 [tool.uv.sources]
 qutefuzz = { workspace = true, editable = true }
 hugr-qir = { git = "https://github.com/CQCL/hugr-qir.git" }
-qirrunner = { workspace = true }
+qirrunner = { path = "libs/qir-runner/pip", editable = true }
 
 [dependency-groups]
 dev = [
