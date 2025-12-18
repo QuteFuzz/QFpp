@@ -13,23 +13,6 @@ void lower(std::string& str){
     );
 }
 
-/// @brief Lowercase input for consistency, and ease. Uses FNV hash. Tried to find a good hash so as to avoid collisions
-/// @param rule_name 
-/// @return 
-U64 hash_rule_name(std::string rule_name) {
-    U64 hash = 14695981039346656037ULL;  // FNV offset basis
-    const U64 prime = 1099511628211ULL;  // FNV prime
-
-    lower(rule_name);
-
-    for (const char& c : rule_name) {
-        hash ^= static_cast<uint8_t>(c);  
-        hash *= prime;                     // multiply by a prime
-    }
-
-    return hash;
-}
-
 std::mt19937& seed(){
     static std::mt19937 random_gen{
         std::random_device{}()

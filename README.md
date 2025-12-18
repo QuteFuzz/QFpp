@@ -15,15 +15,8 @@ See wiki for more details.
 
 You need to install docker and use our dockerfile to set up the environment. After [installing docker](https://docs.docker.com/engine/install/), follow these steps.
 
-1. Set up environment from dockerfile
-
-```
-docker build -t qutefuzz-env .
-```
-
-2. Run docker container
-```
-docker run -it --rm -v "$PWD":/qutefuzz --user $(id -u):$(id -g) qutefuzz-env
+```sh
+./scripts/setup/setup_docker.sh
 ```
 
 This will drop you into a shell within the environment where all dependencies are installed using your **current** user
@@ -31,10 +24,7 @@ This will drop you into a shell within the environment where all dependencies ar
 3. Compile project
 
 ```sh
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make
+./scripts/setup/setup_build.sh
 ```
 
 Use `cmake -DCMAKE_BUILD_TYPE=Debug ..` for debug symbols and other logging info

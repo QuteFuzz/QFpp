@@ -229,7 +229,7 @@ void Run::loop(){
             }
 
         } else {
-            std::cout << current_command << " = " << hash_rule_name(current_command) << "ULL," << std::endl;
+            std::cout << "\"" << current_command << "\" is unknown" << std::endl;
         
         }
     }

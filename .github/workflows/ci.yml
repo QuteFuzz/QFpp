@@ -1,0 +1,32 @@
+name: Circuit Well-formedness Check
+
+# Trigger on any push to the main branch (or any branch you prefer)
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  validate-circuits:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # 1. Check out the repository code
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    # 2. Build the Docker image
+    # This ensures all dependencies (pytket, qiskit, cmake, etc.) match your dev environment
+    - name: Build Environment
+      run: docker build -t qutefuzz-env .
+
+    # 3. Run the Python Control Script inside Docker
+    # We mount the workspace (-v) so the script processes the current code
+    - name: Run Validation Pipeline
+      run: |
+        docker run --rm \
+          -v ${{ github.workspace }}:/qutefuzz \
+          -w /qutefuzz \
+          qutefuzz-env \
+          python3 ci_pipeline.py
