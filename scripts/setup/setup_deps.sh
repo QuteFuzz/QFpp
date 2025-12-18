@@ -57,17 +57,24 @@ fi
 
 echo ">>> 6. Building 'qir-runner' from source..."
 # qir-runner is special; it requires a manual build step before python installation
-if [ ! -d "libs/qir-runner" ]; then
+# Check for Cargo.toml to ensure repo is actually cloned
+if [ ! -f "libs/qir-runner/Cargo.toml" ]; then
+    echo "Cloning qir-runner repository..."
+    rm -rf libs/qir-runner  # Remove any empty/incomplete directory
     mkdir -p libs
     git clone https://github.com/CQCL/qir-runner.git libs/qir-runner
+else
+    echo "qir-runner repository already cloned."
 fi
 
 pushd libs/qir-runner
 
 # Build the Rust binary (warning about lifetime is harmless)
+echo "Building qir-runner Rust components..."
 cargo build --release
 
 # Install the Python package directly into the uv environment
+echo "Installing qir-runner Python package..."
 cd pip
 uv pip install -e .
 
