@@ -9,29 +9,26 @@ See wiki for more details.
 
 [![Unitary Foundation](https://img.shields.io/badge/Supported%20By-UNITARY%20FOUNDATION-brightgreen.svg?style=for-the-badge)](https://unitary.foundation)
 
-## Running
+## Setup
 
-### Build with:
-
-You need to install docker and use our dockerfile to set up the environment. After [installing docker](https://docs.docker.com/engine/install/), follow these steps.
-
+1. Dependencies
 ```sh
-./scripts/setup/setup_docker.sh
+./scripts/setup/setup_deps.sh
 ```
 
-This will drop you into a shell within the environment where all dependencies are installed using your **current** user
+2. Run
+```sh
+uv run scripts/ci_pipeline.py
+```
 
-3. Compile project
+to run fuzzer and differential testing.
 
+To run fuzzer on its own, setup cmake build dir using 
 ```sh
 ./scripts/setup/setup_build.sh
 ```
 
-Use `cmake -DCMAKE_BUILD_TYPE=Debug ..` for debug symbols and other logging info
-
-4. Run with `./fuzzer`.
-
-See [wiki](https://github.com/QuteFuzz/QuteFuzz2.0/wiki/Interacting-with-the-tool) for help on how to intertact with the tool
+then running `build/fuzzer`.
 
 ## Bugs found with the help of QuteFuzz 2.0
 
