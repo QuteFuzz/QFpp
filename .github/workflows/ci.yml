@@ -14,8 +14,8 @@ jobs:
       # Because of the tweak above, the PATH changes survive to the next step.
       - name: Run Setup Script
         run: |
-          chmod +x scripts/setup_deps.sh
-          ./setup_deps.sh
+          chmod +x scripts/setup/setup_deps.sh
+          ./setup/setup_deps.sh
 
       # Now this works perfectly
       - name: Run CI Pipeline
