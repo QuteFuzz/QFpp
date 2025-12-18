@@ -18,15 +18,11 @@ class Run{
 
         void help();
 
-        void run_tests();
-
         void set_grammar();
 
         void tokenise(const std::string& command, const char& delim);
 
         void remove_all_in_dir(const fs::path& dir);
-
-        void print_progress_bar(unsigned int current);
 
         void loop();
 

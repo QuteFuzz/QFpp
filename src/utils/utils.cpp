@@ -1,8 +1,6 @@
 #include <utils.h>
 #include <sstream>
 
-bool plot = false;
-bool verbose = false;
 bool render_dags = false;
 bool run_genetic = false;
 bool swarm_testing = false;
@@ -11,23 +9,6 @@ void lower(std::string& str){
     std::transform(str.begin(), str.end(), str.begin(),
         [](char c){return std::tolower(c);}
     );
-}
-
-/// @brief Lowercase input for consistency, and ease. Uses FNV hash. Tried to find a good hash so as to avoid collisions
-/// @param rule_name 
-/// @return 
-U64 hash_rule_name(std::string rule_name) {
-    U64 hash = 14695981039346656037ULL;  // FNV offset basis
-    const U64 prime = 1099511628211ULL;  // FNV prime
-
-    lower(rule_name);
-
-    for (const char& c : rule_name) {
-        hash ^= static_cast<uint8_t>(c);  
-        hash *= prime;                     // multiply by a prime
-    }
-
-    return hash;
 }
 
 std::mt19937& seed(){
@@ -129,11 +110,6 @@ int vector_max(std::vector<int> in){
 void pipe_to_command(std::string command, std::string write){
     FILE* pipe = popen(command.c_str(), "w");
 
-    if(verbose){
-        INFO("Running: " + command);
-        INFO("Piping: " + write + " to command");
-    }
-
     if(!pipe){
         throw std::runtime_error(ANNOT("Failed to open pipe to command " + command));
     }
@@ -163,9 +139,7 @@ std::string pipe_from_command(std::string command){
         ERROR("Command " + command + " failed");
     }
 
-    if(verbose){
-        INFO("Run command " + command);
-    }
+    INFO("Run command " + command);
 
     return result;
 }

@@ -1,0 +1,22 @@
+name: QuteFuzz CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # The One-Liner Setup
+      # This runs your script, which installs Rust, LLVM, uv, and your deps.
+      # Because of the tweak above, the PATH changes survive to the next step.
+      - name: Run Setup Script
+        run: |
+          chmod +x scripts/setup/setup_deps.sh
+          ./scripts/setup/setup_deps.sh
+
+      # Now this works perfectly
+      - name: Run CI Pipeline
+        run: uv run scripts/ci_pipeline.py
