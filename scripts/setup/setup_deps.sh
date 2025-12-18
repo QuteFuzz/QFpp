@@ -47,13 +47,12 @@ fi
 echo ">>> 5. Initializing uv Project..."
 # Initialize only if pyproject.toml doesn't exist
 if [ ! -f "pyproject.toml" ]; then
-    uv init
+    uv init --no-workspace
 fi
 
-
-if [ ! -f "uv.lock" ]; then
-    # Add local directory in editable mode
-    uv add --dev --editable .
+# Create virtual environment if it doesn't exist
+if [ ! -d ".venv" ]; then
+    uv venv
 fi
 
 echo ">>> 6. Building 'qir-runner' from source..."
@@ -61,20 +60,25 @@ echo ">>> 6. Building 'qir-runner' from source..."
 if [ ! -d "libs/qir-runner" ]; then
     mkdir -p libs
     git clone https://github.com/CQCL/qir-runner.git libs/qir-runner
-    
-    pushd libs/qir-runner
-    
-    # Build the Rust binary
-    cargo build --release
-    
-    popd
 fi
 
-echo ">>> 7. Adding Python Dependencies..."
-# We use 'uv add' instead of 'pip install' so they are saved to pyproject.toml
+pushd libs/qir-runner
+
+# Build the Rust binary (warning about lifetime is harmless)
+cargo build --release
+
+# Install the Python package directly into the uv environment
+cd pip
+uv pip install -e .
+
+popd
+
+echo ">>> 7. Installing Python Dependencies..."
+# Use uv pip install to avoid workspace conflicts
+# This installs directly into the virtual environment
 
 # A. Standard PyPI packages
-uv add \
+uv pip install \
     pytket \
     qiskit \
     pytket-qiskit \
@@ -90,12 +94,10 @@ uv add \
     guppylang
 
 # B. Git dependencies
-# Note: Syntax is "package @ git+url"
-uv add "hugr-qir @ git+https://github.com/CQCL/hugr-qir.git"
+uv pip install git+https://github.com/CQCL/hugr-qir.git
 
-# C. The local qir-runner binding we just built
-# We point to the 'pip' subdirectory where the python package lives
-uv add "./libs/qir-runner/pip"
+# C. Install local qutefuzz package in editable mode
+uv pip install -e .
 
 # If running in GitHub Actions, save these variables for future steps
 if [ -n "$GITHUB_ENV" ]; then
