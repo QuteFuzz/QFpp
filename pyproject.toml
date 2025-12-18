@@ -1,0 +1,40 @@
+[project]
+name = "qutefuzz"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "cirq>=1.6.1",
+    "guppylang>=0.21.7",
+    "hugr-qir",
+    "matplotlib>=3.10.8",
+    "pytket>=2.11.0",
+    "pytket-qir>=0.25.0",
+    "pytket-qiskit>=0.75.0",
+    "qirrunner",
+    "qiskit>=2.2.3",
+    "qnexus>=0.37.1",
+    "selene-sim>=0.2.6",
+    "sympy>=1.14.0",
+    "tket>=0.12.13",
+    "tket2>=0.12.0",
+    "z3-solver>=4.15.4.0",
+]
+
+[tool.uv.sources]
+hugr-qir = { git = "https://github.com/CQCL/hugr-qir.git" }
+qirrunner = { workspace = true }
+
+[tool.uv.workspace]
+members = [
+    "libs/qir-runner/pip",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# This explicitly maps the import name to the folder
+[tool.hatch.build.targets.wheel]
+packages = ["diff_testing"]

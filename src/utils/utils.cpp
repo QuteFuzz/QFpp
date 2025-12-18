@@ -1,8 +1,6 @@
 #include <utils.h>
 #include <sstream>
 
-bool plot = false;
-bool verbose = false;
 bool render_dags = false;
 bool run_genetic = false;
 bool swarm_testing = false;
@@ -112,11 +110,6 @@ int vector_max(std::vector<int> in){
 void pipe_to_command(std::string command, std::string write){
     FILE* pipe = popen(command.c_str(), "w");
 
-    if(verbose){
-        INFO("Running: " + command);
-        INFO("Piping: " + write + " to command");
-    }
-
     if(!pipe){
         throw std::runtime_error(ANNOT("Failed to open pipe to command " + command));
     }
@@ -146,9 +139,7 @@ std::string pipe_from_command(std::string command){
         ERROR("Command " + command + " failed");
     }
 
-    if(verbose){
-        INFO("Run command " + command);
-    }
+    INFO("Run command " + command);
 
     return result;
 }

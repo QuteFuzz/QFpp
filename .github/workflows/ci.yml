@@ -1,32 +1,22 @@
-name: Circuit Well-formedness Check
+name: QuteFuzz CI
 
-# Trigger on any push to the main branch (or any branch you prefer)
-on:
-  push:
-    branches: [ "**" ]
-  pull_request:
-    branches: [ "main" ]
+on: [push, pull_request]
 
 jobs:
-  validate-circuits:
-    runs-on: ubuntu-latest
-    
+  test:
+    runs-on: ubuntu-24.04
     steps:
-    # 1. Check out the repository code
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    # 2. Build the Docker image
-    # This ensures all dependencies (pytket, qiskit, cmake, etc.) match your dev environment
-    - name: Build Environment
-      run: docker build -t qutefuzz-env .
+      # The One-Liner Setup
+      # This runs your script, which installs Rust, LLVM, uv, and your deps.
+      # Because of the tweak above, the PATH changes survive to the next step.
+      - name: Run Setup Script
+        run: |
+          chmod +x setup.sh
+          ./setup.sh
 
-    # 3. Run the Python Control Script inside Docker
-    # We mount the workspace (-v) so the script processes the current code
-    - name: Run Validation Pipeline
-      run: |
-        docker run --rm \
-          -v ${{ github.workspace }}:/qutefuzz \
-          -w /qutefuzz \
-          qutefuzz-env \
-          python3 ci_pipeline.py
+      # Now this works perfectly
+      - name: Run CI Pipeline
+        run: uv run scripts/ci_pipeline.py

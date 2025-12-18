@@ -120,7 +120,7 @@ def validate_generated_files():
             
         try:
             # Run the generated python script
-            run_command(f"python3 {script_path}", env=env, capture_output=True)
+            run_command(f"{sys.executable} {script_path}", env=env, capture_output=True)
 
         except subprocess.CalledProcessError as e:
 
@@ -130,8 +130,9 @@ def validate_generated_files():
                 log(f"  [X] MALFORMED CIRCUIT in {circ_dir.name}", Color.RED)
                 print(err_output)
                 log("CI Failed", Color.RED)
-            else:
-                log(f"  [?] Runtime crash in {circ_dir.name} (Check logs)", Color.YELLOW)
+            # TODO: add this in a separate nightly script
+            # else:
+            #     log(f"  [?] Runtime crash in {circ_dir.name} (Check logs)", Color.YELLOW)
 
             sys.exit(1)
 

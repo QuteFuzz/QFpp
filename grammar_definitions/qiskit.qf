@@ -116,9 +116,8 @@ gate_name = h
     | cx
     | cy
     | cz
-    | ccx
-    | ch
-    ;
+    | ccx;
+    # | ch
 
 # Qiskit requires qubit and bit indexing from registers
 singular_qubit = qubit_name "[0]";
