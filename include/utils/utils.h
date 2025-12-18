@@ -56,7 +56,6 @@ namespace fs = std::filesystem;
 /*
     flags 
 */
-extern bool plot;
 extern bool verbose;
 extern bool render_dags;
 extern bool run_genetic;

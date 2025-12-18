@@ -106,27 +106,6 @@ void Run::remove_all_in_dir(const fs::path& dir){
     }
 }
 
-// Prints a progress bar to the terminal
-void Run::print_progress_bar(unsigned int current) {
-    const int bar_width = 40;
-    unsigned int n = n_programs.value_or(0);
-
-    float progress = (n > 0) ? float(current) / n : 0.0f;
-    int pos = static_cast<int>(bar_width * progress);
-
-    std::cout << "[";
-
-    for (int i = 0; i < bar_width; ++i) {
-        if (i < pos) std::cout << "#";
-        else std::cout << "-";
-    }
-
-    std::cout << "] " << std::setw(3) << int(progress * 100.0) << "%  (" << current << "/" << n << ")\r";
-    std::cout.flush();
-
-    if (current == n) std::cout << std::endl;
-}
-
 void Run::help(){
     std::cout << "-> Type enter to write to a file" << std::endl;
     std::cout << "-> \"grammar_name grammar_entry\" : command to set grammar " << std::endl;
@@ -135,34 +114,6 @@ void Run::help(){
     for(const auto& generator : generators){
         std::cout << generator.second << std::endl;
     }
-}
-
-void Run::run_tests(){
-    int current = 0;
-    std::string results_path = (output_dir / "results.txt").string();
-    std::ofstream results_file(results_path);
-
-    for(auto& entry : fs::directory_iterator(output_dir)){
-
-        // check for directories to avoid running the results.txt file and interesting_circuits
-        if(entry.is_directory() && entry.path().filename() != "interesting_circuits"){
-
-            current++;
-
-            results_file << "Running test: " << entry.path().filename() << std::endl;
-            
-            fs::path program_path = entry.path() / ("circuit.py");
-            std::string command = "python3 " + program_path.string() + (plot ? " --plot" : "") + " 2>&1";
-            
-            results_file << pipe_from_command(command) << std::endl;
-
-            print_progress_bar(current);                       
-        }              
-    }
-
-    results_file.close();
-
-    INFO("Test results written to " + results_path);
 }
 
 void Run::loop(){
@@ -192,21 +143,10 @@ void Run::loop(){
             } else if (current_command == "print_tokens"){
                 current_generator->print_tokens();
             
-            } else if (current_command == "plot"){
-                plot = !plot;
-                INFO("Plot mode is now " + FLAG_STATUS(plot));
-            
-            } else if (current_command == "verbose"){
-                verbose = !verbose;
-                INFO("Verbose mode is now " + FLAG_STATUS(verbose));
-
             } else if (current_command == "render_dags"){
                 render_dags = !render_dags;
                 INFO("DAG render " + FLAG_STATUS(render_dags));
 
-            } else if (current_command == "run_tests"){
-                run_tests();
-                
             } else if (current_command == "swarm_testing") {
                 swarm_testing = !swarm_testing;
                 INFO("Swarm testing mode " + FLAG_STATUS(swarm_testing));
