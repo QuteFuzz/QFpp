@@ -15,7 +15,7 @@ jobs:
       - name: Run Setup Script
         run: |
           chmod +x scripts/setup/setup_deps.sh
-          ./setup/setup_deps.sh
+          ./scripts/setup/setup_deps.sh
 
       # Now this works perfectly
       - name: Run CI Pipeline
