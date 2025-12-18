@@ -22,19 +22,18 @@ dependencies = [
     "z3-solver>=4.15.4.0",
 ]
 
-[tool.uv.sources]
-hugr-qir = { git = "https://github.com/CQCL/hugr-qir.git" }
-qirrunner = { workspace = true }
-
 [tool.uv.workspace]
 members = [
+    ".",
     "libs/qir-runner/pip",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[tool.uv.sources]
+qutefuzz = { workspace = true, editable = true }
+hugr-qir = { git = "https://github.com/CQCL/hugr-qir.git" }
+qirrunner = { workspace = true }
 
-# This explicitly maps the import name to the folder
-[tool.hatch.build.targets.wheel]
-packages = ["diff_testing"]
+[dependency-groups]
+dev = [
+    "qutefuzz",
+]

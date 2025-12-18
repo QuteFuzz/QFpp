@@ -50,15 +50,10 @@ if [ ! -f "pyproject.toml" ]; then
     uv init
 fi
 
-# We add 'diff_testing' (your local library) to the path so python finds it
-# This assumes your directory looks like:
-#   project/
-#   ├── diff_testing/
-#   ├── setup.sh
-#   └── ...
+
 if [ ! -f "uv.lock" ]; then
     # Add local directory in editable mode
-    uv add --editable .
+    uv add --dev --editable .
 fi
 
 echo ">>> 6. Building 'qir-runner' from source..."
