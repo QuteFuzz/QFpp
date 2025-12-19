@@ -146,6 +146,8 @@ def clear_directory(path):
         shutil.rmtree(path)
     os.makedirs(path, exist_ok=True)
 
+
+
 ### START OF MAIN LOGIC ###
 
 # Get the directory where this script is located
@@ -155,7 +157,7 @@ project_root = os.path.dirname(script_dir)
 # Define the base directory for saved circuits
 saved_circuits_dir = os.path.join(project_root, "local_saved_circuits")
 
-models = ["deepseek/deepseek-reasoner"] #"gemini/gemini-2.5-flash", "openai/gpt-5.1"]
+models = ["gemini/gemini-2.5-flash"] #"deepseek/deepseek-chat", "openai/gpt-5.1"]
 
 # Clear all previous saved programs
 for model in models:
@@ -167,7 +169,7 @@ for model in models:
 
 # Loop to generate programs, comprised of half freshly generated ones and half mutated ones. All non-working
 # programs will have to be put through the fixing generation flow once to attempt to fix them.
-cycles = 1
+cycles = 20
 
 # Cycle through different LLMs
 for model in models:
