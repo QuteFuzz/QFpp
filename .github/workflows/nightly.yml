@@ -1,0 +1,104 @@
+name: QuteFuzz Nightly
+
+on:
+  # Run at 2 AM UTC every day
+  schedule:
+    - cron: '0 2 * * *'
+  
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+    inputs:
+      num_tests:
+        description: 'Number of tests per grammar'
+        required: false
+        default: '10'
+        type: string
+      grammars:
+        description: 'Grammars to test (space-separated)'
+        required: false
+        default: 'pytket qiskit cirq'
+        type: string
+
+jobs:
+  nightly:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120  # 2 hours max
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Setup Script
+        run: |
+          chmod +x scripts/setup/setup_deps.sh
+          ./scripts/setup/setup_deps.sh
+
+      - name: Run Nightly Pipeline
+        run: |
+          # Use workflow inputs if provided, otherwise defaults
+          NUM_TESTS="${{ github.event.inputs.num_tests || '100' }}"
+          GRAMMARS="${{ github.event.inputs.grammars || 'pytket qiskit cirq' }}"
+          
+          uv run scripts/ci_pipeline.py \
+            --nightly \
+            --num-tests "$NUM_TESTS" \
+            --grammars $GRAMMARS
+
+      - name: Upload Interesting Circuits
+        if: always()  # Upload even if tests found issues
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-results-${{ github.run_number }}
+          path: nightly_results/
+          retention-days: 90  # Keep for 90 days (max on free tier)
+          compression-level: 9  # Maximum compression to save space
+
+      - name: Upload Summary Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-report-${{ github.run_number }}
+          path: nightly_results/*/report.txt
+          retention-days: 90
+
+      - name: Comment Summary on Commit (if interesting circuits found)
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Find the latest report
+            const nightlyDirs = fs.readdirSync('nightly_results');
+            if (nightlyDirs.length === 0) {
+              console.log('No nightly results found');
+              return;
+            }
+            
+            const latestDir = nightlyDirs.sort().reverse()[0];
+            const reportPath = path.join('nightly_results', latestDir, 'report.txt');
+            
+            if (!fs.existsSync(reportPath)) {
+              console.log('No report found');
+              return;
+            }
+            
+            const report = fs.readFileSync(reportPath, 'utf8');
+            
+            // Extract summary
+            const summaryMatch = report.match(/SUMMARY[\s\S]*$/);
+            const summary = summaryMatch ? summaryMatch[0] : 'Summary not found';
+            
+            // Check if any interesting circuits were found
+            const interestingMatch = report.match(/Total interesting:\s*(\d+)/);
+            const interestingCount = interestingMatch ? parseInt(interestingMatch[1]) : 0;
+            
+            if (interestingCount > 0) {
+              await github.rest.repos.createCommitComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                commit_sha: context.sha,
+                body: `## 🔍 Nightly Testing Found Interesting Circuits\n\n\`\`\`\n${summary}\n\`\`\`\n\nDownload artifacts to investigate: https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+              });
+            }
