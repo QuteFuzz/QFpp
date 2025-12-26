@@ -4,6 +4,7 @@
 #include <utils.h>
 #include <lex.h>
 #include <branch.h>
+#include <lex.h>
 
 enum Node_build_state {
     NB_DONE,
@@ -202,10 +203,6 @@ class Node {
         bool operator==(const Token_kind& other_kind){
             return kind == other_kind;
         }
-
-        // bool operator==(const std::string& other){
-        //     return string == other;
-        // }
 
         bool branch_satisfies_constraint(const Branch& branch){
             return (!constraint.has_value() || constraint.value().passed(branch)) && 

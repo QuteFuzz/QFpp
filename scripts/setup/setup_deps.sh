@@ -58,7 +58,7 @@ fi
 echo ">>> 6. Building 'qir-runner' from source..."
 # qir-runner is special; it requires a manual build step before python installation
 # Check for Cargo.toml to ensure repo is actually cloned
-if [ ! -f "libs/qir-runner/Cargo.toml" ]; then
+if [ ! -f "libs/qir-runner" ]; then
     echo "Cloning qir-runner repository..."
     rm -rf libs/qir-runner  # Remove any empty/incomplete directory
     mkdir -p libs
