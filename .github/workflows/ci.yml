@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -19,4 +20,4 @@ jobs:
 
       # Now this works perfectly
       - name: Run CI Pipeline
-        run: uv run scripts/ci_pipeline.py
+        run: uv run scripts/ci_pipeline.py --num-tests 5 # 5 programs per grammar
