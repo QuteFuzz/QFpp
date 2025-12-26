@@ -11,7 +11,7 @@ on:
       num_tests:
         description: 'Number of tests per grammar'
         required: false
-        default: '10'
+        default: '100'
         type: string
       grammars:
         description: 'Grammars to test (space-separated)'
@@ -23,6 +23,14 @@ jobs:
   nightly:
     runs-on: ubuntu-24.04
     timeout-minutes: 120  # 2 hours max
+    
+    # Grant permissions to post comments
+    permissions:
+      contents: read      # Read repository contents
+      issues: write       # Not needed but often bundled
+      pull-requests: write # Not needed but often bundled
+      # Note: There's no direct "commit comments" permission,
+      # but having write access should work
     
     steps:
       - name: Checkout Code
@@ -61,44 +69,42 @@ jobs:
           path: nightly_results/*/report.txt
           retention-days: 90
 
-      - name: Comment Summary on Commit (if interesting circuits found)
+      - name: Print Summary to Workflow Log
         if: always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-            
-            // Find the latest report
-            const nightlyDirs = fs.readdirSync('nightly_results');
-            if (nightlyDirs.length === 0) {
-              console.log('No nightly results found');
-              return;
-            }
-            
-            const latestDir = nightlyDirs.sort().reverse()[0];
-            const reportPath = path.join('nightly_results', latestDir, 'report.txt');
-            
-            if (!fs.existsSync(reportPath)) {
-              console.log('No report found');
-              return;
-            }
-            
-            const report = fs.readFileSync(reportPath, 'utf8');
-            
-            // Extract summary
-            const summaryMatch = report.match(/SUMMARY[\s\S]*$/);
-            const summary = summaryMatch ? summaryMatch[0] : 'Summary not found';
-            
-            // Check if any interesting circuits were found
-            const interestingMatch = report.match(/Total interesting:\s*(\d+)/);
-            const interestingCount = interestingMatch ? parseInt(interestingMatch[1]) : 0;
-            
-            if (interestingCount > 0) {
-              await github.rest.repos.createCommitComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                commit_sha: context.sha,
-                body: `## 🔍 Nightly Testing Found Interesting Circuits\n\n\`\`\`\n${summary}\n\`\`\`\n\nDownload artifacts to investigate: https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
-              });
-            }
+        run: |
+          echo "==================================================="
+          echo "🔍 NIGHTLY RUN SUMMARY"
+          echo "==================================================="
+          
+          # Find the latest report
+          LATEST_DIR=$(ls -t nightly_results/ | head -1)
+          
+          if [ -z "$LATEST_DIR" ]; then
+            echo "No nightly results found"
+            exit 0
+          fi
+          
+          REPORT_PATH="nightly_results/$LATEST_DIR/report.txt"
+          
+          if [ ! -f "$REPORT_PATH" ]; then
+            echo "No report found at $REPORT_PATH"
+            exit 0
+          fi
+          
+          # Print the summary section
+          echo ""
+          awk '/SUMMARY/,0' "$REPORT_PATH"
+          echo ""
+          echo "==================================================="
+          echo "📥 Download artifacts to view interesting circuits"
+          echo "==================================================="
+          
+          # Check if any interesting circuits were found
+          INTERESTING_COUNT=$(grep -oP 'Total interesting:\s*\K\d+' "$REPORT_PATH" || echo "0")
+          
+          if [ "$INTERESTING_COUNT" -gt 0 ]; then
+            echo "⚠️  Found $INTERESTING_COUNT interesting circuits!"
+            echo "::warning::Nightly testing found $INTERESTING_COUNT interesting circuits. Check artifacts for details."
+          else
+            echo "✅ No interesting circuits found - all tests passed!"
+          fi
