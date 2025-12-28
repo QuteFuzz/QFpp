@@ -136,8 +136,14 @@ Node_constraint Generator::get_swarm_testing_gateset(){
     */
 
     std::vector<unsigned int> occurances(n_gates, 0);
+
+    // Convert to unordered map for constructor of Node_constraint
+    std::unordered_map<Token_kind, unsigned int> gateset_map;
+    for(size_t i = 0; i < n_gates; ++i){
+        gateset_map[selected_gates[i]] = occurances[i];
+    }
     
-    return Node_constraint(selected_gates, occurances);
+    return Node_constraint(gateset_map);
 }
 
 Dag::Dag Generator::crossover(const Dag::Dag& dag1, const Dag::Dag& dag2){

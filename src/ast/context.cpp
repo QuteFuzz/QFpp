@@ -111,10 +111,6 @@ std::shared_ptr<Block> Context::get_random_block(){
     if(blocks.size() && valid_block_exists){
 
         std::shared_ptr<Block> block = blocks.at(random_int(blocks.size()-1));
-
-        #ifdef DEBUG
-        INFO("Getting random block");
-        #endif
         
         while(!can_apply_as_subroutine(block)){
             block = blocks.at(random_int(blocks.size()-1));

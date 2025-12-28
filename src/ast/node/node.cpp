@@ -7,10 +7,8 @@ std::string Node::get_debug_constraint_string() const {
     if(constraint.has_value()){
         std::string debug_string;
 
-        for(size_t i = 0; i < constraint.value().size(); i++){
-            unsigned int n_occurances = constraint.value().get_occurances_at(i);
-            
-            debug_string += std::to_string(constraint.value().get_rule_kind_at(i)) + " with occurances: " + std::to_string(n_occurances) + " ";
+        for(const auto& [rule, n_occurances] : constraint.value().get_constraints()){
+            debug_string += std::to_string(rule) + " with occurances: " + std::to_string(n_occurances) + " ";
             
             if(n_occurances > (unsigned int)WILDCARD_MAX){
                 debug_string += RED("(Cannot be satisfied! Max = " + std::to_string(WILDCARD_MAX) + ")");
@@ -91,14 +89,15 @@ void Node::make_partition(int target, int n_children){
 
     }
 
-#ifdef DEBUG
-    std::cout << "Partition at " << get_content() << std::endl;
-    for(size_t i = 0; i < child_partition.size(); i++){
-        std::cout << child_partition[i] << " ";
-    }
+//  CURRENTLY TOO WORDY, SO TURNED OFF
+// #ifdef DEBUG
+//     std::cout << "Partition at " << get_content() << std::endl;
+//     for(size_t i = 0; i < child_partition.size(); i++){
+//         std::cout << child_partition[i] << " ";
+//     }
 
-    std::cout << std::endl;
-#endif
+//     std::cout << std::endl;
+// #endif
 }
 
 /// @brief Make partitions for control flow blocks and branches, adding correct constraints where required

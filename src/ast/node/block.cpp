@@ -13,10 +13,6 @@ std::shared_ptr<Qubit> Block::get_random_qubit(const U8& scope){
     
     if(total_qubits && valid_qubit_exists){
 
-        #ifdef DEBUG
-        INFO("Getting random qubit");
-        #endif
-
         // std::cout << *this << std::endl;
 
         std::shared_ptr<Qubit> qubit = qubits.at(random_int(total_qubits - 1));
@@ -47,10 +43,6 @@ std::shared_ptr<Bit> Block::get_random_bit(const U8& scope){
     }
     
     if(total_bits && valid_bit_exists){
-
-        #ifdef DEBUG
-        INFO("Getting random bit");
-        #endif
 
         std::shared_ptr<Bit> bit = bits.at(random_int(total_bits - 1));
 
