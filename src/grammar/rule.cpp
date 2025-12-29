@@ -36,10 +36,6 @@ Branch Rule::pick_branch(std::shared_ptr<Node> parent){
     if(size > 0 && valid_branch_exists){
         Branch branch = branches[random_int(size - 1)];
 
-        // #ifdef DEBUG
-        // INFO("Picking branch for " + token.value + STR_SCOPE(scope) + " while satisfying constraint " + parent->get_debug_constraint_string());
-        // #endif
-
         while(!parent->branch_satisfies_constraint(branch)){
             branch = branches[random_int(size - 1)];
         }

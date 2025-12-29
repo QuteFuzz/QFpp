@@ -89,15 +89,6 @@ void Node::make_partition(int target, int n_children){
 
     }
 
-//  CURRENTLY TOO WORDY, SO TURNED OFF
-// #ifdef DEBUG
-//     std::cout << "Partition at " << get_content() << std::endl;
-//     for(size_t i = 0; i < child_partition.size(); i++){
-//         std::cout << child_partition[i] << " ";
-//     }
-
-//     std::cout << std::endl;
-// #endif
 }
 
 /// @brief Make partitions for control flow blocks and branches, adding correct constraints where required
