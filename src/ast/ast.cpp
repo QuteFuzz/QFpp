@@ -266,10 +266,16 @@ void Ast::write_branch(std::shared_ptr<Node> parent, const Term& term){
 		Branch branch = term.get_rule()->pick_branch(parent);
 
 		for(const Term& child_term : branch){
-			
-			std::shared_ptr<Node> child_node = get_node(parent, child_term);
 
-			parent->add_child(child_node);
+			std::shared_ptr<Node> child_node = get_node(parent, child_term);
+			
+			// Obtain grammar-added constraint from child term if it is a rule (defined in .qf file)
+			std::optional<Node_constraint> child_grammar_constraint = std::nullopt;
+			if (child_term.is_rule()) {
+				 child_grammar_constraint = child_term.get_rule()->get_constraint();
+			}
+			
+			parent->add_child(child_node, child_grammar_constraint);
 
 			if(child_node->get_num_children()) continue;
 

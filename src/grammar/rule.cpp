@@ -11,6 +11,17 @@ void Rule::add(const Branch& branch){
     }
 }
 
+/// @brief checks for existing constraint, and adds the new constraint to it if it exists
+/// @param rule_kind 
+/// @param n_occurances 
+void Rule::add_constraint(const Token_kind& rule_kind, unsigned int n_occurances){
+    if(constraint.has_value()){
+        constraint.value().add(rule_kind, n_occurances);
+    } else {
+        constraint = std::make_optional<Node_constraint>(rule_kind, n_occurances);
+    }
+}
+
 Branch Rule::pick_branch(std::shared_ptr<Node> parent){
     
     size_t size = branches.size();
@@ -24,10 +35,6 @@ Branch Rule::pick_branch(std::shared_ptr<Node> parent){
 
     if(size > 0 && valid_branch_exists){
         Branch branch = branches[random_int(size - 1)];
-
-        #ifdef DEBUG
-        INFO("Picking branch for " + token.value + STR_SCOPE(scope) + " while satisfying constraint " + parent->get_debug_constraint_string());
-        #endif
 
         while(!parent->branch_satisfies_constraint(branch)){
             branch = branches[random_int(size - 1)];

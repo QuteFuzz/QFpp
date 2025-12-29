@@ -53,7 +53,11 @@ guppy_decorator = "@guppy";
 decorator = comptime_decorator | guppy_decorator;
 
 
+subroutine_defs = (subroutine_block NEWLINE)*;
+
 block = circuit_def_header NEWLINE INDENT body DEDENT NEWLINE;
+
+subroutine_block = circuit_def_header NEWLINE INDENT subroutine_body DEDENT NEWLINE;
 
 circuit_def_header = "@guppy.comptime" NEWLINE "def " circuit_name "(" EXTERNAL::qubit_defs ") -> None:";
 
@@ -64,6 +68,7 @@ circuit_def_header = "@guppy.comptime" NEWLINE "def " circuit_name "(" EXTERNAL:
 
 body  = INTERNAL::qubit_defs NEWLINE compound_stmts INTERNAL::qubit_defs_discard;
 
+subroutine_body = INTERNAL::qubit_defs NEWLINE compound_stmts INTERNAL::qubit_defs_discard;
 
 # Guppy specific qubit discard to prevent qubit leakage
 INTERNAL {

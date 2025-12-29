@@ -1,11 +1,20 @@
 # qiskit
 
-gates += s
+# Overwrites from meta-grammar
+if_stmt =
+    'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT elif_stmt
+    | 'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
+# Elif statements seems impossible for qiskit?
+elif_stmt = ;       
+else_stmt =
+    'with else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT;
+
+branch_condition = '1' | '0';
+
+gate_name += s
         | sdg
         | t
-        | tdg
-        | v
-        | vdg;
+        | tdg;
 
 x = "x";
 y = "y";
@@ -18,8 +27,6 @@ rx = "rx";
 ry = "ry";
 rz = "rz";
 ccx = "ccx";
-v = "s"; # Qiskit's 's' gate is equivalent to pytket's 'v'
-vdg = "sdg"; # Qiskit's 'sdg' gate is equivalent to pytket's 'vdg'
 tdg = "tdg";
 t = "t";
 sdg = "sdg";
@@ -33,7 +40,12 @@ program = imports NEWLINE subroutine_defs NEWLINE block NEWLINE compiler_call;
 
 block = circuit_def_header NEWLINE body NEWLINE;
 
+# TODO: Bits sometimes doesn't generate
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
+
+subroutine_def_footer = circuit_name " = " circuit_name ".to_gate()" NEWLINE;
+
+circuit_def_header = NEWLINE circuit_name " = QuantumCircuit(0)";
 
 # Redefine EXTERNAL scope for Qiskit register and circuit definitions
 EXTERNAL {
@@ -60,17 +72,12 @@ EXTERNAL {
                         circuit_name ".add_register(" bit_def_name ")";
 }
 
-
 imports = 
     "from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister" NEWLINE
     "from qiskit.circuit.library import standard_gates" NEWLINE
     swarm_testing_imports NEWLINE
-    "from diff_testing.lib import qiskitTesting"
+    "from diff_testing.lib import qiskitTesting" NEWLINE
     ;
-
-subroutine_def_footer = circuit_name " = " circuit_name ".to_gate()" NEWLINE;
-
-circuit_def_header = circuit_name " = QuantumCircuit(0)";
 
 compound_stmt = 
     qubit_op
@@ -90,34 +97,6 @@ subroutine_op_arg =
     | qubit_list
     ;
 
-if_stmt =
-    'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT elif_stmt
-    | 'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
-# Elif statements seems impossible for qiskit?
-elif_stmt = ;       
-else_stmt =
-    'with else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT;
-
-branch_condition = '1' | '0';
-
-gate_name = h
-    | x
-    | y
-    | z
-    | rz
-    | rx
-    | ry
-    | s
-    | sdg
-    | t
-    | tdg
-    | v
-    | vdg
-    | cx
-    | cy
-    | cz
-    | ccx;
-    # | ch
 
 # Qiskit requires qubit and bit indexing from registers
 singular_qubit = qubit_name "[0]";

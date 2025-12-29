@@ -156,9 +156,19 @@ void Grammar::build_grammar(){
             next = next_token.get_ok();
 
             // rules that are within branches, rules before `RULE_START` are handled at `RULE_START`
-            if(current_rule != nullptr){
+            if(current_rule != nullptr && constraint_mode_state == READY_DEFINE_CONSTRAINT){
                 add_term_to_current_branches(token);
                 rule_decl_scope = NO_SCOPE;
+            } else if (current_rule != nullptr && constraint_mode_state == READY_DEFINE_RULE){ //Encountered a term within a constraint definition
+                //Get the current rule's last branch's last term and add a constraint to the rule it references
+                //NOTE: Terms within internal constraints are not added to current branches and only exist as constraints in rules
+                if (!current_branches.back().is_empty() && current_branches.back().at(current_branches.back().size() - 1).is_rule()) {
+                    INFO("Current token: " + token.value);
+                    current_branches.back().at(current_branches.back().size() - 1).get_rule()->add_constraint(token.kind, constraint_occurances);
+                } else {
+                    INFO("No terms exist to add constraint to!");
+                }
+                
             }
         
         } else if (token.kind == RULE_START) {
@@ -172,6 +182,28 @@ void Grammar::build_grammar(){
         
         } else if (token.kind == RULE_END){
             complete_rule(); current_rule = nullptr;
+        
+        // Constraint definition handling in grammar directly
+        } else if (token.kind == LBRACK) {
+            constraint_mode_state = READY_DEFINE_RULE_OCCURANCE;
+
+        } else if (token.kind == RBRACK) {
+            if (constraint_mode_state != FINISH_DEFINE_CONSTRAINT) {
+                throw std::runtime_error(ANNOT("Mismatched constraint definition brackets!"));
+            }
+            constraint_mode_state = READY_DEFINE_CONSTRAINT;
+
+        } else if (token.kind == LANGLE_BRACKET) {
+            constraint_mode_state = READY_DEFINE_RULE;
+            INFO("Defining constraint for rule");
+
+        } else if (token.kind == RANGLE_BRACKET) {
+            constraint_mode_state = FINISH_DEFINE_CONSTRAINT;
+            INFO("Finished defining constraint");
+
+        } else if (token.kind == INTEGER){
+            constraint_occurances = std::stoul(token.value);
+            INFO("Set constraint occurances to " + std::to_string(constraint_occurances));
 
         } else if (token.kind == LPAREN){
             nesting_depth += 1;
