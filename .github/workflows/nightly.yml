@@ -22,7 +22,7 @@ on:
 jobs:
   nightly:
     runs-on: ubuntu-24.04
-    timeout-minutes: 120  # 2 hours max
+    timeout-minutes: 2  # 2 minutes max
     
     # Grant permissions to post comments
     permissions:

@@ -36,7 +36,6 @@ void Generator::ast_to_program(fs::path output_dir, int build_counter, std::opti
         fs::path program_path = current_circuit_dir / "circuit.py";
         std::ofstream stream(program_path.string());
 
-        // render dag (main block)
         if (render_dags) {
             builder->render_dag(current_circuit_dir);
         }
@@ -54,6 +53,10 @@ void Generator::ast_to_program(fs::path output_dir, int build_counter, std::opti
         // write program
         stream << ast_root << std::endl;
         INFO("Program written to " + YELLOW(program_path.string()));
+
+        builder->render_ast(current_circuit_dir);
+
+        // builder->print_ast();
         
     } else {
         ERROR(maybe_ast_root.get_error());
@@ -146,8 +149,8 @@ Node_constraint Generator::get_swarm_testing_gateset(){
     return Node_constraint(gateset_map);
 }
 
-Dag::Dag Generator::crossover(const Dag::Dag& dag1, const Dag::Dag& dag2){
-    Dag::Dag child;
+Dag Generator::crossover(const Dag& dag1, const Dag& dag2){
+    Dag child;
 
     UNUSED(dag1);
     UNUSED(dag2);

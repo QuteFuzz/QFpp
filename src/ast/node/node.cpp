@@ -24,6 +24,31 @@ std::string Node::get_debug_constraint_string() const {
 }
 #endif
 
+void Node::print_ast(std::string indent) const {
+    std::cout << content << std::endl;
+
+    for(const std::shared_ptr<Node>& child : children){
+        std::cout << indent;
+        child->print_ast(indent + "   ");
+    }
+}
+
+void Node::extend_dot_string(std::ostringstream& ss) const {
+
+    for(const std::shared_ptr<Node>& child : children){
+        if(child->get_kind() != SYNTAX){
+            int child_id = child->get_id();
+
+            ss << "  " << id << " [label=\"" << get_content() << "\"];" << std::endl;
+            ss << "  " << child_id << " [label=\"" << child->get_content() << "\"];" << std::endl;
+
+            ss << "  " << id << " -> " << child_id << ";" << std::endl;
+        }
+
+        child->extend_dot_string(ss);
+    }
+}
+
 int Node::get_next_child_target(){
     size_t partition_size = child_partition.size();
 

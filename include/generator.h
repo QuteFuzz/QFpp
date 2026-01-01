@@ -35,7 +35,7 @@ struct Generator {
 
         inline std::shared_ptr<Grammar> get_grammar() const { return grammar; }
 
-        Dag::Dag crossover(const Dag::Dag& dag1, const Dag::Dag& dag2);
+        Dag crossover(const Dag& dag1, const Dag& dag2);
 
         std::pair<Genome&, Genome&> pick_parents();
 
