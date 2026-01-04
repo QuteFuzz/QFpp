@@ -19,6 +19,7 @@
 #include <optional>
 #include <array>
 #include <iomanip>
+#include <functional>
 
 #define WILDCARD_MAX 5
 #define BIT64(pos) (1ULL << pos)
@@ -86,6 +87,10 @@ std::string escape(const std::string& str);
 std::string random_hex_colour();
 
 bool scope_matches(const U8& a, const U8& b);
+
+std::string escape_string(const std::string& input);
+
+void render(std::function<void(std::ostringstream&)> extend_dot_string, const fs::path& render_path);
 
 template<typename T>
 std::vector<T> multiply_vector(std::vector<T> vec, int mult){

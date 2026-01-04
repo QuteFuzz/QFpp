@@ -33,16 +33,27 @@ class Ast{
 
         Genome genome();
 
-        inline void render_dag(const fs::path& current_circuit_dir){dag.render_dag(current_circuit_dir);}
+        inline void print_ast(){
+            root->print_ast("");
+        }
+
+        inline void render_dag(const fs::path& current_circuit_dir){
+            render([dag = dag](std::ostringstream& dot_string){dag->extend_dot_string(dot_string);},
+                current_circuit_dir / "dag.png");
+        }
+
+        inline void render_ast(const fs::path& current_circuit_dir){
+            render([root = root](std::ostringstream& dot_string){root->extend_dot_string(dot_string);},
+                current_circuit_dir / "ast.png");
+        }
 
     protected:
-
         std::shared_ptr<Rule> entry = nullptr;
         std::shared_ptr<Node> dummy = std::make_shared<Node>("");
-        
-        Context context;
+        std::shared_ptr<Node> root;
+        std::shared_ptr<Dag> dag;
         std::optional<Node_constraint> swarm_testing_gateset = std::nullopt;
-        Dag::Dag dag;
+        Context context;
 };
 
 #endif

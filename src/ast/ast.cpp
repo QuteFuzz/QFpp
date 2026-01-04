@@ -303,20 +303,18 @@ Result<Node> Ast::build(const std::optional<Genome>& genome, std::optional<Node_
 
 		Term entry_term(entry, entry->get_token().kind);
 
-		std::shared_ptr<Node> root = get_node(std::make_shared<Node>(""), entry_term);
+		root = get_node(std::make_shared<Node>(""), entry_term);
 
 		write_branch(root, entry_term);
 
 		if(genome.has_value()){
-			dag = genome.value().dag;
+			dag = std::make_shared<Dag>(genome.value().dag);
 		} else {
 			std::shared_ptr<Block> main_circuit_block = context.get_current_block();
-			dag.make_dag(main_circuit_block);
+			dag = std::make_shared<Dag>(main_circuit_block);
 		}
 
 		context.print_block_info();
-
-		std::cout << dag << std::endl;
 
 		res.set_ok(*root);
 	}
@@ -325,5 +323,5 @@ Result<Node> Ast::build(const std::optional<Genome>& genome, std::optional<Node_
 }
 
 Genome Ast::genome(){
-	return Genome{.dag = dag, .dag_score = dag.score()};
+	return Genome{.dag = *dag, .dag_score = dag->score()};
 }

@@ -213,7 +213,7 @@ unsigned int Block::make_resource_definitions(U8& scope, Resource_kind rk, bool 
     }
 }
 
-unsigned int Block::make_resource_definitions(const Dag::Dag& dag, const U8& scope, Resource_kind rk, bool discard_defs){
+unsigned int Block::make_resource_definitions(const Dag& dag, const U8& scope, Resource_kind rk, bool discard_defs){
 
     if (discard_defs) {
         return qubit_defs.get_num_of(scope);

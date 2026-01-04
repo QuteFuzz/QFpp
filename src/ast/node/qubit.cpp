@@ -2,14 +2,14 @@
 
 void Qubit::extend_flow_path(const std::shared_ptr<Qubit_op> qubit_op, unsigned int current_port){
 
-    Dag::Edge edge;
+    Edge edge;
 
     if(flow_path_length == 0){
         // qubit being operated on for the first time
-        edge = Dag::Edge(0, current_port, qubit_op);
+        edge = Edge(0, current_port, qubit_op);
 
     } else {
-        edge = Dag::Edge(flow_path.back().get_dest_port(), current_port, qubit_op);
+        edge = Edge(flow_path.back().get_dest_port(), current_port, qubit_op);
     }
     
     flow_path_length += 1;
@@ -35,7 +35,7 @@ void Qubit::extend_dot_string(std::ostringstream& ss) const {
             ss << flow_path[i] << ", color=\"" << flow_path_colour << "\"];" << std::endl;
         }
 
-        Dag::Edge last_path = flow_path[flow_path_length-1]; 
+        Edge last_path = flow_path[flow_path_length-1]; 
 
         ss << last_path.get_node_resolved_name() << "-> " << output_node 
         << "[label=\"" << std::to_string(last_path.get_dest_port()) 
@@ -47,7 +47,7 @@ void Qubit::extend_dot_string(std::ostringstream& ss) const {
     }
 }
 
-void Qubit::add_path_to_dag(Dag::Dag& dag) const {
+void Qubit::add_path_to_dag(Dag& dag) const {
 
     if(flow_path_length >= 2){
 

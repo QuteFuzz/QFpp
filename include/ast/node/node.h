@@ -143,21 +143,28 @@ class Node {
             return state;
         }
 
-        /// @brief Get node content, stored as a string
-        /// @return 
-        std::string get_content() const {
-            return content;
-        }
-
         int get_id() const {
             return id;
         }
 
-        virtual std::string resolved_name() const {
-            return content + ", id: " + std::to_string(id);
+        std::string get_content() const {
+            std::string esc_content = (kind == SYNTAX) ? escape_string(content) : content;
+            std::string str_id = " " + std::to_string(id);
+
+            if(content.size() > 10){
+                return esc_content.substr(0, 10) + " ... " + str_id; 
+            } else {
+                return esc_content + str_id;
+            }
         }
 
-        // Node_kind get_node_kind() const {return kind;}
+        Token_kind get_kind() const {
+            return kind;
+        }
+
+        virtual std::string resolved_name() const {
+            return get_content();
+        }
 
         virtual void print(std::ostream& stream) const {
             if(kind == SYNTAX){
@@ -175,15 +182,9 @@ class Node {
             return stream;
         }
 
-        void print_ast(){
-            std::cout << content << std::endl;
+        void print_ast(std::string indent) const;
 
-            for(const std::shared_ptr<Node>& child : children){
-                std::cout << "\t";
-                child->print_ast();
-            }
-
-        }
+        void extend_dot_string(std::ostringstream& ss) const;
 
         std::vector<std::shared_ptr<Node>> get_children() const {
             return children;
@@ -246,8 +247,6 @@ class Node {
 
         virtual unsigned int get_n_ports() const {return 1;}
 
-        // std::shared_ptr<Node> find(const U64 _hash) const;
-
         int get_next_child_target();
 
         void make_partition(int target, int n_children);
@@ -255,10 +254,9 @@ class Node {
         void make_control_flow_partition(int target, int n_children);
 
     protected:
+        int id = 0;
         std::string content;
         Token_kind kind;
-
-        int id;
 
         std::string indentation_str;
         std::vector<std::shared_ptr<Node>> children;

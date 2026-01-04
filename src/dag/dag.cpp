@@ -2,7 +2,7 @@
 #include <dag.h>
 #include <block.h>
 
-void Dag::Dag::make_dag(const std::shared_ptr<Block> block){
+Dag::Dag(const std::shared_ptr<Block> block){
     reset();
 
     qubits = block->get_qubits();
@@ -16,7 +16,7 @@ void Dag::Dag::make_dag(const std::shared_ptr<Block> block){
     }
 }
 
-std::optional<unsigned int> Dag::Dag::nodewise_data_contains(std::shared_ptr<Qubit_op> node){
+std::optional<unsigned int> Dag::nodewise_data_contains(std::shared_ptr<Qubit_op> node){
     
     for(unsigned int i = 0; i < nodewise_data.size(); i++){
         if(nodewise_data[i].node->get_id() == node->get_id()){
@@ -28,7 +28,7 @@ std::optional<unsigned int> Dag::Dag::nodewise_data_contains(std::shared_ptr<Qub
 }
 
 
-void Dag::Dag::add_edge(const Edge& edge, std::optional<int> maybe_dest_node_id, int qubit_id){
+void Dag::add_edge(const Edge& edge, std::optional<int> maybe_dest_node_id, int qubit_id){
 
     unsigned int source_node_input_port = edge.get_dest_port();
     std::shared_ptr<Qubit_op> source_node = edge.get_node();
@@ -50,7 +50,7 @@ void Dag::Dag::add_edge(const Edge& edge, std::optional<int> maybe_dest_node_id,
     source_node->add_gate_if_subroutine(subroutine_gates);
 }
 
-int Dag::Dag::max_out_degree(){
+int Dag::max_out_degree(){
     unsigned int curr_max = 0;
 
     for(const auto&data : nodewise_data){
@@ -62,27 +62,12 @@ int Dag::Dag::max_out_degree(){
 
 /// @brief Combine heuristics to get dag score
 /// @return 
-int Dag::Dag::score(){   
+int Dag::score(){   
     return max_out_degree();
 }
 
-void Dag::Dag::render_dag(const fs::path& current_circuit_dir){
-    std::ostringstream dot_string;
-
-    dot_string << "digraph G {\n";
-
+void Dag::extend_dot_string(std::ostringstream& dot_string){
     for(const auto& qubit : qubits){
         qubit->extend_dot_string(dot_string);
     }
-
-    dot_string << "}\n";
-
-
-    fs::path dag_render_path = current_circuit_dir / "dag.png";
-
-    const std::string str = dag_render_path.string();
-    std::string command = "dot -Tpng -o " + str;
-    
-    pipe_to_command(command, dot_string.str());
-    INFO("Program DAG rendered to " + YELLOW(dag_render_path.string()));
 }

@@ -172,3 +172,33 @@ bool scope_matches(const U8& a, const U8& b){
         return a & b;
     }
 }
+
+std::string escape_string(const std::string& input) {
+    std::string output;
+    for (char c : input) {
+        switch (c) {
+            case '\n': output += "\\n"; break;
+            case '\t': output += "\\t"; break;
+            case '\r': output += "\\r"; break;
+            case '\\': output += "\\\\"; break;
+        }
+    }
+    return output;
+}
+
+void render(std::function<void(std::ostringstream&)> extend_dot_string, const fs::path& render_path){
+    std::ostringstream dot_string;
+
+    dot_string << "digraph G {\n";
+
+    extend_dot_string(dot_string);
+
+    dot_string << "}\n";
+
+    std::cout << dot_string.str() << std::endl;
+
+    const std::string str = render_path.string();
+    std::string command = "dot -Tpng -o " + str;
+    
+    pipe_to_command(command, dot_string.str());
+}

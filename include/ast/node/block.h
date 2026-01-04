@@ -165,7 +165,7 @@ class Block : public Node {
 
         unsigned int make_resource_definitions(U8& scope, Resource_kind rk, bool discard_defs = false);
 
-        unsigned int make_resource_definitions(const Dag::Dag& dag, const U8& scope, Resource_kind rk, bool discard_defs = false);
+        unsigned int make_resource_definitions(const Dag& dag, const U8& scope, Resource_kind rk, bool discard_defs = false);
 
         void print_info() const;
 

@@ -105,15 +105,15 @@ class Qubit : public Resource {
 
         void extend_dot_string(std::ostringstream& ss) const;
 
-        void add_path_to_dag(Dag::Dag& dag) const;
+        void add_path_to_dag(Dag& dag) const;
 
-        std::vector<Dag::Edge> get_flow_path(){
+        std::vector<Edge> get_flow_path(){
             return flow_path;
         }
 
 
     private:
-        std::vector<Dag::Edge> flow_path;
+        std::vector<Edge> flow_path;
         std::string flow_path_colour = random_hex_colour();
         size_t flow_path_length = 0;
 

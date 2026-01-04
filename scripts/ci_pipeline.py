@@ -16,7 +16,7 @@ NIGHTLY_DIR = Path("nightly_results")
 GRAMMARS = ["pytket", "qiskit", "cirq"]
 ENTRY_POINT = "program"
 NUM_TESTS = 10  # Default for CI
-NUM_NIGHTLY_TESTS = 100  # More tests for nightly runs
+NUM_NIGHTLY_TESTS = 1200  # More tests for nightly runs
 
 # Thresholds for identifying interesting circuits
 KS_THRESHOLD = 0.00005  # KS p-value below this is interesting

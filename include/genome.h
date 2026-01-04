@@ -4,7 +4,7 @@
 #include <dag.h>
 
 struct Genome {
-    Dag::Dag dag;
+    Dag dag;
     int dag_score;
 };
 
