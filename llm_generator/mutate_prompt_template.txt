@@ -112,3 +112,4 @@
 **Output Format:** Return **ONLY** the mutated Guppy code. No markdown, no explanations.
 
 **Input Code to Mutate:**
+{{input_code}}

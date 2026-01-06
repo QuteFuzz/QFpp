@@ -98,7 +98,8 @@ uv pip install \
     qnexus \
     tket \
     selene-sim \
-    guppylang
+    guppylang \
+    litellm
 
 # B. Git dependencies
 uv pip install git+https://github.com/CQCL/hugr-qir.git
