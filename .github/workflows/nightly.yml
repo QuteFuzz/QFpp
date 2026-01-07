@@ -8,11 +8,6 @@ on:
   # Allow manual trigger from GitHub UI
   workflow_dispatch:
     inputs:
-      num_tests:
-        description: 'Number of tests per grammar'
-        required: false
-        default: '100'
-        type: string
       grammars:
         description: 'Grammars to test (space-separated)'
         required: false
@@ -44,12 +39,10 @@ jobs:
       - name: Run Nightly Pipeline
         run: |
           # Use workflow inputs if provided, otherwise defaults
-          NUM_TESTS="${{ github.event.inputs.num_tests || '100' }}"
           GRAMMARS="${{ github.event.inputs.grammars || 'pytket qiskit cirq' }}"
           
           uv run scripts/ci_pipeline.py \
             --nightly \
-            --num-tests "$NUM_TESTS" \
             --grammars $GRAMMARS
 
       - name: Upload Interesting Circuits
