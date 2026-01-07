@@ -19,7 +19,7 @@ NUM_TESTS = 10  # Default for CI
 NUM_NIGHTLY_TESTS = 1200  # More tests for nightly runs
 
 # Thresholds for identifying interesting circuits
-KS_THRESHOLD = 0.00005  # KS p-value below this is interesting
+KS_THRESHOLD = 0.05  # KS p-value below this is interesting
 LOW_KS_THRESHOLD = 0.02  # For "consistency_counter" tracking
 
 class Color:
