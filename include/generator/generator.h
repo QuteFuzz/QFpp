@@ -66,7 +66,9 @@ struct Generator {
 
         std::vector<Genome> population;
         std::vector<std::shared_ptr<Mutation_rule>> mut_rules = {
-            std::make_shared<X_HSSH>()
+            std::make_shared<Remove_gate>(X),
+            std::make_shared<Remove_gate>(Y),
+            std::make_shared<Remove_gate>(Z),
         };
 
 };

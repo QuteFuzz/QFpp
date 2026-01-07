@@ -154,6 +154,7 @@ void Generator::ast_to_program(fs::path output_dir, std::optional<Genome> genome
 
         if (render_dags) {
             builder->render_dag(output_dir);
+            builder->render_ast(output_dir);
         }
 
         int dag_score;
@@ -170,8 +171,8 @@ void Generator::ast_to_program(fs::path output_dir, std::optional<Genome> genome
         stream << ast_root << std::endl;
         INFO("Program written to " + YELLOW(program_path.string()));
 
-        builder->print_ast();
-        
+        // builder->print_ast();
+
     } else {
         ERROR(maybe_ast_root.get_error());
     }

@@ -2,7 +2,7 @@
 #define MUTATE_H
 
 #include <node.h>
-#include <variable.h>
+#include <compound_stmts.h>
 
 class Mutation_rule {
     public:
@@ -14,12 +14,14 @@ class Mutation_rule {
 
     protected:
         std::vector<std::shared_ptr<Node>*> slots;
+        std::shared_ptr<Node> empty = std::make_shared<Node>("");
 };
 
-class X_HSSH : public Mutation_rule {
+class Remove_gate : public Mutation_rule {
     public:
-        X_HSSH():
-            Mutation_rule()
+        Remove_gate(Token_kind gate_kind):
+            Mutation_rule(),
+            kind(gate_kind)
         {}
 
         bool match(const std::shared_ptr<Node> compound_stmts);
@@ -27,6 +29,7 @@ class X_HSSH : public Mutation_rule {
         void apply(std::shared_ptr<Node>& compound_stmts);
 
     private:
+        Token_kind kind;
 };
 
 #endif
