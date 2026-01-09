@@ -40,7 +40,6 @@ program = imports NEWLINE subroutine_defs NEWLINE block NEWLINE compiler_call;
 
 block = circuit_def_header NEWLINE body NEWLINE;
 
-# TODO: Bits sometimes doesn't generate
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
 
 subroutine_def_footer = circuit_name " = " circuit_name ".to_gate()" NEWLINE;

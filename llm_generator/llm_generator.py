@@ -1,4 +1,4 @@
-from litellm import completion
+from litellm import completion, completion_cost
 import dotenv
 import os
 from jinja2 import Template
@@ -8,7 +8,15 @@ import sys
 import time
 import shutil
 from tqdm import tqdm
+import random
+import matplotlib.pyplot as plt
+import numpy as np
+import concurrent.futures
+import threading
 
+# Add project root to path so we can import scripts
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scripts.circuit_assembler import assemble
 
 # Setup your keys (You can also set these in your OS environment variables)
 os.environ["GEMINI_API_KEY"] = dotenv.get_key(dotenv.find_dotenv(), "GEMINI_API_KEY")
@@ -39,13 +47,13 @@ def save_text_to_file(text, file_path):
     tqdm.write(f"Saved content to {file_path}")
 
 def ask_any_model(model_name, prompt):
-    tqdm.write(f"Sending to {model_name}...")
+    # tqdm.write(f"Sending to {model_name}...") # Too noisy for concurrent execution
     
-    max_retries = 3
-    retry_count = 0
-    wait_per_minute = 40
+    max_retries = 10
+    base_delay = 5
+    max_delay = 120
     
-    while retry_count < max_retries:
+    for attempt in range(max_retries):
         try:
             # distinct "completion" function works for ALL providers
             response = completion(
@@ -56,24 +64,42 @@ def ask_any_model(model_name, prompt):
             )
             
             answer = response['choices'][0]['message']['content']
-            return answer
+            
+            try:
+                cost = completion_cost(completion_response=response)
+            except:
+                cost = 0.0
+                
+            usage = response.get('usage', {})
+            stats = {
+                "prompt_tokens": usage.get('prompt_tokens', 0),
+                "completion_tokens": usage.get('completion_tokens', 0),
+                "total_tokens": usage.get('total_tokens', 0),
+                "cost": cost
+            }
+            
+            return answer, stats
             
         except Exception as e:
-            error_str = str(e)
+            error_str = str(e).lower()
             
             # Check for rate limit or quota exceeded errors
-            if "rate_limit" in error_str.lower() or "quota" in error_str.lower() or "429" in error_str or "503" in error_str:
-                retry_count += 1
-                if retry_count >= max_retries:
-                    tqdm.write(f"Max retries ({max_retries}) reached. Error: {e}")
-                    return None
+            if "rate_limit" in error_str or "quota" in error_str or "429" in error_str or "503" in error_str:
+                if attempt + 1 == max_retries:
+                    tqdm.write(f"Max retries ({max_retries}) reached for {model_name}. Last error: {e}")
+                    return None, None
                 
-                # Wait 60 seconds for per-minute rate limits
-                tqdm.write(f"Rate limit hit (per-minute). Waiting {wait_per_minute} seconds... (Attempt {retry_count}/{max_retries})")
-                time.sleep(wait_per_minute)
+                # Exponential backoff with jitter
+                delay = min(max_delay, base_delay * (2 ** attempt))
+                jitter = random.uniform(0, 0.1 * delay)
+                wait_time = delay + jitter
+                
+                tqdm.write(f"Rate limit hit for {model_name}. Waiting {wait_time:.2f}s... (Attempt {attempt+1}/{max_retries})")
+                time.sleep(wait_time)
             else:
-                tqdm.write(f"Error: {e}")
-                return None
+                tqdm.write(f"Error for {model_name}: {e}")
+                return None, None
+    return None, None
 
 def strip_markdown_syntax(code: str) -> str:
     """
@@ -103,15 +129,33 @@ def strip_markdown_syntax(code: str) -> str:
     
     return code.strip()
 
-def run_generated_program(program_code: str) -> str:
+def parse_time_metrics(output):
+    """Parses output from /usr/bin/time -v"""
+    metrics = {}
+    try:
+        for line in output.splitlines():
+            line = line.strip()
+            if "User time (seconds):" in line:
+                metrics["user_time"] = float(line.split(":")[-1].strip())
+            elif "System time (seconds):" in line:
+                metrics["sys_time"] = float(line.split(":")[-1].strip())
+            elif "Maximum resident set size (kbytes):" in line:
+                metrics["max_rss_kb"] = int(line.split(":")[-1].strip())
+            elif "Percent of CPU this job got:" in line:
+                metrics["cpu_percent"] = line.split(":")[-1].strip()
+    except Exception as e:
+        tqdm.write(f"Error parsing time metrics: {e}")
+    return metrics
+
+def run_generated_program(program_code: str):
     """
-    Execute generated Python program and capture error message.
+    Execute generated Python program and capture error message and resource usage.
     
     Args:
         program_code: The Python code to execute
         
     Returns:
-        Error message string (stdout + stderr combined), or empty string if execution succeeds
+        tuple: (Error message string or empty string, Metrics dictionary)
     """
     try:
         # Create a temporary file to store the generated program
@@ -121,34 +165,198 @@ def run_generated_program(program_code: str) -> str:
             temp_file.write(clean_code)
             temp_file_path = temp_file.name
         
+        metrics_file = temp_file_path + ".time"
+        
         try:
-            # Execute the generated program with timeout
+            start_time = time.time()
+            # Execute the generated program with timeout, wrapped in /usr/bin/time
             result = subprocess.run(
-                [sys.executable, temp_file_path],
+                ["/usr/bin/time", "-v", "-o", metrics_file, sys.executable, temp_file_path],
                 capture_output=True,
                 text=True,
                 timeout=30
             )
             
+            metrics = {}
+            if os.path.exists(metrics_file):
+                with open(metrics_file, 'r') as f:
+                    metrics = parse_time_metrics(f.read())
+            
+            metrics["wall_time"] = time.time() - start_time
+            
             # Return error (if any)
-            return result.stderr if result.stderr else ""
+            return (result.stderr if result.stderr else ""), metrics
             
         finally:
-            # Clean up temporary file
+            # Clean up temporary files
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
+            if os.path.exists(metrics_file):
+                os.remove(metrics_file)
                 
     except subprocess.TimeoutExpired:
-        return "ERROR: Program execution timed out after 30 seconds"
+        return "ERROR: Program execution timed out after 30 seconds", {"wall_time": 30.0, "note": "timed_out"}
     except Exception as e:
-        return f"ERROR: Failed to execute program: {str(e)}"
+        return f"ERROR: Failed to execute program: {str(e)}", {}
 
 def clear_directory(path):
     if os.path.exists(path):
         shutil.rmtree(path)
     os.makedirs(path, exist_ok=True)
 
+def generate_summary_plot(stats_summary, output_dir):
+    """
+    Generates a summary plot comparing performance metrics across models.
+    """
+    if not stats_summary:
+        return
+
+    models = [s['model'] for s in stats_summary]
+    valid_percentages = [(s['valid_programs'] / s['total_programs']) * 100 for s in stats_summary]
+    avg_times = [s['total_time'] / s['total_programs'] for s in stats_summary]
+    costs_per_valid = []
+    for s in stats_summary:
+        if s['valid_programs'] > 0:
+            costs_per_valid.append(s['total_cost'] / s['valid_programs'])
+        else:
+            costs_per_valid.append(0) # Or handled differently
+
+    x = np.arange(len(models))  # the label locations
+    width = 0.25  # the width of the bars
+
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+
+    # Plot Validity (Percentage)
+    rects1 = ax1.bar(x - width, valid_percentages, width, label='Valid Programs (%)', color='skyblue')
+    
+    # Plot Time (Average per program)
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    rects2 = ax2.bar(x, avg_times, width, label='Avg Time (s)', color='lightgreen')
+    
+    # Plot Cost (Per valid program)
+    ax3 = ax1.twinx()
+    # Offset the right spine of ax3.  The ticks and label have already been
+    # placed on the right by twinx above.
+    ax3.spines.right.set_position(("axes", 1.1))
+    rects3 = ax3.bar(x + width, costs_per_valid, width, label='Cost/Valid Program ($)', color='salmon')
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax1.set_xlabel('Models')
+    ax1.set_ylabel('Validity (%)', color='skyblue')
+    ax2.set_ylabel('Time (s)', color='lightgreen')
+    ax3.set_ylabel('Cost ($)', color='salmon')
+    
+    ax1.set_title('Model Performance Comparison')
+    ax1.set_xticks(x)
+    ax1.set_xticklabels([m.split('/')[-1] for m in models], rotation=45, ha='right')
+    
+    # Combined legend
+    lines, labels = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    lines3, labels3 = ax3.get_legend_handles_labels()
+    ax1.legend(lines + lines2 + lines3, labels + labels2 + labels3, loc='upper left')
+
+    fig.tight_layout()
+    
+    plot_path = os.path.join(output_dir, "performance_summary.png")
+    plt.savefig(plot_path)
+    tqdm.write(f"Summary plot saved to {plot_path}")
+
+def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing_cycles, logfile, log_lock, start_time):
+    filename = f"output{index+1}.py"
+    current_stats = {'cost': 0.0, 'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0}
+    
+    def get_elapsed():
+         return f"[Elapsed: {time.time() - start_time:.2f}s]"
+
+    # Generate
+    generation_prompt = get_dynamic_prompt("./generation_prompt.txt")
+    generated_program, stats = ask_any_model(model, generation_prompt)
+    
+    if generated_program is None:
+        with log_lock:
+            logfile.write(f"Failed to generate output for {filename}\n\n")
+        return None, current_stats
+
+    if stats:
+        current_stats['cost'] += stats.get('cost', 0.0)
+        current_stats['prompt_tokens'] += stats.get('prompt_tokens', 0)
+        current_stats['completion_tokens'] += stats.get('completion_tokens', 0)
+        current_stats['total_tokens'] += stats.get('total_tokens', 0)
+        with log_lock:
+             logfile.write(f"{filename} Generation Cost: ${stats.get('cost', 0.0):.6f} | Tokens: {stats.get('total_tokens', 0)}\n")
+
+    # Verify
+    with log_lock:
+        logfile.write(f"--- {get_elapsed()} Testing generated {filename} ---\n")
+    
+    run_error, metrics = run_generated_program(generated_program)
+    
+    with log_lock:
+        logfile.write(f"{filename} Metrics: {metrics}\n")
+
+    if run_error.strip() == "":
+        with log_lock:
+            logfile.write(f"{filename} ran successfully with no errors.\n\n")
+        save_path = os.path.join(generated_dir, filename)
+        save_text_to_file(generated_program, save_path)
+        return save_path, current_stats
+    else:
+        with log_lock:
+            logfile.write(f"{filename} Error Message:\n{run_error}\n\n")
+        
+        current_code = generated_program
+        current_error = run_error
+        fixed = False
+        
+        for cycle in range(n_max_fixing_cycles):
+            # fixing logic
+            fixing_prompt = get_dynamic_prompt("fixing_prompt_template.txt", faulty_code=current_code, error_message=current_error)
+            fixed_code, stats = ask_any_model(model, fixing_prompt)
+
+            if fixed_code is None:
+                 with log_lock:
+                     logfile.write(f"Failed to generate fix for {filename} cycle {cycle+1}\n\n")
+                 break
+            
+            if stats:
+                current_stats['cost'] += stats.get('cost', 0.0)
+                current_stats['prompt_tokens'] += stats.get('prompt_tokens', 0)
+                current_stats['completion_tokens'] += stats.get('completion_tokens', 0)
+                current_stats['total_tokens'] += stats.get('total_tokens', 0)
+                with log_lock:
+                    logfile.write(f"{filename} Fixing (Cycle {cycle+1}) Cost: ${stats.get('cost', 0.0):.6f}\n")
+
+            with log_lock:
+                logfile.write(f"--- {get_elapsed()} Running fixed {filename} (Cycle {cycle+1}) ---\n")
+            
+            fixed_run_error, fixed_metrics = run_generated_program(fixed_code)
+            
+            with log_lock:
+                logfile.write(f"{filename} Cycle {cycle+1} Metrics: {fixed_metrics}\n")
+            
+            if fixed_run_error.strip() == "":
+                with log_lock:
+                    logfile.write(f"Fixed {filename} (Cycle {cycle+1}) ran successfully with no errors.\n\n")
+                save_path = os.path.join(generated_dir, filename)
+                save_text_to_file(fixed_code, save_path)
+                return save_path, current_stats
+            else:
+                with log_lock:
+                    logfile.write(f"Fixed {filename} (Cycle {cycle+1}) Error Message:\n{fixed_run_error}\n\n")
+                current_code = fixed_code
+                current_error = fixed_run_error
+        
+        if not fixed:
+            with log_lock:
+                logfile.write(f"Failed to fix {filename} after {n_max_fixing_cycles} cycles. Saving to failed_programs.\n\n")
+            save_path = os.path.join(failed_dir, filename)
+            save_text_to_file(current_code, save_path)
+            return None, current_stats
+
 def program_gen_loop():
+    start_time = time.time()
+
     # Get the directory where this script is located
     script_dir = os.path.dirname(os.path.abspath(__file__))
     # Go up one level to get the project root
@@ -156,98 +364,139 @@ def program_gen_loop():
     # Define the base directory for saved circuits
     saved_circuits_dir = os.path.join(project_root, "local_saved_circuits")
 
-    models = ["anthropic/claude-sonnet-4-5"] # , "openai/gpt-5.1", "deepseek/deepseek-reasoner", "gemini/gemini-3-pro-preview" 
+    models = ["deepseek/deepseek-reasoner"]#,"deepseek/deepseek-chat" , "anthropic/claude-sonnet-4-5", "openai/gpt-5-mini", "openai/gpt-5.2" , "gemini/gemini-3-pro-preview", "gemini/gemini-3-flash-preview"] 
 
-    # Clear all previous saved programs
-    for model in models:
-        model_dir = os.path.join(saved_circuits_dir, model.replace('/', '_'))
-        clear_directory(os.path.join(model_dir, "generated"))
-        clear_directory(os.path.join(model_dir, "generated_fixed"))
     # Loop to generate programs, comprised of half freshly generated ones and half mutated ones. All non-working
     # programs will have to be put through the fixing generation flow once to attempt to fix them.
-    n_programs = 20
+    n_programs = 100
     n_max_fixing_cycles = 2
+    
+    # Program assembly settings
+    n_circuits_per_assembly = 5   # Number of circuits per assembled file (n)
+    n_assemblies_to_create = 5    # Total number of assembled files to create (x)
+
+    # Generate timestamp for unique directory for this entire run
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    common_run_dir = os.path.join(saved_circuits_dir, timestamp)
+    os.makedirs(common_run_dir, exist_ok=True)
+
+    stats_summary = []
 
     # Cycle through different LLMs
     for model in models:
-        # Setup logging
-        model_safe_name = model.replace('/', '_')
-        log_file_path = os.path.join(saved_circuits_dir, model_safe_name, "generation.log")
-        os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+        # Track successfully generated/fixed files for assembly
+        successful_files = []
         
-        def log(msg):
-            tqdm.write(msg)
-            with open(log_file_path, "a") as f:
-                f.write(msg + "\n")
+        # Track costs and token usage
+        total_cost = 0.0
+        total_prompt_tokens = 0
+        total_completion_tokens = 0
 
-        # First run and save n_programs generated programs
-        Generation_pbar = tqdm(range(n_programs), desc="Starting Generation", unit="Programs")
-        for i in Generation_pbar:
-            Generation_pbar.set_description(f"Generating {i+1}/{n_programs} programs with {model}")
+        # Setup directories for this specific model within the common run directory
+        model_safe_name = model.replace('/', '_')
+        model_run_dir = os.path.join(common_run_dir, model_safe_name)
+        
+        generated_dir = os.path.join(model_run_dir, "generated")
+        failed_dir = os.path.join(model_run_dir, "failed_programs")
+        
+        # Create directories
+        os.makedirs(generated_dir, exist_ok=True)
+        os.makedirs(failed_dir, exist_ok=True)
+        
+        logfile_path = os.path.join(model_run_dir, "execution_log.txt")
+        log_lock = threading.Lock()
 
-            generation_prompt = get_dynamic_prompt("./generation_prompt.txt")
-            generated_program = ask_any_model(model, generation_prompt)
-            save_text_to_file(generated_program, os.path.join(saved_circuits_dir, model_safe_name, f"generated/output{i+1}.py"))
-
-        # Then run and fix each generated program
-        Fixing_pbar = tqdm(range(n_programs), desc="Starting Fixing", unit="Programs")
-
-        # Create or overwrite the log file for execution results
-        log_dir = os.path.join(saved_circuits_dir, model_safe_name, "generated")
-        os.makedirs(log_dir, exist_ok=True)
-        logfile_path = os.path.join(log_dir, "execution_log.txt")
-
+        # Combined generation and fixing loop
+        # Concurrency settings
+        max_workers = 50
+        
         with open(logfile_path, "w") as logfile:
-            logfile.write(f"Execution Log for programs in generated\n\n")
-            
-            for i in Fixing_pbar:
-                Fixing_pbar.set_description(f"Fixing {i+1}/{n_programs} programs with {model}")
-                filename = f"output{i+1}.py"
-                file_path = os.path.join(log_dir, filename)
-                fixed_file_path = os.path.join(saved_circuits_dir, model_safe_name, f"generated_fixed/{filename}")
-                
-                if not os.path.exists(file_path):
-                    tqdm.write(f"Warning: {filename} not found.")
-                    continue
+            logfile.write(f"Execution Log for programs in generated\n")
+            logfile.write(f"Started at: {time.ctime(start_time)}\n\n")
 
-                logfile.write(f"--- Running {filename} ---\n")
+            model_gen_start_time = time.time()
+            
+            with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = []
+                # Submit tasks
+                for i in range(n_programs):
+                    futures.append(executor.submit(
+                        process_single_program,
+                        i, model, generated_dir, failed_dir, n_max_fixing_cycles, logfile, log_lock, time.time()
+                    ))
                 
-                with open(file_path, "r") as f:
-                    program_code = f.read()
-                
-                run_error = run_generated_program(program_code)
-                
-                if run_error.strip() == "":
-                    logfile.write(f"{filename} ran successfully with no errors.\n\n")
+                # Wait for completion and aggregate results
+                for future in tqdm(concurrent.futures.as_completed(futures), total=n_programs, desc=f"Generating with {model}", unit="Programs"):
+                    try:
+                        save_path, stats = future.result()
+                        
+                        # Update stats
+                        if stats:
+                            total_cost += stats['cost']
+                            total_prompt_tokens += stats['prompt_tokens']
+                            total_completion_tokens += stats['completion_tokens']
+                        
+                        if save_path:
+                            successful_files.append(save_path)
+                            
+                    except Exception as e:
+                        tqdm.write(f"An error occurred in a thread: {e}")
+
+            model_gen_end_time = time.time()
+            total_duration = model_gen_end_time - model_gen_start_time
+            logfile.write("\n" + "="*60 + "\n")
+            logfile.write(f"  PERFORMANCE SUMMARY for {model}\n")
+            logfile.write("-" * 60 + "\n")
+            logfile.write(f"  Total Programs Processed : {n_programs}\n")
+            logfile.write(f"  Total Valid Programs     : {len(successful_files)}\n")
+            logfile.write(f"  Total Time Taken         : {total_duration:.2f} seconds\n")
+            
+            avg_valid_time = total_duration / len(successful_files) if successful_files else 0
+            logfile.write(f"  Avg Time per Valid Prog  : {avg_valid_time:.2f} seconds\n")
+            
+            logfile.write("-" * 60 + "\n")
+            logfile.write(f"  Total Cost               : ${total_cost:.6f}\n")
+            logfile.write(f"  Total Prompt Tokens      : {total_prompt_tokens}\n")
+            logfile.write(f"  Total Completion Tokens  : {total_completion_tokens}\n")
+            logfile.write(f"  Total Tokens             : {total_prompt_tokens + total_completion_tokens}\n")
+            logfile.write("="*60 + "\n")
+
+            # Collect stats
+            stats_summary.append({
+                "model": model,
+                "total_cost": total_cost,
+                "total_time": total_duration,
+                "total_programs": n_programs,
+                "valid_programs": len(successful_files)
+            })
+
+        # Assemble successful circuits
+        if successful_files:
+            tqdm.write(f"Assembling circuits from {len(successful_files)} successful programs...")
+            
+            assembled_dir = os.path.join(model_run_dir, "assembled_circuits")
+            os.makedirs(assembled_dir, exist_ok=True)
+            
+            for i in range(n_assemblies_to_create):
+                # Select circuits for this assembly
+                if len(successful_files) >= n_circuits_per_assembly:
+                    files_to_assemble = random.sample(successful_files, n_circuits_per_assembly)
                 else:
-                    logfile.write(f"{filename} Error Message:\n{run_error}\n\n")
-                    
-                    current_code = program_code
-                    current_error = run_error
-                    
-                    for cycle in range(n_max_fixing_cycles):
-                        tqdm.write(f"Fixing cycle {cycle+1}/{n_max_fixing_cycles} for {filename}...")
-                        
-                        fixing_prompt = get_dynamic_prompt("fixing_prompt_template.txt", faulty_code=current_code, error_message=current_error)
-                        fixed_code = ask_any_model(model, fixing_prompt)
-                        
-                        # Save the fixed code (overwriting previous fix)
-                        save_text_to_file(fixed_code, fixed_file_path)
-                        
-                        # Run the fixed code
-                        logfile.write(f"--- Running fixed {filename} (Cycle {cycle+1}) ---\n")
-                        fixed_run_error = run_generated_program(fixed_code)
-                        
-                        if fixed_run_error.strip() == "":
-                            logfile.write(f"Fixed {filename} (Cycle {cycle+1}) ran successfully with no errors.\n\n")
-                            break # Success, stop fixing
-                        else:
-                            logfile.write(f"Fixed {filename} (Cycle {cycle+1}) Error Message:\n{fixed_run_error}\n\n")
-                            # Update for next cycle
-                            current_code = fixed_code
-                            current_error = fixed_run_error
-                    else:
-                        logfile.write(f"Failed to fix {filename} after {n_max_fixing_cycles} cycles.\n\n")
+                    # If we don't have enough unique files, sample with replacement to reach target n
+                    files_to_assemble = random.choices(successful_files, k=n_circuits_per_assembly)
+                
+                assembled_filename = f"assembled_circuits_{i+1}.py"
+                assembled_path = os.path.join(assembled_dir, assembled_filename)
+                
+                try:
+                    assemble(files_to_assemble, assembled_path)
+                    tqdm.write(f"Successfully assembled {len(files_to_assemble)} circuits into {assembled_path}")
+                except Exception as e:
+                    tqdm.write(f"Error assembling circuits: {e}")
+
+    # Generate summary plot
+    if stats_summary:
+        generate_summary_plot(stats_summary, common_run_dir)
 
 
 if __name__ == "__main__":
