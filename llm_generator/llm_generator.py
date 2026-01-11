@@ -305,11 +305,16 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
     filename = f"output{index+1}.py"
     current_stats = {'cost': 0.0, 'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0}
     
+    # Define template directory path
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    template_dir = os.path.join(script_dir, "LLM_prompt_templates")
+
     def get_elapsed():
          return f"[Elapsed: {time.time() - start_time:.2f}s]"
 
     # Generate
-    generation_prompt = get_dynamic_prompt("./generation_prompt.txt")
+    generation_prompt_path = os.path.join(template_dir, "generation_prompt.txt")
+    generation_prompt = get_dynamic_prompt(generation_prompt_path)
     generated_program, stats = ask_any_model(model, generation_prompt)
     
     if generated_program is None:
@@ -350,7 +355,8 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
         
         for cycle in range(n_max_fixing_cycles):
             # fixing logic
-            fixing_prompt = get_dynamic_prompt("fixing_prompt_template.txt", faulty_code=current_code, error_message=current_error)
+            fixing_prompt_path = os.path.join(template_dir, "fixing_prompt_template.txt")
+            fixing_prompt = get_dynamic_prompt(fixing_prompt_path, faulty_code=current_code, error_message=current_error)
             fixed_code, stats = ask_any_model(model, fixing_prompt)
 
             if fixed_code is None:
