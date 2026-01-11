@@ -1,5 +1,6 @@
 import ast
 import sys
+import logging
 
 class CircuitRenamer(ast.NodeTransformer):
     def __init__(self, prefix, global_funcs):
@@ -110,7 +111,7 @@ def assemble(files, output_path, unique_index=0):
                 main_funcs.append(prefix + "main")
                 
         except Exception as e:
-            print(f"Error processing {file_path}: {e}")
+            logging.error(f"Error processing {file_path}: {e}")
             continue
 
     # Construct output module
@@ -203,26 +204,34 @@ def assemble(files, output_path, unique_index=0):
     
     with open(output_path, "w") as f:
         f.write(output_code)
-    print(f"Assembled {len(files)} files into {output_path}")
+    # print(f"Assembled {len(files)} files into {output_path}")
 
 if __name__ == "__main__":
     import glob
     import random
     import os
     import subprocess
+    from tqdm import tqdm
 
     # Configuration
-    INPUT_DIR = "local_saved_circuits/gemini_gemini-3-pro-preview/generated"
-    OUTPUT_DIR = "local_saved_circuits/combined_circuits"
-    N_GENERATIONS = 10
+    INPUT_DIR = "local_saved_circuits/Big_aggregate/generated"
+    OUTPUT_DIR = "local_saved_circuits/Big_aggregate/combined_circuits"
+    N_GENERATIONS = 1000
     MIN_FILES = 2
     MAX_FILES = 5
+
+    # Setup logging
+    logging.basicConfig(
+        filename='assembler_errors.log', 
+        level=logging.ERROR,
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
 
     # Ensure output directory exists
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     # Get all python files
-    input_files = glob.glob(os.path.join(INPUT_DIR, "output*.py"))
+    input_files = glob.glob(os.path.join(INPUT_DIR, "circuit*.py"))
     
     if not input_files:
         print(f"No input files found in {INPUT_DIR}")
@@ -232,49 +241,63 @@ if __name__ == "__main__":
 
     seen_combinations = set()
     generated_count = 0
+    assembled_files = []
 
-    while generated_count < N_GENERATIONS:
-        # Determine size of this combination
-        k = random.randint(MIN_FILES, min(MAX_FILES, len(input_files)))
-        
-        # Sample k files
-        selected_files = random.sample(input_files, k)
-        
-        # Create a representation to check for duplicates
-        # Do not sort, as order of assembly matters for circuit execution
-        combo_key = tuple(selected_files)
-        
-        if combo_key in seen_combinations:
-            continue
+    # Phase 1: Assembly
+    print("Phase 1: Assembling circuits...")
+    with tqdm(total=N_GENERATIONS, desc="Assembling") as pbar:
+        while generated_count < N_GENERATIONS:
+            # Determine size of this combination
+            k = random.randint(MIN_FILES, min(MAX_FILES, len(input_files)))
             
-        seen_combinations.add(combo_key)
-        
-        # Output path
-        output_file = os.path.join(OUTPUT_DIR, f"assembled_circuit_{generated_count}.py")
-        
-        print(f"[{generated_count+1}/{N_GENERATIONS}] Assembling {k} files into {output_file}...")
-        assemble(selected_files, output_file, generated_count)
-        
-        # Execute the generated script
-        print(f"Running {output_file}...")
-        try:
-            # Add project root to PYTHONPATH so diff_testing can be imported
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            project_root = os.path.dirname(script_dir)
+            # Sample k files
+            selected_files = random.sample(input_files, k)
             
-            env = os.environ.copy()
-            pythonpath = env.get("PYTHONPATH", "")
-            if pythonpath:
-                env["PYTHONPATH"] = f"{project_root}{os.pathsep}{pythonpath}"
-            else:
-                env["PYTHONPATH"] = project_root
+            # Create a representation to check for duplicates
+            # Do not sort, as order of assembly matters for circuit execution
+            combo_key = tuple(selected_files)
+            
+            if combo_key in seen_combinations:
+                continue
                 
-            subprocess.run([sys.executable, output_file], check=True, env=env)
-            print(f"Successfully executed {output_file}")
-        except subprocess.CalledProcessError as e:
-            print(f"Error executing {output_file}: {e}")
-        except Exception as e:
-            print(f"Unexpected error executing {output_file}: {e}")
-        
-        generated_count += 1
+            seen_combinations.add(combo_key)
+            
+            # Output path
+            output_file = os.path.join(OUTPUT_DIR, f"assembled_circuit_{generated_count}.py")
+            
+            assemble(selected_files, output_file, generated_count)
+            assembled_files.append(output_file)
+            
+            generated_count += 1
+            pbar.update(1)
+
+    # Phase 2: Execution
+    print("Phase 2: Running circuits...")
+    with tqdm(total=len(assembled_files), desc="Running") as pbar:
+        for output_file in assembled_files:
+            try:
+                # Add project root to PYTHONPATH so diff_testing can be imported
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                project_root = os.path.dirname(script_dir)
+                
+                env = os.environ.copy()
+                pythonpath = env.get("PYTHONPATH", "")
+                if pythonpath:
+                    env["PYTHONPATH"] = f"{project_root}{os.pathsep}{pythonpath}"
+                else:
+                    env["PYTHONPATH"] = project_root
+                    
+                subprocess.run(
+                    [sys.executable, output_file], 
+                    check=True, 
+                    env=env,
+                    capture_output=True,
+                    text=True
+                )
+            except subprocess.CalledProcessError as e:
+                logging.error(f"Error executing {output_file}: {e}\nStdout: {e.stdout}\nStderr: {e.stderr}")
+            except Exception as e:
+                logging.error(f"Unexpected error executing {output_file}: {e}")
+            
+            pbar.update(1)
 

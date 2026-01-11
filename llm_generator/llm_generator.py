@@ -1,6 +1,7 @@
 from litellm import completion, completion_cost
 import dotenv
 import os
+import json
 from jinja2 import Template
 import subprocess
 import tempfile
@@ -166,15 +167,30 @@ def run_generated_program(program_code: str):
             temp_file_path = temp_file.name
         
         metrics_file = temp_file_path + ".time"
+        coverage_file = temp_file_path + ".coverage"
+        json_report_file = temp_file_path + ".json"
         
         try:
             start_time = time.time()
-            # Execute the generated program with timeout, wrapped in /usr/bin/time
+            
+            # Prepare environment for coverage
+            env = os.environ.copy()
+            env["COVERAGE_FILE"] = coverage_file
+            
+            # Execute the generated program with timeout, wrapped in /usr/bin/time and coverage run
+            cmd = [
+                "/usr/bin/time", "-v", "-o", metrics_file, 
+                sys.executable, "-m", "coverage", "run", 
+                "--branch", "--source=guppylang_internals", 
+                temp_file_path
+            ]
+            
             result = subprocess.run(
-                ["/usr/bin/time", "-v", "-o", metrics_file, sys.executable, temp_file_path],
+                cmd,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
+                env=env
             )
             
             metrics = {}
@@ -183,6 +199,25 @@ def run_generated_program(program_code: str):
                     metrics = parse_time_metrics(f.read())
             
             metrics["wall_time"] = time.time() - start_time
+            
+            # Process coverage info
+            if os.path.exists(coverage_file):
+                try:
+                    subprocess.run(
+                        [sys.executable, "-m", "coverage", "json", "-o", json_report_file],
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                        env=env
+                    )
+                    
+                    if os.path.exists(json_report_file):
+                        with open(json_report_file, 'r') as f:
+                            report_data = json.load(f)
+                            if "totals" in report_data:
+                                metrics["coverage_percent"] = report_data["totals"].get("percent_covered", 0.0)
+                except Exception as e:
+                    metrics["coverage_error"] = str(e)
             
             # Return error (if any)
             return (result.stderr if result.stderr else ""), metrics
@@ -193,6 +228,10 @@ def run_generated_program(program_code: str):
                 os.remove(temp_file_path)
             if os.path.exists(metrics_file):
                 os.remove(metrics_file)
+            if os.path.exists(coverage_file):
+                os.remove(coverage_file)
+            if os.path.exists(json_report_file):
+                os.remove(json_report_file)
                 
     except subprocess.TimeoutExpired:
         return "ERROR: Program execution timed out after 30 seconds", {"wall_time": 30.0, "note": "timed_out"}

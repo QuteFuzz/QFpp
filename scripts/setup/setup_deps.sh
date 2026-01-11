@@ -22,7 +22,8 @@ sudo apt-get install -y \
     zlib1g-dev \
     libxml2-dev \
     libncurses-dev \
-    libffi-dev
+    libffi-dev \
+    python3-pip
 
 echo ">>> 2. Setting up Environment Variables..."
 # Crucial for Rust packages linking against LLVM 14 (like qir-runner)
@@ -99,7 +100,8 @@ uv pip install \
     tket \
     selene-sim \
     guppylang \
-    litellm
+    litellm \
+    coverage
 
 # B. Git dependencies
 uv pip install git+https://github.com/CQCL/hugr-qir.git
