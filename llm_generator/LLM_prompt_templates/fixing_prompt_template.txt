@@ -86,12 +86,16 @@ You must ensure the fixed code adheres to these rules. **Do not introduce new vi
         
     - **ILLEGAL SYNTAX**: `measure(q_reg[i])` is strictly **forbidden**. You cannot destructively measure a single element of an array using the standard measure function.
         
-6. **Typing & Linearity**
+6. **Typing & Linearity (Main Function Updates)**
     
     - **Strict Typing**: Never compare `bool` with `int` (e.g., `if True == 1` is invalid).
         
-    - **Linearity**: Owned qubits (created inside scope) MUST be consumed before scope ends. Borrowed qubits (arguments) generally should not be consumed/measured unless clearly intended.
+    - **Main Function Linearity**:
         
+        - **External Qubits Only:** The `main` function **MUST NOT** define its own qubits. It must accept all qubits as arguments (e.g., `main(q: qubit, qr: array[qubit, 2])`).
+            
+        - **No Destructive Measure in Main:** Because all qubits in `main` are borrowed (arguments), you **MUST NOT** use `measure` or `measure_array` on them inside `main`. You may only use `measure_and_reset`.
+            
 7. **Gate Syntax**
     
     - Rotations require `angle()` wrapper: `rx(q, angle(0.5))`.
@@ -100,18 +104,18 @@ You must ensure the fixed code adheres to these rules. **Do not introduce new vi
         
 8. **Execution**
     
-    - The code must end with `main.compile()`.
+    - The code **MUST NOT** contain `main.compile()`.
         
 
 ---
 
 ### **Your Task**
 
-1. **Analyze the Error:** Look at the `{{error_message}}` and identify which line in `{{faulty_code}}` triggered it.
+1. **Analyze the Error:** Look at the error trace and identify which line in the faulty code triggered it.
     
 2. **Cross-Reference Rules:** Check if the fix requires changing a decorator, fixing an illegal array construction in a function call, or ensuring gate arguments are unique.
     
-3. **Refactor:** Rewrite the code to fix the error. Ensure the rest of the file remains valid.
+3. **Refactor:** Rewrite the code to fix the error. **Specifically check the `main` function:** ensure it has arguments, no internal `qubit()` definitions, no destructive measurements, and no `.compile()` call at the end.
     
 4. **Final Output:** Return **only** the corrected, fully executable Guppy code. Do not include markdown notes or explanations.
     
