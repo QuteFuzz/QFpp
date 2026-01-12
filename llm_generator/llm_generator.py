@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import concurrent.futures
 import threading
+import ast
 
 # Add project root to path so we can import scripts
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -148,6 +149,86 @@ def parse_time_metrics(output):
         tqdm.write(f"Error parsing time metrics: {e}")
     return metrics
 
+def add_main_wrapper(code: str) -> str:
+    """
+    Parses the code to find the main function, creates a wrapper function
+    that initializes arguments and calls main, and adds a compilation check.
+    """
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return code
+
+    main_func = None
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name == 'main':
+            main_func = node
+            break
+            clean_code = add_main_wrapper(clean_code)
+            clean_code = add_main_wrapper(clean_code)
+            
+    if not main_func:
+        return code
+
+    setup_code = []
+    result_code = []
+    call_args = []
+    
+    for arg in main_func.args.args:
+        arg_name = arg.arg
+        ann = arg.annotation
+        
+        if not ann:
+            continue
+
+        def is_qubit(node):
+            return isinstance(node, ast.Name) and node.id == 'qubit'
+
+        def get_array_size(node):
+            if not isinstance(node, ast.Subscript):
+                return None
+            if not (isinstance(node.value, ast.Name) and node.value.id == 'array'):
+                return None
+            
+            slice_content = node.slice
+            # Handle Python < 3.9 ast.Index wrapper
+            if isinstance(slice_content, ast.Index):
+                 slice_content = slice_content.value
+            
+            if isinstance(slice_content, ast.Tuple):
+                elts = slice_content.elts
+                if len(elts) == 2 and is_qubit(elts[0]):
+                    size_node = elts[1]
+                    if isinstance(size_node, ast.Constant):
+                        return size_node.value
+                    elif isinstance(size_node, ast.Num):
+                        return size_node.n
+            return None
+
+        if is_qubit(ann):
+            setup_code.append(f"    {arg_name} = qubit()")
+            result_code.append(f'    result("{arg_name}", measure({arg_name}))')
+            call_args.append(arg_name)
+        else:
+            arr_size = get_array_size(ann)
+            if arr_size is not None:
+                setup_code.append(f"    {arg_name} = array(qubit() for _ in range({arr_size}))")
+                result_code.append(f'    result("{arg_name}", measure_array({arg_name}))')
+                call_args.append(arg_name)
+    
+    wrapper_code = "\n\n@guppy\ndef main_wrapper() -> None:\n"
+    if setup_code:
+        wrapper_code += "\n".join(setup_code) + "\n"
+    
+    wrapper_code += f"    main({', '.join(call_args)})\n"
+    
+    if result_code:
+        wrapper_code += "\n".join(result_code) + "\n"
+        
+    wrapper_code += "\nmain_wrapper.compile()\n"
+    
+    return code + wrapper_code
+
 def run_generated_program(program_code: str):
     """
     Execute generated Python program and capture error message and resource usage.
@@ -163,6 +244,7 @@ def run_generated_program(program_code: str):
         with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, dir='/tmp') as temp_file:
             # Strip markdown syntax before writing
             clean_code = strip_markdown_syntax(program_code)
+            clean_code = add_main_wrapper(clean_code)
             temp_file.write(clean_code)
             temp_file_path = temp_file.name
         
@@ -409,16 +491,16 @@ def program_gen_loop():
     # Define the base directory for saved circuits
     saved_circuits_dir = os.path.join(project_root, "local_saved_circuits")
 
-    models = ["deepseek/deepseek-reasoner"]#,"deepseek/deepseek-chat" , "anthropic/claude-sonnet-4-5", "openai/gpt-5-mini", "openai/gpt-5.2" , "gemini/gemini-3-pro-preview", "gemini/gemini-3-flash-preview"] 
+    models = ["deepseek/deepseek-reasoner", "deepseek/deepseek-chat", "anthropic/claude-sonnet-4-5", "openai/gpt-5-mini" , "gemini/gemini-3-pro-preview", "gemini/gemini-3-flash-preview"] 
 
     # Loop to generate programs, comprised of half freshly generated ones and half mutated ones. All non-working
     # programs will have to be put through the fixing generation flow once to attempt to fix them.
-    n_programs = 100
+    n_programs = 20
     n_max_fixing_cycles = 2
     
     # Program assembly settings
-    n_circuits_per_assembly = 5   # Number of circuits per assembled file (n)
-    n_assemblies_to_create = 5    # Total number of assembled files to create (x)
+    n_circuits_per_assembly = 2   # Number of circuits per assembled file (n)
+    n_assemblies_to_create = 40    # Total number of assembled files to create (x)
 
     # Generate timestamp for unique directory for this entire run
     timestamp = time.strftime("%Y%m%d_%H%M%S")

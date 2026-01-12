@@ -28,23 +28,25 @@ Role: You are an advanced Guppy code generator.
             
         - **Constraint:** Functions decorated with **`@guppy`** cannot use any variable named `pi`.
             
-3. **Mandatory Main Function:**
+3. **Mandatory Main Function (External Qubits Only):**
     
-    - **Logic:** It must instantiate necessary initial qubits/variables, invoke the helper functions, and **destructively measure** all qubits at the end to prevent leakage.
+    - **Logic:** The `main` function acts as an entry point for **borrowed** qubits. It must invoke helper functions to manipulate these qubits.
         
-    - **No Return:** Generate a final `main` function that accepts **zero arguments** and returns **`None`**.
+    - **No Internal Qubits:** You **MUST NOT** instantiate new qubits (via `qubit()` or `array(qubit()...)`) inside `main`. All qubits must be passed in as arguments.
         
-4. **Compilation Command:** At the very end of the code, strictly invoke `.compile()` on the main function (e.g., `main.compile()`).
-    
-5. **Measurement Rules (Strict):**
+    - **No Destructive Measurement:** Since all qubits in `main` are borrowed, you **MUST NOT** destructively measure them (i.e., do NOT use `measure` or `measure_array` in `main`). `measure_and_reset` is allowed as it keeps the qubit alive.
+        
+    - **Arguments:** Generate a final `main` function that accepts **qubit arguments** (e.g., `main(q: qubit, qreg: array[qubit, 3])`) and returns **`None`**.
+        
+4. **Measurement Rules (Strict):**
     
     - You must use the 3 specific variations of measurement defined in the specifications below (`measure`, `measure_array`, `measure_and_reset`).
         
     - **Crucial:** `measure(qreg[i])` is **ILLEGAL**. You cannot use the standard `measure` on elements of an array.
         
-6. **Enforce Linearity, Freshness & Uniqueness (CRITICAL):**
+5. **Enforce Linearity, Freshness & Uniqueness (CRITICAL):**
     
-    - **Fresh Instantiation:** When defining new qubit arrays (e.g., `qreg = array(...)`), you **MUST NOT** include already-defined qubits (arguments or previous variables). New arrays must strictly contain _new_ `qubit()` calls.
+    - **Fresh Instantiation:** If a helper function needs local qubits, it may define them. When defining new qubit arrays (e.g., `qreg = array(...)`), you **MUST NOT** include already-defined qubits (arguments or previous variables). New arrays must strictly contain _new_ `qubit()` calls.
         
     - **Gate Argument Uniqueness:** For any multi-qubit gate (e.g., `cx`, `toffoli`), you **MUST NOT** pass the same qubit variable twice. The arguments must be distinct physical qubits. (e.g., `cx(q1, q1)` is **ILLEGAL**).
         
@@ -58,7 +60,7 @@ Role: You are an advanced Guppy code generator.
         
     - **Owned Qubits:** Must be consumed by `measure` or `measure_array` before the scope ends. `measure_and_reset` does **not** count as consuming the qubit (it keeps it alive).
         
-7. **Output Format:** Provide **only** the raw Guppy code. Do not add explanations, comments, or apologies.
+6. **Output Format:** Provide **only** the raw Guppy code. Do not add explanations, comments, or apologies.
     
 
 ---
@@ -66,8 +68,6 @@ Role: You are an advanced Guppy code generator.
 ### Guppy Language Specification (Strict Rules)
 
 **1. Imports**
-
-Python
 
 ```Python
 from guppylang.decorator import guppy
@@ -95,9 +95,9 @@ guppylang.enable_experimental_features()
     - **INVALID:** Branching on function arguments. (e.g., `def func(x: int): if x > 0:` is forbidden).
         
 
-3. Function Definitions & Calling Conventions
+**3. Function Definitions & Calling Conventions**
 
-All quantum functions must use either the @guppy or @guppy.comptime decorator.
+All quantum functions must use either the `@guppy` or `@guppy.comptime` decorator.
 
 **CRITICAL: Function Call Syntax Differences**
 
@@ -120,7 +120,7 @@ All quantum functions must use either the @guppy or @guppy.comptime decorator.
     - **Legal:** `helper_func(existing_qreg_variable)`
         
 
-4. Qubit Definitions (Inside a function)
+**4. Qubit Definitions (Inside a function)**
 
 These are "owned" qubits and must be measured.
 
@@ -173,7 +173,7 @@ qreg0 = array(qubit() for _ in range(num_qubits))
     - **Note:** Because it is non-destructive, the qubit is still alive after this call. You must still eventually use measure or measure_array to consume it before the function ends.
         
 
-6. Gate Syntax
+**6. Gate Syntax**
 
 You must use a wide variety of gates from the lists below.
 
@@ -240,19 +240,14 @@ For any gate taking >1 qubit (CNOT, Toffoli, etc.), you MUST use distinct qubits
     ```
     
 
-7. **Linearity and Control Flow (Example)** Combine all rules. Notice how `q_in` (borrowed) is not measured, but `q_local` (owned) is. All control flow is deterministic, depending on the function argument `control_val`.
+**7. Linearity and Control Flow (Example)** Combine all rules. Notice how `q_in` (borrowed) is not measured, but `q_local` (owned) is. All control flow is deterministic, depending on the function argument `control_val`.
 
 ```Python
 @guppy.comptime
 def fuzzer_example(q_in: qubit, control_val: float) -> int:
-
     # Define local, "owned" qubits
     q_local = qubit()
-    q_reg = array(qubit() for _ in range(3)) # Hardcoded size
-
-    # ILLEGAL CONTROL FLOW:
-    # if control_val > 0.5:  <-- FORBIDDEN (Branching on argument)
-    #    x(q_in)
+    q_reg = array(qubit() for _ in range(3)) 
 
     # VALID CONTROL FLOW (Branching on measurement):
     m_res = measure_and_reset(q_local)
@@ -261,14 +256,9 @@ def fuzzer_example(q_in: qubit, control_val: float) -> int:
     else:
          x(q_in)
 
-    # VALID LOOP (Hardcoded range):
-    for i in range(3):
-         # Angles can use arguments, just not for branching conditions
-         rz(q_reg[i], angle(control_val * pi * float(i)))
-
     # Consume "owned" qubits by measuring them
     m_local = measure(q_local)
-    measure_array(q_reg) # Must measure all in the register
+    measure_array(q_reg) 
 
     return m_local
 ```
@@ -282,7 +272,6 @@ def sub_routine(q: qubit) -> None:
     v(q)
     # Non-destructive measure (acts like a gate, q is still alive)
     res = measure_and_reset(q)
-    # Valid branching on measurement
     if res:
         x(q)
 
@@ -290,8 +279,8 @@ def sub_routine(q: qubit) -> None:
 def complex_logic(q_in: qubit, q_reg: array[qubit, 2]) -> None:
     # This function uses @guppy, so it CANNOT use 'pi'
     sub_routine(q_in)
-
-    # Hardcoded check is allowed (compile time constant)
+	
+	# Hardcoded check is allowed (compile time constant)
     if 1 < 2:
         cx(q_in, q_reg[0])
         # Branching on array measurement
@@ -300,21 +289,14 @@ def complex_logic(q_in: qubit, q_reg: array[qubit, 2]) -> None:
     else:
         vdg(q_in)
 
+# MAIN: External arguments only, no internal qubits, no destructive cleanup
 @guppy
-def main() -> None:
-    # 1. Generate Inputs/Qubits
-    q1 = qubit()
-    q_reg = array(qubit() for _ in range(2))
-
-    # 2. Invoke Functions
+def main(q1: qubit, q_reg: array[qubit, 2]) -> None:
+    # Invoke Functions on borrowed qubits
     complex_logic(q1, q_reg)
-
-    # 3. Destructive Cleanup
-    measure_array(q_reg)
-    _ = measure(q1)
-
-# 5. MANDATORY Compilation
-main.compile()
+    
+    # Optional non-destructive operations allowed
+    measure_and_reset(q1)
 ```
 
 **Your Task:** Generate a new, random-looking, **fully deterministic** block of Guppy code. It must include:
@@ -323,7 +305,7 @@ main.compile()
     
 2. Usage of `measure_and_reset` for mid-circuit measurement (on both standalone and register qubits).
     
-3. **Correct qubit definition:** New, internal qubit definitions **MUST** not contain qubits from existing qubits (e.g., `array(qubit1, ...)` is **FORBIDDEN**), and must therefore only use new `qubit()`s.
+3. **Correct qubit definition:** Helper functions may create local qubits, but `main` **MUST** not. Any local qubits created must be strictly fresh (no aliasing). New, internal qubit definitions **MUST** not contain qubits from existing qubits (e.g., `array(qubit1, ...)` is **FORBIDDEN**), and must therefore only use new `qubit()`s.
     
 4. **Unique Gate Arguments:** Ensure no multi-qubit gate uses the same qubit more than once.
     
@@ -333,7 +315,7 @@ main.compile()
         
     - In `@guppy.comptime` functions, you may use `[...]` to combine qubits into a list argument.
         
-6. Use `measure_array` for registers and `measure` for standalone qubits. Never use `measure` on a register element.
+6. Use `measure_array` for registers and `measure` for standalone qubits (only for "owned" qubits in helper functions).
     
 7. Correct decorators based on rules: **Any function using `pi` must be `@guppy.comptime`**. Functions without `pi` but with control flow use `@guppy`.
     
@@ -341,6 +323,4 @@ main.compile()
     
 9. **Control Flow Logic:** You **MUST** branch on `measure_and_reset` results. You **MUST NOT** branch on function arguments.
     
-10. A `main` function that takes no arguments, sets up qubits, calls the helpers, cleans up, and returns `None`.
-    
-11. `main.compile()` at the end.
+10. A `main` function that accepts **external qubits as arguments**, calls the helpers, and returns `None`. **Do not** instantiate new qubits in `main`. **Do not** destructively measure the arguments in `main`.
