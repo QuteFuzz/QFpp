@@ -17,7 +17,7 @@ import threading
 
 # Add project root to path so we can import scripts
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from scripts.circuit_assembler import assemble
+from llm_generator.circuit_assembler import assemble
 
 # Setup your keys (You can also set these in your OS environment variables)
 os.environ["GEMINI_API_KEY"] = dotenv.get_key(dotenv.find_dotenv(), "GEMINI_API_KEY")

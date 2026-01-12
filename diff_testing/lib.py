@@ -29,11 +29,13 @@ import matplotlib.ticker as ticker
 import traceback
 import pathlib
 import shutil
+import random
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 
 # Pytket imports
 from pytket.circuit import Circuit
 from pytket.passes import *
+from pytket.passes import RemoveRedundancies, CliffordSimp
 from pytket.extensions.qiskit import AerBackend
 from pytket.extensions.qiskit import AerStateBackend
 
@@ -49,6 +51,7 @@ from guppylang.std.builtins import result, array
 enable_experimental_features()
 from selene_sim import build, Quest
 from hugr.qsystem.result import QsysResult
+from tket.passes import NormalizeGuppy, PytketHugrPass, PassResult
 
 # QIR imports
 from hugr_qir.hugr_to_qir import hugr_to_qir
@@ -61,7 +64,7 @@ class Base():
     # Define the plots directory as a class variable
     OUTPUT_DIR = (pathlib.Path(__file__).parent.parent / "outputs").resolve()
     # Define timeout seconds for any compilation
-    TIMEOUT_SECONDS = 30
+    TIMEOUT_SECONDS = 200
 
     def __init__(self):
         super().__init__()
@@ -103,7 +106,18 @@ class Base():
                 key_str = ''.join(str(x) for x in k).replace(' ', '')
             else:
                 key_str = str(k).replace(' ', '')
-            out[int(key_str, 2)] = counts[k]
+            
+            print(f"DEBUG: preprocess_counts key: '{k}' -> '{key_str}'")
+
+            if not key_str:
+                print(f"Warning: Empty key string encounterd in counts: {k}. Skipping.")
+                continue
+
+            try:
+                out[int(key_str, 2)] = counts[k]
+            except ValueError as e:
+                print(f"Error processing count key: '{k}' -> '{key_str}'. Error: {e}")
+                raise e
         
         return dict(sorted(out.items()))
     
@@ -453,10 +467,12 @@ class guppyTesting(Base):
     def __init__(self):
         super().__init__()
 
-    def ks_diff_test(self, circuit : Any, circuit_number : int) -> None:
+    def ks_diff_test(self, circuit : Any, circuit_number : int, n_qubits: int = 20) -> None:
         '''
         Compile guppy circuit into hugr and optimise through TKET for differential testing
-        '''        
+        '''
+        hugr = None
+
         def compile_circuit():
             return circuit.compile()
         
@@ -464,11 +480,12 @@ class guppyTesting(Base):
         try:
             with ThreadPoolExecutor(max_workers=1) as executor:
                 future = executor.submit(compile_circuit)
-                result = future.result(timeout=self.TIMEOUT_SECONDS)
+                hugr = future.result(timeout=self.TIMEOUT_SECONDS)
 
         except FuturesTimeoutError:
             print(f"Compilation timed out after {self.TIMEOUT_SECONDS} seconds")
             self.save_interesting_circuit(circuit_number, self.OUTPUT_DIR / "interesting_circuits")
+            return
         except Exception as e:
             from guppylang_internals.error import GuppyError
             if isinstance(e, GuppyError):
@@ -485,8 +502,105 @@ class guppyTesting(Base):
             print("Error during compilation:", e)
             print("Exception :", traceback.format_exc())
             self.save_interesting_circuit(circuit_number, self.OUTPUT_DIR / "interesting_circuits")
+            return
 
-        # TODO: Insert TKET optimisation passes here
+        if hugr is None:
+            return
+
+        # Run uncompiled circuit
+        try:
+            runner = build(hugr)
+            results = QsysResult(
+                runner.run_shots(Quest(), n_qubits=n_qubits, n_shots=1)
+            )
+            raw_counts = results.collated_counts()
+            if not raw_counts:
+                 print(f"Warning: No counts collected for circuit {circuit_number}")
+            elif len(raw_counts) > 0 and not list(raw_counts.keys())[0]:
+                 print(f"Warning: Empty keys in counts for circuit {circuit_number}. Measurements may not be returned/output.")
+            
+            # Ensure keys are formatted as expected (strings)
+            ## Debug prints
+            print(f"DEBUG: Circuit {circuit_number} (Base) Raw counts: {raw_counts}")
+            
+            counts_base = Counter({''.join([str(measurement[1]) for measurement in key]): value for key, value in raw_counts.items()})
+            
+            print(f"DEBUG: Circuit {circuit_number} (Base) Processed strings: {counts_base}")
+
+            counts_base = self.preprocess_counts(counts_base)
+            
+            if not counts_base:
+                print(f"Warning: No valid counts after preprocessing for circuit {circuit_number}. Skipping test.")
+                return
+
+        except Exception as e:
+            print(f"Error running uncompiled circuit: {e}")
+            self.save_interesting_circuit(circuit_number, self.OUTPUT_DIR / "interesting_circuits")
+            return
+
+        # Select a random pass
+        pass_name = random.choice(["redundant_cx", "clifford", "normalize"])
+        sys.stderr.write(f"DEBUG: Applying pass: {pass_name}\n")
+        sys.stderr.flush()
+        print(f"Applying pass: {pass_name}")
+        
+        try:
+            hugr_opt = None
+            normalize = NormalizeGuppy()
+            hugr_norm = normalize(hugr)
+
+            if pass_name == "redundant_cx":
+                rr_pass = PytketHugrPass(RemoveRedundancies())
+                pass_result = rr_pass.run(hugr_norm)
+                hugr_opt = pass_result.hugr
+                
+            elif pass_name == "clifford":
+                cliff_pass = PytketHugrPass(CliffordSimp(allow_swaps=True))
+                hugr_opt = cliff_pass(hugr_norm)
+                
+            elif pass_name == "normalize":
+                hugr_opt = hugr_norm
+
+            # Run optimized circuit
+            runner_opt = build(hugr_opt)
+            results_opt = QsysResult(
+                runner_opt.run_shots(Quest(), n_qubits=n_qubits, n_shots=1000)
+            )
+            raw_counts_opt = results_opt.collated_counts()
+            
+            ## Debug prints
+            print(f"DEBUG: Circuit {circuit_number} (Opt) Raw counts: {raw_counts_opt}")
+
+            counts_opt = Counter({''.join([str(measurement[1]) for measurement in key]): value for key, value in raw_counts_opt.items()})
+            
+            print(f"DEBUG: Circuit {circuit_number} (Opt) Processed strings: {counts_opt}")
+
+            counts_opt = self.preprocess_counts(counts_opt)
+            
+            if not counts_opt:
+                 print(f"Warning: No valid counts after preprocessing for optimized circuit {circuit_number}.")
+                 # If base had counts but opt doesn't, that's interesting (or a bug)
+                 if counts_base:
+                     print(f"Interesting discrepancy: Optimized circuit lost all outputs.")
+                     self.save_interesting_circuit(circuit_number, self.OUTPUT_DIR / "interesting_circuits")
+                 return
+            
+            # KS Test
+            ks_value = self.ks_test(counts_base, counts_opt, 1000)
+            print(f"Pass {pass_name} ks-test p-value: {ks_value}")
+            
+            if ks_value < 0.05:
+                print(f"Interesting circuit found (Low KS): {circuit_number}")
+                self.save_interesting_circuit(circuit_number, self.OUTPUT_DIR / "interesting_circuits")
+                
+            if self.plot:
+                self.plot_histogram(counts_base, f"Guppy Base Results", 0, circuit_number)
+                self.plot_histogram(counts_opt, f"Guppy {pass_name} Results", 1, circuit_number)
+                
+        except Exception as e:
+            print(f"Error executing pass {pass_name} or running result: {e}")
+            traceback.print_exc()
+            self.save_interesting_circuit(circuit_number, self.OUTPUT_DIR / "interesting_circuits")
             
 
     def guppy_qir_diff_test(self, circuit : Any, circuit_number : int, total_num_qubits : int) -> None:
