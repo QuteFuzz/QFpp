@@ -102,7 +102,10 @@ def add_main_wrapper(code: str) -> str:
     if result_code:
         wrapper_code += "\n".join(result_code) + "\n"
         
-    wrapper_code += "\nmain_wrapper.compile()\n"
+    wrapper_code += "\nfrom selene_sim import build, Quest\n"
+    wrapper_code += "\nfrom hugr.qsystem.result import QsysResult\n"
+    wrapper_code += "\nrunner = build(main_wrapper.compile())\n"
+    wrapper_code += "\nresults = QsysResult(runner.run_shots(Quest(), n_qubits=15, n_shots=1))\n"
     
     return code + wrapper_code
 
@@ -210,6 +213,11 @@ def run_program_file(file_path):
              # However, the original script returned result.stderr directly.
              error_msg = result.stderr
 
+        # Check for Panics/Errors in stdout even if successful exit code
+        if not error_msg and result.stdout:
+             if "Panic" in result.stdout or "Error running" in result.stdout:
+                 error_msg = f"Error detected in stdout (exit code 0): Check Output above."
+
         return error_msg, result.stdout, metrics, wrapped_code
             
     except subprocess.TimeoutExpired:
@@ -276,7 +284,7 @@ def process_single_file(file_path, logfile, log_lock, verbose=False):
 def main():
     parser = argparse.ArgumentParser(description="Run tests on existing generated circuits without generating new ones.")
     parser.add_argument("input_dir", help="Directory containing .py files to test")
-    parser.add_argument("--workers", type=int, default=10, help="Number of concurrent workers")
+    parser.add_argument("--workers", type=int, default=1, help="Number of concurrent workers")
     parser.add_argument("--verbose", action="store_true", help="Include wrapped code in the log output")
     parser.add_argument("--output-log", help="Optional path for the log file")
     args = parser.parse_args()

@@ -18,7 +18,7 @@ import ast
 
 # Add project root to path so we can import scripts
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from llm_generator.circuit_assembler import assemble
+from circuit_assembler import assemble
 
 # Setup your keys (You can also set these in your OS environment variables)
 os.environ["GEMINI_API_KEY"] = dotenv.get_key(dotenv.find_dotenv(), "GEMINI_API_KEY")
@@ -149,7 +149,7 @@ def parse_time_metrics(output):
         tqdm.write(f"Error parsing time metrics: {e}")
     return metrics
 
-def add_main_wrapper(code: str) -> str:
+def add_main_wrapper_guppy(code: str) -> str:
     """
     Parses the code to find the main function, creates a wrapper function
     that initializes arguments and calls main, and adds a compilation check.
@@ -164,8 +164,6 @@ def add_main_wrapper(code: str) -> str:
         if isinstance(node, ast.FunctionDef) and node.name == 'main':
             main_func = node
             break
-            clean_code = add_main_wrapper(clean_code)
-            clean_code = add_main_wrapper(clean_code)
             
     if not main_func:
         return code
@@ -191,10 +189,7 @@ def add_main_wrapper(code: str) -> str:
                 return None
             
             slice_content = node.slice
-            # Handle Python < 3.9 ast.Index wrapper
-            if isinstance(slice_content, ast.Index):
-                 slice_content = slice_content.value
-            
+
             if isinstance(slice_content, ast.Tuple):
                 elts = slice_content.elts
                 if len(elts) == 2 and is_qubit(elts[0]):
@@ -224,8 +219,12 @@ def add_main_wrapper(code: str) -> str:
     
     if result_code:
         wrapper_code += "\n".join(result_code) + "\n"
-        
-    wrapper_code += "\nmain_wrapper.compile()\n"
+    
+    # Seemingly arbitrary, but selene-sim catches run-time errors that seem to compile fine, like repeatedly borrowed qubits.
+    wrapper_code += "\nfrom selene_sim import build, Quest\n"
+    wrapper_code += "\nfrom hugr.qsystem.result import QsysResult\n"
+    wrapper_code += "\nrunner = build(main_wrapper.compile())\n"
+    wrapper_code += "\nresults = QsysResult(runner.run_shots(Quest(), n_qubits=15, n_shots=1))\n"
     
     return code + wrapper_code
 
@@ -244,7 +243,7 @@ def run_generated_program(program_code: str):
         with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, dir='/tmp') as temp_file:
             # Strip markdown syntax before writing
             clean_code = strip_markdown_syntax(program_code)
-            clean_code = add_main_wrapper(clean_code)
+            clean_code = add_main_wrapper_guppy(clean_code)
             temp_file.write(clean_code)
             temp_file_path = temp_file.name
         
@@ -302,7 +301,10 @@ def run_generated_program(program_code: str):
                     metrics["coverage_error"] = str(e)
             
             # Return error (if any)
-            return (result.stderr if result.stderr else ""), metrics
+            error = result.stderr if result.stderr else ""
+            if not error and ("Panic" in result.stdout or "Error running" in result.stdout):
+                 error = f"Error detected in stdout: {result.stdout}"
+            return error, metrics
             
         finally:
             # Clean up temporary files
@@ -383,6 +385,7 @@ def generate_summary_plot(stats_summary, output_dir):
     plt.savefig(plot_path)
     tqdm.write(f"Summary plot saved to {plot_path}")
 
+# Defined for running multiple instances of program generation and fixing concurrently
 def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing_cycles, logfile, log_lock, start_time):
     filename = f"output{index+1}.py"
     current_stats = {'cost': 0.0, 'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0}
@@ -491,7 +494,7 @@ def program_gen_loop():
     # Define the base directory for saved circuits
     saved_circuits_dir = os.path.join(project_root, "local_saved_circuits")
 
-    models = ["deepseek/deepseek-reasoner", "deepseek/deepseek-chat", "anthropic/claude-sonnet-4-5", "openai/gpt-5-mini" , "gemini/gemini-3-pro-preview", "gemini/gemini-3-flash-preview"] 
+    models = ["deepseek/deepseek-reasoner"] #, "deepseek/deepseek-chat", "anthropic/claude-sonnet-4-5", "openai/gpt-5-mini" , "gemini/gemini-3-pro-preview", "gemini/gemini-3-flash-preview"] 
 
     # Loop to generate programs, comprised of half freshly generated ones and half mutated ones. All non-working
     # programs will have to be put through the fixing generation flow once to attempt to fix them.
@@ -535,7 +538,7 @@ def program_gen_loop():
 
         # Combined generation and fixing loop
         # Concurrency settings
-        max_workers = 50
+        max_workers = 10
         
         with open(logfile_path, "w") as logfile:
             logfile.write(f"Execution Log for programs in generated\n")
