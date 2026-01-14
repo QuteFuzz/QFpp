@@ -2,15 +2,15 @@
 
 int Node::node_counter = 0;
 
-std::shared_ptr<Node>* Node::find_slot(Token_kind node_kind, std::vector<std::shared_ptr<Node>*>& visited_slots){
+std::shared_ptr<Node>* Node::find_slot(Token_kind node_kind, std::vector<std::shared_ptr<Node>*>& visited_slots, bool track_visited){
     std::shared_ptr<Node>* maybe_find;
     
     for(std::shared_ptr<Node>& child : children){
-        if((child->get_kind() == node_kind) && !visited(visited_slots, &child)){
+        if((child->get_kind() == node_kind) && !visited(visited_slots, &child, track_visited)){
             return &child;
         }
 
-        maybe_find = child->find_slot(node_kind, visited_slots);
+        maybe_find = child->find_slot(node_kind, visited_slots, track_visited);
         if(maybe_find != nullptr) return maybe_find;
     }
 

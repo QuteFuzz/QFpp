@@ -183,11 +183,9 @@ Node Generator::build_equivalent(Node ast_root){
     std::vector<std::shared_ptr<Node>*> visited_slots = {};
     std::shared_ptr<Node>* maybe_compound_stmts = ast_root.find_slot(COMPOUND_STMTS, visited_slots);
 
-    while(maybe_compound_stmts != nullptr){        
+    while(maybe_compound_stmts != nullptr){
         for(auto rule : mut_rules){
-            if(rule->match(*maybe_compound_stmts)){
-                rule->apply(*maybe_compound_stmts);
-            }
+            rule->apply(*maybe_compound_stmts);
         }
 
         maybe_compound_stmts = ast_root.find_slot(COMPOUND_STMTS, visited_slots);

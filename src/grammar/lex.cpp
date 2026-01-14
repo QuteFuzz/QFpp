@@ -30,7 +30,7 @@ void Lexer::lex(){
 
             } else {
             
-                for(const Regex_matcher rm : TOKEN_RULES){
+                for(const Regex_matcher& rm : TOKEN_RULES){
                     if(string_is(matched_string, rm.pattern)){
 
                         if(rm.kind == SYNTAX){
