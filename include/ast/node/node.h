@@ -189,8 +189,12 @@ class Node : public std::enable_shared_from_this<Node> {
             return children.size();
         }
 
-        bool operator==(const Token_kind& other_kind){
+        bool operator==(const Token_kind& other_kind) const {
             return kind == other_kind;
+        }
+
+        bool operator==(const Node& other) const {
+            return get_content() == other.get_content();
         }
 
         bool branch_satisfies_constraint(const Branch& branch){

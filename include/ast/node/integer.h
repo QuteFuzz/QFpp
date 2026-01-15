@@ -22,16 +22,12 @@ class Integer : public Node {
             content = std::to_string(num);
         }
 
-        bool operator==(const Integer& other) const {
-            return num == other.get_num();
-        }
-
         inline int get_num() const {
             return num;
         }
 
     private:
-        int num;
+        int num = 0;
 
 };
 
