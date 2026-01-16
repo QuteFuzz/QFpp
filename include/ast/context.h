@@ -1,7 +1,7 @@
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
-#include <block.h>
+#include <circuit.h>
 #include <resource_definition.h>
 #include <variable.h>
 #include <resource_defs.h>
@@ -17,7 +17,7 @@
 
 enum Reset_level {
 	RL_PROGRAM,
-	RL_BLOCK,
+	RL_CIRCUIT,
 	RL_QUBIT_OP,
 };
 
@@ -31,11 +31,11 @@ struct Context {
 
 		void reset(Reset_level l);
 
-		inline std::string get_current_block_owner(){
-			return current_block_owner;
+		inline std::string get_current_circuit_owner(){
+			return current_circuit_owner;
 		}
 
-		bool can_apply_as_subroutine(const std::shared_ptr<Block> block);
+		bool can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit);
 
 		void set_can_apply_subroutines();
 
@@ -43,11 +43,11 @@ struct Context {
 
 		unsigned int get_max_external_bits();
 
-		std::shared_ptr<Block> get_current_block() const;
+		std::shared_ptr<Circuit> get_current_circuit() const;
 
-		std::shared_ptr<Block> get_random_block();
+		std::shared_ptr<Circuit> get_random_circuit();
 
-		std::shared_ptr<Block> new_block_node();
+		std::shared_ptr<Circuit> new_circuit_node();
 		
 		std::shared_ptr<Qubit_defs> get_qubit_defs_node(U8& scope);
 
@@ -55,7 +55,7 @@ struct Context {
 
 		std::shared_ptr<Bit_defs> get_bit_defs_node(U8& scope);
 
-		std::optional<std::shared_ptr<Block>> get_block(std::string owner);
+		std::optional<std::shared_ptr<Circuit>> get_circuit(std::string owner);
 
 		std::shared_ptr<Qubit> new_qubit();
 
@@ -82,12 +82,12 @@ struct Context {
 		}
 
 		inline std::shared_ptr<Qubit_definition> new_qubit_definition(const U8& scope){
-			current_qubit_definition = get_current_block()->get_next_qubit_def(scope);
+			current_qubit_definition = get_current_circuit()->get_next_qubit_def(scope);
 			return current_qubit_definition;
 		}
 
 		inline std::shared_ptr<Qubit_definition> new_qubit_def_discard(const U8& scope){
-			current_qubit_definition = get_current_block()->get_next_qubit_def_discard(scope);
+			current_qubit_definition = get_current_circuit()->get_next_qubit_def_discard(scope);
 			return current_qubit_definition;
 		}
 
@@ -96,7 +96,7 @@ struct Context {
 		std::shared_ptr<Integer> get_current_qubit_definition_size();
 
 		inline std::shared_ptr<Bit_definition> new_bit_definition(const U8& scope){
-			current_bit_definition = get_current_block()->get_next_bit_def(scope);
+			current_bit_definition = get_current_circuit()->get_next_bit_def(scope);
 			return current_bit_definition;
 		}
 		
@@ -135,14 +135,14 @@ struct Context {
 		std::shared_ptr<Qubit_op> new_qubit_op_node(){
 			reset(RL_QUBIT_OP);
 
-			current_qubit_op = can_copy_dag ? genome.value().dag.get_next_node() : std::make_shared<Qubit_op>(get_current_block());
+			current_qubit_op = can_copy_dag ? genome.value().dag.get_next_node() : std::make_shared<Qubit_op>(get_current_circuit());
 
 			return current_qubit_op;
 		}
 
-		/// @brief Is the current block being generated a subroutine?
+		/// @brief Is the current circuit being generated a subroutine?
 		/// @return 
-		inline bool current_block_is_subroutine(){
+		inline bool current_circuit_is_subroutine(){
 			return subroutines_node.has_value() && (subroutines_node.value()->build_state() == NB_BUILD);
 		}
 
@@ -150,17 +150,17 @@ struct Context {
 
 		void set_genome(const std::optional<Genome>& _genome);
 
-		inline void print_block_info() const {		
-			for(const std::shared_ptr<Block>& block : blocks){
-				block->print_info();
+		inline void print_circuit_info() const {		
+			for(const std::shared_ptr<Circuit>& circuit : circuits){
+				circuit->print_info();
 			}
 		}
 
 	private:
-		std::string current_block_owner;
-		std::vector<std::shared_ptr<Block>> blocks;
+		std::string current_circuit_owner;
+		std::vector<std::shared_ptr<Circuit>> circuits;
 		
-		std::shared_ptr<Block> dummy_block = std::make_shared<Block>();
+		std::shared_ptr<Circuit> dummy_circuit = std::make_shared<Circuit>();
 		Integer dummy_int;
 		Variable dummy_var;
 

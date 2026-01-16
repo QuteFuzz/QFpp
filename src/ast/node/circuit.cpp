@@ -1,6 +1,6 @@
-#include <block.h>
+#include <circuit.h>
 
-std::shared_ptr<Qubit> Block::get_random_qubit(const U8& scope){
+std::shared_ptr<Qubit> Circuit::get_random_qubit(const U8& scope){
     size_t total_qubits = qubits.get_num_of(scope);
     //Iterate through all qubits and see if there is at least one valid bit to prevent infinite loop
     bool valid_qubit_exists = false;
@@ -28,7 +28,7 @@ std::shared_ptr<Qubit> Block::get_random_qubit(const U8& scope){
     }
 }
 
-std::shared_ptr<Bit> Block::get_random_bit(const U8& scope){
+std::shared_ptr<Bit> Circuit::get_random_bit(const U8& scope){
     size_t total_bits = bits.get_num_of(scope);
     //Iterate through all bits and see if there is at least one valid bit to prevent infinite loop
     bool valid_bit_exists = false;
@@ -58,7 +58,7 @@ std::shared_ptr<Bit> Block::get_random_bit(const U8& scope){
 }
 
 
-std::shared_ptr<Qubit_definition> Block::get_next_qubit_def(const U8& scope){
+std::shared_ptr<Qubit_definition> Circuit::get_next_qubit_def(const U8& scope){
     auto maybe_def = qubit_defs.at(qubit_def_pointer++);
 
     while((maybe_def != nullptr) && !scope_matches(maybe_def->get_scope(), scope)){
@@ -72,7 +72,7 @@ std::shared_ptr<Qubit_definition> Block::get_next_qubit_def(const U8& scope){
     }
 }
 
-std::shared_ptr<Qubit_definition> Block::get_next_qubit_def_discard(const U8& scope){
+std::shared_ptr<Qubit_definition> Circuit::get_next_qubit_def_discard(const U8& scope){
     auto maybe_def = qubit_defs_discard.at(qubit_def_discard_pointer++);
 
     while((maybe_def != nullptr) && !scope_matches(maybe_def->get_scope(), scope)){
@@ -86,7 +86,7 @@ std::shared_ptr<Qubit_definition> Block::get_next_qubit_def_discard(const U8& sc
     }
 }
 
-std::shared_ptr<Bit_definition> Block::get_next_bit_def(const U8& scope){
+std::shared_ptr<Bit_definition> Circuit::get_next_bit_def(const U8& scope){
     auto maybe_def = bit_defs.at(bit_def_pointer++);
 
     while((maybe_def != nullptr) && !scope_matches(maybe_def->get_scope(), scope)){
@@ -106,7 +106,7 @@ std::shared_ptr<Bit_definition> Block::get_next_bit_def(const U8& scope){
 /// @param rk 
 /// @param total_definitions 
 /// @return number of resources created from this definition
-unsigned int Block::make_register_resource_definition(unsigned int max_size, U8& scope, Resource_kind rk, unsigned int& total_definitions){
+unsigned int Circuit::make_register_resource_definition(unsigned int max_size, U8& scope, Resource_kind rk, unsigned int& total_definitions){
 
     unsigned int size;
 
@@ -145,7 +145,7 @@ unsigned int Block::make_register_resource_definition(unsigned int max_size, U8&
 /// @param rk 
 /// @param total_definitions 
 /// @return 1, since there's one qubit created from a singular resource definition
-unsigned int Block::make_singular_resource_definition(U8& scope, Resource_kind rk, unsigned int& total_definitions){
+unsigned int Circuit::make_singular_resource_definition(U8& scope, Resource_kind rk, unsigned int& total_definitions){
     if (rk == RK_QUBIT) {
         Singular_qubit_definition def (
             Variable("qubit" + std::to_string(qubit_defs.get_num_of(ALL_SCOPES)))
@@ -171,7 +171,7 @@ unsigned int Block::make_singular_resource_definition(U8& scope, Resource_kind r
     return 1;
 }
 
-unsigned int Block::make_resource_definitions(U8& scope, Resource_kind rk, bool discard_defs){
+unsigned int Circuit::make_resource_definitions(U8& scope, Resource_kind rk, bool discard_defs){
 
     if (discard_defs) {
         //Simply report back how many qubit defs are there
@@ -210,7 +210,7 @@ unsigned int Block::make_resource_definitions(U8& scope, Resource_kind rk, bool 
     }
 }
 
-unsigned int Block::make_resource_definitions(const Dag& dag, const U8& scope, Resource_kind rk, bool discard_defs){
+unsigned int Circuit::make_resource_definitions(const Dag& dag, const U8& scope, Resource_kind rk, bool discard_defs){
 
     if (discard_defs) {
         return qubit_defs.get_num_of(scope);
@@ -230,10 +230,10 @@ unsigned int Block::make_resource_definitions(const Dag& dag, const U8& scope, R
     }
 }
  
-void Block::print_info() const {
+void Circuit::print_info() const {
 
     std::cout << "=======================================" << std::endl;
-    std::cout << "              BLOCK INFO               " << std::endl;
+    std::cout << "              CIRCUIT INFO               " << std::endl;
     std::cout << "=======================================" << std::endl;
     std::cout << "Owner: " << owner << " [can apply subroutines: " << (can_apply_subroutines ? "true" : "false") << "]" << std::endl;
 
@@ -249,7 +249,7 @@ void Block::print_info() const {
     std::cout << "Qubit definitions " << std::endl;
 
     if(owner == QuteFuzz::TOP_LEVEL_CIRCUIT_NAME){
-        std::cout << YELLOW("Qubit defs may not match target if block is built to match DAG") << std::endl;
+        std::cout << YELLOW("Qubit defs may not match target if circuit is built to match DAG") << std::endl;
     }
 
     for(const auto& qubit_def : qubit_defs){

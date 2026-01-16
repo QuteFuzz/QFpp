@@ -13,16 +13,16 @@ EXTERNAL {
     bit_def = singular_bit_def | register_bit_def;
 }
 
-program       = imports NEWLINE subroutine_defs NEWLINE block NEWLINE compiler_call;
+program       = imports NEWLINE subroutine_defs NEWLINE circuit NEWLINE compiler_call;
 
-subroutine_defs = (subroutine_block NEWLINE subroutine_def_footer)*;
+subroutine_defs = (subroutine_circuit NEWLINE subroutine_def_footer)*;
 
 # all subroutines have just qubit ops and no if-else statements
 subroutine_body = EXTERNAL::qubit_defs NEWLINE (qubit_op NEWLINE)+;
 
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
 
-subroutine_block = circuit_def_header NEWLINE subroutine_body;
+subroutine_circuit = circuit_def_header NEWLINE subroutine_body;
 
 compound_stmts = (compound_stmt NEWLINE)+;
 

@@ -1,4 +1,5 @@
 #include <generator.h>
+#include <ast_utils.h>
 
 /// @brief It's possible that 2 parents that were picked before will be picked again, that's fine
 /// @return 
@@ -179,16 +180,11 @@ void Generator::ast_to_program(fs::path output_dir, std::optional<Genome> genome
 }
 
 Node Generator::build_equivalent(Node ast_root){
-
-    std::vector<std::shared_ptr<Node>*> visited_slots = {};
-    std::shared_ptr<Node>* maybe_compound_stmts = ast_root.find_slot(COMPOUND_STMTS, visited_slots);
-
-    while(maybe_compound_stmts != nullptr){
+    // for each COMPOUND_STMTS node, apply mutation rules
+    for(auto& compound_stmts : Node_gen(ast_root, COMPOUND_STMTS)){
         for(auto rule : mut_rules){
-            rule->apply(*maybe_compound_stmts);
+            rule->apply(compound_stmts);
         }
-
-        maybe_compound_stmts = ast_root.find_slot(COMPOUND_STMTS, visited_slots);
     }
 
     return ast_root;

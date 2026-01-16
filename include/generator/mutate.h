@@ -27,4 +27,16 @@ class Commutation_rule : public Mutation_rule {
     private:
 };
 
+class Gate_fission : public Mutation_rule {
+
+    public:
+        Gate_fission():
+            Mutation_rule()
+        {}
+
+        void apply(std::shared_ptr<Node>& compound_stmts);
+
+    private:
+};
+
 #endif

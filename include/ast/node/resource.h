@@ -75,7 +75,14 @@ class Resource : public Node {
         std::string resolved_name() const override;
 
         bool operator==(const Resource& other) const {
-            return (*get_name() == *other.get_name()) && (*get_index() == *other.get_index());
+            bool name_matches = (*get_name() == *other.get_name());
+            bool index_matches = (*get_index() == *other.get_index()); 
+
+            if(is_register_def()){
+                return name_matches && index_matches;
+            } else {
+                return name_matches;
+            }
         }
         
     private:

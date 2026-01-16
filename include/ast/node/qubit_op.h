@@ -3,7 +3,7 @@
 
 #include <node.h>
 
-class Block;
+class Circuit;
 class Gate;
 
 class Qubit_op : public Node {
@@ -13,11 +13,13 @@ class Qubit_op : public Node {
             Node("qubit_op", QUBIT_OP)
         {}
 
-        Qubit_op(std::shared_ptr<Block> current_block);
+        Qubit_op(std::shared_ptr<Circuit> current_circuit);
 
         inline void set_gate_node(std::shared_ptr<Node> node){
             gate_node = std::make_optional<std::shared_ptr<Node>>(node);
         }
+
+        bool is_subroutine_op() const;
 
         void add_gate_if_subroutine(std::vector<std::shared_ptr<Node>>& subroutine_gates);
 

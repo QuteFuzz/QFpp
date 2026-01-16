@@ -8,14 +8,14 @@ class Gate_name : public Node {
     public:
         using Node::Node;
 
-        Gate_name(const std::shared_ptr<Node> parent, const std::shared_ptr<Block> current_block, const std::optional<Node_constraint>& swarm_testing_gateset) :
-            Node("gate_name", GATE_MAME, swarm_testing_gateset)
+        Gate_name(const std::shared_ptr<Node> parent, const std::shared_ptr<Circuit> current_circuit, const std::optional<Node_constraint>& swarm_testing_gateset) :
+            Node("gate_name", GATE_NAME, swarm_testing_gateset)
         {
 
-            if(current_block->num_qubits_of(OWNED_SCOPE) == 0){
+            if(current_circuit->num_qubits_of(OWNED_SCOPE) == 0){
                 add_constraint(MEASURE_AND_RESET, 0);
 
-                if (current_block->num_bits_of(ALL_SCOPES) == 0) {
+                if (current_circuit->num_bits_of(ALL_SCOPES) == 0) {
                     add_constraint(MEASURE, 0);
                 }
                 /*

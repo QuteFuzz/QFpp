@@ -3,7 +3,7 @@ project(fuzzer)
 
 set(CMAKE_CXX_STANDARD 20)             
 set(CMAKE_CXX_STANDARD_REQUIRED ON)  
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O3 -DDEBUG -Wall -Wextra -Wswitch-enum")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O3 -DDEBUG -Wall -Wextra -Wswitch-enum -fsanitize=address")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 

@@ -178,14 +178,20 @@ class Node : public std::enable_shared_from_this<Node> {
         }
 
         inline std::shared_ptr<Node> child_at(size_t index) const {
-            if(index < children.size()){
+            if(index < size()){
                 return children.at(index);
             } else {
                 return nullptr;
             }
         }
 
-        size_t get_num_children() const {
+        inline void insert_child(size_t index, Node& child) {
+            if(index < size()){
+                children.insert(children.begin() + index, std::make_shared<Node>(child));
+            }
+        }
+
+        size_t size() const {
             return children.size();
         }
 

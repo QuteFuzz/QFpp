@@ -3,10 +3,10 @@
 #include <sstream>
 #include <result.h>
 
-#include <block.h>
+#include <circuit.h>
 #include <gate.h>
 #include <compound_stmts.h>
-#include <float.h>
+#include <float_literal.h>
 #include <float_list.h>
 #include <resource_list.h>
 #include <subroutine_op_args.h>
@@ -61,13 +61,13 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 		case INDENTATION_DEPTH:
 			return std::make_shared<Integer>(Node::indentation_tracker.size());
 
-		/// TODO: add grammar syntax to allow certain rules to exclude other rules downstream, useful for non_comptime_block
-		// case QuteFuzz::non_comptime_block:
+		/// TODO: add grammar syntax to allow certain rules to exclude other rules downstream, useful for non_comptime_circuit
+		// case QuteFuzz::non_comptime_circuit:
 		// 	context.set_can_apply_subroutines(false);
 		// 	return std::make_shared<Node>(str, hash);
 
-		case BLOCK:
-			return context.new_block_node();
+		case CIRCUIT:
+			return context.new_circuit_node();
 
 		case BODY:
 			return std::make_shared<Node>(str, kind);
@@ -112,7 +112,7 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 			return context.new_qubit_op_node();
 	
 		case CIRCUIT_NAME:
-			return std::make_shared<Variable>(context.get_current_block_owner());
+			return std::make_shared<Variable>(context.get_current_circuit_owner());
 
 		case QUBIT_DEF_SIZE:
 			return context.get_current_qubit_definition_size();
@@ -188,21 +188,21 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 			return context.new_bit();
 		
 		case FLOAT_LITERAL:
-			return std::make_shared<Float>();
+			return std::make_shared<Float_literal>();
 
 		case NUMBER:
 			return std::make_shared<Integer>();
 
-		case GATE_MAME:
-			return std::make_shared<Gate_name>(parent, context.get_current_block(), swarm_testing_gateset);
+		case GATE_NAME:
+			return std::make_shared<Gate_name>(parent, context.get_current_circuit(), swarm_testing_gateset);
 
 		case SUBROUTINE: {
-			std::shared_ptr<Block> subroutine_block = context.get_random_block();
+			std::shared_ptr<Circuit> subroutine_circuit = context.get_random_circuit();
 
-			subroutine_block->print_info();
+			subroutine_circuit->print_info();
 
-			std::shared_ptr<Gate> subroutine_gate = context.new_gate(str, kind, subroutine_block->get_qubit_defs()); 
-			subroutine_gate->add_child(std::make_shared<Variable>(subroutine_block->get_owner()));
+			std::shared_ptr<Gate> subroutine_gate = context.new_gate(str, kind, subroutine_circuit->get_qubit_defs()); 
+			subroutine_gate->add_child(std::make_shared<Variable>(subroutine_circuit->get_owner()));
 			
 			return subroutine_gate;
 		}
@@ -241,9 +241,9 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 			return context.new_gate(str, kind, 1, 1, 0);
 		
 		case BARRIER: {
-			std::shared_ptr<Block> current_block = context.get_current_block();
+			std::shared_ptr<Circuit> current_circuit = context.get_current_circuit();
 
-			unsigned int n_qubits = std::min((unsigned int)WILDCARD_MAX, (unsigned int)current_block->num_qubits_of(ALL_SCOPES));
+			unsigned int n_qubits = std::min((unsigned int)WILDCARD_MAX, (unsigned int)current_circuit->num_qubits_of(ALL_SCOPES));
 			unsigned int random_barrier_width = random_int(n_qubits, 1);
 
 			return context.new_gate(str, kind, random_barrier_width, 0, 0);
@@ -276,10 +276,9 @@ void Ast::write_branch(std::shared_ptr<Node> parent, const Term& term){
 			
 			parent->add_child(child_node, child_grammar_constraint);
 
-			if(child_node->get_num_children()) continue;
+			if(child_node->size()) continue;
 
 			write_branch(child_node, child_term);
-
 		}
 	}
 
@@ -309,11 +308,11 @@ Result<Node> Ast::build(const std::optional<Genome>& genome, const std::optional
 		if(genome.has_value()){
 			dag = std::make_shared<Dag>(genome.value().dag);
 		} else {
-			std::shared_ptr<Block> main_circuit_block = context.get_current_block();
-			dag = std::make_shared<Dag>(main_circuit_block);
+			std::shared_ptr<Circuit> main_circuit_circuit = context.get_current_circuit();
+			dag = std::make_shared<Dag>(main_circuit_circuit);
 		}
 
-		context.print_block_info();
+		context.print_circuit_info();
 
 		res.set_ok(*root);
 	}

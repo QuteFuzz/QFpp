@@ -20,9 +20,11 @@ t = "T";
 s = "S";
 measure = "Measure";
 
-block = circuit_def_header NEWLINE body NEWLINE;
+circuit = circuit_def_header NEWLINE body NEWLINE;
 
 # body = EXTERNAL::qubit_defs NEWLINE compound_stmts;
+
+gate_name = x | rx;
 
 EXTERNAL {
 

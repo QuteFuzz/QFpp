@@ -64,7 +64,7 @@ class Dag {
     public:
         Dag(){}
 
-        Dag(const std::shared_ptr<Block> block); 
+        Dag(const std::shared_ptr<Circuit> circuit); 
 
         inline Collection<Qubit_definition> get_qubit_defs() const {
             return qubit_defs;

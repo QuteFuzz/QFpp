@@ -7,10 +7,10 @@ class Subroutine_defs : public Node {
 
     public:
 
-        Subroutine_defs(unsigned int n_blocks):
+        Subroutine_defs(unsigned int n_circuits):
             Node("subroutine defs", SUBROUTINE_DEFS)
         {
-            add_constraint(BLOCK, n_blocks);
+            add_constraint(CIRCUIT, n_circuits);
         }
 
     private:

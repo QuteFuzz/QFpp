@@ -12,10 +12,6 @@ class Variable : public Node {
             Node("dummy")
         {}
 
-        bool operator==(const Variable& other) const {
-            return get_content() == other.get_content();
-        }
-
     private:
 
 };

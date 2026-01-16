@@ -21,9 +21,9 @@ rz = "cirq.rz";
 measure = "cirq.measure";
 
 
-program = imports NEWLINE subroutine_defs NEWLINE block NEWLINE compiler_call;
+program = imports NEWLINE subroutine_defs NEWLINE circuit NEWLINE compiler_call;
 
-block = circuit_def_header NEWLINE body NEWLINE;
+circuit = circuit_def_header NEWLINE body NEWLINE;
 
 body = EXTERNAL::qubit_defs NEWLINE compound_stmts;
 

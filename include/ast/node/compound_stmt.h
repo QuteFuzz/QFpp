@@ -4,7 +4,7 @@
 #include <node.h>
 
 class Gate;
-class Block;
+class Circuit;
 
 class Compound_stmt : public Node {
 
@@ -30,7 +30,7 @@ class Compound_stmt : public Node {
             
             } else {
                 /*
-                    use nesting block, target is > 1 
+                    use nesting circuit, target is > 1 
                 */
                 stmt.make_partition(target_num_qubit_ops, 1);
                 stmt.add_constraint(QUBIT_OP, 0);

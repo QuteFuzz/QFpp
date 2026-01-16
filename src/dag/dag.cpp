@@ -1,15 +1,15 @@
 #include <resource.h>
 #include <dag.h>
-#include <block.h>
+#include <circuit.h>
 
-Dag::Dag(const std::shared_ptr<Block> block){
+Dag::Dag(const std::shared_ptr<Circuit> circuit){
     reset();
 
-    qubits = block->get_qubits();
-    qubit_defs = block->get_qubit_defs();
+    qubits = circuit->get_qubits();
+    qubit_defs = circuit->get_qubit_defs();
 
-    bits = block->get_bits();
-    bit_defs = block->get_bit_defs();
+    bits = circuit->get_bits();
+    bit_defs = circuit->get_bit_defs();
     
     for(const auto& qubit : qubits){
         qubit->add_path_to_dag(*this);
