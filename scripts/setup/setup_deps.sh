@@ -103,6 +103,9 @@ uv pip install \
     litellm \
     coverage
 
+# Ensure guppylang is the latest version
+uv pip install --upgrade guppylang
+
 # B. Git dependencies
 uv pip install git+https://github.com/CQCL/hugr-qir.git
 

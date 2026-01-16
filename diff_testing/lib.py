@@ -35,7 +35,7 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeou
 # Pytket imports
 from pytket.circuit import Circuit
 from pytket.passes import *
-from pytket.passes import RemoveRedundancies, CliffordSimp
+from pytket.passes import RemoveRedundancies, SquashRzPhasedX
 from pytket.extensions.qiskit import AerBackend
 from pytket.extensions.qiskit import AerStateBackend
 
@@ -52,6 +52,7 @@ enable_experimental_features()
 from selene_sim import build, Quest
 from hugr.qsystem.result import QsysResult
 from tket.passes import NormalizeGuppy, PytketHugrPass, PassResult
+from hugr.hugr.base import Hugr
 
 # QIR imports
 from hugr_qir.hugr_to_qir import hugr_to_qir
@@ -519,19 +520,16 @@ class guppyTesting(Base):
             elif len(raw_counts) > 0 and not list(raw_counts.keys())[0]:
                  print(f"Warning: Empty keys in counts for circuit {circuit_number}. Measurements may not be returned/output.")
             
-            # Ensure keys are formatted as expected (strings)
-            ## Debug prints
-            print(f"DEBUG: Circuit {circuit_number} (Base) Raw counts: {raw_counts}")
-            
             counts_base = Counter({''.join([str(measurement[1]) for measurement in key]): value for key, value in raw_counts.items()})
             
-            print(f"DEBUG: Circuit {circuit_number} (Base) Processed strings: {counts_base}")
 
             counts_base = self.preprocess_counts(counts_base)
             
             if not counts_base:
                 print(f"Warning: No valid counts after preprocessing for circuit {circuit_number}. Skipping test.")
                 return
+            
+            print(f"Uncompiled circuit{circuit_number} succesfully run.")
 
         except Exception as e:
             print(f"Error running uncompiled circuit: {e}")
@@ -539,24 +537,25 @@ class guppyTesting(Base):
             return
 
         # Select a random pass
-        pass_name = random.choice(["redundant_cx", "clifford", "normalize"])
+        pass_name = random.choice(["redundant_cx", "squash_rz", "normalize"])
         sys.stderr.write(f"DEBUG: Applying pass: {pass_name}\n")
         sys.stderr.flush()
         print(f"Applying pass: {pass_name}")
         
         try:
+            main_function: Hugr = circuit.compile_function().modules[0]
             hugr_opt = None
             normalize = NormalizeGuppy()
-            hugr_norm = normalize(hugr)
+            hugr_norm = normalize(main_function)
 
             if pass_name == "redundant_cx":
                 rr_pass = PytketHugrPass(RemoveRedundancies())
-                pass_result = rr_pass.run(hugr_norm)
+                pass_result: PassResult = rr_pass.run(hugr_norm)
                 hugr_opt = pass_result.hugr
                 
-            elif pass_name == "clifford":
-                cliff_pass = PytketHugrPass(CliffordSimp(allow_swaps=True))
-                hugr_opt = cliff_pass(hugr_norm)
+            elif pass_name == "squash_rz":
+                squash_pass = PytketHugrPass(SquashRzPhasedX())
+                hugr_opt = squash_pass(hugr_norm)
                 
             elif pass_name == "normalize":
                 hugr_opt = hugr_norm
