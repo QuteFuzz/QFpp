@@ -1,74 +1,18 @@
 import ast
 import sys
 import logging
+import glob
+import random
+import os
+import subprocess
+import argparse
+from tqdm import tqdm
 
-def is_qubit(node):
-    return isinstance(node, ast.Name) and node.id == 'qubit'
+# Add project root to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-def get_array_size(node):
-    if not isinstance(node, ast.Subscript):
-        return None
-    if not (isinstance(node.value, ast.Name) and node.value.id == 'array'):
-        return None
-    
-    slice_content = node.slice
-    # Handle Python < 3.9 ast.Index wrapper
-    if isinstance(slice_content, ast.Index):
-            slice_content = slice_content.value
-    
-    if isinstance(slice_content, ast.Tuple):
-        elts = slice_content.elts
-        if len(elts) == 2 and is_qubit(elts[0]):
-            size_node = elts[1]
-            if isinstance(size_node, ast.Constant):
-                return size_node.value
-            elif isinstance(size_node, ast.Num):
-                return size_node.n
-    return None
-
-class CircuitRenamer(ast.NodeTransformer):
-    def __init__(self, prefix, global_funcs):
-        self.prefix = prefix
-        self.global_funcs = global_funcs
-        self.local_scopes = []
-
-    def visit_FunctionDef(self, node):
-        # We need to rename the name of the function definition if it is global
-        if node.name in self.global_funcs:
-            node.name = self.prefix + node.name
-            
-        # Enter new scope
-        self.local_scopes.append(set())
-        
-        # Visit children (args, body, decorators)
-        self.generic_visit(node)
-        
-        # Exit scope
-        self.local_scopes.pop()
-        return node
-
-    def visit_arg(self, node):
-        if self.local_scopes:
-            self.local_scopes[-1].add(node.arg)
-        return node
-
-    def visit_Name(self, node):
-        # If we are in a scope and the name is defined locally, don't rename.
-        is_local = False
-        if self.local_scopes:
-            for scope in reversed(self.local_scopes):
-                if node.id in scope:
-                    is_local = True
-                    break
-        
-        if not is_local and node.id in self.global_funcs:
-            node.id = self.prefix + node.id
-            
-        # If it's a store (assignment), and we are in a local scope, add to local scope
-        if isinstance(node.ctx, ast.Store) and self.local_scopes:
-            self.local_scopes[-1].add(node.id)
-            
-        return node
+# Import from local library
+from lib.ast_ops import is_qubit_guppy, get_array_size_guppy, CircuitRenamer
 
 def assemble(files, output_path, unique_index=0):
     all_imports = []
@@ -188,7 +132,7 @@ def assemble(files, output_path, unique_index=0):
                 setup_expr = None
                 measure_call = None
                 
-                if is_qubit(ann):
+                if is_qubit_guppy(ann):
                     # var = qubit()
                     setup_expr = ast.Call(
                         func=ast.Name(id='qubit', ctx=ast.Load()),
@@ -202,7 +146,7 @@ def assemble(files, output_path, unique_index=0):
                     )
                     
                 else:
-                    arr_size = get_array_size(ann)
+                    arr_size = get_array_size_guppy(ann)
                     if arr_size is not None:
                         # var = array(qubit() for _ in range(size))
                         range_call = ast.Call(
@@ -333,13 +277,6 @@ def assemble(files, output_path, unique_index=0):
     # print(f"Assembled {len(files)} files into {output_path}")
 
 if __name__ == "__main__":
-    import glob
-    import random
-    import os
-    import subprocess
-    import argparse
-    from tqdm import tqdm
-
     # Configuration via argparse
     parser = argparse.ArgumentParser(description="Assemble and test quantum circuits.")
     parser.add_argument("input_dir", nargs='?', default="local_saved_circuits/Correct_format/", help="Directory containing input circuit files")
@@ -377,7 +314,7 @@ if __name__ == "__main__":
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     # Get all python files
-    input_files = glob.glob(os.path.join(INPUT_DIR, "circuit*.py"))
+    input_files = glob.glob(os.path.join(INPUT_DIR, "*.py"))
     
     if not input_files:
         msg = f"No input files found in {INPUT_DIR}"
@@ -463,5 +400,3 @@ if __name__ == "__main__":
     
     logging.info(f"Finished. {success_count}/{len(assembled_files)} assembled circuits ran successfully.")
     print(f"Finished. {success_count}/{len(assembled_files)} assembled circuits ran successfully.")
-
-

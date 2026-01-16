@@ -3,223 +3,16 @@ import sys
 import argparse
 import subprocess
 import glob
-import json
-import tempfile
-import time
-import shutil
 from tqdm import tqdm
-import matplotlib.pyplot as plt
-import numpy as np
 
 # Add project root to path so we can import scripts if needed
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Import from local library
+from lib.execution import run_coverage_on_file
+from lib.utils import generate_coverage_text_report, generate_coverage_plot
+
 PYTHON_EXECUTABLE = sys.executable
-
-def strip_markdown_syntax(code: str) -> str:
-    """
-    Remove markdown code block syntax from generated code.
-    Strips leading ```python or ``` and trailing ```.
-    """
-    code = code.strip()
-    
-    # Remove leading markdown syntax (```python, ```py, ``` etc.)
-    if code.startswith("```"):
-        lines = code.split('\n')
-        lines = lines[1:]  # Skip first line with ```
-        code = '\n'.join(lines)
-    
-    # Remove trailing markdown syntax (```)
-    if code.endswith("```"):
-        lines = code.split('\n')
-        lines = lines[:-1]  # Skip last line with ```
-        code = '\n'.join(lines)
-    
-    return code.strip()
-
-def run_coverage_on_file(file_path: str, source_package: str = "guppylang_internals", verbose: bool = False):
-    """
-    Run a single python file with coverage tracking.
-    Returns the coverage percentage, any error message, coverage data, and verbose report.
-    """
-    try:
-        # Read the file content
-        with open(file_path, 'r') as f:
-            content = f.read()
-
-        # Clean the content just in case, though saved files should be clean
-        clean_code = strip_markdown_syntax(content)
-        
-        # We need to run it in a temp location or just run the file directly?
-        # Running directly is better if imports are relative, but these seem to be standalone scripts
-        # tailored for the environment. However, let's use a temp file to avoid polluting the 
-        # source directory with .coverage files, or handle the coverage file carefully.
-        
-        # Let's run directly on the file but direct coverage output to a temp file
-        
-        with tempfile.NamedTemporaryFile(suffix=".coverage", delete=False) as cov_file:
-            coverage_file_path = cov_file.name
-        
-        json_report_file = coverage_file_path + ".json"
-        
-        env = os.environ.copy()
-        env["COVERAGE_FILE"] = coverage_file_path
-        
-        # Add project root to PYTHONPATH so local modules like diff_testing can be imported
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        current_pythonpath = env.get("PYTHONPATH", "")
-        if current_pythonpath:
-            env["PYTHONPATH"] = f"{project_root}{os.pathsep}{current_pythonpath}"
-        else:
-            env["PYTHONPATH"] = project_root
-
-        # Execute with coverage
-        cmd = [
-            PYTHON_EXECUTABLE, "-m", "coverage", "run", 
-            "--branch", f"--source={source_package}", 
-            file_path
-        ]
-        
-        # We use a timeout to prevent hanging scripts
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=30,
-                env=env
-            )
-            run_error = result.stderr if result.returncode != 0 else ""
-        except subprocess.TimeoutExpired:
-            return 0.0, "Timeout", {}, ""
-
-        coverage_percent = 0.0
-        coverage_data = {}
-        verbose_report = ""
-
-        # Generate JSON report
-        if os.path.exists(coverage_file_path):
-            try:
-                subprocess.run(
-                    [PYTHON_EXECUTABLE, "-m", "coverage", "json", "-o", json_report_file],
-                    capture_output=True,
-                    text=True,
-                    timeout=10,
-                    env=env
-                )
-                
-                if os.path.exists(json_report_file):
-                    with open(json_report_file, 'r') as f:
-                        report_data = json.load(f)
-                        if "totals" in report_data:
-                            coverage_percent = report_data["totals"].get("percent_covered", 0.0)
-                        coverage_data = report_data
-                
-                if verbose:
-                    report_res = subprocess.run(
-                        [PYTHON_EXECUTABLE, "-m", "coverage", "report"],
-                        capture_output=True,
-                        text=True,
-                        timeout=10,
-                        env=env
-                    )
-                    verbose_report = report_res.stdout
-
-            except Exception as e:
-                run_error += f"\nCoverage report error: {str(e)}"
-        
-        # Cleanup
-        if os.path.exists(coverage_file_path):
-            os.remove(coverage_file_path)
-        if os.path.exists(json_report_file):
-            os.remove(json_report_file)
-            
-        return coverage_percent, run_error, coverage_data, verbose_report
-
-    except Exception as e:
-        return 0.0, str(e), {}, ""
-
-def generate_text_report(grouped_results, output_file):
-    """Generates a structured text report of coverage results."""
-    with open(output_file, 'w') as f:
-        f.write("Coverage Analysis Report\n")
-        f.write("========================\n\n")
-        
-        for group_name in sorted(grouped_results.keys()):
-            files = grouped_results[group_name]
-            f.write(f"=== Group: {group_name} ===\n")
-            
-            successful_coverages = []
-            files_sorted = sorted(files, key=lambda x: x['file'])
-            
-            # List individual files
-            for entry in files_sorted:
-                fname = os.path.basename(entry['file'])
-                if entry['success']:
-                    f.write(f"  {fname}: {entry['coverage_percent']:.2f}%\n")
-                    if entry.get("verbose_report"):
-                        f.write("\n    Detailed Coverage:\n")
-                        for line in entry["verbose_report"].splitlines():
-                            f.write(f"    {line}\n")
-                        f.write("\n")
-                    successful_coverages.append(entry['coverage_percent'])
-                else:
-                    err_msg = entry['error'].replace('\n', ' ')[:100]
-                    f.write(f"  {fname}: ERROR ({err_msg}...)\n")
-            
-            # Summary for the group
-            if successful_coverages:
-                avg = sum(successful_coverages) / len(successful_coverages)
-                f.write(f"\n  Summary for {group_name}:\n")
-                f.write(f"    Average Coverage: {avg:.2f}%\n")
-                f.write(f"    Valid Programs: {len(successful_coverages)}/{len(files)}\n")
-            else:
-                f.write(f"\n  Summary for {group_name}:\n")
-                f.write(f"    Average Coverage: N/A\n")
-                f.write(f"    Valid Programs: 0/{len(files)}\n")
-            
-            f.write("\n" + "-"*40 + "\n\n")
-
-def generate_plot(grouped_results, output_file):
-    """Generates a bar chart comparing average coverage across groups."""
-    group_names = []
-    averages = []
-    
-    for name in sorted(grouped_results.keys()):
-        files = grouped_results[name]
-        successful = [x['coverage_percent'] for x in files if x['success']]
-        if successful:
-            avg = sum(successful) / len(successful)
-            group_names.append(name)
-            averages.append(avg)
-            
-    if not group_names:
-        print("No successful data to plot.")
-        return
-
-    plt.figure(figsize=(10 + len(group_names)*0.5, 6)) # Adjust width based on number of groups
-    bars = plt.bar(group_names, averages, color='skyblue')
-    
-    plt.xlabel('Group / Model')
-    plt.ylabel('Average Coverage (%)')
-    plt.title('Average Code Coverage by Group')
-    
-    # Rotate labels to prevent overlap
-    plt.xticks(rotation=45, ha='right')
-    
-    # Add values on top of bars
-    for bar in bars:
-        height = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2., height,
-                f'{height:.1f}%',
-                ha='center', va='bottom')
-                
-    plt.tight_layout()
-    try:
-        plt.savefig(output_file)
-        print(f"Plot saved to {output_file}")
-    except Exception as e:
-        print(f"Failed to save plot: {e}")
 
 def main():
     parser = argparse.ArgumentParser(description="Run coverage analysis on generated Python programs.")
@@ -295,14 +88,19 @@ def main():
     grouped_results = {}
     
     for file_path in tqdm(files_to_process, desc="Running Coverage"):
-        percent, error, _, verbose_report = run_coverage_on_file(file_path, args.source, verbose=args.verbose)
+        percent, error, _, verbose_report = run_coverage_on_file(
+            file_path, 
+            source_package=args.source, 
+            verbose=args.verbose, 
+            python_executable=PYTHON_EXECUTABLE
+        )
         
         result_entry = {
             "file": file_path,
             "coverage_percent": percent,
             "error": error,
             "verbose_report": verbose_report,
-            "success": error == "" or "Timeout" not in error
+            "success": error == ""
         }
         
         # Determine group based on path
@@ -338,10 +136,10 @@ def main():
 
     # Generate outputs
     print(f"\nGenerating report to {args.output_report}...")
-    generate_text_report(grouped_results, args.output_report)
+    generate_coverage_text_report(grouped_results, args.output_report)
     
     print(f"Generating plot to {args.output_plot}...")
-    generate_plot(grouped_results, args.output_plot)
+    generate_coverage_plot(grouped_results, args.output_plot)
     
     print("Analysis Complete.")
 
