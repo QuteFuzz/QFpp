@@ -20,7 +20,7 @@ vdg = "vdg";
 tdg = "tdg";
 sdg = "sdg";
 ccx = "toffoli";
-measure_and_reset = "measure_and_reset"; 
+measure_and_reset = "measure_and_reset";
 #barrier = "barrier"; # Taken out for now until new strctural changes are made
 phased_x = "phased_x";
 # project_z = "project_z"; # Taken out for now until new strctural changes are made
@@ -53,11 +53,11 @@ guppy_decorator = "@guppy";
 decorator = comptime_decorator | guppy_decorator;
 
 
-subroutine_defs = (subroutine_block NEWLINE)*;
+subroutine_defs = (subroutine_circuit NEWLINE)*;
 
-block = circuit_def_header NEWLINE INDENT body DEDENT NEWLINE;
+circuit = circuit_def_header NEWLINE INDENT body DEDENT NEWLINE;
 
-subroutine_block = circuit_def_header NEWLINE INDENT subroutine_body DEDENT NEWLINE;
+subroutine_circuit = circuit_def_header NEWLINE INDENT subroutine_body DEDENT NEWLINE;
 
 circuit_def_header = "@guppy.comptime" NEWLINE "def " circuit_name "(" EXTERNAL::qubit_defs ") -> None:";
 
@@ -106,7 +106,7 @@ subroutine_op = subroutine "(" subroutine_op_args ")";
 
 singular_qubit = qubit_name;
 
-register_qubit = qubit_name "[" qubit_index "]"; 
+register_qubit = qubit_name "[" qubit_index "]";
 
 
 imports = "from guppylang.decorator import guppy " NEWLINE

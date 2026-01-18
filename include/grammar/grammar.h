@@ -36,12 +36,12 @@ class Grammar{
         std::shared_ptr<Rule> get_rule_pointer(const Token& token, const U8& scope = NO_SCOPE);
 
         inline void reset_current_branches(){current_branches.clear();}
-        
+
         inline void add_current_branches_to_rule(){
 
             if(current_branches.size() == 0){
                 current_rule->add(Branch());
-                
+
             } else {
 
                 for(Branch& current_branch : current_branches){
@@ -94,13 +94,13 @@ class Grammar{
                 if((ptr->get_name() == rule_name) && (ptr->get_scope() == scope)){return true;}
             }
 
-            return false;            
+            return false;
         }
 
         inline std::string get_name(){return name;}
 
         inline std::string get_path(){return path.string();}
-    
+
     private:
         std::vector<Token> tokens;
         size_t num_tokens = 0;
@@ -124,7 +124,7 @@ class Grammar{
         unsigned int constraint_occurances = 0;
 
         std::vector<std::shared_ptr<Rule>> rule_pointers;
-        
+
         Lexer lexer;
         std::string name;
         fs::path path;

@@ -1,5 +1,5 @@
-#ifndef BLOCK_H
-#define BLOCK_H
+#ifndef CIRCUIT_H
+#define CIRCUIT_H
 
 #include <node.h>
 #include <resource_definition.h>
@@ -8,26 +8,26 @@
 #include <params.h>
 
 /*
-    Blocks contain external and internal qubits, external and internal bits, which are set targets that must be satisfied
-    It is not a guarantee that any block will have both internal and external qubits, so the targets are set such that any block 
-    will have external qubits = (MIN_QUBITS, MAX_QUBITS) and internal qubits = (MIN_QUBITS, MAX_QUBITS) separately, 
+    Circuits contain external and internal qubits, external and internal bits, which are set targets that must be satisfied
+    It is not a guarantee that any circuit will have both internal and external qubits, so the targets are set such that any circuit
+    will have external qubits = (MIN_QUBITS, MAX_QUBITS) and internal qubits = (MIN_QUBITS, MAX_QUBITS) separately,
     instead of external qubits + internal qubits = (MIN_QUBITS, MAX_QUBITS)
 
     See example below, if using  external qubits + internal qubits = (MIN_QUBITS, MAX_QUBITS)
 
     =======================================
-                BLOCK INFO               
+                CIRCUIT INFO
     =======================================
     Owner: main_circuit
-    Target num qubits 
+    Target num qubits
     EXTERNAL: 3
     INTERNAL: 1
-    Target num bits 
+    Target num bits
     EXTERNAL: 1
     INTERNAL: 1
 
-    Qubit definitions 
-    Qubit defs may not match target if block is built to match DAG
+    Qubit definitions
+    Qubit defs may not match target if circuit is built to match DAG
     name: qreg0 size: 1 Scope: internal
     =======================================
     @guppy.comptime
@@ -36,39 +36,39 @@
             if 0 <= 0  and 0 > 0   or 0 <= 0  and 0 == 0   :
                     if 0 <= 0  and 0 == 0   or 0 >= 0  and 0 <= 0   :
                             project_z(qreg0[0])
-                            cy(qreg0[0], 
+                            cy(qreg0[0],
 
-    the block set a target for internal qubits of 1, and external of 3. But since this is guppy, only internal definitions are created, and therefore this stalls in 
+    the circuit set a target for internal qubits of 1, and external of 3. But since this is guppy, only internal definitions are created, and therefore this stalls in
     an infinite loop while picking a random qubit
 */
 
-class Block : public Node {
+class Circuit : public Node {
 
     public:
 
-        Block() : 
-            Node("block", BLOCK),
-            owner("dummy_block")
+        Circuit() :
+            Node("circuit", CIRCUIT),
+            owner("dummy_circuit")
         {}
 
-        /// @brief Generating a random block from scratch
-        Block(std::string owner_name) :
-            Node("block", BLOCK),
-            owner(owner_name), 
-            target_num_qubits_external(random_int(QuteFuzz::MAX_QUBITS, QuteFuzz::MIN_QUBITS)),
-            target_num_qubits_internal(random_int(QuteFuzz::MAX_QUBITS, QuteFuzz::MIN_QUBITS)),
-            target_num_bits_external(random_int(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)),
-            target_num_bits_internal(random_int(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)) 
+        /// @brief Generating a random circuit from scratch
+        Circuit(std::string owner_name) :
+            Node("circuit", CIRCUIT),
+            owner(owner_name),
+            target_num_qubits_external(random_uint(QuteFuzz::MAX_QUBITS, QuteFuzz::MIN_QUBITS)),
+            target_num_qubits_internal(random_uint(QuteFuzz::MAX_QUBITS, QuteFuzz::MIN_QUBITS)),
+            target_num_bits_external(random_uint(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)),
+            target_num_bits_internal(random_uint(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS))
         {}
 
-        /// @brief Generating a block with a specific number of external qubits (generating from DAG)
-        Block(std::string owner_name, unsigned int num_external_qubits) :
-            Node("block", BLOCK),
-            owner(owner_name), 
+        /// @brief Generating a circuit with a specific number of external qubits (generating from DAG)
+        Circuit(std::string owner_name, unsigned int num_external_qubits) :
+            Node("circuit", CIRCUIT),
+            owner(owner_name),
             target_num_qubits_external(num_external_qubits),
-            target_num_qubits_internal(random_int(QuteFuzz::MAX_QUBITS, QuteFuzz::MIN_QUBITS)),
-            target_num_bits_external(random_int(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)),
-            target_num_bits_internal(random_int(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)) 
+            target_num_qubits_internal(random_uint(QuteFuzz::MAX_QUBITS, QuteFuzz::MIN_QUBITS)),
+            target_num_bits_external(random_uint(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)),
+            target_num_bits_internal(random_uint(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS))
         {}
 
         inline bool owned_by(std::string other){return other == owner;}
@@ -150,7 +150,7 @@ class Block : public Node {
         }
 
         std::shared_ptr<Qubit> get_random_qubit(const U8& scope);
-        
+
         std::shared_ptr<Bit> get_random_bit(const U8& scope);
 
         std::shared_ptr<Qubit_definition> get_next_qubit_def(const U8& scope);
@@ -176,7 +176,7 @@ class Block : public Node {
         unsigned int target_num_qubits_internal = 0;
         unsigned int target_num_bits_external = QuteFuzz::MIN_BITS;
         unsigned int target_num_bits_internal = 0;
-        
+
         bool can_apply_subroutines = false;
 
         Collection<Qubit> qubits;

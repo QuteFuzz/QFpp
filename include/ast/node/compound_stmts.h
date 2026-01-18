@@ -21,7 +21,7 @@ class Compound_stmts : public Node {
 
             stmts.add_constraint(COMPOUND_STMT, n_children);
             stmts.make_partition(target_num_qubit_ops, n_children);
-            
+
             return std::make_shared<Compound_stmts>(stmts);
         }
 

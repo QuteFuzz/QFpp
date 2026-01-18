@@ -4,14 +4,14 @@
 #include <node.h>
 
 class Gate;
-class Block;
+class Circuit;
 
 class Compound_stmt : public Node {
 
     public:
         static std::shared_ptr<Compound_stmt> from_nested_depth(unsigned int nested_depth){
             Compound_stmt stmt;
-            
+
             if(nested_depth == 0){
                 stmt.add_constraint(QUBIT_OP, 1);
             }
@@ -27,10 +27,10 @@ class Compound_stmt : public Node {
                     make qubit op
                 */
                 stmt.add_constraint(QUBIT_OP, 1);
-            
+
             } else {
                 /*
-                    use nesting block, target is > 1 
+                    use nesting circuit, target is > 1
                 */
                 stmt.make_partition(target_num_qubit_ops, 1);
                 stmt.add_constraint(QUBIT_OP, 0);

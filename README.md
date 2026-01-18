@@ -3,7 +3,7 @@
 <p align="center" width="100%">
     <img width="25%" src="etc/qutefuzz.png">
 
-Generating programs for circuit-based programming languages by leveraging a BNF-style meta-language, which is used to describe the program. The tool takes this as input, generates an AST from it, then outputs a program. 
+Generating programs for circuit-based programming languages by leveraging a BNF-style meta-language, which is used to describe the program. The tool takes this as input, generates an AST from it, then outputs a program.
 
 See wiki for more details.
 
@@ -23,7 +23,7 @@ uv run scripts/ci_pipeline.py
 
 to run fuzzer and differential testing.
 
-To run fuzzer on its own, setup cmake build dir using 
+To run fuzzer on its own, setup cmake build dir using
 ```sh
 ./scripts/setup/setup_build.sh
 ```
@@ -37,7 +37,7 @@ then running `build/fuzzer`.
 | Compiler Bugs | Other Bugs |
 |---------------|------------|
 | [Issue 623 &#x1F41E;](https://github.com/CQCL/pytket-quantinuum/issues/623) | |
-| [Issue 2004  &#x1F41E;](https://github.com/CQCL/tket/issues/2004) | 
+| [Issue 2004  &#x1F41E;](https://github.com/CQCL/tket/issues/2004) |
 | | |
 
 ### Guppy:
@@ -48,6 +48,3 @@ then running `build/fuzzer`.
 | [Issue 1224 &#x1F41E;](https://github.com/CQCL/guppylang/issues/1224) | |
 | [Issue 1079 &#x1F41E;](https://github.com/CQCL/guppylang/issues/1079) | |
 | | |
-
-
-

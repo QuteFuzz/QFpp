@@ -8,7 +8,7 @@ class Variable : public Node {
     public:
         using Node::Node;
 
-        Variable() : 
+        Variable() :
             Node("dummy")
         {}
 

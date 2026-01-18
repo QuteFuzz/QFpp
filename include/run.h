@@ -9,6 +9,8 @@
 
 class Run{
 
+    static const fs::path OUTPUT_DIR;
+
     public:
         Run(const std::string& _grammars_dir);
 
@@ -24,21 +26,26 @@ class Run{
 
         void remove_all_in_dir(const fs::path& dir);
 
-        void generate_random_programs(fs::path output_dir, int n_programs);
-
         void loop();
+
+        inline void setup_output_dir(const std::string& grammar_name) {
+            current_output_dir = OUTPUT_DIR / grammar_name;
+
+            if(fs::exists(current_output_dir)){
+                remove_all_in_dir(current_output_dir);
+            } else {
+                fs::create_directory(current_output_dir);
+            }
+        }
 
     private:
         fs::path grammars_dir;
+        fs::path current_output_dir;
+
         std::unordered_map<std::string, std::shared_ptr<Generator>> generators;
         std::shared_ptr<Generator> current_generator = nullptr;
-
         std::vector<std::string> tokens;
-
         std::optional<unsigned int> n_programs;
-
-        fs::path output_dir;
 };
 
 #endif
-

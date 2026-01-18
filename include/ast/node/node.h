@@ -29,7 +29,7 @@ struct Node_constraint {
             rule_kinds_and_occurances{{rule, _occurances}}
         {}
 
-        Node_constraint(std::unordered_map<Token_kind, unsigned int> _rule_kinds_and_occurances): 
+        Node_constraint(std::unordered_map<Token_kind, unsigned int> _rule_kinds_and_occurances):
             rule_kinds_and_occurances(std::move(_rule_kinds_and_occurances))
         {}
 
@@ -116,7 +116,7 @@ class Node : public std::enable_shared_from_this<Node> {
             std::string str_id = " " + std::to_string(id);
 
             if(content.size() > 10){
-                return esc_content.substr(0, 10) + " ... " + str_id; 
+                return esc_content.substr(0, 10) + " ... " + str_id;
             } else {
                 return esc_content + str_id;
             }
@@ -130,16 +130,16 @@ class Node : public std::enable_shared_from_this<Node> {
             return get_content();
         }
 
-        inline bool visited(std::vector<std::shared_ptr<Node>*>& visited_slots, std::shared_ptr<Node>* slot){
+        inline bool visited(std::vector<std::shared_ptr<Node>*>& visited_slots, std::shared_ptr<Node>* slot, bool track_visited){
             for(auto vslot : visited_slots){
                 if(vslot == slot) return true;
             }
 
-            visited_slots.push_back(slot);
+            if(track_visited) visited_slots.push_back(slot);
             return false;
         }
 
-        std::shared_ptr<Node>* find_slot(Token_kind node_kind, std::vector<std::shared_ptr<Node>*>& visited_slots);
+        std::shared_ptr<Node>* find_slot(Token_kind node_kind, std::vector<std::shared_ptr<Node>*>& visited_slots, bool track_visited = true);
 
         std::shared_ptr<Node> find(Token_kind node_kind);
 
@@ -178,23 +178,33 @@ class Node : public std::enable_shared_from_this<Node> {
         }
 
         inline std::shared_ptr<Node> child_at(size_t index) const {
-            if(index < children.size()){
+            if(index < size()){
                 return children.at(index);
             } else {
                 return nullptr;
             }
         }
 
-        size_t get_num_children() const {
+        inline void insert_child(size_t index, Node& child) {
+            if(index < size()){
+                children.insert(children.begin() + index, std::make_shared<Node>(child));
+            }
+        }
+
+        size_t size() const {
             return children.size();
         }
 
-        bool operator==(const Token_kind& other_kind){
+        bool operator==(const Token_kind& other_kind) const {
             return kind == other_kind;
         }
 
+        bool operator==(const Node& other) const {
+            return get_content() == other.get_content();
+        }
+
         bool branch_satisfies_constraint(const Branch& branch){
-            return (!constraint.has_value() || constraint.value().passed(branch)) && 
+            return (!constraint.has_value() || constraint.value().passed(branch)) &&
                    (!grammar_added_constraint.has_value() || grammar_added_constraint.value().passed(branch));
         }
 
@@ -247,7 +257,7 @@ class Node : public std::enable_shared_from_this<Node> {
 
         std::vector<int> child_partition;
         unsigned int partition_counter = 0;
-    
+
     private:
         std::optional<Node_constraint> constraint;
         std::optional<Node_constraint> grammar_added_constraint;

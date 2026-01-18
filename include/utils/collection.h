@@ -8,10 +8,10 @@ class Qubit_definition;
 class Bit_definition;
 
 template<typename T>
-concept Allowed_Type = 
+concept Allowed_Type =
     std::is_same_v<T, Qubit> ||
-    std::is_same_v<T, Bit> || 
-    std::is_same_v<T, Qubit_definition> || 
+    std::is_same_v<T, Bit> ||
+    std::is_same_v<T, Qubit_definition> ||
     std::is_same_v<T, Bit_definition>;
 
 template<Allowed_Type T>

@@ -1,18 +1,18 @@
-#ifndef FLOAT_H
-#define FLOAT_H
+#ifndef FLOAT_LITERAL_H
+#define FLOAT_LITERAL_H
 
 #include <node.h>
 
-class Float : public Node {
+class Float_literal : public Node {
 
     public:
         using Node::Node;
 
-        Float() :
+        Float_literal() :
             Node(std::to_string(random_float(10)))
         {}
 
-        Float(float n) :
+        Float_literal(float n) :
             Node(std::to_string(n)),
             num(n)
         {}

@@ -11,14 +11,14 @@ class Rule {
 
     public:
         Rule(){}
-        
+
         Rule(const Token& _token, const U8& _scope) :
             token(_token),
             scope(_scope)
         {}
-        
-        Rule(const std::vector<Branch>& _branches) : 
-            branches(_branches) 
+
+        Rule(const std::vector<Branch>& _branches) :
+            branches(_branches)
         {}
 
         ~Rule(){}
@@ -32,7 +32,7 @@ class Rule {
         std::optional<Node_constraint> get_constraint() const {return constraint;}
 
         bool get_recursive_flag() const {return recursive;}
-                
+
         std::vector<Branch> get_branches(){return branches;}
 
         void add(const Branch& b);
@@ -51,13 +51,13 @@ class Rule {
             return (token == other.get_token()) && scope_matches(scope, other.get_scope());
         }
 
-        bool matches(const std::string& name, const U8& _scope) { 
+        bool matches(const std::string& name, const U8& _scope) {
             return (token.value == name) && scope_matches(scope, _scope);
         }
 
         friend std::ostream& operator<<(std::ostream& stream, const Rule& rule){
             stream << rule.get_name() << " = ";
-            
+
             for(size_t i = 0; i < rule.branches.size(); i++){
                 stream << rule.branches[i];
                 if(i < rule.branches.size() - 1) stream << " | ";
@@ -76,7 +76,7 @@ class Rule {
         std::optional<Node_constraint> constraint;
 
         bool recursive = false;
-    
+
 };
 
 #endif

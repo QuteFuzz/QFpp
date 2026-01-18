@@ -1,10 +1,22 @@
 #include <utils.h>
 #include <sstream>
+#include <params.h>
 
-bool render_dags = false;
-bool run_genetic = false;
-bool swarm_testing = false;
-bool run_mutate = false;
+std::ofstream get_stream(fs::path output_dir, std::string file_name){
+    fs::create_directory(output_dir);
+    fs::path path = output_dir / file_name;
+    std::ofstream stream(path.string());
+
+    INFO("Writing to " + path.string());
+
+    return stream;
+}
+
+void init_global_seed(Control& control, std::optional<unsigned int> user_seed) {
+    std::random_device rd;
+    control.GLOBAL_SEED_VAL = user_seed.value_or(rd());
+    rng().seed(control.GLOBAL_SEED_VAL);
+}
 
 void lower(std::string& str){
     std::transform(str.begin(), str.end(), str.begin(),
@@ -12,21 +24,19 @@ void lower(std::string& str){
     );
 }
 
-std::mt19937& seed(){
-    static std::mt19937 random_gen{
-        std::random_device{}()
-    };
+std::mt19937& rng(){
+    static std::mt19937 random_gen;
     return random_gen;
 }
 
-/// @brief Random integer within some range
+/// @brief Random unsigned integer within some range
 /// @param max value inclusive
 /// @param min value inclusive
 /// @return
-int random_int(int max, int min){
+unsigned int random_uint(unsigned int max, unsigned int min){
     if(min < max){
-        std::uniform_int_distribution<int> int_dist(min, max);
-        return int_dist(seed());
+        std::uniform_int_distribution<unsigned int> uint_dist(min, max);
+        return uint_dist(rng());
 
     } else {
         return min;
@@ -36,11 +46,11 @@ int random_int(int max, int min){
 /// @brief Random float within some range
 /// @param max value inclusive
 /// @param min value inclusive
-/// @return 
+/// @return
 float random_float(float max, float min){
     if(min < max){
         std::uniform_real_distribution<float> float_dist(min, max);
-        return float_dist(seed());
+        return float_dist(rng());
 
     } else {
         return min;
@@ -48,12 +58,11 @@ float random_float(float max, float min){
 }
 
 
-std::optional<int> safe_stoi(const std::string& str) {
+std::optional<unsigned int> safe_stoul(const std::string& str) {
     try {
-        int ret = (str == "") ? 1 : std::stoi(str);
-        return std::optional<int>(ret);
+        unsigned int ret = (str == "") ? 1 : std::stoul(str);
+        return std::optional<unsigned int>(ret);
     } catch (const std::invalid_argument& e) {
-        // ERROR(e.what());
         ERROR("Please enter a valid integer or enter a valid command");
         return std::nullopt;
     }
@@ -62,12 +71,12 @@ std::optional<int> safe_stoi(const std::string& str) {
 /// @brief Find all possible combinations that can be chosen from numbers in [0, n-1]
 /// Knew the solution had something to do with counting in binary, but I didn't come up with this algorithm myself
 /// https://stackoverflow.com/questions/12991758/creating-all-possible-k-combinations-of-n-items-in-c
-/// @param n 
-/// @param r 
-/// @return 
+/// @param n
+/// @param r
+/// @return
 std::vector<std::vector<int>> n_choose_r(const int n, const int r){
     std::vector<std::vector<int>> res;
-    
+
     if(n >= r){
         std::string bitmask(r, 1);
         bitmask.resize(n, 0);
@@ -116,7 +125,7 @@ void pipe_to_command(std::string command, std::string write){
     }
 
     fwrite(write.c_str(), sizeof(char), write.size(), pipe);
-    
+
     if(pclose(pipe)){
         throw std::runtime_error(ANNOT("Command " + command + " failed"));
     }
@@ -159,9 +168,9 @@ std::string random_hex_colour(){
 
     ss << "#"
     << std::hex << std::setfill('0')
-    << std::setw(2) << int_dist(seed()) 
-    << std::setw(2) << int_dist(seed()) 
-    << std::setw(2) << int_dist(seed());
+    << std::setw(2) << int_dist(rng())
+    << std::setw(2) << int_dist(rng())
+    << std::setw(2) << int_dist(rng());
 
     return ss.str();
 }
@@ -200,6 +209,6 @@ void render(std::function<void(std::ostringstream&)> extend_dot_string, const fs
 
     const std::string str = render_path.string();
     std::string command = "dot -Tpng -o " + str;
-    
+
     pipe_to_command(command, dot_string.str());
 }

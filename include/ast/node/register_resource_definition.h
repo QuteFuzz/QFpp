@@ -13,11 +13,11 @@ class Register_resource_definition : public Node {
     public:
 
         /// @brief Dummy resource definition
-        Register_resource_definition() : 
+        Register_resource_definition() :
             Node("")
         {}
 
-        Register_resource_definition(const Variable& _name, const Integer& _size): 
+        Register_resource_definition(const Variable& _name, const Integer& _size):
             Node("register_resource_def", REGISTER_RESOURCE_DEF),
             name(_name),
             size(_size)
@@ -100,4 +100,3 @@ class Register_bit_definition : public Register_resource_definition {
 };
 
 #endif
-

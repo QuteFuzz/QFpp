@@ -14,7 +14,7 @@ class Register_resource : public Node {
             Node("register_resource", REGISTER_RESOURCE)
         {}
 
-        Register_resource(const std::string& str, const Token_kind& kind, const Variable& _name, const Integer& _index) : 
+        Register_resource(const std::string& str, const Token_kind& kind, const Variable& _name, const Integer& _index) :
             Node(str, kind),
             name(_name),
             index(_index)
@@ -23,13 +23,13 @@ class Register_resource : public Node {
         void reset(){used = false;}
 
         void set_used(){used = true;}
-        
+
         bool is_used(){return used;}
 
         inline std::shared_ptr<Variable> get_name() const {
             return std::make_shared<Variable>(name);
         }
-        
+
         inline std::shared_ptr<Integer> get_index() const {
             return std::make_shared<Integer>(index);
         }
@@ -43,7 +43,7 @@ class Register_resource : public Node {
 class Register_qubit : public Register_resource {
 
     public:
-        Register_qubit(const Variable& _name, const Integer& _index) : 
+        Register_qubit(const Variable& _name, const Integer& _index) :
             Register_resource("register_qubit", REGISTER_QUBIT, _name, _index)
         {}
 
@@ -54,7 +54,7 @@ class Register_qubit : public Register_resource {
 class Register_bit : public Register_resource {
 
     public:
-        Register_bit(const Variable& _name, const Integer& _index) : 
+        Register_bit(const Variable& _name, const Integer& _index) :
             Register_resource("register_bit", REGISTER_BIT, _name, _index)
         {}
 

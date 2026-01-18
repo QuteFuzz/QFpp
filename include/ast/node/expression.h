@@ -17,10 +17,10 @@ class Expression : public Node {
 
         void print(std::ostream& stream) const override {
             stream << " ";
-            
+
             for(const std::shared_ptr<Node>& child : children){
                 stream << *child;
-            } 
+            }
         }
 
     private:

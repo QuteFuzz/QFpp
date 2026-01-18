@@ -14,7 +14,7 @@ class Gate_op_args : public Node {
 
             if(*current_gate == SUBROUTINE){
                 ERROR("Gate op args cannot be used on subroutine!");
-            
+
             } else {
                 add_constraint(FLOAT_LIST, current_gate->get_num_floats() > 0);
                 add_constraint(BIT_LIST, current_gate->get_num_external_bits() > 0);

@@ -21,9 +21,9 @@ rz = "cirq.rz";
 measure = "cirq.measure";
 
 
-program = imports NEWLINE subroutine_defs NEWLINE block NEWLINE compiler_call;
+program = imports NEWLINE subroutine_defs NEWLINE circuit NEWLINE compiler_call;
 
-block = circuit_def_header NEWLINE body NEWLINE;
+circuit = circuit_def_header NEWLINE body NEWLINE;
 
 body = EXTERNAL::qubit_defs NEWLINE compound_stmts;
 
@@ -43,7 +43,7 @@ EXTERNAL {
 imports =
     "import cirq" NEWLINE
     swarm_testing_imports NEWLINE
-    "from diff_testing.lib import cirqTesting"
+    # "from diff_testing.lib import cirqTesting"
     ;
 
 
@@ -76,19 +76,19 @@ subroutine_op_arg =
 # Measurement in Cirq appends a measure operation with a string key
 # measure_op = circuit_name ".append(" measure "(" qubit_list ", key='" qubit_list "'))";
 
-gate_name = rx 
-            | ry 
-            | rz 
-            | h 
-            | x 
-            | y 
-            | z 
-            | s 
-            | t 
-            | cx 
-            | cy 
-            | cz 
-            | ccx 
+gate_name = rx
+            | ry
+            | rz
+            | h
+            | x
+            | y
+            | z
+            | s
+            | t
+            | cx
+            | cy
+            | cz
+            | ccx
             | ch;
 
 singular_qubit = qubit_name;

@@ -11,7 +11,7 @@ class Disjunction : public Node {
 
     public:
         Disjunction() :
-            Node("disjunction", DISJUNCTION)         
+            Node("disjunction", DISJUNCTION)
         {
             add_constraint(CONJUNCTION, 2);
         }
@@ -19,7 +19,7 @@ class Disjunction : public Node {
         void print(std::ostream& stream) const override {
             for(const std::shared_ptr<Node>& child : children){
                 stream << *child << " ";
-            } 
+            }
         }
 
     private:

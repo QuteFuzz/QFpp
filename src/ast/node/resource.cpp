@@ -13,4 +13,3 @@ std::string Resource::resolved_name() const {
     }
 
 }
-

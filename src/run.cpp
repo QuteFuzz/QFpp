@@ -3,10 +3,13 @@
 #include <lex.h>
 #include <params.h>
 
-Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
+const fs::path Run::OUTPUT_DIR = fs::path(__FILE__).parent_path().parent_path() / fs::path(QuteFuzz::OUTPUTS_FOLDER_NAME);
 
+Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
     std::vector<Token> meta_grammar_tokens;
-    
+
+    fs::create_directory(OUTPUT_DIR);
+
     // build all grammars
     try{
 
@@ -16,10 +19,10 @@ Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
             */
             for(auto& file : fs::directory_iterator(grammars_dir)){
 
-                if(file.is_regular_file() && (file.path().stem() == QuteFuzz::META_GRAMMAR_NAME)){                    
+                if(file.is_regular_file() && (file.path().stem() == QuteFuzz::META_GRAMMAR_NAME)){
                     Lexer lexer(file.path().string());
                     meta_grammar_tokens = std::move(lexer.get_tokens());
-                    
+
                     // remove EOF from meta grammar's tokens
                     meta_grammar_tokens.pop_back();
                     break;
@@ -38,22 +41,10 @@ Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
 
                     std::string name = grammar.get_name();
                     std::cout << "Built " << name << std::endl;
-                    
+
                     generators[name] = std::make_shared<Generator>(grammar);
                 }
             }
-
-            /* 
-                prepare directories
-            */
-            output_dir = grammars_dir.parent_path() / QuteFuzz::OUTPUTS_FOLDER_NAME;
-            
-            if(!fs::exists(output_dir)){
-                fs::create_directory(output_dir);
-            } else {
-                remove_all_in_dir(output_dir);
-            }
-
         }
 
     } catch (const fs::filesystem_error& error) {
@@ -77,13 +68,10 @@ void Run::set_grammar(){
         scope |= ((t == "O") & OWNED_SCOPE);
     }
 
-    if(is_grammar(grammar_name)){
-        current_generator = generators[grammar_name];
-        current_generator->set_grammar_entry(entry_name, scope);
+    current_generator = generators[grammar_name];
+    current_generator->set_grammar_entry(entry_name, scope);
 
-    } else {
-        std::cout << grammar_name << " is not a known grammar!" << std::endl;
-    }
+    setup_output_dir(grammar_name);
 }
 
 void Run::tokenise(const std::string& command, const char& delim){
@@ -119,6 +107,8 @@ void Run::help(){
 void Run::loop(){
 
     std::string current_command;
+    Control qf_control = {0};
+    init_global_seed(qf_control);
 
     while(true){
         std::cout << "> ";
@@ -127,65 +117,51 @@ void Run::loop(){
         tokenise(current_command, ' ');
 
         if(tokens.size() == 2){
-            set_grammar();
+            if (is_grammar(tokens[0])){
+                set_grammar();
+            } else if (tokens[0] == "seed") {
+                init_global_seed(qf_control, safe_stoul(tokens[1]));
+                INFO("Global seed set to " + std::to_string(qf_control.GLOBAL_SEED_VAL));
+            }
 
         } else if(current_command == "h"){
             help();
 
         } else if (current_command == "quit"){
+            current_generator.reset();
+            generators.clear();
             break;
 
         } else if(current_generator != nullptr){
 
-            if(current_command == "print"){
-                current_generator->print_grammar();
-            
-            } else if (current_command == "print_tokens"){
-                current_generator->print_tokens();
-            
-            } else if (current_command == "render_dags"){
-                render_dags = !render_dags;
-                INFO("DAG render " + FLAG_STATUS(render_dags));
-
-            } else if (current_command == "swarm_testing") {
-                swarm_testing = !swarm_testing;
-                INFO("Swarm testing mode " + FLAG_STATUS(swarm_testing));
-
-            } else if (current_command == "genetic"){
-                run_genetic = !run_genetic;
-                INFO("Genetic generation mode " + FLAG_STATUS(run_genetic));
+            if (current_command == "swarm_testing") {
+                qf_control.swarm_testing = !qf_control.swarm_testing;
+                INFO("Swarm testing mode " + FLAG_STATUS(qf_control.swarm_testing));
 
             } else if (current_command == "mutate"){
-                run_mutate = !run_mutate;
-                INFO("Mutation mode " + FLAG_STATUS(run_mutate));
+                qf_control.run_mutate = !qf_control.run_mutate;
+                INFO("Mutation mode " + FLAG_STATUS(qf_control.run_mutate));
 
-            } else if ((n_programs = safe_stoi(current_command))){
-                remove_all_in_dir(output_dir);
+            } else if ((n_programs = safe_stoul(current_command))){
+                remove_all_in_dir(current_output_dir);
 
-                if(run_genetic){
-                    current_generator->run_genetic(output_dir, n_programs.value_or(0));
+                for(size_t build_counter = 0; build_counter < n_programs.value_or(0); build_counter++){
+                    unsigned int seed = random_uint(UINT32_MAX);
 
-                } else if (run_mutate){
-                    for(int build_counter = 0; build_counter < n_programs.value_or(0); build_counter++){
-                        fs::path current_circuit_dir = output_dir / ("circuit" + std::to_string(build_counter));
-                        current_generator->ast_to_equivalent_programs(current_circuit_dir);
-                    }
-            
-                } else {
-                    for(int build_counter = 0; build_counter < n_programs.value_or(0); build_counter++){
-                        fs::path current_circuit_dir = output_dir / ("circuit" + std::to_string(build_counter));
-                        current_generator->ast_to_program(current_circuit_dir, std::nullopt);
-                    }
+                    std::ofstream stream = get_stream(current_output_dir, "regression_seed.txt");
+                    stream << qf_control.GLOBAL_SEED_VAL << std::endl;
+                    stream.close();
+
+                    fs::path current_circuit_dir = current_output_dir / ("circuit" + std::to_string(build_counter));
+                    current_generator->ast_to_program(current_circuit_dir, qf_control, seed);
                 }
+
+                init_global_seed(qf_control);
             }
 
         } else {
             std::cout << "\"" << current_command << "\" is unknown" << std::endl;
-        
+
         }
     }
 }
-
-
-
-

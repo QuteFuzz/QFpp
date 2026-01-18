@@ -14,7 +14,7 @@ Grammar::Grammar(const fs::path& filename, std::vector<Token>& meta_grammar_toke
 void Grammar::consume(int n){
 
     token_pointer += n;
-            
+
     if(token_pointer == num_tokens){
         curr_token.set_error("Out of tokens!");
     } else {
@@ -62,22 +62,22 @@ std::shared_ptr<Rule> Grammar::get_rule_pointer(const Token& token, const U8& sc
 }
 
 /// @brief Convert a single token into a term and add it to the given branch
-/// @param token 
+/// @param token
 void Grammar::add_term_to_branch(const Token& token, Branch& branch){
-    
+
     if(token.kind == SYNTAX){
         branch.add(Term(token.value, token.kind, nesting_depth));
 
     } else if (is_kind_of_rule(token.kind)){
         /*
             each term within the branch of a rule has a scope associated with it
-            if explicitly specified like EXTERNAL::term, then the term takes on that scope, otherwise, it 
+            if explicitly specified like EXTERNAL::term, then the term takes on that scope, otherwise, it
             takes on the scope of the current rule (i.e the rule def)
         */
         U8 scope = (rule_decl_scope == NO_SCOPE) && (current_rule != nullptr) ? current_rule->get_scope() : rule_decl_scope;
 
         branch.add(Term(get_rule_pointer(token, scope), token.kind, nesting_depth));
-    
+
     } else {
         throw std::runtime_error(ANNOT("Build branch should only be called on syntax or rule tokens!"));
     }
@@ -88,7 +88,7 @@ void Grammar::add_term_to_branch(const Token& token, Branch& branch){
 }
 
 /// @brief The token into a term and add it to all current branches
-/// @param tokens 
+/// @param tokens
 void Grammar::add_term_to_current_branches(const Token& token){
     if(current_branches.size() == 0){
         Branch b;
@@ -115,17 +115,17 @@ void Grammar::extend_current_branches(const Token& wildcard){
 
             if(wildcard.kind == OPTIONAL){
                 extensions.push_back(Branch(basis.remainders));
-                break;            
+                break;
 
             } else if (wildcard.kind == ZERO_OR_MORE){
                 extensions.push_back(Branch(basis.remainders));
             }
-        
+
             // use basis to get extensions depending on the wildcard being processed
             for(unsigned int mult = 2; mult <= WILDCARD_MAX; ++mult){
 
                 auto terms = append_vectors(basis.remainders, multiply_vector(basis.mults, mult));
-                
+
                 Branch extension(terms);
                 extensions.push_back(extension);
             }
@@ -143,7 +143,7 @@ void Grammar::build_grammar(){
     if(curr_token.is_ok()){
         Token token = curr_token.get_ok();
 
-        // cannot set here because if curr token is EOF, next should be an error. 
+        // cannot set here because if curr token is EOF, next should be an error.
         // I set this for only the specific cases where I use it to avoid an extra if statement checking for ok here
         Token next;
 
@@ -168,21 +168,21 @@ void Grammar::build_grammar(){
                 } else {
                     INFO("No terms exist to add constraint to!");
                 }
-                
+
             }
-        
+
         } else if (token.kind == RULE_START) {
             reset_current_branches();
             current_rule = get_rule_pointer(prev_token, rule_def_scope);
             current_rule->clear();
-        
+
         } else if (token.kind == RULE_APPEND){
             reset_current_branches();
             current_rule = get_rule_pointer(prev_token, rule_def_scope);
-        
+
         } else if (token.kind == RULE_END){
             complete_rule(); current_rule = nullptr;
-        
+
         // Constraint definition handling in grammar directly
         } else if (token.kind == LBRACK) {
             constraint_mode_state = READY_DEFINE_RULE_OCCURANCE;
@@ -209,14 +209,14 @@ void Grammar::build_grammar(){
             nesting_depth += 1;
 
         } else if (token.kind == RPAREN){
-            nesting_depth -= 1; 
+            nesting_depth -= 1;
 
             next = next_token.get_ok();
 
             if(!is_wildcard(next.kind)){
                 increment_nesting_depth_base();
             }
-        
+
         } else if (token.kind == SEPARATOR){
             add_current_branches_to_rule();
             reset_current_branches();
@@ -226,7 +226,7 @@ void Grammar::build_grammar(){
 
         } else if (token.kind == RBRACE){
             rule_def_scope = NO_SCOPE;
-        
+
         } else if (token.kind == EXTERNAL){
 
             if(current_rule == nullptr){
@@ -234,14 +234,14 @@ void Grammar::build_grammar(){
             } else {
                 rule_decl_scope |= EXTERNAL_SCOPE;
             }
-        
+
         } else if (token.kind == INTERNAL){
             if(current_rule == nullptr){
                 rule_def_scope |= INTERNAL_SCOPE;
             } else {
                 rule_decl_scope |= INTERNAL_SCOPE;
             }
-        
+
         } else if (token.kind == OWNED){
             if(current_rule == nullptr){
                 rule_def_scope |= OWNED_SCOPE;
@@ -252,7 +252,7 @@ void Grammar::build_grammar(){
         } else if (is_quiet(token.kind)){
 
         } else {
-            throw std::runtime_error(ANNOT("Unknown token: " + token.value)); 
+            throw std::runtime_error(ANNOT("Unknown token: " + token.value));
         }
 
         prev_token = token;

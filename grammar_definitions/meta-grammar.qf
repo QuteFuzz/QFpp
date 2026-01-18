@@ -13,16 +13,16 @@ EXTERNAL {
     bit_def = singular_bit_def | register_bit_def;
 }
 
-program       = imports NEWLINE subroutine_defs NEWLINE block NEWLINE compiler_call;
+program       = imports NEWLINE subroutine_defs NEWLINE circuit NEWLINE compiler_call;
 
-subroutine_defs = (subroutine_block NEWLINE subroutine_def_footer)*;
+subroutine_defs = (subroutine_circuit NEWLINE subroutine_def_footer)*;
 
 # all subroutines have just qubit ops and no if-else statements
 subroutine_body = EXTERNAL::qubit_defs NEWLINE (qubit_op NEWLINE)+;
 
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
 
-subroutine_block = circuit_def_header NEWLINE subroutine_body;
+subroutine_circuit = circuit_def_header NEWLINE subroutine_body;
 
 compound_stmts = (compound_stmt NEWLINE)+;
 
@@ -40,7 +40,7 @@ gate_name = h
     | cz
     | ccx;
     #| ch; # Missing measure and other non-universal gates for better compatibility
-    
+
 gate_op_args = qubit_list
     | qubit_list ", " bit_list
     | float_list ", " qubit_list
@@ -48,8 +48,8 @@ gate_op_args = qubit_list
 
 subroutine_op_args = subroutine_op_arg ("," subroutine_op_arg)*;
 
-subroutine_op_arg = 
-    qubit    
+subroutine_op_arg =
+    qubit
     | "[" qubit_list "]"
     ;
 
@@ -57,14 +57,14 @@ qubit_list  = qubit (", " qubit)*;
 
 float_list = float_literal (", " float_literal)*;
 
-qubit = 
-    singular_qubit 
+qubit =
+    singular_qubit
     | register_qubit
     ;
 
 bit_list = bit (", " bit)*;
 
-bit = singular_bit 
+bit = singular_bit
     | register_bit
     ;
 
@@ -92,7 +92,7 @@ disjunction =
     | conjunction;
 
 conjunction =
-    inversion ('and' inversion )+ 
+    inversion ('and' inversion )+
     | inversion;
 
 inversion =
@@ -101,7 +101,7 @@ inversion =
 # Comparison operators
 # --------------------
 
-comparison = 
+comparison =
     bitwise_or compare_op_bitwise_or_pair;
 
 compare_op_bitwise_or_pair =
@@ -113,10 +113,10 @@ compare_op_bitwise_or_pair =
     | gt_bitwise_or;
 
 eq_bitwise_or: '==' bitwise_or;
-noteq_bitwise_or: '!=' bitwise_or; 
+noteq_bitwise_or: '!=' bitwise_or;
 lte_bitwise_or: '<=' bitwise_or;
 lt_bitwise_or: '<' bitwise_or ;
-gte_bitwise_or: '>=' bitwise_or; 
+gte_bitwise_or: '>=' bitwise_or;
 gt_bitwise_or: '>' bitwise_or ;
 
 
@@ -124,19 +124,19 @@ gt_bitwise_or: '>' bitwise_or ;
 # -----------------
 
 bitwise_or:
-    # | bitwise_or '|' bitwise_xor 
+    # | bitwise_or '|' bitwise_xor
     bitwise_xor;
 
 bitwise_xor:
-    # | bitwise_xor '^' bitwise_and 
+    # | bitwise_xor '^' bitwise_and
     bitwise_and;
 
 bitwise_and:
-    # | bitwise_and '&' shift_expr 
+    # | bitwise_and '&' shift_expr
     shift_expr;
 
 shift_expr:
-    # | shift_expr '<<' primary 
+    # | shift_expr '<<' primary
     # | shift_expr '>>' primary
     primary;
 

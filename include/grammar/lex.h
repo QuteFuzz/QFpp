@@ -50,7 +50,7 @@ enum Token_kind {
     PHASED_X,
     BARRIER,
     SUBROUTINE_DEFS,
-    BLOCK,
+    CIRCUIT,
     BODY,
     QUBIT_DEFS,
     QUBIT_DEFS_DISCARD,
@@ -75,7 +75,7 @@ enum Token_kind {
     QUBIT_OP,
     GATE_OP,
     SUBROUTINE_OP,
-    GATE_MAME,
+    GATE_NAME,
     QUBIT_LIST,
     BIT_LIST,
     QUBIT_DEF_LIST,
@@ -112,7 +112,7 @@ enum Token_kind {
     /*
         these aren't used in the lexer, but in the AST node creation. maybe will be used in the lexer if these rules are needed later
     */
-    REGISTER_RESOURCE,  
+    REGISTER_RESOURCE,
     REGISTER_RESOURCE_DEF,
     SINGULAR_RESOURCE,
     SINGULAR_RESOURCE_DEF,
@@ -160,26 +160,26 @@ enum Token_kind {
 };
 
 inline bool is_wildcard(const Token_kind& kind) {
-    return 
-        (kind ==  OPTIONAL) || 
-        (kind == ZERO_OR_MORE) || 
+    return
+        (kind ==  OPTIONAL) ||
+        (kind == ZERO_OR_MORE) ||
         (kind == ONE_OR_MORE)
         ;
 }
 
-inline bool is_kind_of_rule(const Token_kind& kind){ 
-    return 
-        (RULE_KINDS_TOP < kind) && 
+inline bool is_kind_of_rule(const Token_kind& kind){
+    return
+        (RULE_KINDS_TOP < kind) &&
         (RULE_KINDS_BOTTOM > kind)
         ;
 }
 
 inline bool is_quiet(const Token_kind& kind){
-    return 
-        (kind == MULTI_COMMENT_START)|| 
-        (kind == MULTI_COMMENT_END) || 
+    return
+        (kind == MULTI_COMMENT_START)||
+        (kind == MULTI_COMMENT_END) ||
         (kind == LBRACE) ||
-        (kind == COMMENT) || 
+        (kind == COMMENT) ||
         (kind == ARROW);
 }
 
@@ -192,9 +192,9 @@ struct Token{
     }
 
     friend std::ostream& operator<<(std::ostream& stream, const Token t){
-        if(t.kind == SYNTAX) std::cout << t.kind << " " << std::quoted(t.value);        
+        if(t.kind == SYNTAX) std::cout << t.kind << " " << std::quoted(t.value);
         else std::cout << t.kind << " " << t.value;
-        
+
         return stream;
     }
 };
@@ -229,8 +229,10 @@ struct Regex_matcher {
 const std::vector<Regex_matcher> TOKEN_RULES = {
 
     Regex_matcher(R"(subroutine_defs)", SUBROUTINE_DEFS),
-    Regex_matcher(R"(block|subroutine_block)", BLOCK, false),
-    Regex_matcher(R"(body|subroutine_body)", BODY, false),
+    Regex_matcher(R"(circuit)", CIRCUIT),
+    Regex_matcher(R"(subroutine_circuit)", CIRCUIT),
+    Regex_matcher(R"(body)", BODY),
+    Regex_matcher(R"(subroutine_body)", BODY),
     Regex_matcher(R"(qubit_defs)", QUBIT_DEFS),
     Regex_matcher(R"(qubit_defs_discard)", QUBIT_DEFS_DISCARD),
     Regex_matcher(R"(bit_defs)", BIT_DEFS),
@@ -254,7 +256,7 @@ const std::vector<Regex_matcher> TOKEN_RULES = {
     Regex_matcher(R"(qubit_op)", QUBIT_OP),
     Regex_matcher(R"(gate_op)", GATE_OP),
     Regex_matcher(R"(subroutine_op)", SUBROUTINE_OP),
-    Regex_matcher(R"(gate_name)", GATE_MAME),
+    Regex_matcher(R"(gate_name)", GATE_NAME),
     Regex_matcher(R"(qubit_list)", QUBIT_LIST),
     Regex_matcher(R"(bit_list)", BIT_LIST),
     Regex_matcher(R"(qubit_def_list)", QUBIT_DEF_LIST),
@@ -376,7 +378,7 @@ const std::string FULL_REGEX = [] {
 
     return regex;
 }();
-        
+
 class Lexer{
     public:
         Lexer(){}
@@ -388,14 +390,14 @@ class Lexer{
         }
 
         std::string remove_outer_quotes(const std::string& token){
-            if ((token.size() > 2) && 
+            if ((token.size() > 2) &&
                 (((token.front() == '\"') && (token.back() == '\"')) ||
                 ((token.front() == '\'') && (token.back() == '\'')))
             ){
                 return token.substr(1, token.size() - 2);
             }
-            
-            return token;      
+
+            return token;
         }
 
         inline bool string_is(const std::string& string, const std::string& pattern){
@@ -414,11 +416,9 @@ class Lexer{
 
     private:
         Result<std::vector<Token>> result;
-        std::string _filename = "bnf.bnf"; 
+        std::string _filename = "bnf.bnf";
         bool ignore = false;
-        
+
 };
 
 #endif
-
-

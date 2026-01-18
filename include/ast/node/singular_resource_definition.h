@@ -11,11 +11,11 @@ class Singular_resource_definition : public Node {
     public:
 
         /// @brief Dummy resource definition
-        Singular_resource_definition() : 
+        Singular_resource_definition() :
             Node()
         {}
 
-        Singular_resource_definition(const Variable& _name) : 
+        Singular_resource_definition(const Variable& _name) :
             Node("singular_resource_def", SINGULAR_RESOURCE_DEF),
             name(_name)
         {}
@@ -30,9 +30,9 @@ class Singular_resource_definition : public Node {
 };
 
 class Singular_qubit_definition : public Singular_resource_definition {
-    
+
     public:
-        Singular_qubit_definition(const Variable& _name) : 
+        Singular_qubit_definition(const Variable& _name) :
             Singular_resource_definition(_name)
         {}
 
@@ -50,9 +50,9 @@ class Singular_qubit_definition : public Singular_resource_definition {
 };
 
 class Singular_bit_definition : public Singular_resource_definition {
-    
+
     public:
-        Singular_bit_definition(const Variable& _name) : 
+        Singular_bit_definition(const Variable& _name) :
             Singular_resource_definition(_name)
         {}
 
@@ -70,4 +70,3 @@ class Singular_bit_definition : public Singular_resource_definition {
 };
 
 #endif
-

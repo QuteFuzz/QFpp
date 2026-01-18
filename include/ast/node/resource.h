@@ -67,17 +67,24 @@ class Resource : public Node {
         inline std::shared_ptr<Integer> get_index() const {
             if(is_register_def()){
                 return std::get<Register_resource>(value).get_index();
+            } else {
+                return std::make_shared<Integer>();
             }
-
-            ERROR("Singular resource do not have indices!");
-
-            return std::make_shared<Integer>();
         }
 
         std::string resolved_name() const override;
 
-        
-        
+        bool operator==(const Resource& other) const {
+            bool name_matches = (*get_name() == *other.get_name());
+            bool index_matches = (*get_index() == *other.get_index());
+
+            if(is_register_def()){
+                return name_matches && index_matches;
+            } else {
+                return name_matches;
+            }
+        }
+
     private:
         std::variant<Register_resource, Singular_resource> value;
         U8 scope;
@@ -139,10 +146,6 @@ class Bit : public Resource {
     private:
 
 };
-
-
-
-
 
 
 #endif

@@ -5,3 +5,22 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = []
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.408",
+    "ruff>=0.14.13",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]  # Enable Pyflakes, pycodestyle, Isort, and Warnings
+ignore = []
+
+[tool.pyright]
+include = ["scripts", "diff_testing", "main.py"]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"  # Ch
