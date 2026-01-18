@@ -76,7 +76,7 @@ imports =
     "from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister" NEWLINE
     "from qiskit.circuit.library import standard_gates" NEWLINE
     swarm_testing_imports NEWLINE
-    "from diff_testing.lib import qiskitTesting" NEWLINE
+    "from diff_testing.qiskit import qiskitTesting" NEWLINE
     ;
 
 compound_stmt = 

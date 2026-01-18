@@ -3,8 +3,12 @@
 #include <lex.h>
 #include <params.h>
 
+const fs::path Run::OUTPUT_DIR = fs::path(QuteFuzz::OUTPUTS_FOLDER_NAME);
+
 Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
     std::vector<Token> meta_grammar_tokens;
+
+    fs::create_directory(OUTPUT_DIR);
     
     // build all grammars
     try{
@@ -41,18 +45,6 @@ Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
                     generators[name] = std::make_shared<Generator>(grammar);
                 }
             }
-
-            /* 
-                prepare directories
-            */
-            output_dir = grammars_dir.parent_path() / QuteFuzz::OUTPUTS_FOLDER_NAME;
-            
-            if(!fs::exists(output_dir)){
-                fs::create_directory(output_dir);
-            } else {
-                remove_all_in_dir(output_dir);
-            }
-
         }
 
     } catch (const fs::filesystem_error& error) {
@@ -78,6 +70,8 @@ void Run::set_grammar(){
 
     current_generator = generators[grammar_name];
     current_generator->set_grammar_entry(entry_name, scope);
+
+    setup_output_dir(grammar_name);
 }
 
 void Run::tokenise(const std::string& command, const char& delim){
@@ -149,16 +143,16 @@ void Run::loop(){
                 INFO("Mutation mode " + FLAG_STATUS(qf_control.run_mutate));
 
             } else if ((n_programs = safe_stoul(current_command))){
-                remove_all_in_dir(output_dir);
+                remove_all_in_dir(current_output_dir);
 
                 for(size_t build_counter = 0; build_counter < n_programs.value_or(0); build_counter++){
                     unsigned int seed = random_uint(UINT32_MAX);
 
-                    std::ofstream stream = get_stream(output_dir, "regression_seed.txt");
+                    std::ofstream stream = get_stream(current_output_dir, "regression_seed.txt");
                     stream << qf_control.GLOBAL_SEED_VAL << std::endl;
                     stream.close();
 
-                    fs::path current_circuit_dir = output_dir / ("circuit" + std::to_string(build_counter));
+                    fs::path current_circuit_dir = current_output_dir / ("circuit" + std::to_string(build_counter));
                     current_generator->ast_to_program(current_circuit_dir, qf_control, seed);
                 }
 

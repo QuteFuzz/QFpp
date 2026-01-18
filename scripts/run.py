@@ -68,12 +68,6 @@ def run_command(command, cwd=None, env=None, capture_output=False):
             print(e.stderr)
         raise e
 
-
-def clean_circuits():
-    log("Cleaning outputs directory")
-    run_command("rm -rf " + str(OUTPUT_DIR))
-
-
 def clean_and_build():
     """Compiles the C++ fuzzer"""
     log("Cleaning build directory...", Color.YELLOW)
@@ -93,14 +87,18 @@ def clean_and_build():
         sys.exit(1)
 
 
-def generate_tests(grammar, num_tests):
+def generate_tests(grammar, num_tests, seed=None):
     """Runs the fuzzer executable to generate python scripts"""
     log(f"Generating {num_tests} tests for grammar: {grammar}", Color.YELLOW)
 
     fuzzer_executable = BUILD_DIR / "fuzzer"
 
     # Commands to feed into the fuzzer CLI
-    input_str = f"{grammar} {ENTRY_POINT}\n{num_tests}\nquit\n"
+
+    if seed:
+        input_str = f"{grammar} {ENTRY_POINT}\n{num_tests}\nseed {seed}\nquit\n"
+    else:
+        input_str = f"{grammar} {ENTRY_POINT}\n{num_tests}\nquit\n"
 
     try:
         process = subprocess.Popen(
@@ -167,11 +165,16 @@ def is_circuit_interesting(result: CircuitResult) -> tuple[bool, str]:
     return is_interesting, reason_str
 
 
-def run_circuit(script_path: Path, env: dict, timeout: int = 300) -> tuple[str, str, int]:
+def run_circuit(
+    script_path: Path, env: dict, plot: bool, timeout: int = 300
+) -> tuple[str, str, int]:
     """Run a single circuit and capture output"""
     try:
+        cmd = [sys.executable, str(script_path)]
+        if plot:
+            cmd.append("--plot")
         result = subprocess.run(
-            [sys.executable, str(script_path)],
+            cmd,
             env=env,
             capture_output=True,
             text=True,
@@ -183,6 +186,7 @@ def run_circuit(script_path: Path, env: dict, timeout: int = 300) -> tuple[str, 
     except Exception as e:
         return "", f"Exception running circuit: {str(e)}", 1
 
+
 def set_python_path():
     """Set PYTHONPATH to include project directory"""
     env = os.environ.copy()
@@ -190,53 +194,24 @@ def set_python_path():
     env["PYTHONPATH"] = str(project_root) + os.pathsep + env.get("PYTHONPATH", "")
     return env
 
-def get_ciruit_dirs() -> List[Path]:
+
+def get_ciruit_dirs(grammar: str) -> List[Path]:
     """Get list of generated circuit directories"""
-    if not OUTPUT_DIR.exists():
+    current_output_dir = OUTPUT_DIR / grammar
+
+    if not current_output_dir.exists():
         return []
 
-    return sorted(
-        [d for d in OUTPUT_DIR.iterdir() if d.is_dir() and d.name.startswith("circuit")]
-    )
+    return sorted([d for d in current_output_dir.iterdir() if d.is_dir() and d.name.startswith("circuit")])
 
-def validate_generated_files_ci():
-    """
-    CI mode: Runs circuits and exits on first malformed circuit.
-    """
-    log("Validating generated circuits (CI mode)...", Color.YELLOW)
-
-    circuit_dirs = get_ciruit_dirs()
-    env = set_python_path()
-
-    for circ_dir in circuit_dirs:
-        script_path = circ_dir / "circuit.py"
-        if not script_path.exists():
-            continue
-
-        try:
-            run_command(f"{sys.executable} {script_path}", env=env, capture_output=True)
-        except subprocess.CalledProcessError as e:
-            err_output = e.stderr
-            if (
-                "SyntaxError" in err_output
-                or "IndentationError" in err_output
-                or "NameError" in err_output
-            ):
-                log(f"  [X] MALFORMED CIRCUIT in {circ_dir.name}", Color.RED)
-                print(err_output)
-                log("CI Failed", Color.RED)
-                sys.exit(1)
-
-    log("CI Passed", Color.GREEN)
-
-
-def validate_generated_files_nightly(grammar: str) -> List[CircuitResult]:
+def validate_generated_files(grammar: str, mode: str, plot: bool) -> List[CircuitResult]:
     """
     Nightly mode: Runs all circuits, collects interesting ones.
+    CI mode: Fails fast on first error.
     """
-    log("Validating generated circuits (Nightly mode)...", Color.YELLOW)
+    log(f"Validating generated circuits, mode: {mode} ...", Color.YELLOW)
 
-    circuit_dirs = get_ciruit_dirs()
+    circuit_dirs = get_ciruit_dirs(grammar=grammar)
     env = set_python_path()
 
     results = []
@@ -250,7 +225,7 @@ def validate_generated_files_nightly(grammar: str) -> List[CircuitResult]:
 
         result = CircuitResult(circuit_name=circ_dir.name, grammar=grammar)
 
-        stdout, stderr, returncode = run_circuit(script_path, env)
+        stdout, stderr, returncode = run_circuit(script_path, env, plot)
 
         if returncode != 0:
             # Analyze the error
@@ -266,6 +241,11 @@ def validate_generated_files_nightly(grammar: str) -> List[CircuitResult]:
                 result.had_runtime_error = True
                 result.error_message = stderr[:500]
                 log("  → Runtime error detected", Color.YELLOW)
+
+        if mode == "CI" and result.had_syntax_error:
+            log("CI mode: Failing fast due to error.", Color.RED)
+            log(f"Error message:\n{result.error_message}", Color.RED)
+            sys.exit(1)
 
         # Parse KS values from output
         result.ks_values = parse_ks_values(stdout)
@@ -287,7 +267,9 @@ def save_interesting_circuits(
     results: List[CircuitResult], grammar: str, run_timestamp: str
 ) -> int:
     """Copy interesting circuits to nightly results directory"""
+
     interesting_results = [r for r in results if r.is_interesting]
+    current_output_dir = OUTPUT_DIR / grammar
 
     if not interesting_results:
         log("No interesting circuits found", Color.GREEN)
@@ -297,12 +279,19 @@ def save_interesting_circuits(
     nightly_run_dir = NIGHTLY_DIR / run_timestamp / grammar
     nightly_run_dir.mkdir(parents=True, exist_ok=True)
 
+    regression_seed_src = current_output_dir / "regression_seed.txt"
+    regression_seed_dst = nightly_run_dir / "regression_seed.txt"
+
+    if regression_seed_src.exists():
+        regression_seed_dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(regression_seed_src, regression_seed_dst)
+
     log(
         f"Saving {len(interesting_results)} interesting circuits to {nightly_run_dir}", Color.YELLOW
     )
 
     for result in interesting_results:
-        src_dir = OUTPUT_DIR / result.circuit_name
+        src_dir = current_output_dir / result.circuit_name
         dst_dir = nightly_run_dir / result.circuit_name
 
         if src_dir.exists():
@@ -388,6 +377,10 @@ def main():
     parser.add_argument(
         "--grammars", nargs="+", default=GRAMMARS, help="Grammars to test (default: all)"
     )
+    parser.add_argument(
+        "--seed", type=int, help="Seed for random number generator", default=None, nargs=1
+    )
+    parser.add_argument("--plot", action="store_true", help="Plot results after running circuit")
 
     args = parser.parse_args()
 
@@ -400,46 +393,32 @@ def main():
     # Build the fuzzer
     clean_and_build()
 
-    if args.nightly:
-        # Nightly mode: collect all interesting circuits
-        run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        log(f"Starting nightly run: {run_timestamp}", Color.BLUE)
+    for grammar in args.grammars:
+        log(f"\n{'=' * 60}", Color.BLUE)
+        log(f"Testing grammar: {grammar}", Color.BLUE)
+        log(f"{'=' * 60}", Color.BLUE)
 
-        all_results = {}
+        generate_tests(grammar, num_tests)
         interesting_results = 0
 
-        for grammar in args.grammars:
-            log(f"\n{'=' * 60}", Color.BLUE)
-            log(f"Testing grammar: {grammar}", Color.BLUE)
-            log(f"{'=' * 60}", Color.BLUE)
+        if args.nightly:
+            run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            log(f"Starting nightly run: {run_timestamp}", Color.BLUE)
 
-            clean_circuits()
-            generate_tests(grammar, num_tests)
+            all_results = {}
 
-            results = validate_generated_files_nightly(grammar)
+            results = validate_generated_files(grammar, mode="nightly", plot=args.plot)
+
             all_results[grammar] = results
-
             interesting_results += save_interesting_circuits(results, grammar, run_timestamp)
+            log("\nNightly run complete!", Color.GREEN)
 
-        if interesting_results:
-            generate_nightly_report(all_results, run_timestamp)
+        else:
+            validate_generated_files(grammar, mode="CI", plot=args.plot)
+            log("\nCI Passed!", Color.GREEN)
 
-        log("\nNightly run complete!", Color.GREEN)
-
-    else:
-        # CI mode: fail fast on first error
-        log("Starting CI run", Color.BLUE)
-
-        for grammar in args.grammars:
-            log(f"\n{'=' * 60}", Color.BLUE)
-            log(f"Testing grammar: {grammar}", Color.BLUE)
-            log(f"{'=' * 60}", Color.BLUE)
-
-            clean_circuits()
-            generate_tests(grammar, num_tests)
-            validate_generated_files_ci()
-
-        log("\nCI Passed!", Color.GREEN)
+    if interesting_results:
+        generate_nightly_report(all_results, run_timestamp)
 
 
 if __name__ == "__main__":
