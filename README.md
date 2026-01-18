@@ -18,7 +18,7 @@ See wiki for more details.
 
 2. Run
 ```sh
-uv run scripts/ci_pipeline.py
+uv run scripts/run.py
 ```
 
 to run fuzzer and differential testing.
