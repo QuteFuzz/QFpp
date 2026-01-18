@@ -4,7 +4,7 @@
 #include <run.h>
 
 int main(){
-    
+
     Run run("../grammar_definitions");
     run.loop();
 

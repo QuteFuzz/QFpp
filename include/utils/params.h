@@ -4,7 +4,7 @@
 namespace QuteFuzz {
 
 /*
-    names 
+    names
 */
 constexpr char TOP_LEVEL_CIRCUIT_NAME[] = "main_circuit";
 constexpr char OUTPUTS_FOLDER_NAME[] = "outputs";

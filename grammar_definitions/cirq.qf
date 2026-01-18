@@ -76,19 +76,19 @@ subroutine_op_arg =
 # Measurement in Cirq appends a measure operation with a string key
 # measure_op = circuit_name ".append(" measure "(" qubit_list ", key='" qubit_list "'))";
 
-gate_name = rx 
-            | ry 
-            | rz 
-            | h 
-            | x 
-            | y 
-            | z 
-            | s 
-            | t 
-            | cx 
-            | cy 
-            | cz 
-            | ccx 
+gate_name = rx
+            | ry
+            | rz
+            | h
+            | x
+            | y
+            | z
+            | s
+            | t
+            | cx
+            | cy
+            | cz
+            | ccx
             | ch;
 
 singular_qubit = qubit_name;

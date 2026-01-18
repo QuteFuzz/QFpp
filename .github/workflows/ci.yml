@@ -22,7 +22,7 @@ jobs:
           # Check for formatting issues (optional, remove if you don't enforce formatting)
           uv run ruff format --check .
           # Run static type checking
-          uv run pyright      
+          uv run pyright
 
       - name: Run CI Pipeline
         run: uv run scripts/run.py --num-tests 5 # 5 programs per grammar

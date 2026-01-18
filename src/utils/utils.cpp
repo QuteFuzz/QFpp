@@ -8,7 +8,7 @@ std::ofstream get_stream(fs::path output_dir, std::string file_name){
     std::ofstream stream(path.string());
 
     INFO("Writing to " + path.string());
-    
+
     return stream;
 }
 
@@ -46,7 +46,7 @@ unsigned int random_uint(unsigned int max, unsigned int min){
 /// @brief Random float within some range
 /// @param max value inclusive
 /// @param min value inclusive
-/// @return 
+/// @return
 float random_float(float max, float min){
     if(min < max){
         std::uniform_real_distribution<float> float_dist(min, max);
@@ -71,12 +71,12 @@ std::optional<unsigned int> safe_stoul(const std::string& str) {
 /// @brief Find all possible combinations that can be chosen from numbers in [0, n-1]
 /// Knew the solution had something to do with counting in binary, but I didn't come up with this algorithm myself
 /// https://stackoverflow.com/questions/12991758/creating-all-possible-k-combinations-of-n-items-in-c
-/// @param n 
-/// @param r 
-/// @return 
+/// @param n
+/// @param r
+/// @return
 std::vector<std::vector<int>> n_choose_r(const int n, const int r){
     std::vector<std::vector<int>> res;
-    
+
     if(n >= r){
         std::string bitmask(r, 1);
         bitmask.resize(n, 0);
@@ -125,7 +125,7 @@ void pipe_to_command(std::string command, std::string write){
     }
 
     fwrite(write.c_str(), sizeof(char), write.size(), pipe);
-    
+
     if(pclose(pipe)){
         throw std::runtime_error(ANNOT("Command " + command + " failed"));
     }
@@ -168,8 +168,8 @@ std::string random_hex_colour(){
 
     ss << "#"
     << std::hex << std::setfill('0')
-    << std::setw(2) << int_dist(rng()) 
-    << std::setw(2) << int_dist(rng()) 
+    << std::setw(2) << int_dist(rng())
+    << std::setw(2) << int_dist(rng())
     << std::setw(2) << int_dist(rng());
 
     return ss.str();
@@ -209,6 +209,6 @@ void render(std::function<void(std::ostringstream&)> extend_dot_string, const fs
 
     const std::string str = render_path.string();
     std::string command = "dot -Tpng -o " + str;
-    
+
     pipe_to_command(command, dot_string.str());
 }

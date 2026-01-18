@@ -12,7 +12,7 @@ class Conjunction : public Node {
 
     public:
         Conjunction() :
-            Node("conjuction", CONJUNCTION)         
+            Node("conjuction", CONJUNCTION)
         {
             add_constraint(INVERSION, 2);
         }
@@ -20,7 +20,7 @@ class Conjunction : public Node {
         void print(std::ostream& stream) const override {
             for(const std::shared_ptr<Node>& child : children){
                 stream << *child << " ";
-            } 
+            }
         }
 
     private:

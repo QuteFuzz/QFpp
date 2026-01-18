@@ -57,7 +57,7 @@ class Branch {
 
         bool is_empty() const {return terms.empty();}
 
-        std::vector<Term> get_terms() const {return terms;} 
+        std::vector<Term> get_terms() const {return terms;}
 
         void setup_basis(Branch_multiply& basis, unsigned int nesting_depth) const;
 

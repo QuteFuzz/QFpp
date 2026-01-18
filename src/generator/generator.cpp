@@ -4,7 +4,7 @@
 
 std::shared_ptr<Ast> Generator::setup_builder(){
     std::shared_ptr<Ast> builder = std::make_shared<Ast>();
-    
+
     if(grammar->is_rule(entry_name, scope)){
         builder->set_entry(grammar->get_rule_pointer_if_exists(entry_name, scope));
 
@@ -12,7 +12,7 @@ std::shared_ptr<Ast> Generator::setup_builder(){
         WARNING("Rule " + entry_name + STR_SCOPE(scope) + " is not defined for grammar " + grammar->get_name() + ". Will use previous entry instead");
 
     } else {
-        ERROR("Rule " + entry_name + " is not defined for grammar " + grammar->get_name());  
+        ERROR("Rule " + entry_name + " is not defined for grammar " + grammar->get_name());
     }
 
     return builder;
@@ -51,12 +51,12 @@ void Generator::ast_to_program(fs::path output_dir, const Control& control, unsi
 
         stream << ast_root << std::endl;
         stream.close();
-        
+
         if(control.run_mutate){
             fs::path equi_dir = output_dir / "equi_circuits";
 
             stream = get_stream(equi_dir, "equi_circuit0.py");
-            
+
             Node ast_root_p = build_equivalent(ast_root);
             stream << ast_root_p << std::endl;
             stream.close();
@@ -72,12 +72,12 @@ void Generator::ast_to_program(fs::path output_dir, const Control& control, unsi
 }
 
 /// @brief Get defined gates in grammar, filtering out measure gates
-/// @return 
+/// @return
 std::vector<Token_kind> Generator::get_available_gates(){
     std::vector<Token_kind> out;
 
     std::shared_ptr<Rule> gate_name = grammar->get_rule_pointer_if_exists("gate_name");
-    
+
     if(gate_name == nullptr){
         ERROR("No gates have been defined in the grammar!");
 
@@ -103,7 +103,7 @@ Node_constraint Generator::get_swarm_testing_gateset(){
     size_t n_gates = std::min((size_t)QuteFuzz::SWARM_TESTING_GATESET_SIZE, gates.size());
 
     std::vector<Token_kind> selected_gates(n_gates);
-    
+
     #ifdef DEBUG
     if (n_gates == gates.size()) {
         WARNING("Requested swarm testing gateset size is larger than or equal to available gates");
@@ -124,6 +124,6 @@ Node_constraint Generator::get_swarm_testing_gateset(){
     for(size_t i = 0; i < n_gates; ++i){
         gateset_map[selected_gates[i]] = occurances[i];
     }
-    
+
     return Node_constraint(gateset_map);
 }

@@ -29,7 +29,7 @@ struct Node_constraint {
             rule_kinds_and_occurances{{rule, _occurances}}
         {}
 
-        Node_constraint(std::unordered_map<Token_kind, unsigned int> _rule_kinds_and_occurances): 
+        Node_constraint(std::unordered_map<Token_kind, unsigned int> _rule_kinds_and_occurances):
             rule_kinds_and_occurances(std::move(_rule_kinds_and_occurances))
         {}
 
@@ -116,7 +116,7 @@ class Node : public std::enable_shared_from_this<Node> {
             std::string str_id = " " + std::to_string(id);
 
             if(content.size() > 10){
-                return esc_content.substr(0, 10) + " ... " + str_id; 
+                return esc_content.substr(0, 10) + " ... " + str_id;
             } else {
                 return esc_content + str_id;
             }
@@ -204,7 +204,7 @@ class Node : public std::enable_shared_from_this<Node> {
         }
 
         bool branch_satisfies_constraint(const Branch& branch){
-            return (!constraint.has_value() || constraint.value().passed(branch)) && 
+            return (!constraint.has_value() || constraint.value().passed(branch)) &&
                    (!grammar_added_constraint.has_value() || grammar_added_constraint.value().passed(branch));
         }
 
@@ -257,7 +257,7 @@ class Node : public std::enable_shared_from_this<Node> {
 
         std::vector<int> child_partition;
         unsigned int partition_counter = 0;
-    
+
     private:
         std::optional<Node_constraint> constraint;
         std::optional<Node_constraint> grammar_added_constraint;

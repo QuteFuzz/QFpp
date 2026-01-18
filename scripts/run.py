@@ -68,6 +68,7 @@ def run_command(command, cwd=None, env=None, capture_output=False):
             print(e.stderr)
         raise e
 
+
 def clean_and_build():
     """Compiles the C++ fuzzer"""
     log("Cleaning build directory...", Color.YELLOW)
@@ -202,7 +203,10 @@ def get_ciruit_dirs(grammar: str) -> List[Path]:
     if not current_output_dir.exists():
         return []
 
-    return sorted([d for d in current_output_dir.iterdir() if d.is_dir() and d.name.startswith("circuit")])
+    return sorted(
+        [d for d in current_output_dir.iterdir() if d.is_dir() and d.name.startswith("circuit")]
+    )
+
 
 def validate_generated_files(grammar: str, mode: str, plot: bool) -> List[CircuitResult]:
     """
@@ -236,11 +240,11 @@ def validate_generated_files(grammar: str, mode: str, plot: bool) -> List[Circui
             ):
                 result.had_syntax_error = True
                 result.error_message = stderr[:500]  # Truncate long errors
-                log("  → Syntax error detected", Color.RED)
+                log("  Syntax error detected", Color.RED)
             else:
                 result.had_runtime_error = True
                 result.error_message = stderr[:500]
-                log("  → Runtime error detected", Color.YELLOW)
+                log("  Runtime error detected", Color.YELLOW)
 
         if mode == "CI" and result.had_syntax_error:
             log("CI mode: Failing fast due to error.", Color.RED)
@@ -250,13 +254,13 @@ def validate_generated_files(grammar: str, mode: str, plot: bool) -> List[Circui
         # Parse KS values from output
         result.ks_values = parse_ks_values(stdout)
         if result.ks_values:
-            log(f"  → KS values: {[f'{v:.4f}' for v in result.ks_values]}", Color.BLUE)
+            log(f"  KS values: {[f'{v:.4f}' for v in result.ks_values]}", Color.BLUE)
 
         # Determine if interesting
         result.is_interesting, result.reason = is_circuit_interesting(result)
 
         if result.is_interesting:
-            log(f"  ⚠ INTERESTING: {result.reason}", Color.YELLOW)
+            log(f"  INTERESTING: {result.reason}", Color.YELLOW)
 
         results.append(result)
 
@@ -343,7 +347,7 @@ def generate_nightly_report(all_results: dict[str, List[CircuitResult]], run_tim
             if interesting:
                 f.write("Interesting circuits:\n")
                 for r in interesting:
-                    f.write(f"  • {r.circuit_name}: {r.reason}\n")
+                    f.write(f"  {r.circuit_name}: {r.reason}\n")
 
             total_circuits += len(results)
             total_interesting += len(interesting)

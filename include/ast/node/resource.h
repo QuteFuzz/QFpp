@@ -76,7 +76,7 @@ class Resource : public Node {
 
         bool operator==(const Resource& other) const {
             bool name_matches = (*get_name() == *other.get_name());
-            bool index_matches = (*get_index() == *other.get_index()); 
+            bool index_matches = (*get_index() == *other.get_index());
 
             if(is_register_def()){
                 return name_matches && index_matches;
@@ -84,7 +84,7 @@ class Resource : public Node {
                 return name_matches;
             }
         }
-        
+
     private:
         std::variant<Register_resource, Singular_resource> value;
         U8 scope;

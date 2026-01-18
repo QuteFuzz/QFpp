@@ -28,17 +28,17 @@ void Context::reset(Reset_level l){
 }
 
 /// @brief Check whether current circuit can apply `circuit` as a subroutine
-/// @param dest 
-/// @param circuit 
-/// @return 
+/// @param dest
+/// @param circuit
+/// @return
 bool Context::can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit){
-    
+
     std::shared_ptr<Circuit> current_circuit = get_current_circuit();
 
     if(circuit->owned_by(QuteFuzz::TOP_LEVEL_CIRCUIT_NAME) || circuit->owned_by(current_circuit_owner)){
-        return false; 
+        return false;
     }
-    
+
     unsigned int num_dest_qubits = current_circuit->num_qubits_of(ALL_SCOPES);
     unsigned int num_dest_bits = current_circuit->num_bits_of(ALL_SCOPES);
 
@@ -98,9 +98,9 @@ std::shared_ptr<Circuit> Context::get_current_circuit() const {
 /// @brief This loop is guaranteed to stop. If this function is called, then `set_can_apply_subroutines` must've passed
 /// So you just need to return a current circuit that's not the main circuit, or the current circuit and needs <= num qubits in current circuit
 /// Qubit comparison needed because `set_can_apply_subroutines` only tells you that there's at least one circuit that can be picked
-/// @return 
+/// @return
 std::shared_ptr<Circuit> Context::get_random_circuit(){
-    
+
     bool valid_circuit_exists = false;
     for (const auto& circuit : circuits) {
         if (can_apply_as_subroutine(circuit)) {
@@ -108,17 +108,17 @@ std::shared_ptr<Circuit> Context::get_random_circuit(){
             break;
         }
     }
-    
+
     if(circuits.size() && valid_circuit_exists){
 
         std::shared_ptr<Circuit> circuit = circuits.at(random_uint(circuits.size()-1));
-        
+
         while(!can_apply_as_subroutine(circuit)){
             circuit = circuits.at(random_uint(circuits.size()-1));
         }
 
         return circuit;
-    
+
     } else {
         ERROR("No available circuits to use as subroutines!");
         return dummy_circuit;
@@ -136,8 +136,8 @@ std::shared_ptr<Circuit> Context::new_circuit_node(){
             std::shared_ptr<Node> subroutine = genome.value().dag.get_next_subroutine_gate();
 
             std::cout << YELLOW("setting circuit from DAG ") << std::endl;
-            std::cout << YELLOW("owner: " + subroutine->get_content()) << std::endl; 
-            std::cout << YELLOW("n ports: " + std::to_string(subroutine->get_n_ports())) << std::endl; 
+            std::cout << YELLOW("owner: " + subroutine->get_content()) << std::endl;
+            std::cout << YELLOW("n ports: " + std::to_string(subroutine->get_n_ports())) << std::endl;
 
             current_circuit_owner = subroutine->get_content();
             current_circuit = std::make_shared<Circuit>(current_circuit_owner, subroutine->get_n_ports());
@@ -168,11 +168,11 @@ std::shared_ptr<Qubit_defs> Context::get_qubit_defs_node(U8& scope){
 
     if(can_copy_dag){
         num_defs = current_circuit->make_resource_definitions(genome->dag, scope, RK_QUBIT);
-    
+
     } else {
         num_defs = current_circuit->make_resource_definitions(scope, RK_QUBIT);
     }
-    
+
     return std::make_shared<Qubit_defs>(num_defs);
 }
 
@@ -183,11 +183,11 @@ std::shared_ptr<Qubit_defs> Context::get_qubit_defs_discard_node(U8& scope){
 
     if(can_copy_dag){
         num_defs = current_circuit->make_resource_definitions(genome->dag, scope, RK_QUBIT, true);
-    
+
     } else {
         num_defs = current_circuit->make_resource_definitions(scope, RK_QUBIT, true);
     }
-    
+
     return std::make_shared<Qubit_defs>(num_defs, true);
 }
 
@@ -195,7 +195,7 @@ std::shared_ptr<Bit_defs> Context::get_bit_defs_node(U8& scope){
     std::shared_ptr<Circuit> current_circuit = get_current_circuit();
 
     unsigned int num_defs;
-    
+
     if(can_copy_dag){
         num_defs = current_circuit->make_resource_definitions(genome->dag, scope, RK_BIT);
     } else {
@@ -207,7 +207,7 @@ std::shared_ptr<Bit_defs> Context::get_bit_defs_node(U8& scope){
 
 std::optional<std::shared_ptr<Circuit>> Context::get_circuit(std::string owner){
     for(const std::shared_ptr<Circuit>& circuit : circuits){
-        if(circuit->owned_by(owner)) return std::make_optional<std::shared_ptr<Circuit>>(circuit); 
+        if(circuit->owned_by(owner)) return std::make_optional<std::shared_ptr<Circuit>>(circuit);
     }
 
     INFO("Circuit owner by " + owner + " not defined!");
@@ -218,8 +218,8 @@ std::optional<std::shared_ptr<Circuit>> Context::get_circuit(std::string owner){
 std::shared_ptr<Qubit> Context::new_qubit(){
     // U8 scope = (*current_gate == QuteFuzz::Measure) ? OWNED_SCOPE : ALL_SCOPES;
 
-    auto random_qubit = get_current_circuit()->get_random_qubit(ALL_SCOPES); 
-    
+    auto random_qubit = get_current_circuit()->get_random_qubit(ALL_SCOPES);
+
     random_qubit->extend_flow_path(current_qubit_op, current_port++);
 
     current_qubit = random_qubit;
@@ -239,7 +239,7 @@ std::shared_ptr<Integer> Context::get_current_qubit_index(){
 std::shared_ptr<Bit> Context::new_bit(){
     auto random_bit = get_current_circuit()->get_random_bit(ALL_SCOPES);
     current_bit = random_bit;
-    
+
     return current_bit;
 }
 
@@ -327,7 +327,7 @@ std::shared_ptr<Nested_stmt> Context::get_nested_stmt(const std::string& str, co
 }
 
 std::shared_ptr<Compound_stmt> Context::get_compound_stmt(std::shared_ptr<Node> parent){
-    
+
     if(can_copy_dag){
         return Compound_stmt::from_num_qubit_ops(parent->get_next_child_target());
     } else {
@@ -337,7 +337,7 @@ std::shared_ptr<Compound_stmt> Context::get_compound_stmt(std::shared_ptr<Node> 
 }
 
 std::shared_ptr<Compound_stmts> Context::get_compound_stmts(std::shared_ptr<Node> parent){
-    
+
     /*
         this check is to make sure we only call the function for the compound statements rule in the circuit body, as opposed to each nested
         call within the body in control flow
@@ -356,7 +356,7 @@ std::shared_ptr<Compound_stmts> Context::get_compound_stmts(std::shared_ptr<Node
 
     } else {
         return Compound_stmts::from_num_compound_stmts(WILDCARD_MAX);
-    }   
+    }
 }
 
 std::shared_ptr<Subroutine_defs> Context::new_subroutines_node(){

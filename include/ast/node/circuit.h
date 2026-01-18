@@ -9,24 +9,24 @@
 
 /*
     Circuits contain external and internal qubits, external and internal bits, which are set targets that must be satisfied
-    It is not a guarantee that any circuit will have both internal and external qubits, so the targets are set such that any circuit 
-    will have external qubits = (MIN_QUBITS, MAX_QUBITS) and internal qubits = (MIN_QUBITS, MAX_QUBITS) separately, 
+    It is not a guarantee that any circuit will have both internal and external qubits, so the targets are set such that any circuit
+    will have external qubits = (MIN_QUBITS, MAX_QUBITS) and internal qubits = (MIN_QUBITS, MAX_QUBITS) separately,
     instead of external qubits + internal qubits = (MIN_QUBITS, MAX_QUBITS)
 
     See example below, if using  external qubits + internal qubits = (MIN_QUBITS, MAX_QUBITS)
 
     =======================================
-                CIRCUIT INFO               
+                CIRCUIT INFO
     =======================================
     Owner: main_circuit
-    Target num qubits 
+    Target num qubits
     EXTERNAL: 3
     INTERNAL: 1
-    Target num bits 
+    Target num bits
     EXTERNAL: 1
     INTERNAL: 1
 
-    Qubit definitions 
+    Qubit definitions
     Qubit defs may not match target if circuit is built to match DAG
     name: qreg0 size: 1 Scope: internal
     =======================================
@@ -36,9 +36,9 @@
             if 0 <= 0  and 0 > 0   or 0 <= 0  and 0 == 0   :
                     if 0 <= 0  and 0 == 0   or 0 >= 0  and 0 <= 0   :
                             project_z(qreg0[0])
-                            cy(qreg0[0], 
+                            cy(qreg0[0],
 
-    the circuit set a target for internal qubits of 1, and external of 3. But since this is guppy, only internal definitions are created, and therefore this stalls in 
+    the circuit set a target for internal qubits of 1, and external of 3. But since this is guppy, only internal definitions are created, and therefore this stalls in
     an infinite loop while picking a random qubit
 */
 
@@ -46,7 +46,7 @@ class Circuit : public Node {
 
     public:
 
-        Circuit() : 
+        Circuit() :
             Node("circuit", CIRCUIT),
             owner("dummy_circuit")
         {}
@@ -54,21 +54,21 @@ class Circuit : public Node {
         /// @brief Generating a random circuit from scratch
         Circuit(std::string owner_name) :
             Node("circuit", CIRCUIT),
-            owner(owner_name), 
+            owner(owner_name),
             target_num_qubits_external(random_uint(QuteFuzz::MAX_QUBITS, QuteFuzz::MIN_QUBITS)),
             target_num_qubits_internal(random_uint(QuteFuzz::MAX_QUBITS, QuteFuzz::MIN_QUBITS)),
             target_num_bits_external(random_uint(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)),
-            target_num_bits_internal(random_uint(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)) 
+            target_num_bits_internal(random_uint(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS))
         {}
 
         /// @brief Generating a circuit with a specific number of external qubits (generating from DAG)
         Circuit(std::string owner_name, unsigned int num_external_qubits) :
             Node("circuit", CIRCUIT),
-            owner(owner_name), 
+            owner(owner_name),
             target_num_qubits_external(num_external_qubits),
             target_num_qubits_internal(random_uint(QuteFuzz::MAX_QUBITS, QuteFuzz::MIN_QUBITS)),
             target_num_bits_external(random_uint(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)),
-            target_num_bits_internal(random_uint(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)) 
+            target_num_bits_internal(random_uint(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS))
         {}
 
         inline bool owned_by(std::string other){return other == owner;}
@@ -150,7 +150,7 @@ class Circuit : public Node {
         }
 
         std::shared_ptr<Qubit> get_random_qubit(const U8& scope);
-        
+
         std::shared_ptr<Bit> get_random_bit(const U8& scope);
 
         std::shared_ptr<Qubit_definition> get_next_qubit_def(const U8& scope);
@@ -176,7 +176,7 @@ class Circuit : public Node {
         unsigned int target_num_qubits_internal = 0;
         unsigned int target_num_bits_external = QuteFuzz::MIN_BITS;
         unsigned int target_num_bits_internal = 0;
-        
+
         bool can_apply_subroutines = false;
 
         Collection<Qubit> qubits;

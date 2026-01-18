@@ -2,7 +2,7 @@
 #include <node.h>
 
 /// @brief need to have this check and store pointers to recursive branches separately
-/// @param branch 
+/// @param branch
 void Rule::add(const Branch& branch){
     branches.push_back(branch);
 
@@ -12,8 +12,8 @@ void Rule::add(const Branch& branch){
 }
 
 /// @brief checks for existing constraint, and adds the new constraint to it if it exists
-/// @param rule_kind 
-/// @param n_occurances 
+/// @param rule_kind
+/// @param n_occurances
 void Rule::add_constraint(const Token_kind& rule_kind, unsigned int n_occurances){
     if(constraint.has_value()){
         constraint.value().add(rule_kind, n_occurances);
@@ -23,7 +23,7 @@ void Rule::add_constraint(const Token_kind& rule_kind, unsigned int n_occurances
 }
 
 Branch Rule::pick_branch(std::shared_ptr<Node> parent){
-    
+
     size_t size = branches.size();
     bool valid_branch_exists = false;
     for (const auto& branch : branches) {
@@ -50,4 +50,3 @@ Branch Rule::pick_branch(std::shared_ptr<Node> parent){
         return Branch();
     }
 }
-

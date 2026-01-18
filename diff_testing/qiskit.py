@@ -31,7 +31,7 @@ class qiskitTesting(Base):
 
         # Compile circuit at 3 different optimisation levels
         for i in range(3):
-            compiled_circ = transpile(circuit, backend, optimization_level=i+1)
+            compiled_circ = transpile(circuit, backend, optimization_level=i + 1)
 
             counts2 = self.preprocess_counts(
                 backend.run(compiled_circ, shots=10000).result().get_counts()
@@ -45,7 +45,7 @@ class qiskitTesting(Base):
                 self.plot_histogram(
                     res=counts2,
                     title="Compiled Circuit Results",
-                    compilation_level=i+1,
+                    compilation_level=i + 1,
                     circuit_number=circuit_number,
                 )
 

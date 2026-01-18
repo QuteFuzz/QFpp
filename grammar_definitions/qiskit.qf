@@ -5,7 +5,7 @@ if_stmt =
     'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT elif_stmt
     | 'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
 # Elif statements seems impossible for qiskit?
-elif_stmt = ;       
+elif_stmt = ;
 else_stmt =
     'with else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT;
 
@@ -55,31 +55,31 @@ EXTERNAL {
     bit_defs = (bit_def NEWLINE)+;
 
     # Qiskit registers are defined by size and name, not individually
-    singular_qubit_def = 
+    singular_qubit_def =
         qubit_def_name " = QuantumRegister(1, '" qubit_def_name "')" NEWLINE
                         circuit_name ".add_register(" qubit_def_name ")";
 
-    register_qubit_def = 
+    register_qubit_def =
         qubit_def_name " = QuantumRegister(" qubit_def_size ", '" qubit_def_name "')" NEWLINE
                         circuit_name ".add_register(" qubit_def_name ")";
 
-    singular_bit_def = 
+    singular_bit_def =
         bit_def_name " = ClassicalRegister(1, '" bit_def_name "')" NEWLINE
                         circuit_name ".add_register(" bit_def_name ")";
 
-    register_bit_def = 
+    register_bit_def =
         bit_def_name " = ClassicalRegister(" bit_def_size ", '" bit_def_name "')" NEWLINE
                         circuit_name ".add_register(" bit_def_name ")";
 }
 
-imports = 
+imports =
     "from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister" NEWLINE
     "from qiskit.circuit.library import standard_gates" NEWLINE
     swarm_testing_imports NEWLINE
     "from diff_testing.qiskit import qiskitTesting" NEWLINE
     ;
 
-compound_stmt = 
+compound_stmt =
     qubit_op
     | if_stmt
     ;
@@ -92,7 +92,7 @@ gate_op = circuit_name "." gate_name "(" gate_op_args ")";
 
 subroutine_op = circuit_name ".append(" subroutine ",[" subroutine_op_args "])";
 
-subroutine_op_arg = 
+subroutine_op_arg =
     qubit
     | qubit_list
     ;

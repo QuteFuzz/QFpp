@@ -1,0 +1,49 @@
+exclude: '^outputs/|^nightly_report/'
+
+default_language_version:
+  python: python3.12
+
+repos:
+  # General file standards check
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+    - id: check-symlinks
+    - id: trailing-whitespace
+      args: [--markdown-linebreak-ext=md]
+    - id: end-of-file-fixer
+    - id: check-yaml
+    - id: check-toml
+    - id: check-ast
+    - id: check-added-large-files
+    - id: check-merge-conflict
+    - id: detect-private-key
+    - id: debug-statements
+
+  # for Python
+  - repo: local
+    hooks:
+    - id: pyright
+      name: pyright
+      entry: uv run pyright
+      language: system
+      types: [python]
+    - id: ruff-check
+      name: ruff-check
+      entry: uvx ruff check
+      language: system
+      types: [python]
+    - id: ruff-format
+      name: ruff-format
+      entry: uvx ruff format
+      language: system
+      types: [python]
+
+  # Check for non-ASCII
+  - repo: local
+    hooks:
+      - id: forbid-non-ascii
+        name: Forbid non-ASCII characters
+        entry: '[^\x00-\x7F]'
+        language: pygrep
+        types: [text]

@@ -9,7 +9,7 @@ Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
     std::vector<Token> meta_grammar_tokens;
 
     fs::create_directory(OUTPUT_DIR);
-    
+
     // build all grammars
     try{
 
@@ -19,10 +19,10 @@ Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
             */
             for(auto& file : fs::directory_iterator(grammars_dir)){
 
-                if(file.is_regular_file() && (file.path().stem() == QuteFuzz::META_GRAMMAR_NAME)){                    
+                if(file.is_regular_file() && (file.path().stem() == QuteFuzz::META_GRAMMAR_NAME)){
                     Lexer lexer(file.path().string());
                     meta_grammar_tokens = std::move(lexer.get_tokens());
-                    
+
                     // remove EOF from meta grammar's tokens
                     meta_grammar_tokens.pop_back();
                     break;
@@ -41,7 +41,7 @@ Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
 
                     std::string name = grammar.get_name();
                     std::cout << "Built " << name << std::endl;
-                    
+
                     generators[name] = std::make_shared<Generator>(grammar);
                 }
             }
@@ -161,11 +161,7 @@ void Run::loop(){
 
         } else {
             std::cout << "\"" << current_command << "\" is unknown" << std::endl;
-        
+
         }
     }
 }
-
-
-
-

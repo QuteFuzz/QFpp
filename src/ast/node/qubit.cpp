@@ -11,7 +11,7 @@ void Qubit::extend_flow_path(const std::shared_ptr<Qubit_op> qubit_op, unsigned 
     } else {
         edge = Edge(flow_path.back().get_dest_port(), current_port, qubit_op);
     }
-    
+
     flow_path_length += 1;
     flow_path.push_back(edge);
 }
@@ -31,14 +31,14 @@ void Qubit::extend_dot_string(std::ostringstream& ss) const {
             if(i != 0) {
                 ss << flow_path[i - 1].get_node_resolved_name();
             }
-            
+
             ss << flow_path[i] << ", color=\"" << flow_path_colour << "\"];" << std::endl;
         }
 
-        Edge last_path = flow_path[flow_path_length-1]; 
+        Edge last_path = flow_path[flow_path_length-1];
 
-        ss << last_path.get_node_resolved_name() << "-> " << output_node 
-        << "[label=\"" << std::to_string(last_path.get_dest_port()) 
+        ss << last_path.get_node_resolved_name() << "-> " << output_node
+        << "[label=\"" << std::to_string(last_path.get_dest_port())
         << ",0\", color=\"" << flow_path_colour << "\"];" << std::endl;
 
     } else {

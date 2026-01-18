@@ -9,7 +9,7 @@ class Gate;
 class Qubit_op : public Node {
 
     public:
-        Qubit_op(): 
+        Qubit_op():
             Node("qubit_op", QUBIT_OP)
         {}
 

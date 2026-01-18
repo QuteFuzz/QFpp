@@ -9,7 +9,7 @@ class Nested_stmt : public Node {
         Nested_stmt(const std::string& str, const Token_kind& kind):
             Node(str, kind)
         {}
-    
+
         Nested_stmt(const std::string& str, const Token_kind& kind, unsigned int target_num_qubit_ops):
             Node(str, kind)
         {

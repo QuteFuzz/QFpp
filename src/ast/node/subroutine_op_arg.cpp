@@ -12,7 +12,7 @@ Subroutine_op_arg::Subroutine_op_arg(const std::shared_ptr<Qubit_definition>& qu
 
     if(qubit_def->is_register_def()){
         add_constraint(QUBIT_LIST, 1);
-    
+
     } else {
         add_constraint(QUBIT, 1);
     }

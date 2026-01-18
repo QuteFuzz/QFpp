@@ -12,7 +12,7 @@ struct Generator {
 
     public:
 
-        Generator(Grammar& _grammar): 
+        Generator(Grammar& _grammar):
             grammar(std::make_shared<Grammar>(_grammar))
         {}
 
@@ -65,4 +65,3 @@ struct Generator {
 
 
 #endif
-

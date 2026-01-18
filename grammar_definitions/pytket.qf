@@ -32,21 +32,21 @@ qubit_defs = (qubit_def NEWLINE)+;
 
 bit_defs = (bit_def NEWLINE)+;
 
-singular_qubit_def = 
+singular_qubit_def =
     qubit_def_name ' = Qubit("'  qubit_def_name '",0)' NEWLINE circuit_name ".add_qubit(" qubit_def_name ")";
 
-register_qubit_def = 
+register_qubit_def =
     qubit_def_name " = " circuit_name '.add_q_register("' qubit_def_name '",' qubit_def_size ")";
 
-singular_bit_def = 
+singular_bit_def =
     bit_def_name ' = Bit("' bit_def_name '", 0)' NEWLINE circuit_name ".add_bit(" bit_def_name ")";
 
-register_bit_def = 
+register_bit_def =
     bit_def_name " = " circuit_name '.add_c_register("' bit_def_name '",' bit_def_size ")";
 }
 
 
-imports = 
+imports =
     "from pytket import Circuit, Qubit, Bit" NEWLINE
     "from pytket.circuit import Op, OpType, MultiplexorBox, CircBox" NEWLINE
     swarm_testing_imports NEWLINE

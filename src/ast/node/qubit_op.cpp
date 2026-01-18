@@ -16,7 +16,7 @@ bool Qubit_op::is_subroutine_op() const{
 }
 
 void Qubit_op::add_gate_if_subroutine(std::vector<std::shared_ptr<Node>>& subroutine_gates){
-    
+
     if(is_subroutine_op()){
         for(std::shared_ptr<Node>& gate : subroutine_gates){
             if(gate->get_content() == gate_node.value()->get_content()){return;}
@@ -28,7 +28,7 @@ void Qubit_op::add_gate_if_subroutine(std::vector<std::shared_ptr<Node>>& subrou
 
 std::string Qubit_op::resolved_name() const {
     std::string _string = "UNKNOWN";
-    
+
     if(gate_node.has_value()){
         _string = gate_node.value()->get_content();
     }

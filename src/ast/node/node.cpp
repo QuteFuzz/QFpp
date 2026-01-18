@@ -4,7 +4,7 @@ int Node::node_counter = 0;
 
 std::shared_ptr<Node>* Node::find_slot(Token_kind node_kind, std::vector<std::shared_ptr<Node>*>& visited_slots, bool track_visited){
     std::shared_ptr<Node>* maybe_find;
-    
+
     for(std::shared_ptr<Node>& child : children){
         if((child->get_kind() == node_kind) && !visited(visited_slots, &child, track_visited)){
             return &child;
@@ -29,16 +29,16 @@ std::shared_ptr<Node> Node::find(Token_kind node_kind){
 }
 
 /// @brief // Adds child to parent node, along with any grammar constraint from parent only if child doesn't have the same constraint already on that Rule
-/// @param child 
-/// @param child_constraint 
+/// @param child
+/// @param child_constraint
 void Node::add_child(const std::shared_ptr<Node> child, const std::optional<Node_constraint>& child_grammar_constraint){
-    
+
     // First merge child's grammar constraint with parent's grammar constraint, child priority.
     if (child_grammar_constraint.has_value() && grammar_added_constraint.has_value()) {
         for(const auto& [rule, occurances] : grammar_added_constraint->get_constraints()){
             child->add_grammar_constraint(rule, occurances);
         }
-        
+
         for(const auto& [rule, occurances] : child_grammar_constraint->get_constraints()){
                 if(child->grammar_added_constraint.has_value()){
                     child->grammar_added_constraint->set_occurances_for_rule(rule, occurances);
@@ -46,9 +46,9 @@ void Node::add_child(const std::shared_ptr<Node> child, const std::optional<Node
                     child->add_grammar_constraint(rule, occurances);
                 }
         }
-    } 
+    }
     //If parent has no grammar constraints, just add child's constraints
-    else if (!grammar_added_constraint.has_value() && child_grammar_constraint.has_value()) { 
+    else if (!grammar_added_constraint.has_value() && child_grammar_constraint.has_value()) {
         for(const auto& [rule, occurances] : child_grammar_constraint->get_constraints()){
             child->add_grammar_constraint(rule, occurances);
         }
@@ -102,13 +102,13 @@ int Node::get_next_child_target(){
 }
 
 /// @brief Create a random partition of `target` over `n_children`. Final result contains +ve ints
-/// @param target 
-/// @param n_children 
+/// @param target
+/// @param n_children
 void Node::make_partition(int target, int n_children){
 
     if((n_children == 1) || (target == 1)){
         child_partition = {target};
-    
+
     } else if (target == n_children){
         child_partition = std::vector<int>(n_children, 1);
 
@@ -116,7 +116,7 @@ void Node::make_partition(int target, int n_children){
 
         /*
             make N-1 random cuts between 1 and T-1
-            ex: 
+            ex:
                 T = 10, N = 4
                 {2, 9, 4}
         */
@@ -158,20 +158,20 @@ void Node::make_partition(int target, int n_children){
 }
 
 /// @brief Make partitions for control flow circuits and branches, adding correct constraints where required
-/// @param target 
-/// @param n_children 
+/// @param target
+/// @param n_children
 void Node::make_control_flow_partition(int target, int n_children){
     make_partition(target, n_children);
-    
+
     if(n_children == 1){
         add_constraint(ELSE_STMT, 0);
         add_constraint(ELIF_STMT, 0);
 
     } else if (random_uint(1)) {
         add_constraint(ELSE_STMT, 1);
-        
+
     } else {
         add_constraint(ELIF_STMT, 1);
-   
+
     }
 }

@@ -99,7 +99,7 @@ void render(std::function<void(std::ostringstream&)> extend_dot_string, const fs
 template<typename T>
 std::vector<T> multiply_vector(std::vector<T> vec, int mult){
     std::vector<T> multiplied_vec;
-    
+
     multiplied_vec.reserve(vec.size() * mult);
 
     for(int i = 0; i < mult; ++i){
@@ -119,4 +119,3 @@ std::vector<T> append_vectors(std::vector<T> vec1, std::vector<T> vec2){
 }
 
 #endif
-

@@ -4,7 +4,7 @@ on:
   # Run at 2 AM UTC every day
   schedule:
     - cron: '0 2 * * *'
-  
+
   # Allow manual trigger from GitHub UI
   workflow_dispatch:
     inputs:
@@ -18,7 +18,7 @@ jobs:
   nightly:
     runs-on: ubuntu-24.04
     timeout-minutes: 120  # 2 hours max
-    
+
     # Grant permissions to post comments
     permissions:
       contents: read      # Read repository contents
@@ -26,7 +26,7 @@ jobs:
       pull-requests: write # Not needed but often bundled
       # Note: There's no direct "commit comments" permission,
       # but having write access should work
-    
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -40,7 +40,7 @@ jobs:
         run: |
           # Use workflow inputs if provided, otherwise defaults
           GRAMMARS="${{ github.event.inputs.grammars || 'pytket qiskit cirq' }}"
-          
+
           uv run scripts/run.py \
             --nightly \
             --grammars $GRAMMARS

@@ -25,51 +25,29 @@ class pytketTesting(Base):
         """
         backend = AerBackend()
 
-        try:
-            # Get original circuit shots
-            uncompiled_circ = backend.get_compiled_circuit(circuit, optimisation_level=0)
-            handle1 = backend.process_circuit(uncompiled_circ, n_shots=100000)
-            result1 = backend.get_result(handle1)
-            counts1 = self.preprocess_counts(result1.get_counts())
-            is_testcase_interesting = False
-            consistency_counter = 0
+        # Get original circuit shots
+        uncompiled_circ = backend.get_compiled_circuit(circuit, optimisation_level=0)
+        handle1 = backend.process_circuit(uncompiled_circ, n_shots=100000)
+        result1 = backend.get_result(handle1)
+        counts1 = self.preprocess_counts(result1.get_counts())
 
-            # Compile circuit at 3 different optimisation levels
-            for i in range(3):
-                compiled_circ = backend.get_compiled_circuit(circuit, optimisation_level=i + 1)
+        # Compile circuit at 3 different optimisation levels
+        for i in range(3):
+            compiled_circ = backend.get_compiled_circuit(circuit, optimisation_level=i + 1)
 
-                # Process the compiled circuit
-                handle2 = backend.process_circuit(compiled_circ, n_shots=100000)
-                result2 = backend.get_result(handle2)
-                counts2 = self.preprocess_counts(result2.get_counts())
+            # Process the compiled circuit
+            handle2 = backend.process_circuit(compiled_circ, n_shots=100000)
+            result2 = backend.get_result(handle2)
+            counts2 = self.preprocess_counts(result2.get_counts())
 
-                # Run the kstest on the two results
-                ks_value = self.ks_test(counts1, counts2, 100000)
-                print(f"Optimisation level {i + 1} ks-test p-value: {ks_value}")
+            # Run the kstest on the two results
+            ks_value = self.ks_test(counts1, counts2, 100000)
+            print(f"Optimisation level {i + 1} ks-test p-value: {ks_value}")
 
-                # Heuristic to determine if the testcase is interesting
-                if ks_value < 0.2:
-                    consistency_counter += 1
-                if ks_value < 0.05 or consistency_counter >= 2:
-                    is_testcase_interesting = True
-
-                # plot results
-                if self.plot:
-                    self.plot_histogram(counts1, "Uncompiled Circuit Results", 0, circuit_number)
-                    self.plot_histogram(counts2, "Compiled Circuit Results", i + 1, circuit_number)
-
-        except Exception:
-            print("Exception :", traceback.format_exc())
-            self.save_interesting_circuit(circuit_number, self.OUTPUT_DIR / "interesting_circuits")
-            # If exception occurs, we assume it might be interesting enough to save,
-            # so we ensure `is_testcase_interesting` logic doesn't conflict.
-            # The original code saved in `except` block AND checked flag.
-            return
-
-        # Dump files to a "interesting circuits" folder if found interesting testcase
-        if is_testcase_interesting:
-            print(f"Interesting circuit found: {circuit_number}")
-            self.save_interesting_circuit(circuit_number, self.OUTPUT_DIR / "interesting_circuits")
+            # plot results
+            if self.plot:
+                self.plot_histogram(counts1, "Uncompiled Circuit Results", 0, circuit_number)
+                self.plot_histogram(counts2, "Compiled Circuit Results", i + 1, circuit_number)
 
     def run_circ_statevector(self, circuit: Circuit, circuit_number: int) -> None:
         """

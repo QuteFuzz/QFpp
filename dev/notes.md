@@ -1,4 +1,4 @@
-## Linting
+## Linting and type checking
 
 1. Install pyright and ruff vscode extensions. The former is for type checking, the latter is for formatting.
 
@@ -8,7 +8,7 @@
   "[python]": {
     // Set Ruff as the default formatter for Python files
     "editor.defaultFormatter": "charliermarsh.ruff",
-    
+
     // Automatically format code (indentation, spacing) on save
     "editor.formatOnSave": true,
 
@@ -23,7 +23,7 @@
   "ruff.enable": true,
   "ruff.lint.args": [],
 
-  // Disable the built-in Pylint/Flake8 if you have them enabled, 
+  // Disable the built-in Pylint/Flake8 if you have them enabled,
   // since Ruff replaces them
   "python.linting.pylintEnabled": false,
   "python.linting.flake8Enabled": false,
@@ -34,7 +34,9 @@
   "python.analysis.typeCheckingMode": "basic", // Matches your pyproject.toml
   "python.analysis.extraPaths": [
     "scripts",
-    "diff_testing" 
+    "diff_testing"
   ]
 }
 ```
+
+Run `pre-commit run --all-files` to run checks locally

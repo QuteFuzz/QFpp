@@ -10,7 +10,7 @@ std::shared_ptr<Qubit> Circuit::get_random_qubit(const U8& scope){
             break;
         }
     }
-    
+
     if(total_qubits && valid_qubit_exists){
         std::shared_ptr<Qubit> qubit = qubits.at(random_uint(total_qubits - 1));
 
@@ -21,7 +21,7 @@ std::shared_ptr<Qubit> Circuit::get_random_qubit(const U8& scope){
         qubit->set_used();
 
         return qubit;
-    
+
     } else {
         ERROR("No more available qubits!");
         return dummy_qubit;
@@ -38,7 +38,7 @@ std::shared_ptr<Bit> Circuit::get_random_bit(const U8& scope){
             break;
         }
     }
-    
+
     if(total_bits && valid_bit_exists){
 
         std::shared_ptr<Bit> bit = bits.at(random_uint(total_bits - 1));
@@ -50,7 +50,7 @@ std::shared_ptr<Bit> Circuit::get_random_bit(const U8& scope){
         bit->set_used();
 
         return bit;
-    
+
     } else {
         ERROR("No more available bits!");
         return dummy_bit;
@@ -101,10 +101,10 @@ std::shared_ptr<Bit_definition> Circuit::get_next_bit_def(const U8& scope){
 }
 
 /// @brief Make a register resource definition, whose size is bounded by `max_size`
-/// @param max_size 
-/// @param scope 
-/// @param rk 
-/// @param total_definitions 
+/// @param max_size
+/// @param scope
+/// @param rk
+/// @param total_definitions
 /// @return number of resources created from this definition
 unsigned int Circuit::make_register_resource_definition(unsigned int max_size, U8& scope, Resource_kind rk, unsigned int& total_definitions){
 
@@ -140,10 +140,10 @@ unsigned int Circuit::make_register_resource_definition(unsigned int max_size, U
     return size;
 }
 
-/// @brief Make singular resource definition 
-/// @param scope 
-/// @param rk 
-/// @param total_definitions 
+/// @brief Make singular resource definition
+/// @param scope
+/// @param rk
+/// @param total_definitions
 /// @return 1, since there's one qubit created from a singular resource definition
 unsigned int Circuit::make_singular_resource_definition(U8& scope, Resource_kind rk, unsigned int& total_definitions){
     if (rk == RK_QUBIT) {
@@ -185,7 +185,7 @@ unsigned int Circuit::make_resource_definitions(U8& scope, Resource_kind rk, boo
         unsigned int target_num_resources = 0, total_num_definitions = 0;
         bool scope_is_external = (scope & EXTERNAL_SCOPE);
         bool classificaton_is_qubit = (rk == RK_QUBIT);
-        
+
         switch((scope_is_external << 1) | classificaton_is_qubit){
             case 0b00: target_num_resources = target_num_bits_internal; break;
             case 0b01: target_num_resources = target_num_qubits_internal; break;
@@ -217,7 +217,7 @@ unsigned int Circuit::make_resource_definitions(const Dag& dag, const U8& scope,
     } else {
         if(rk == RK_QUBIT){
             qubits = dag.get_qubits();
-            qubit_defs = dag.get_qubit_defs();   
+            qubit_defs = dag.get_qubit_defs();
 
             return qubit_defs.get_num_of(scope);
 
@@ -229,7 +229,7 @@ unsigned int Circuit::make_resource_definitions(const Dag& dag, const U8& scope,
         }
     }
 }
- 
+
 void Circuit::print_info() const {
 
     std::cout << "=======================================" << std::endl;

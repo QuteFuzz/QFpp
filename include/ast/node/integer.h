@@ -8,11 +8,11 @@ class Integer : public Node {
     public:
         using Node::Node;
 
-        Integer() : 
+        Integer() :
             Node(std::to_string(42))
         {}
 
-        Integer(int i) : 
+        Integer(int i) :
             Node(std::to_string(i)),
             num(i)
         {}

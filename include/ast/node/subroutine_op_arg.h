@@ -10,7 +10,7 @@ class Subroutine_op_arg : public Node {
         Subroutine_op_arg();
 
         Subroutine_op_arg(const std::shared_ptr<Qubit_definition>& qubit_def);
-        
+
     private:
 };
 

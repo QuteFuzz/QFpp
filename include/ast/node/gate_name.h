@@ -25,9 +25,9 @@ class Gate_name : public Node {
 
             if(*parent == SUBROUTINE_OP){
                 add_constraint(SUBROUTINE, 1);
-                
-            } else if (*parent == GATE_OP) {                
-                add_constraint(SUBROUTINE, 0);                
+
+            } else if (*parent == GATE_OP) {
+                add_constraint(SUBROUTINE, 0);
 
             } else {
                 ERROR("Gate name expected parent to be subroutine_op or gate_op!");

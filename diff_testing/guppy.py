@@ -2,23 +2,23 @@ import datetime
 import sys
 import traceback
 from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import TimeoutError as FuturesTimeoutError
 from typing import Any, Dict
 
 import pyqir
 import qnexus as qnx
 from guppylang import enable_experimental_features
-from guppylang.std.qsystem import *
-from guppylang.std.quantum import *
 from guppylang_internals.diagnostic import DiagnosticsRenderer
 from guppylang_internals.engine import DEF_STORE
 from guppylang_internals.error import GuppyError
 from hugr.qsystem.result import QsysResult
+from qnexus.qir.conversion.hugr import hugr_to_qir  # type: ignore
+from selene_sim import Quest
+from selene_sim.build import build
+
 from .lib import Base
-from qnexus.qir.conversion.hugr import hugr_to_qir
-from selene_sim import Quest, build
 
 enable_experimental_features()
+
 
 class guppyTesting(Base):
     def __init__(self) -> None:
@@ -33,34 +33,16 @@ class guppyTesting(Base):
             return circuit.compile()
 
         # Run the compile with timeout using ThreadPoolExecutor
-        try:
-            with ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(compile_circuit)
-                # Wait for result, ignoring return value as we just test compilation here?
-                # Original code assigned result but didn't use it immediately except for potential future passes
-                _ = future.result(timeout=self.TIMEOUT_SECONDS)
-
-        except FuturesTimeoutError:
-            print(f"Compilation timed out after {self.TIMEOUT_SECONDS} seconds")
-            self.save_interesting_circuit(circuit_number, self.OUTPUT_DIR / "interesting_circuits")
-        except Exception as e:
-            if isinstance(e, GuppyError):
-                renderer = DiagnosticsRenderer(DEF_STORE.sources)
-                renderer.render_diagnostic(e.error)
-                sys.stderr.write("\n".join(renderer.buffer))
-                sys.stderr.write("\n\nGuppy compilation failed due to 1 previous error\n")
-                return
-
-            # If it's not a GuppyError, fall back to default hook
-            print("Error during compilation:", e)
-            print("Exception :", traceback.format_exc())
-            self.save_interesting_circuit(circuit_number, self.OUTPUT_DIR / "interesting_circuits")
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(compile_circuit)
+            # Wait for result, ignoring return value as we just test compilation here?
+            # Original code assigned result but didn't use it immediately except for potential
+            # future passes
+            _ = future.result(timeout=self.TIMEOUT_SECONDS)
 
         # TODO: Insert TKET optimisation passes here
 
-    def guppy_qir_diff_test(
-        self, circuit: Any, circuit_number: int, total_num_qubits: int
-    ) -> None:
+    def guppy_qir_diff_test(self, circuit: Any, circuit_number: int, total_num_qubits: int) -> None:
         """
         Compile guppy circuit into hugr and convert to QIR for differential testing
         """
@@ -73,9 +55,7 @@ class guppyTesting(Base):
             # Circuit compiled successfully, now differential test hugr
             # Running hugr on selene
             runner = build(hugr)
-            results = QsysResult(
-                runner.run_shots(Quest(), n_qubits=total_num_qubits, n_shots=1000)
-            )
+            results = QsysResult(runner.run_shots(Quest(), n_qubits=total_num_qubits, n_shots=1000))
             counts_guppy = results.collated_counts()
 
             reconstructed_counts: Dict[Any, int] = {
@@ -108,21 +88,17 @@ class guppyTesting(Base):
             )
 
             qnx.jobs.wait_for(ref_execute_job)
-            qir_result = qnx.jobs.results(ref_execute_job)[0].download_result()
-            counts_qir = self.preprocess_counts(qir_result.get_counts())
+            qir_result = qnx.jobs.results(ref_execute_job)[0].download_result()  # type: ignore
+            counts_qir = self.preprocess_counts(qir_result.get_counts())  # type: ignore
 
             # Run the kstest on the two results
             ks_value = self.ks_test(processed_counts_guppy, counts_qir, 1000)
             print(f"Guppy vs QIR ks-test p-value: {ks_value}")
 
-            if ks_value < 0.05:
-                print(f"Interesting circuit found: {circuit_number}")
-                self.save_interesting_circuit(
-                    circuit_number, self.OUTPUT_DIR / "interesting_circuits"
-                )
-
             if self.plot:
-                self.plot_histogram(processed_counts_guppy, "Guppy Circuit Results", 0, circuit_number)
+                self.plot_histogram(
+                    processed_counts_guppy, "Guppy Circuit Results", 0, circuit_number
+                )
                 self.plot_histogram(counts_qir, "Guppy-QIR Circuit Results", 0, circuit_number)
 
         except Exception as e:
@@ -136,4 +112,3 @@ class guppyTesting(Base):
             # If it's not a GuppyError, fall back to default hook
             print("Error during compilation:", e)
             print("Exception :", traceback.format_exc())
-            self.save_interesting_circuit(circuit_number, self.OUTPUT_DIR / "interesting_circuits")

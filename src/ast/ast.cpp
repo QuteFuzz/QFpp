@@ -40,11 +40,11 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 
 	std::string str = term.get_string();
 	Token_kind kind = term.get_kind();
-	
+
 	if(*parent == COMPARE_OP_BITWISE_OR_PAIR){
 		return std::make_shared<Compare_op_bitwise_or_pair_child>(str, kind);
 	}
-	
+
 	switch(kind){
 
 		case INDENT:
@@ -74,14 +74,14 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 
 		case COMPOUND_STMTS:
 			return context.get_compound_stmts(parent);
-		
+
 		case COMPOUND_STMT:
 			return context.get_compound_stmt(parent);
 
 		case IF_STMT:
 			// Bridging solution for IF_STMT without defining it as a gate
 			context.reset(RL_QUBIT_OP);
-			
+
 			return context.get_nested_stmt(str, kind, parent);
 
 		case ELIF_STMT: case ELSE_STMT:
@@ -98,19 +98,19 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 
 		case EXPRESSION:
 			return std::make_shared<Expression>();
-		
+
 		case CIRCUIT_ID:
 			return context.get_circuit_id();
 
-		case MAIN_CIRCUIT_NAME:				
+		case MAIN_CIRCUIT_NAME:
 			return std::make_shared<Variable>(QuteFuzz::TOP_LEVEL_CIRCUIT_NAME);
 
 		case SUBROUTINE_DEFS:
-			return context.new_subroutines_node();	
+			return context.new_subroutines_node();
 
 		case QUBIT_OP:
 			return context.new_qubit_op_node();
-	
+
 		case CIRCUIT_NAME:
 			return std::make_shared<Variable>(context.get_current_circuit_owner());
 
@@ -176,7 +176,7 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 			return context.get_current_qubit_name();
 
 		case QUBIT:
-			return context.new_qubit(); 
+			return context.new_qubit();
 
 		case BIT_INDEX:
 			return context.get_current_bit_index();
@@ -186,7 +186,7 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 
 		case BIT:
 			return context.new_bit();
-		
+
 		case FLOAT_LITERAL:
 			return std::make_shared<Float_literal>();
 
@@ -201,9 +201,9 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 
 			subroutine_circuit->print_info();
 
-			std::shared_ptr<Gate> subroutine_gate = context.new_gate(str, kind, subroutine_circuit->get_qubit_defs()); 
+			std::shared_ptr<Gate> subroutine_gate = context.new_gate(str, kind, subroutine_circuit->get_qubit_defs());
 			subroutine_gate->add_child(std::make_shared<Variable>(subroutine_circuit->get_owner()));
-			
+
 			return subroutine_gate;
 		}
 
@@ -212,7 +212,7 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 
 		case SUBROUTINE_OP_ARG:
 			return context.new_arg();
-	
+
 		case H: case X: case Y: case Z: case T:
 		case TDG: case S: case SDG: case PROJECT_Z: case MEASURE_AND_RESET:
 		case V: case VDG:
@@ -236,10 +236,10 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 
 		case U3: case U:
 			return context.new_gate(str, kind, 1, 0, 3);
-		
+
 		case MEASURE:
 			return context.new_gate(str, kind, 1, 1, 0);
-		
+
 		case BARRIER: {
 			std::shared_ptr<Circuit> current_circuit = context.get_current_circuit();
 
@@ -267,13 +267,13 @@ void Ast::write_branch(std::shared_ptr<Node> parent, const Term& term){
 		for(const Term& child_term : branch){
 
 			std::shared_ptr<Node> child_node = get_node(parent, child_term);
-			
+
 			// Obtain grammar-added constraint from child term if it is a rule (defined in .qf file)
 			std::optional<Node_constraint> child_grammar_constraint = std::nullopt;
 			if (child_term.is_rule()) {
 				 child_grammar_constraint = child_term.get_rule()->get_constraint();
 			}
-			
+
 			parent->add_child(child_node, child_grammar_constraint);
 
 			if(child_node->size()) continue;

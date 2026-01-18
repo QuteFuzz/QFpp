@@ -20,7 +20,7 @@ vdg = "vdg";
 tdg = "tdg";
 sdg = "sdg";
 ccx = "toffoli";
-measure_and_reset = "measure_and_reset"; 
+measure_and_reset = "measure_and_reset";
 #barrier = "barrier"; # Taken out for now until new strctural changes are made
 phased_x = "phased_x";
 # project_z = "project_z"; # Taken out for now until new strctural changes are made
@@ -106,7 +106,7 @@ subroutine_op = subroutine "(" subroutine_op_args ")";
 
 singular_qubit = qubit_name;
 
-register_qubit = qubit_name "[" qubit_index "]"; 
+register_qubit = qubit_name "[" qubit_index "]";
 
 
 imports = "from guppylang.decorator import guppy " NEWLINE

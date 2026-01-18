@@ -112,7 +112,7 @@ enum Token_kind {
     /*
         these aren't used in the lexer, but in the AST node creation. maybe will be used in the lexer if these rules are needed later
     */
-    REGISTER_RESOURCE,  
+    REGISTER_RESOURCE,
     REGISTER_RESOURCE_DEF,
     SINGULAR_RESOURCE,
     SINGULAR_RESOURCE_DEF,
@@ -160,26 +160,26 @@ enum Token_kind {
 };
 
 inline bool is_wildcard(const Token_kind& kind) {
-    return 
-        (kind ==  OPTIONAL) || 
-        (kind == ZERO_OR_MORE) || 
+    return
+        (kind ==  OPTIONAL) ||
+        (kind == ZERO_OR_MORE) ||
         (kind == ONE_OR_MORE)
         ;
 }
 
-inline bool is_kind_of_rule(const Token_kind& kind){ 
-    return 
-        (RULE_KINDS_TOP < kind) && 
+inline bool is_kind_of_rule(const Token_kind& kind){
+    return
+        (RULE_KINDS_TOP < kind) &&
         (RULE_KINDS_BOTTOM > kind)
         ;
 }
 
 inline bool is_quiet(const Token_kind& kind){
-    return 
-        (kind == MULTI_COMMENT_START)|| 
-        (kind == MULTI_COMMENT_END) || 
+    return
+        (kind == MULTI_COMMENT_START)||
+        (kind == MULTI_COMMENT_END) ||
         (kind == LBRACE) ||
-        (kind == COMMENT) || 
+        (kind == COMMENT) ||
         (kind == ARROW);
 }
 
@@ -192,9 +192,9 @@ struct Token{
     }
 
     friend std::ostream& operator<<(std::ostream& stream, const Token t){
-        if(t.kind == SYNTAX) std::cout << t.kind << " " << std::quoted(t.value);        
+        if(t.kind == SYNTAX) std::cout << t.kind << " " << std::quoted(t.value);
         else std::cout << t.kind << " " << t.value;
-        
+
         return stream;
     }
 };
@@ -378,7 +378,7 @@ const std::string FULL_REGEX = [] {
 
     return regex;
 }();
-        
+
 class Lexer{
     public:
         Lexer(){}
@@ -390,14 +390,14 @@ class Lexer{
         }
 
         std::string remove_outer_quotes(const std::string& token){
-            if ((token.size() > 2) && 
+            if ((token.size() > 2) &&
                 (((token.front() == '\"') && (token.back() == '\"')) ||
                 ((token.front() == '\'') && (token.back() == '\'')))
             ){
                 return token.substr(1, token.size() - 2);
             }
-            
-            return token;      
+
+            return token;
         }
 
         inline bool string_is(const std::string& string, const std::string& pattern){
@@ -416,11 +416,9 @@ class Lexer{
 
     private:
         Result<std::vector<Token>> result;
-        std::string _filename = "bnf.bnf"; 
+        std::string _filename = "bnf.bnf";
         bool ignore = false;
-        
+
 };
 
 #endif
-
-

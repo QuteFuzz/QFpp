@@ -30,9 +30,7 @@ from scipy.stats import ks_2samp
 
 
 class Base:
-    # Define the plots directory as a class variable
     OUTPUT_DIR = (Path(__file__).parent.parent / "outputs").resolve()
-    # Define timeout seconds for any compilation
     TIMEOUT_SECONDS = 30
 
     def __init__(self, qss_name) -> None:
@@ -56,7 +54,7 @@ class Base:
             return
 
         try:
-            qnx.client.auth.login_no_interaction(user_email, user_password)
+            qnx.client.auth.login_no_interaction(user_email, user_password)  # type: ignore
         except Exception as e:
             print("Error logging into Nexus:", e)
 
@@ -84,7 +82,6 @@ class Base:
             else:
                 key_str = str(k).replace(" ", "")
 
-            # Ensure valid binary string before conversion
             if key_str:
                 out[int(key_str, 2)] = v
 
@@ -108,10 +105,8 @@ class Base:
             "Sample size does not match number of shots"
         )
 
-        # ks_2samp returns KstestResult, we only want pvalue [1]
-        _, p_value = ks_2samp(sorted(sample1), sorted(sample2), method="asymp")  # type: ignore
-
-        return float(p_value)
+        res = ks_2samp(sorted(sample1), sorted(sample2), method="asymp")
+        return float(res.pvalue)  # type: ignore
 
     def compare_statevectors(
         self, sv1: NDArray[np.complex128], sv2: NDArray[np.complex128], precision: int = 6
@@ -125,10 +120,7 @@ class Base:
         if not plots_dir.exists():
             plots_dir.mkdir(parents=True, exist_ok=True)
 
-        plots_path = (
-            plots_dir
-            / f"plot_{compilation_level}.png"
-        )
+        plots_path = plots_dir / f"plot_{compilation_level}.png"
 
         # Plot the histogram
         values = list(res.keys())
@@ -141,6 +133,6 @@ class Base:
         plt.xlabel("Possible results")
         plt.ylabel("Number of occurances")
         plt.title(title)
-        plt.tight_layout()  # Adjust layout to prevent clipping of ylabel and title
+        plt.tight_layout()
         plt.savefig(plots_path)
-        plt.close()  # Close the plot to free up memory
+        plt.close()

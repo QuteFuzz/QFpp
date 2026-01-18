@@ -10,7 +10,7 @@ class Edge {
     public:
         Edge(){}
 
-        Edge(unsigned int _src_port, unsigned int _dest_port, std::shared_ptr<Qubit_op> _node): 
+        Edge(unsigned int _src_port, unsigned int _dest_port, std::shared_ptr<Qubit_op> _node):
             src_port(_src_port),
             dest_port(_dest_port),
             node(_node)
@@ -60,11 +60,11 @@ struct Node_data{
 
 /// @brief Given a set of qubits, get DAG score using the path taken by each qubit
 class Dag {
-    
+
     public:
         Dag(){}
 
-        Dag(const std::shared_ptr<Circuit> circuit); 
+        Dag(const std::shared_ptr<Circuit> circuit);
 
         inline Collection<Qubit_definition> get_qubit_defs() const {
             return qubit_defs;
@@ -121,7 +121,7 @@ class Dag {
         friend std::ostream& operator<<(std::ostream& stream, const Dag& dag){
 
             stream << "=========================================" << std::endl;
-            stream << "                DAG INFO                 " << std::endl; 
+            stream << "                DAG INFO                 " << std::endl;
             stream << "=========================================" << std::endl;
 
             stream << "N_NODES (all nodes are Qubit_ops): " << dag.n_qubit_ops() << std::endl;
@@ -156,7 +156,7 @@ class Dag {
 
         Collection<Qubit> qubits;
         Collection<Qubit_definition> qubit_defs;
-        
+
         Collection<Bit> bits;
         Collection<Bit_definition> bit_defs;
 

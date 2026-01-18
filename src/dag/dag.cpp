@@ -10,17 +10,17 @@ Dag::Dag(const std::shared_ptr<Circuit> circuit){
 
     bits = circuit->get_bits();
     bit_defs = circuit->get_bit_defs();
-    
+
     for(const auto& qubit : qubits){
         qubit->add_path_to_dag(*this);
     }
 }
 
 std::optional<unsigned int> Dag::nodewise_data_contains(std::shared_ptr<Qubit_op> node){
-    
+
     for(unsigned int i = 0; i < nodewise_data.size(); i++){
         if(nodewise_data[i].node->get_id() == node->get_id()){
-            return std::make_optional<unsigned int>(i);   
+            return std::make_optional<unsigned int>(i);
         }
     }
 
@@ -38,7 +38,7 @@ void Dag::add_edge(const Edge& edge, std::optional<int> maybe_dest_node_id, int 
 
     if(maybe_pos.has_value() == false){
         nodewise_data.push_back(Node_data{.node = source_node, .inputs = {}, .children = {}});
-        
+
         // reserve memory for inputs depending on number of ports this gate has
         nodewise_data.at(pos).inputs.resize(source_node->get_n_ports(), 0);
     }
@@ -61,8 +61,8 @@ int Dag::max_out_degree(){
 }
 
 /// @brief Combine heuristics to get dag score
-/// @return 
-int Dag::score(){   
+/// @return
+int Dag::score(){
     return max_out_degree();
 }
 

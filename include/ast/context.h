@@ -48,7 +48,7 @@ struct Context {
 		std::shared_ptr<Circuit> get_random_circuit();
 
 		std::shared_ptr<Circuit> new_circuit_node();
-		
+
 		std::shared_ptr<Qubit_defs> get_qubit_defs_node(U8& scope);
 
 		std::shared_ptr<Qubit_defs> get_qubit_defs_discard_node(U8& scope);
@@ -99,7 +99,7 @@ struct Context {
 			current_bit_definition = get_current_circuit()->get_next_bit_def(scope);
 			return current_bit_definition;
 		}
-		
+
 		std::shared_ptr<Variable> get_current_bit_definition_name();
 
 		std::shared_ptr<Integer> get_current_bit_definition_size();
@@ -141,7 +141,7 @@ struct Context {
 		}
 
 		/// @brief Is the current circuit being generated a subroutine?
-		/// @return 
+		/// @return
 		inline bool current_circuit_is_subroutine(){
 			return subroutines_node.has_value() && (subroutines_node.value()->build_state() == NB_BUILD);
 		}
@@ -150,7 +150,7 @@ struct Context {
 
 		void set_genome(const std::optional<Genome>& _genome);
 
-		inline void print_circuit_info() const {		
+		inline void print_circuit_info() const {
 			for(const std::shared_ptr<Circuit>& circuit : circuits){
 				circuit->print_info();
 			}
@@ -159,7 +159,7 @@ struct Context {
 	private:
 		std::string current_circuit_owner;
 		std::vector<std::shared_ptr<Circuit>> circuits;
-		
+
 		std::shared_ptr<Circuit> dummy_circuit = std::make_shared<Circuit>();
 		Integer dummy_int;
 		Variable dummy_var;
@@ -167,7 +167,7 @@ struct Context {
 		unsigned int subroutine_counter = 0;
 		unsigned int current_port;
 		unsigned int nested_depth;
-	
+
 		std::shared_ptr<Qubit_definition> current_qubit_definition;
 		std::shared_ptr<Bit_definition> current_bit_definition;
 		std::shared_ptr<Qubit> current_qubit;

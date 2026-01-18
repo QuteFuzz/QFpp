@@ -32,7 +32,7 @@ bool diagonal_in_same_basis(const std::shared_ptr<Node>& compound_stmt_a, const 
         // qubit_b->print_ast("");
 
         if (gates_found && qubits_match){
-            return (X_BASIS.count(gate_a->get_kind()) && X_BASIS.count(gate_b->get_kind())) || 
+            return (X_BASIS.count(gate_a->get_kind()) && X_BASIS.count(gate_b->get_kind())) ||
                 (Y_BASIS.count(gate_a->get_kind()) && Y_BASIS.count(gate_b->get_kind()));
         } else {
             return false;
@@ -62,12 +62,12 @@ void Gate_fission::apply(std::shared_ptr<Node>& compound_stmts){
 
     for(auto _qubit_op : Node_gen(*compound_stmts, QUBIT_OP)){
         std::shared_ptr<Qubit_op> qubit_op = std::dynamic_pointer_cast<Qubit_op>(_qubit_op);
-        
+
         if(!qubit_op->is_subroutine_op()){
             // std::shared_ptr<Gate> gate = std::dynamic_pointer_cast<Gate>(qubit_op->find(GATE_NAME)->child_at(0));
             // std::shared_ptr<Float_literal> f = std::dynamic_pointer_cast<Float_literal>(qubit_op->find(FLOAT_LITERAL));
 
         }
-        
+
     }
 }

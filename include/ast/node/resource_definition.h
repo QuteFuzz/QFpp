@@ -10,7 +10,7 @@ class Resource_definition : public Node {
     public:
 
         /// @brief Dummy definition
-        Resource_definition() : 
+        Resource_definition() :
             Node("resource_def", RESOURCE_DEF),
             value(Register_resource_definition())
         {}
@@ -23,7 +23,7 @@ class Resource_definition : public Node {
 
         Resource_definition(const Singular_resource_definition& def, const U8& _scope) :
             Node("singular_resource_def", SINGULAR_RESOURCE_DEF),
-            value(def), 
+            value(def),
             scope(_scope)
         {}
 
@@ -36,11 +36,11 @@ class Resource_definition : public Node {
         }
 
         /// @brief Get size of resource definition if it is a register definition. If not, return 1, or whatever `default_size` is as an `Integer` node
-        /// @param default_size 
-        /// @return 
-        inline std::shared_ptr<Integer> get_size(unsigned int default_size = 1) const {                
+        /// @param default_size
+        /// @return
+        inline std::shared_ptr<Integer> get_size(unsigned int default_size = 1) const {
             if(is_register_def()){
-                return std::get<Register_resource_definition>(value).get_size();   
+                return std::get<Register_resource_definition>(value).get_size();
             }
 
             WARNING("Singular resource definitions do not have sizes! Using default size = " + default_size);
@@ -73,7 +73,7 @@ class Qubit_definition : public Resource_definition {
 
         Qubit_definition(const Register_resource_definition& def, const U8& scope, bool def_discard = false):
             Resource_definition(
-                def, 
+                def,
                 scope
             )
         {
@@ -86,7 +86,7 @@ class Qubit_definition : public Resource_definition {
 
         Qubit_definition(const Singular_resource_definition& def, const U8& scope, bool def_discard = false):
             Resource_definition(
-                def, 
+                def,
                 scope
             )
         {
@@ -108,7 +108,7 @@ class Bit_definition : public Resource_definition {
 
         Bit_definition(const Register_resource_definition& def, const U8& scope):
             Resource_definition(
-                def, 
+                def,
                 scope
             )
         {
@@ -117,7 +117,7 @@ class Bit_definition : public Resource_definition {
 
         Bit_definition(const Singular_resource_definition& def, const U8& scope):
             Resource_definition(
-                def, 
+                def,
                 scope
             )
         {

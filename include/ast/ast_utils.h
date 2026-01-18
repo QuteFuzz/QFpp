@@ -13,7 +13,7 @@ class Node_gen {
     public:
         class Iterator {
             public:
-                Iterator(Node& root, Token_kind kind, std::vector<Slot_type>& visited) 
+                Iterator(Node& root, Token_kind kind, std::vector<Slot_type>& visited)
                     : _root(&root), _kind(kind), _visited(&visited) {
                     // Prime the first element
                     _current_slot = _root->find_slot(_kind, *_visited);
