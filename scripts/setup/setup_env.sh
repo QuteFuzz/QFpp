@@ -47,4 +47,4 @@ if [ -n "$GITHUB_ENV" ]; then
 fi
 
 echo ">>> Setup Complete!"
-echo "Run your code using: uv run scripts/run.py"
+echo "Run using: uv run scripts/run.py"
