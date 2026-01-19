@@ -10,6 +10,11 @@
 
 struct Generator {
 
+    const std::shared_ptr<Mutation_rule> RULE = 
+        std::make_shared<Commutation_rule>(QuteFuzz::Z_BASIS) +
+        std::make_shared<Commutation_rule>(QuteFuzz::Y_BASIS) +
+        std::make_shared<Commutation_rule>(QuteFuzz::X_BASIS);  
+
     public:
 
         Generator(Grammar& _grammar):
@@ -57,10 +62,6 @@ struct Generator {
         float elitism = 0.2;
 
         std::vector<Genome> population;
-        std::vector<std::shared_ptr<Mutation_rule>> mut_rules = {
-            std::make_shared<Commutation_rule>()
-        };
-
 };
 
 

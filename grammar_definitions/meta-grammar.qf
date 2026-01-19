@@ -39,7 +39,7 @@ gate_name = h
     | cy
     | cz
     | ccx;
-    #| ch; # Missing measure and other non-universal gates for better compatibility
+
 
 gate_op_args = qubit_list
     | qubit_list ", " bit_list

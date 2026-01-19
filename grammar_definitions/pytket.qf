@@ -22,9 +22,7 @@ measure = "Measure";
 
 circuit = circuit_def_header NEWLINE body NEWLINE;
 
-# body = EXTERNAL::qubit_defs NEWLINE compound_stmts;
-
-gate_name = x | rx;
+# gate_name = x | rx;
 
 EXTERNAL {
 

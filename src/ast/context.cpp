@@ -355,7 +355,7 @@ std::shared_ptr<Compound_stmts> Context::get_compound_stmts(std::shared_ptr<Node
         return Compound_stmts::from_num_qubit_ops(parent->get_next_child_target());
 
     } else {
-        return Compound_stmts::from_num_compound_stmts(WILDCARD_MAX);
+        return Compound_stmts::from_num_compound_stmts(QuteFuzz::WILDCARD_MAX);
     }
 }
 

@@ -22,7 +22,6 @@
 #include <iomanip>
 #include <functional>
 
-#define WILDCARD_MAX 5
 #define BIT64(pos) (1ULL << pos)
 #define UNUSED(x) (void)(x)
 

@@ -9,3 +9,4 @@ __pycache__
 .devcontainer
 libs/
 nightly_results
+.coverage

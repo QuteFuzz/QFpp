@@ -21,9 +21,7 @@ std::shared_ptr<Ast> Generator::setup_builder(){
 Node Generator::build_equivalent(Node ast_root){
     // for each COMPOUND_STMTS node, apply mutation rules
     for(auto& compound_stmts : Node_gen(ast_root, COMPOUND_STMTS)){
-        for(auto rule : mut_rules){
-            rule->apply(compound_stmts);
-        }
+        RULE->apply(compound_stmts);
     }
 
     return ast_root;

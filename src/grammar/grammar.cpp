@@ -1,5 +1,6 @@
 #include <grammar.h>
 #include <term.h>
+#include <params.h>
 
 Grammar::Grammar(const fs::path& filename, std::vector<Token>& meta_grammar_tokens): lexer(filename.string()), name(filename.stem()), path(filename) {
 
@@ -122,7 +123,7 @@ void Grammar::extend_current_branches(const Token& wildcard){
             }
 
             // use basis to get extensions depending on the wildcard being processed
-            for(unsigned int mult = 2; mult <= WILDCARD_MAX; ++mult){
+            for(unsigned int mult = 2; mult <= QuteFuzz::WILDCARD_MAX; ++mult){
 
                 auto terms = append_vectors(basis.remainders, multiply_vector(basis.mults, mult));
 

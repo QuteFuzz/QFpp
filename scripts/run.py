@@ -71,10 +71,10 @@ def run_command(command, cwd=None, env=None, capture_output=False):
 
 def clean_and_build():
     """Compiles the C++ fuzzer"""
-    log("Cleaning build directory...", Color.YELLOW)
-    if BUILD_DIR.exists():
-        shutil.rmtree(BUILD_DIR)
-    BUILD_DIR.mkdir()
+    log("Making build directory...", Color.YELLOW)
+    if not BUILD_DIR.exists():
+        # shutil.rmtree(BUILD_DIR)
+        BUILD_DIR.mkdir()
 
     log("Compiling QuteFuzz...", Color.YELLOW)
     try:
@@ -167,13 +167,18 @@ def is_circuit_interesting(result: CircuitResult) -> tuple[bool, str]:
 
 
 def run_circuit(
-    script_path: Path, env: dict, plot: bool, timeout: int = 300
+    script_path: Path, grammar: str, env: dict, plot: bool, timeout: int = 300
 ) -> tuple[str, str, int]:
     """Run a single circuit and capture output"""
     try:
-        cmd = [sys.executable, str(script_path)]
+        cmd = [sys.executable, "-m", "coverage", "run",
+               "--source",
+               grammar,
+               str(script_path)]
+
         if plot:
             cmd.append("--plot")
+
         result = subprocess.run(
             cmd,
             env=env,
@@ -229,7 +234,7 @@ def validate_generated_files(grammar: str, mode: str, plot: bool) -> List[Circui
 
         result = CircuitResult(circuit_name=circ_dir.name, grammar=grammar)
 
-        stdout, stderr, returncode = run_circuit(script_path, env, plot)
+        stdout, stderr, returncode = run_circuit(script_path, grammar, env, plot)
 
         if returncode != 0:
             # Analyze the error

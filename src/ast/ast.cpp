@@ -243,7 +243,7 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 		case BARRIER: {
 			std::shared_ptr<Circuit> current_circuit = context.get_current_circuit();
 
-			unsigned int n_qubits = std::min((unsigned int)WILDCARD_MAX, (unsigned int)current_circuit->num_qubits_of(ALL_SCOPES));
+			unsigned int n_qubits = std::min((unsigned int)QuteFuzz::WILDCARD_MAX, (unsigned int)current_circuit->num_qubits_of(ALL_SCOPES));
 			unsigned int random_barrier_width = random_uint(n_qubits, 1);
 
 			return context.new_gate(str, kind, random_barrier_width, 0, 0);
