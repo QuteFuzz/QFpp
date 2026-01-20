@@ -56,14 +56,22 @@ namespace fs = std::filesystem;
 
 struct Control {
     unsigned int GLOBAL_SEED_VAL;
-    bool render_dags;
+    bool render;
     bool swarm_testing;
     bool run_mutate;
+    std::string ext;
+    unsigned int min_qubits;
+    unsigned int min_bits;
+    unsigned int max_qubits;
+    unsigned int max_bits;
+    unsigned int max_subroutines; 
+    unsigned int nested_max_depth;
+    unsigned int wildcard_max;
 };
 
 void lower(std::string& str);
 
-std::ofstream get_stream(fs::path output_dir, std::string file_name = "circuit.py");
+std::ofstream get_stream(fs::path output_dir, std::string file_name);
 
 void init_global_seed(Control& control, std::optional<unsigned int> user_seed = std::nullopt);
 

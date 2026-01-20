@@ -149,10 +149,7 @@ enum Token_kind {
         INTERNAL,
         EXTERNAL,
         OWNED,
-        COMMENT,
-        MULTI_COMMENT_START,
-        MULTI_COMMENT_END,
-
+        SCOPE_RES,
     /*
         Grammar syntax end, add new syntax above
     */
@@ -176,10 +173,8 @@ inline bool is_kind_of_rule(const Token_kind& kind){
 
 inline bool is_quiet(const Token_kind& kind){
     return
-        (kind == MULTI_COMMENT_START)||
-        (kind == MULTI_COMMENT_END) ||
+        (kind == SCOPE_RES) ||
         (kind == LBRACE) ||
-        (kind == COMMENT) ||
         (kind == ARROW);
 }
 
@@ -199,185 +194,166 @@ struct Token{
     }
 };
 
-struct Regex_matcher {
+struct Token_matcher {
 
-    Regex_matcher(const std::string& p, const Token_kind& k, bool match_exact = true){
+    Token_matcher(const std::string& p, const Token_kind& k){
         pattern = p;
         kind = k;
-
-        if(match_exact){
-            pattern = "^" + pattern + "$";
-        }
     }
 
-    Regex_matcher(const std::string& p, const Token_kind& k, std::optional<std::string> v, bool match_exact = true){
+    Token_matcher(const std::string& p, const Token_kind& k, std::optional<std::string> r){
         pattern = p;
         kind = k;
-        value = v;
-
-        if(match_exact){
-            pattern = "^" + pattern + "$";
-        }
+        replacement = r;
     }
 
     std::string pattern;
     Token_kind kind;
-
-    std::optional<std::string> value = std::nullopt;
+    std::optional<std::string> replacement = std::nullopt;
 };
 
-const std::vector<Regex_matcher> TOKEN_RULES = {
+const std::vector<Token_matcher> TOKEN_RULES = {
 
-    Regex_matcher(R"(subroutine_defs)", SUBROUTINE_DEFS),
-    Regex_matcher(R"(circuit)", CIRCUIT),
-    Regex_matcher(R"(subroutine_circuit)", CIRCUIT),
-    Regex_matcher(R"(body)", BODY),
-    Regex_matcher(R"(subroutine_body)", BODY),
-    Regex_matcher(R"(qubit_defs)", QUBIT_DEFS),
-    Regex_matcher(R"(qubit_defs_discard)", QUBIT_DEFS_DISCARD),
-    Regex_matcher(R"(bit_defs)", BIT_DEFS),
-    Regex_matcher(R"(qubit_def)", QUBIT_DEF),
-    Regex_matcher(R"(qubit_def_discard)", QUBIT_DEF_DISCARD),
-    Regex_matcher(R"(bit_def)", BIT_DEF),
-    Regex_matcher(R"(register_qubit_def)", REGISTER_QUBIT_DEF),
-    Regex_matcher(R"(singular_qubit_def)", SINGULAR_QUBIT_DEF),
-    Regex_matcher(R"(register_qubit_def_discard)", REGISTER_QUBIT_DEF_DISCARD),
-    Regex_matcher(R"(singular_qubit_def_discard)", SINGULAR_QUBIT_DEF_DISCARD),
-    Regex_matcher(R"(register_bit_def)", REGISTER_BIT_DEF),
-    Regex_matcher(R"(singular_bit_def)", SINGULAR_BIT_DEF),
-    Regex_matcher(R"(circuit_name)", CIRCUIT_NAME),
-    Regex_matcher(R"(float_list)", FLOAT_LIST),
-    Regex_matcher(R"(float_literal)", FLOAT_LITERAL),
-    Regex_matcher(R"(main_circuit_name)", MAIN_CIRCUIT_NAME),
-    Regex_matcher(R"(qubit_def_name)", QUBIT_DEF_NAME),
-    Regex_matcher(R"(bit_def_name)", BIT_DEF_NAME),
-    Regex_matcher(R"(qubit)", QUBIT),
-    Regex_matcher(R"(bit)", BIT),
-    Regex_matcher(R"(qubit_op)", QUBIT_OP),
-    Regex_matcher(R"(gate_op)", GATE_OP),
-    Regex_matcher(R"(subroutine_op)", SUBROUTINE_OP),
-    Regex_matcher(R"(gate_name)", GATE_NAME),
-    Regex_matcher(R"(qubit_list)", QUBIT_LIST),
-    Regex_matcher(R"(bit_list)", BIT_LIST),
-    Regex_matcher(R"(qubit_def_list)", QUBIT_DEF_LIST),
-    Regex_matcher(R"(qubit_def_size)", QUBIT_DEF_SIZE),
-    Regex_matcher(R"(bit_def_list)", BIT_DEF_LIST),
-    Regex_matcher(R"(bit_def_size)", BIT_DEF_SIZE),
-    Regex_matcher(R"(singular_qubit)", SINGULAR_QUBIT),
-    Regex_matcher(R"(register_qubit)", REGISTER_QUBIT),
-    Regex_matcher(R"(singular_bit)", SINGULAR_BIT),
-    Regex_matcher(R"(register_bit)", REGISTER_BIT),
-    Regex_matcher(R"(qubit_name)", QUBIT_NAME),
-    Regex_matcher(R"(bit_name)", BIT_NAME),
-    Regex_matcher(R"(qubit_index)", QUBIT_INDEX),
-    Regex_matcher(R"(bit_index)", BIT_INDEX),
-    Regex_matcher(R"(subroutine)", SUBROUTINE),
-    Regex_matcher(R"(circuit_id)", CIRCUIT_ID),
-    Regex_matcher(R"(INDENT)", INDENT),
-    Regex_matcher(R"(DEDENT)", DEDENT),
-    Regex_matcher(R"(if_stmt)", IF_STMT),
-    Regex_matcher(R"(else_stmt)", ELSE_STMT),
-    Regex_matcher(R"(elif_stmt)", ELIF_STMT),
-    Regex_matcher(R"(disjunction)", DISJUNCTION),
-    Regex_matcher(R"(conjunction)", CONJUNCTION),
-    Regex_matcher(R"(inversion)", INVERSION),
-    Regex_matcher(R"(expression)", EXPRESSION),
-    Regex_matcher(R"(compare_op_bitwise_or_pair)", COMPARE_OP_BITWISE_OR_PAIR),
-    Regex_matcher(R"(NUMBER)", NUMBER),
-    Regex_matcher(R"(subroutine_op_args)", SUBROUTINE_OP_ARGS),
-    Regex_matcher(R"(gate_op_args)", GATE_OP_ARGS),
-    Regex_matcher(R"(subroutine_op_arg)", SUBROUTINE_OP_ARG),
-    Regex_matcher(R"(compound_stmt)", COMPOUND_STMT),
-    Regex_matcher(R"(compound_stmts)", COMPOUND_STMTS),
-    Regex_matcher(R"(indentation_depth)", INDENTATION_DEPTH),
+    Token_matcher("subroutine_defs", SUBROUTINE_DEFS),
+    Token_matcher("circuit", CIRCUIT),
+    Token_matcher("subroutine_circuit", CIRCUIT),
+    Token_matcher("body", BODY),
+    Token_matcher("subroutine_body", BODY),
+    Token_matcher("qubit_defs", QUBIT_DEFS),
+    Token_matcher("qubit_defs_discard", QUBIT_DEFS_DISCARD),
+    Token_matcher("bit_defs", BIT_DEFS),
+    Token_matcher("qubit_def", QUBIT_DEF),
+    Token_matcher("qubit_def_discard", QUBIT_DEF_DISCARD),
+    Token_matcher("bit_def", BIT_DEF),
+    Token_matcher("register_qubit_def", REGISTER_QUBIT_DEF),
+    Token_matcher("singular_qubit_def", SINGULAR_QUBIT_DEF),
+    Token_matcher("register_qubit_def_discard", REGISTER_QUBIT_DEF_DISCARD),
+    Token_matcher("singular_qubit_def_discard", SINGULAR_QUBIT_DEF_DISCARD),
+    Token_matcher("register_bit_def", REGISTER_BIT_DEF),
+    Token_matcher("singular_bit_def", SINGULAR_BIT_DEF),
+    Token_matcher("circuit_name", CIRCUIT_NAME),
+    Token_matcher("float_list", FLOAT_LIST),
+    Token_matcher("float_literal", FLOAT_LITERAL),
+    Token_matcher("main_circuit_name", MAIN_CIRCUIT_NAME),
+    Token_matcher("qubit_def_name", QUBIT_DEF_NAME),
+    Token_matcher("bit_def_name", BIT_DEF_NAME),
+    Token_matcher("qubit", QUBIT),
+    Token_matcher("bit", BIT),
+    Token_matcher("qubit_op", QUBIT_OP),
+    Token_matcher("gate_op", GATE_OP),
+    Token_matcher("subroutine_op", SUBROUTINE_OP),
+    Token_matcher("gate_name", GATE_NAME),
+    Token_matcher("qubit_list", QUBIT_LIST),
+    Token_matcher("bit_list", BIT_LIST),
+    Token_matcher("qubit_def_list", QUBIT_DEF_LIST),
+    Token_matcher("qubit_def_size", QUBIT_DEF_SIZE),
+    Token_matcher("bit_def_list", BIT_DEF_LIST),
+    Token_matcher("bit_def_size", BIT_DEF_SIZE),
+    Token_matcher("singular_qubit", SINGULAR_QUBIT),
+    Token_matcher("register_qubit", REGISTER_QUBIT),
+    Token_matcher("singular_bit", SINGULAR_BIT),
+    Token_matcher("register_bit", REGISTER_BIT),
+    Token_matcher("qubit_name", QUBIT_NAME),
+    Token_matcher("bit_name", BIT_NAME),
+    Token_matcher("qubit_index", QUBIT_INDEX),
+    Token_matcher("bit_index", BIT_INDEX),
+    Token_matcher("subroutine", SUBROUTINE),
+    Token_matcher("circuit_id", CIRCUIT_ID),
+    Token_matcher("INDENT", INDENT),
+    Token_matcher("DEDENT", DEDENT),
+    Token_matcher("if_stmt", IF_STMT),
+    Token_matcher("else_stmt", ELSE_STMT),
+    Token_matcher("elif_stmt", ELIF_STMT),
+    Token_matcher("disjunction", DISJUNCTION),
+    Token_matcher("conjunction", CONJUNCTION),
+    Token_matcher("inversion", INVERSION),
+    Token_matcher("expression", EXPRESSION),
+    Token_matcher("compare_op_bitwise_or_pair", COMPARE_OP_BITWISE_OR_PAIR),
+    Token_matcher("NUMBER", NUMBER),
+    Token_matcher("subroutine_op_args", SUBROUTINE_OP_ARGS),
+    Token_matcher("gate_op_args", GATE_OP_ARGS),
+    Token_matcher("subroutine_op_arg", SUBROUTINE_OP_ARG),
+    Token_matcher("compound_stmts", COMPOUND_STMT),
+    Token_matcher("compound_stmts", COMPOUND_STMTS),
+    Token_matcher("indentation_depth", INDENTATION_DEPTH),
 
-    Regex_matcher(R"(h)", H),
-    Regex_matcher(R"(x)", X),
-    Regex_matcher(R"(y)", Y),
-    Regex_matcher(R"(z)", Z),
-    Regex_matcher(R"(rz)", RZ),
-    Regex_matcher(R"(rx)", RX),
-    Regex_matcher(R"(ry)", RY),
-    Regex_matcher(R"(u1)", U1),
-    Regex_matcher(R"(s)", S),
-    Regex_matcher(R"(sdg)", SDG),
-    Regex_matcher(R"(t)", T),
-    Regex_matcher(R"(tdg)", TDG),
-    Regex_matcher(R"(v)", V),
-    Regex_matcher(R"(vdg)", VDG),
-    Regex_matcher(R"(phased_x)", PHASED_X),
-    Regex_matcher(R"(project_z)", PROJECT_Z),
-    Regex_matcher(R"(measure_and_reset)", MEASURE_AND_RESET),
-    Regex_matcher(R"(measure)", MEASURE),
-    Regex_matcher(R"(cx)", CX),
-    Regex_matcher(R"(cy)", CY),
-    Regex_matcher(R"(cz)", CZ),
-    Regex_matcher(R"(ccx)", CCX),
-    Regex_matcher(R"(u2)", U2),
-    Regex_matcher(R"(cnot)", CNOT),
-    Regex_matcher(R"(ch)", CH),
-    Regex_matcher(R"(crz)", CRZ),
-    Regex_matcher(R"(u3)", U3),
-    Regex_matcher(R"(cswap)", CSWAP),
-    Regex_matcher(R"(toffoli)", TOFFOLI),
-    Regex_matcher(R"(u)", U),
-    Regex_matcher(R"(barrier)", BARRIER),
+    Token_matcher("h", H),
+    Token_matcher("x", X),
+    Token_matcher("y", Y),
+    Token_matcher("z", Z),
+    Token_matcher("rz", RZ),
+    Token_matcher("rx", RX),
+    Token_matcher("ry", RY),
+    Token_matcher("u1", U1),
+    Token_matcher("s", S),
+    Token_matcher("sdg", SDG),
+    Token_matcher("t", T),
+    Token_matcher("tdg", TDG),
+    Token_matcher("v", V),
+    Token_matcher("vdg", VDG),
+    Token_matcher("phased_x", PHASED_X),
+    Token_matcher("project_z", PROJECT_Z),
+    Token_matcher("measure_and_reset", MEASURE_AND_RESET),
+    Token_matcher("measure", MEASURE),
+    Token_matcher("cx", CX),
+    Token_matcher("cy", CY),
+    Token_matcher("cz", CZ),
+    Token_matcher("ccx", CCX),
+    Token_matcher("u2", U2),
+    Token_matcher("cnot", CNOT),
+    Token_matcher("ch", CH),
+    Token_matcher("crz", CRZ),
+    Token_matcher("u3", U3),
+    Token_matcher("cswap", CSWAP),
+    Token_matcher("toffoli", TOFFOLI),
+    Token_matcher("u", U),
+    Token_matcher("barrier", BARRIER),
 
-    Regex_matcher(R"(LPAREN)", SYNTAX, std::make_optional<std::string>("(")),
-    Regex_matcher(R"(RPAREN)", SYNTAX, std::make_optional<std::string>(")")),
-    Regex_matcher(R"(LBRACK)", SYNTAX, std::make_optional<std::string>("[")),
-    Regex_matcher(R"(RBRACK)", SYNTAX, std::make_optional<std::string>("]")),
-    Regex_matcher(R"(LBRACE)", SYNTAX, std::make_optional<std::string>("{")),
-    Regex_matcher(R"(RBRACE)", SYNTAX, std::make_optional<std::string>("}")),
-    Regex_matcher(R"(COMMA)", SYNTAX, std::make_optional<std::string>(",")),
-    Regex_matcher(R"(SPACE)", SYNTAX, std::make_optional<std::string>(" ")),
-    Regex_matcher(R"(DOT)", SYNTAX, std::make_optional<std::string>(".")),
-    Regex_matcher(R"(SINGLE_QUOTE)", SYNTAX, std::make_optional<std::string>("\'")),
-    Regex_matcher(R"(DOUBLE_QUOTE)", SYNTAX, std::make_optional<std::string>("\"")),
-    Regex_matcher(R"(EQUALS)", SYNTAX, std::make_optional<std::string>("=")),
-    Regex_matcher(R"(NEWLINE)", SYNTAX, std::make_optional<std::string>("\n")),
-    Regex_matcher(R"(\".*?\"|\'.*?\')", SYNTAX, false),
+    Token_matcher("LPAREN", SYNTAX, std::make_optional<std::string>("(")),
+    Token_matcher("RPAREN", SYNTAX, std::make_optional<std::string>(")")),
+    Token_matcher("LBRACK", SYNTAX, std::make_optional<std::string>("[")),
+    Token_matcher("RBRACK", SYNTAX, std::make_optional<std::string>("]")),
+    Token_matcher("LBRACE", SYNTAX, std::make_optional<std::string>("{")),
+    Token_matcher("RBRACE", SYNTAX, std::make_optional<std::string>("}")),
+    Token_matcher("COMMA", SYNTAX, std::make_optional<std::string>(",")),
+    Token_matcher("SPACE", SYNTAX, std::make_optional<std::string>(" ")),
+    Token_matcher("DOT", SYNTAX, std::make_optional<std::string>(".")),
+    Token_matcher("SINGLE_QUOTE", SYNTAX, std::make_optional<std::string>("\'")),
+    Token_matcher("DOUBLE_QUOTE", SYNTAX, std::make_optional<std::string>("\"")),
+    Token_matcher("EQUALS", SYNTAX, std::make_optional<std::string>("=")),
+    Token_matcher("NEWLINE", SYNTAX, std::make_optional<std::string>("\n")),
 
-    Regex_matcher(R"(EXTERNAL(::)?)", EXTERNAL, false),
-    Regex_matcher(R"(INTERNAL(::)?)", INTERNAL, false),
-    Regex_matcher(R"(OWNED(::)?)", OWNED, false),
+    Token_matcher("EXTERNAL", EXTERNAL),
+    Token_matcher("INTERNAL", INTERNAL),
+    Token_matcher("OWNED", OWNED),
 
-    Regex_matcher(R"([a-zA-Z_]+)", RULE, false),
-    Regex_matcher(R"([0-9]+)", INTEGER, false),
+    Token_matcher("::", SCOPE_RES),
+    Token_matcher("->", ARROW),
+    Token_matcher("+=", RULE_APPEND),
 
-    Regex_matcher(R"(\(\*)", MULTI_COMMENT_START, false),
-    Regex_matcher(R"(\*\))", MULTI_COMMENT_END, false),
-    Regex_matcher(R"(=|:)", RULE_START, false),
-    Regex_matcher(R"(\+=)", RULE_APPEND, false),
-    Regex_matcher(R"(\|)", SEPARATOR, false),
-    Regex_matcher(R"(;)", RULE_END, false),
-    Regex_matcher(R"(\()", LPAREN, false),
-    Regex_matcher(R"(\))", RPAREN, false),
-    Regex_matcher(R"(\[)", LBRACK, false),
-    Regex_matcher(R"(\])", RBRACK, false),
-    Regex_matcher(R"(\{)", LBRACE, false),
-    Regex_matcher(R"(\})", RBRACE, false),
-    Regex_matcher(R"(\*)", ZERO_OR_MORE, false),
-    Regex_matcher(R"(\?)", OPTIONAL, false),
-    Regex_matcher(R"(\+)", ONE_OR_MORE, false),
-    Regex_matcher(R"(\-\>)", ARROW, false),
-    Regex_matcher(R"(<)", LANGLE_BRACKET, false),
-    Regex_matcher(R"(>)", RANGLE_BRACKET, false),
-    Regex_matcher(R"(#)", COMMENT, false),
+    /*
+        single character tokens
+    */
+    Token_matcher("=", RULE_START),
+    Token_matcher(":", RULE_START),
+    Token_matcher("|", SEPARATOR),
+    Token_matcher(";", RULE_END),
+    Token_matcher("(", LPAREN),
+    Token_matcher(")", RPAREN),
+    Token_matcher("[", LBRACK),
+    Token_matcher("]", RBRACK),
+    Token_matcher("{", LBRACE),
+    Token_matcher("}", RBRACE),
+    Token_matcher("*", ZERO_OR_MORE),
+    Token_matcher("?", OPTIONAL),
+    Token_matcher("+", ONE_OR_MORE),
+    Token_matcher("<", LANGLE_BRACKET),
+    Token_matcher(">", RANGLE_BRACKET),
 };
 
-const std::string FULL_REGEX = [] {
-    std::string regex = "(";
+const std::string FULL_REGEX = 
+    R"([a-zA-Z_][a-zA-Z0-9_]*|[0-9]+(\.[0-9]+)?|#[^\n]*|\(\*|\*\)|\".*?\"|\'.*?\'|->|::|.)";
 
-    for (size_t i = 0; i < TOKEN_RULES.size(); i++) {
-        regex += TOKEN_RULES[i].pattern;
-
-        if (i + 1 < TOKEN_RULES.size()) regex += "|";
-    }
-    regex += ")";
-
-    return regex;
-}();
 
 class Lexer{
     public:
@@ -398,11 +374,6 @@ class Lexer{
             }
 
             return token;
-        }
-
-        inline bool string_is(const std::string& string, const std::string& pattern){
-            bool matches = std::regex_match(string, std::regex(pattern));
-            return ((ignore == false) && matches) || (string == "*)") ;
         }
 
         void lex();

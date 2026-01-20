@@ -31,7 +31,7 @@ void Generator::ast_to_program(fs::path output_dir, const Control& control, unsi
     rng().seed(seed);
 
     std::ofstream stream;
-    stream = get_stream(output_dir);
+    stream = get_stream(output_dir, "prog" + control.ext);
 
     std::optional<Node_constraint> gateset;
 
@@ -51,17 +51,18 @@ void Generator::ast_to_program(fs::path output_dir, const Control& control, unsi
         stream.close();
 
         if(control.run_mutate){
-            fs::path equi_dir = output_dir / "equi_circuits";
+            fs::path equi_dir = output_dir / "equi_progs";
 
-            stream = get_stream(equi_dir, "equi_circuit0.py");
+            stream = get_stream(equi_dir, "equi_prog0" + control.ext);
 
             Node ast_root_p = build_equivalent(ast_root);
             stream << ast_root_p << std::endl;
             stream.close();
         }
 
-        if (control.render_dags) {
+        if (control.render) {
             builder->render_dag(output_dir);
+            builder->render_ast(output_dir);
         }
 
     } else {

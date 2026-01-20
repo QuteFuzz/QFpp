@@ -13,13 +13,6 @@
 
 class Grammar{
 
-    enum Constraint_def_states {
-        READY_DEFINE_CONSTRAINT = 0,
-        READY_DEFINE_RULE_OCCURANCE = 1,
-        READY_DEFINE_RULE = 2,
-        FINISH_DEFINE_CONSTRAINT = 3,
-    };
-
     public:
         Grammar(){}
 
@@ -31,7 +24,9 @@ class Grammar{
 
         void peek();
 
-        std::shared_ptr<Rule> get_rule_pointer_if_exists(const std::string& name, const U8& scope = NO_SCOPE);
+        std::string dig(const std::string& rule_name) const;
+
+        std::shared_ptr<Rule> get_rule_pointer_if_exists(const std::string& name, const U8& scope = NO_SCOPE) const;
 
         std::shared_ptr<Rule> get_rule_pointer(const Token& token, const U8& scope = NO_SCOPE);
 
@@ -119,10 +114,6 @@ class Grammar{
 
         unsigned int nesting_depth_base = 0;
         unsigned int nesting_depth = nesting_depth_base;
-
-        Constraint_def_states constraint_mode_state = READY_DEFINE_CONSTRAINT;
-        unsigned int constraint_occurances = 0;
-
         std::vector<std::shared_ptr<Rule>> rule_pointers;
 
         Lexer lexer;

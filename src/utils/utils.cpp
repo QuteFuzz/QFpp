@@ -205,7 +205,7 @@ void render(std::function<void(std::ostringstream&)> extend_dot_string, const fs
 
     dot_string << "}\n";
 
-    std::cout << dot_string.str() << std::endl;
+    // std::cout << dot_string.str() << std::endl;
 
     const std::string str = render_path.string();
     std::string command = "dot -Tpng -o " + str;

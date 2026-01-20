@@ -41,7 +41,35 @@ void Grammar::peek(){
 
 }
 
-std::shared_ptr<Rule> Grammar::get_rule_pointer_if_exists(const std::string& name, const U8& scope){
+std::string Grammar::dig(const std::string& rule_name) const {
+    std::shared_ptr<Rule> rule_ptr = get_rule_pointer_if_exists(rule_name); 
+
+    if(rule_ptr == nullptr) return "";
+
+    auto branches = rule_ptr->get_branches();
+    
+    if (branches.size() == 1){
+        auto terms = branches[0].get_terms();
+
+        if(terms.size() == 1){
+            if(is_kind_of_rule(terms[0].get_kind())){
+                return dig(terms[0].get_string());
+            } else {
+                return terms[0].get_syntax();
+            }
+        } else {
+            return "";
+        }
+    } else {
+        return "";
+    }
+}
+
+/// @brief Only return rule pointer if already exists
+/// @param name 
+/// @param scope 
+/// @return 
+std::shared_ptr<Rule> Grammar::get_rule_pointer_if_exists(const std::string& name, const U8& scope) const {
 
     for(const auto& rp : rule_pointers){
         if(rp->matches(name, scope)){return rp;}
@@ -50,6 +78,10 @@ std::shared_ptr<Rule> Grammar::get_rule_pointer_if_exists(const std::string& nam
     return nullptr;
 }
 
+/// @brief If rule pointer doesn't exist, create it first then return
+/// @param token 
+/// @param scope 
+/// @return 
 std::shared_ptr<Rule> Grammar::get_rule_pointer(const Token& token, const U8& scope){
     auto dummy = std::make_shared<Rule>(token, scope);
 
@@ -157,19 +189,9 @@ void Grammar::build_grammar(){
             next = next_token.get_ok();
 
             // rules that are within branches, rules before `RULE_START` are handled at `RULE_START`
-            if(current_rule != nullptr && constraint_mode_state == READY_DEFINE_CONSTRAINT){
+            if(current_rule != nullptr){
                 add_term_to_current_branches(token);
                 rule_decl_scope = NO_SCOPE;
-            } else if (current_rule != nullptr && constraint_mode_state == READY_DEFINE_RULE){ //Encountered a term within a constraint definition
-                //Get the current rule's last branch's last term and add a constraint to the rule it references
-                //NOTE: Terms within internal constraints are not added to current branches and only exist as constraints in rules
-                if (!current_branches.back().is_empty() && current_branches.back().at(current_branches.back().size() - 1).is_rule()) {
-                    INFO("Current token: " + token.value);
-                    current_branches.back().at(current_branches.back().size() - 1).get_rule()->add_constraint(token.kind, constraint_occurances);
-                } else {
-                    INFO("No terms exist to add constraint to!");
-                }
-
             }
 
         } else if (token.kind == RULE_START) {
@@ -183,28 +205,6 @@ void Grammar::build_grammar(){
 
         } else if (token.kind == RULE_END){
             complete_rule(); current_rule = nullptr;
-
-        // Constraint definition handling in grammar directly
-        } else if (token.kind == LBRACK) {
-            constraint_mode_state = READY_DEFINE_RULE_OCCURANCE;
-
-        } else if (token.kind == RBRACK) {
-            if (constraint_mode_state != FINISH_DEFINE_CONSTRAINT) {
-                throw std::runtime_error(ANNOT("Mismatched constraint definition brackets!"));
-            }
-            constraint_mode_state = READY_DEFINE_CONSTRAINT;
-
-        } else if (token.kind == LANGLE_BRACKET) {
-            constraint_mode_state = READY_DEFINE_RULE;
-            INFO("Defining constraint for rule");
-
-        } else if (token.kind == RANGLE_BRACKET) {
-            constraint_mode_state = FINISH_DEFINE_CONSTRAINT;
-            INFO("Finished defining constraint");
-
-        } else if (token.kind == INTEGER){
-            constraint_occurances = std::stoul(token.value);
-            INFO("Set constraint occurances to " + std::to_string(constraint_occurances));
 
         } else if (token.kind == LPAREN){
             nesting_depth += 1;
@@ -229,25 +229,30 @@ void Grammar::build_grammar(){
             rule_def_scope = NO_SCOPE;
 
         } else if (token.kind == EXTERNAL){
+            next = next_token.get_ok();
 
-            if(current_rule == nullptr){
-                rule_def_scope |= EXTERNAL_SCOPE;
-            } else {
+            if(next.kind == SCOPE_RES){
                 rule_decl_scope |= EXTERNAL_SCOPE;
+            } else {
+                rule_def_scope |= EXTERNAL_SCOPE;
             }
 
         } else if (token.kind == INTERNAL){
-            if(current_rule == nullptr){
-                rule_def_scope |= INTERNAL_SCOPE;
-            } else {
+            next = next_token.get_ok();
+
+            if(next.kind == SCOPE_RES){
                 rule_decl_scope |= INTERNAL_SCOPE;
+            } else {
+                rule_def_scope |= INTERNAL_SCOPE;
             }
 
         } else if (token.kind == OWNED){
-            if(current_rule == nullptr){
-                rule_def_scope |= OWNED_SCOPE;
-            } else {
+            next = next_token.get_ok();
+
+            if(next.kind == SCOPE_RES){
                 rule_decl_scope |= OWNED_SCOPE;
+            } else {
+                rule_def_scope |= OWNED_SCOPE;
             }
 
         } else if (is_quiet(token.kind)){
