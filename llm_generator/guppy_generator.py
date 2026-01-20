@@ -22,7 +22,7 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
     
     # Define template directory path
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    template_dir = os.path.join(script_dir, "LLM_prompt_templates")
+    template_dir = os.path.join(script_dir, "Guppy_prompt_templates")
 
     def get_elapsed():
          return f"[Elapsed: {time.time() - start_time:.2f}s]"
