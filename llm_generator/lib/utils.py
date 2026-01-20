@@ -2,6 +2,7 @@ import os
 import shutil
 import time
 import json
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
@@ -78,7 +79,7 @@ def clear_directory(path):
 def generate_summary_plot(stats_summary, output_dir):
     """
     Generates summary plots comparing performance metrics across models.
-    Creates 3 side-by-side subplots for Validity, Time, and Cost.
+    Creates separate plot files for Validity, Time, and Cost in the output directory.
     """
     if not stats_summary:
         return
@@ -106,19 +107,24 @@ def generate_summary_plot(stats_summary, output_dir):
             costs_per_valid.append(s['total_cost']) 
 
     x = np.arange(len(models)) 
-    
-    # Create 3 subplots
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 6))
-    
-    # Plot 1: Validity
+
+    # --- Plot 1: Validity ---
+    fig1, ax1 = plt.subplots(figsize=(10, 6))
     ax1.bar(x, valid_percentages, color='skyblue')
     ax1.set_title('Validity (%)')
     ax1.set_ylabel('Percentage')
     ax1.set_xticks(x)
     ax1.set_xticklabels(short_models, rotation=45, ha='right')
     ax1.grid(axis='y', linestyle='--', alpha=0.7)
+    
+    fig1.tight_layout()
+    plot_path1 = os.path.join(output_dir, "performance_validity.png")
+    plt.savefig(plot_path1, bbox_inches='tight')
+    tqdm.write(f"Validity plot saved to {plot_path1}")
+    plt.close(fig1)
 
-    # Plot 2: Time
+    # --- Plot 2: Time ---
+    fig2, ax2 = plt.subplots(figsize=(10, 6))
     ax2.bar(x, avg_times, color='lightgreen')
     ax2.set_title('Avg Time per Valid Program (s)')
     ax2.set_ylabel('Seconds')
@@ -126,7 +132,14 @@ def generate_summary_plot(stats_summary, output_dir):
     ax2.set_xticklabels(short_models, rotation=45, ha='right')
     ax2.grid(axis='y', linestyle='--', alpha=0.7)
 
-    # Plot 3: Cost
+    fig2.tight_layout()
+    plot_path2 = os.path.join(output_dir, "performance_time.png")
+    plt.savefig(plot_path2, bbox_inches='tight')
+    tqdm.write(f"Time plot saved to {plot_path2}")
+    plt.close(fig2)
+
+    # --- Plot 3: Cost ---
+    fig3, ax3 = plt.subplots(figsize=(10, 6))
     ax3.bar(x, costs_per_valid, color='salmon')
     ax3.set_title('Cost per Valid Program ($)')
     ax3.set_ylabel('Dollars')
@@ -134,13 +147,11 @@ def generate_summary_plot(stats_summary, output_dir):
     ax3.set_xticklabels(short_models, rotation=45, ha='right')
     ax3.grid(axis='y', linestyle='--', alpha=0.7)
 
-    fig.suptitle('Model Performance Comparison', fontsize=16)
-    fig.tight_layout()
-    
-    plot_path = os.path.join(output_dir, "performance_summary.png")
-    # Use bbox_inches='tight' to ensure the legend and labels are included and not cut off
-    plt.savefig(plot_path, bbox_inches='tight')
-    tqdm.write(f"Summary plot saved to {plot_path}")
+    fig3.tight_layout()
+    plot_path3 = os.path.join(output_dir, "performance_cost.png")
+    plt.savefig(plot_path3, bbox_inches='tight')
+    tqdm.write(f"Cost plot saved to {plot_path3}")
+    plt.close(fig3)
 
 def generate_coverage_text_report(grouped_results, output_file):
     """Generates a structured text report of coverage results."""
@@ -184,42 +195,52 @@ def generate_coverage_text_report(grouped_results, output_file):
             f.write("\n" + "-"*40 + "\n\n")
 
 def generate_coverage_plot(grouped_results, output_file):
-    """Generates a bar chart comparing average coverage across groups."""
-    group_names = []
-    averages = []
+    """
+    Generates scatter plots of coverage vs function count.
+    Generates a separate plot file for each group in grouped_results.
+    """
+    groups = sorted(grouped_results.keys())
     
-    for name in sorted(grouped_results.keys()):
-        files = grouped_results[name]
-        successful = [x['coverage_percent'] for x in files if x['success']]
-        if successful:
-            avg = sum(successful) / len(successful)
-            group_names.append(name)
-            averages.append(avg)
-            
-    if not group_names:
-        print("No successful data to plot.")
+    if not groups:
+        tqdm.write("No data to plot.")
         return
 
-    plt.figure(figsize=(10 + len(group_names)*0.5, 6)) # Adjust width based on number of groups
-    bars = plt.bar(group_names, averages, color='skyblue')
-    
-    plt.xlabel('Group / Model')
-    plt.ylabel('Average Coverage (%)')
-    plt.title('Average Code Coverage by Group')
-    
-    # Rotate labels to prevent overlap
-    plt.xticks(rotation=45, ha='right')
-    
-    # Add values on top of bars
-    for bar in bars:
-        height = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2., height,
-                f'{height:.1f}%',
-                ha='center', va='bottom')
-                
-    plt.tight_layout()
-    try:
-        plt.savefig(output_file)
-        print(f"Plot saved to {output_file}")
-    except Exception as e:
-        print(f"Failed to save plot: {e}")
+    base_name, ext = os.path.splitext(output_file)
+    if not ext:
+        ext = ".png"
+        
+    for name in groups:
+        files = grouped_results[name]
+        successful_entries = [x for x in files if x.get('success', False)]
+        
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        if successful_entries:
+            x_vals = [entry.get('function_count', 0) for entry in successful_entries]
+            y_vals = [entry.get('coverage_percent', 0.0) for entry in successful_entries]
+            
+            if x_vals and y_vals:
+                ax.scatter(x_vals, y_vals, alpha=0.7, edgecolors='w', s=60)
+        
+        ax.set_title(f"Coverage Analysis: {name}")
+        ax.set_xlabel('Number of Distinct Functions')
+        ax.set_ylabel('Coverage (%)')
+        ax.grid(True, which='both', linestyle='--', linewidth=0.5, alpha=0.7)
+        
+        # Determine filename
+        if len(groups) > 1:
+            # Sanitize group name for filename
+            safe_name = "".join(x for x in name if x.isalnum() or x in ('_', '-'))
+            current_output = f"{base_name}_{safe_name}{ext}"
+        else:
+            current_output = output_file
+            
+        fig.tight_layout()
+        
+        try:
+            plt.savefig(current_output, bbox_inches='tight', dpi=150)
+            tqdm.write(f"Plot saved to {current_output}")
+        except Exception as e:
+            tqdm.write(f"Failed to save plot to {current_output}: {e}")
+            
+        plt.close(fig)

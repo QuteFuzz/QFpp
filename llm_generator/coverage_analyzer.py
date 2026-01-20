@@ -3,6 +3,7 @@ import sys
 import argparse
 import subprocess
 import glob
+import ast
 from tqdm import tqdm
 
 # Add project root to path so we can import scripts if needed
@@ -13,6 +14,15 @@ from lib.execution import run_coverage_on_file
 from lib.utils import generate_coverage_text_report, generate_coverage_plot
 
 PYTHON_EXECUTABLE = sys.executable
+
+def count_functions(file_path):
+    """Counts the number of function definitions in a python file."""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            tree = ast.parse(f.read())
+        return sum(isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) for node in ast.walk(tree))
+    except Exception:
+        return 0
 
 def main():
     parser = argparse.ArgumentParser(description="Run coverage analysis on generated Python programs.")
@@ -95,9 +105,12 @@ def main():
             python_executable=PYTHON_EXECUTABLE
         )
         
+        num_funcs = count_functions(file_path)
+
         result_entry = {
             "file": file_path,
             "coverage_percent": percent,
+            "function_count": num_funcs,
             "error": error,
             "verbose_report": verbose_report,
             "success": error == ""
