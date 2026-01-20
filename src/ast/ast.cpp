@@ -107,8 +107,6 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 		case QUBIT_DEF_SIZE:
 			return context.get_current_qubit_definition_size();
 
-		/// TODO: Add QUBIT_DEF_SIZE handling since currently its just giving dummy nodes
-
 		case QUBIT_DEF_NAME:
 			return context.get_current_qubit_definition_name();
 
