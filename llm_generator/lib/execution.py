@@ -6,19 +6,25 @@ import time
 import json
 import ast
 from .utils import strip_markdown_syntax, parse_time_metrics
-from .ast_ops import add_main_wrapper_guppy
+from .ast_ops import add_main_wrapper_guppy, add_main_wrapper_qiskit
 
-def run_generated_program(program_code: str, timeout: int = 30):
+def run_generated_program(program_code: str, timeout: int = 30, language: str = 'guppy', coverage_source: str = None):
     """
     Execute generated Python program and capture error message and resource usage.
-    Automatically adds the main wrapper for execution.
+    Automatically adds the main wrapper for execution based on language.
     
     Args:
         program_code: The Python code to execute
+        timeout: Execution timeout in seconds
+        language: Language of the code ('guppy' or 'qiskit')
+        coverage_source: Package to trace for coverage
         
     Returns:
         tuple: (Error message string or empty string, stdout string, Metrics dictionary, Wrapped code string)
     """
+    if coverage_source is None:
+        coverage_source = "guppylang_internals" if language == 'guppy' else "qiskit"
+
     temp_file_path = None
     metrics_file = None
     coverage_file = None
@@ -31,21 +37,25 @@ def run_generated_program(program_code: str, timeout: int = 30):
             # Strip markdown syntax before writing
             clean_code = strip_markdown_syntax(program_code)
             
-            # Check if main function has arguments
-            needs_wrapper = False
-            try:
-                tree = ast.parse(clean_code)
-                for node in tree.body:
-                    if isinstance(node, ast.FunctionDef) and node.name == 'main':
-                        if len(node.args.args) > 0:
-                            needs_wrapper = True
-                            break
-            except Exception:
-                pass # If parsing fails, rely on original code or handle downstream
+            if language == 'guppy':
+                # Check if main function has arguments
+                needs_wrapper = False
+                try:
+                    tree = ast.parse(clean_code)
+                    for node in tree.body:
+                        if isinstance(node, ast.FunctionDef) and node.name == 'main':
+                            if len(node.args.args) > 0:
+                                needs_wrapper = True
+                                break
+                except Exception:
+                    pass # If parsing fails, rely on original code or handle downstream
+                
+                if needs_wrapper:
+                    clean_code = add_main_wrapper_guppy(clean_code)
             
-            if needs_wrapper:
-                clean_code = add_main_wrapper_guppy(clean_code)
-            
+            elif language == 'qiskit':
+                clean_code = add_main_wrapper_qiskit(clean_code)
+
             temp_file.write(clean_code)
             temp_file_path = temp_file.name
         
@@ -72,7 +82,7 @@ def run_generated_program(program_code: str, timeout: int = 30):
             cmd = [
                 "/usr/bin/time", "-v", "-o", metrics_file, 
                 sys.executable, "-m", "coverage", "run", 
-                "--branch", "--source=guppylang_internals", 
+                "--branch", f"--source={coverage_source}", 
                 temp_file_path
             ]
             
@@ -136,12 +146,15 @@ def run_generated_program(program_code: str, timeout: int = 30):
     except Exception as e:
         return f"ERROR: Failed to execute program: {str(e)}", "", {}, clean_code
 
-def run_coverage_on_file(file_path: str, source_package: str = "guppylang_internals", verbose: bool = False, python_executable=sys.executable):
+def run_coverage_on_file(file_path: str, source_package: str = None, verbose: bool = False, python_executable=sys.executable, language: str = 'guppy'):
     """
     Run a single python file with coverage tracking.
     Returns the coverage percentage, any error message, coverage data, and verbose report.
     Automatically adds the main wrapper for execution.
     """
+    if source_package is None:
+        source_package = "guppylang_internals" if language == 'guppy' else "qiskit"
+        
     temp_src_path = None
     coverage_file_path = None
     json_report_file = None
@@ -152,21 +165,26 @@ def run_coverage_on_file(file_path: str, source_package: str = "guppylang_intern
             with open(file_path, 'r', encoding='utf-8') as f:
                 code = f.read()
 
-            # Check if main function has arguments
-            needs_wrapper = False
-            try:
-                tree = ast.parse(code)
-                for node in tree.body:
-                    if isinstance(node, ast.FunctionDef) and node.name == 'main':
-                        if len(node.args.args) > 0:
-                            needs_wrapper = True
-                            break
-            except Exception:
-                pass # If parsing fails, rely on original code or handle downstream
+            if language == 'guppy':
+                # Check if main function has arguments
+                needs_wrapper = False
+                try:
+                    tree = ast.parse(code)
+                    for node in tree.body:
+                        if isinstance(node, ast.FunctionDef) and node.name == 'main':
+                            if len(node.args.args) > 0:
+                                needs_wrapper = True
+                                break
+                except Exception:
+                    pass # If parsing fails, rely on original code or handle downstream
 
-            # Conditionally apply wrapper
-            if needs_wrapper:
-                wrapped_code = add_main_wrapper_guppy(code)
+                # Conditionally apply wrapper
+                if needs_wrapper:
+                    wrapped_code = add_main_wrapper_guppy(code)
+                else:
+                    wrapped_code = code
+            elif language == 'qiskit':
+                wrapped_code = add_main_wrapper_qiskit(code)
             else:
                 wrapped_code = code
             

@@ -12,9 +12,222 @@ from tqdm import tqdm
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import from local library
-from lib.ast_ops import is_qubit_guppy, get_array_size_guppy, CircuitRenamer
+from lib.ast_ops import is_qubit_guppy, get_array_size_guppy, GuppyCircuitRenamer, QiskitMainTransformer
 
-def assemble(files, output_path, unique_index=0):
+def assemble_qiskit(files, output_path, unique_index=0):
+    all_imports = []
+    renamed_bodies = []
+    main_calls = []
+
+    # Add required import for diff testing
+    diff_test_import = ast.ImportFrom(
+        module='diff_testing.lib',
+        names=[ast.alias(name='qiskitTesting', asname=None)],
+        level=0
+    )
+    all_imports.append(diff_test_import)
+    
+    # Global tracking for max resources
+    global_max_qubits = 1
+    global_max_clbits = 1
+
+    # Track seen imports to avoid duplication
+    seen_imports = set()
+
+    for i, file_path in enumerate(files):
+        try:
+            with open(file_path, "r") as f:
+                source = f.read()
+            
+            tree = ast.parse(source)
+            prefix = f"c{i}_"
+            file_global_funcs = set()
+            
+            # Transform main function to use shared resources
+            transformer = QiskitMainTransformer()
+            tree = transformer.visit(tree)
+            
+            # Update global max requirements
+            global_max_qubits = max(global_max_qubits, transformer.max_qubits)
+            global_max_clbits = max(global_max_clbits, transformer.max_clbits)
+            
+            # First pass: collect global function names
+            for node in tree.body:
+                if isinstance(node, ast.FunctionDef):
+                    file_global_funcs.add(node.name)
+            
+            top_level_nodes = []
+            
+            # Second pass: process nodes and imports
+            for node in tree.body:
+                if isinstance(node, (ast.Import, ast.ImportFrom)):
+                    code_str = ast.unparse(node)
+                    if code_str not in seen_imports:
+                        seen_imports.add(code_str)
+                        all_imports.append(node)
+                    continue
+                
+                # Verify passed code doesn't have if __name__ == "__main__" blocks that might run
+                if isinstance(node, ast.If) and isinstance(node.test, ast.Compare):
+                     if isinstance(node.test.left, ast.Name) and node.test.left.id == "__name__":
+                         continue
+
+                # Filter out top-level calls to main() since we will invoke it manually with appropriate arguments
+                if isinstance(node, ast.Expr) and isinstance(node.value, ast.Call):
+                     if isinstance(node.value.func, ast.Name) and node.value.func.id == "main":
+                         continue
+
+                top_level_nodes.append(node)
+                
+            # Rename
+            renamer = GuppyCircuitRenamer(prefix, file_global_funcs)
+            new_nodes = []
+            for node in top_level_nodes:
+                new_node = renamer.visit(node)
+                new_nodes.append(new_node)
+                
+            renamed_bodies.extend(new_nodes)
+            
+            # Store the call to the renamed main function
+            main_calls.append(ast.Expr(
+                value=ast.Call(
+                    func=ast.Name(id=f"{prefix}main", ctx=ast.Load()),
+                    args=[
+                        ast.Name(id='qc', ctx=ast.Load()),
+                        ast.Name(id='qr', ctx=ast.Load()),
+                        ast.Name(id='cr', ctx=ast.Load())
+                    ],
+                    keywords=[]
+                )
+            ))
+            
+        except Exception as e:
+            logging.error(f"Error processing {file_path}: {e}")
+            continue
+
+    # Construct output module
+    new_module = ast.Module(body=[], type_ignores=[])
+    
+    # Add collected imports
+    new_module.body.extend(all_imports)
+    
+    # Add all renamed bodies
+    new_module.body.extend(renamed_bodies)
+    
+    # Create master main function
+    
+    # Setup global resources
+    # qr = QuantumRegister(global_max_qubits, 'q')
+    qr_init = ast.Assign(
+        targets=[ast.Name(id='qr', ctx=ast.Store())],
+        value=ast.Call(
+            func=ast.Name(id='QuantumRegister', ctx=ast.Load()),
+            args=[
+                ast.Constant(value=global_max_qubits),
+                ast.Constant(value='q')
+            ],
+            keywords=[]
+        )
+    )
+    
+    # cr = ClassicalRegister(global_max_clbits, 'c')
+    cr_init = ast.Assign(
+        targets=[ast.Name(id='cr', ctx=ast.Store())],
+        value=ast.Call(
+            func=ast.Name(id='ClassicalRegister', ctx=ast.Load()),
+            args=[
+                ast.Constant(value=global_max_clbits),
+                ast.Constant(value='c')
+            ],
+            keywords=[]
+        )
+    )
+    
+    # qc = QuantumCircuit(qr, cr)
+    qc_init = ast.Assign(
+        targets=[ast.Name(id='qc', ctx=ast.Store())],
+        value=ast.Call(
+            func=ast.Name(id='QuantumCircuit', ctx=ast.Load()),
+            args=[
+                ast.Name(id='qr', ctx=ast.Load()),
+                ast.Name(id='cr', ctx=ast.Load())
+            ],
+            keywords=[]
+        )
+    )
+
+    # Return qc at the end
+    return_qc = ast.Return(value=ast.Name(id='qc', ctx=ast.Load()))
+
+    master_body = [qr_init, cr_init, qc_init]
+    
+    if main_calls:
+        master_body.extend(main_calls)
+    else:
+        master_body.append(ast.Pass())
+
+    master_body.append(return_qc)
+
+    master_main = ast.FunctionDef(
+        name='main',
+        args=ast.arguments(
+            posonlyargs=[], args=[], kwonlyargs=[], kw_defaults=[], defaults=[]
+        ),
+        body=master_body,
+        decorator_list=[]
+    )
+    
+    new_module.body.append(master_main)
+
+    
+    # Add __name__ == "__main__" block
+    if_main = ast.If(
+        test=ast.Compare(
+            left=ast.Name(id='__name__', ctx=ast.Load()),
+            ops=[ast.Eq()],
+            comparators=[ast.Constant(value='__main__')]
+        ),
+        body=[
+            # qt = qiskitTesting()
+            ast.Assign(
+                targets=[ast.Name(id='qt', ctx=ast.Store())],
+                value=ast.Call(
+                    func=ast.Name(id='qiskitTesting', ctx=ast.Load()),
+                    args=[],
+                    keywords=[]
+                )
+            ),
+            # qt.ks_diff_test(main(), unique_index)
+            ast.Expr(
+                value=ast.Call(
+                    func=ast.Attribute(
+                        value=ast.Name(id='qt', ctx=ast.Load()),
+                        attr='ks_diff_test',
+                        ctx=ast.Load()
+                    ),
+                    args=[
+                        ast.Call(func=ast.Name(id='main', ctx=ast.Load()), args=[], keywords=[]),
+                        ast.Constant(value=unique_index)
+                    ],
+                    keywords=[]
+                )
+            )
+        ],
+        orelse=[]
+    )
+    new_module.body.append(if_main)
+    
+    # Write to file
+    try:
+        ast.fix_missing_locations(new_module)
+        with open(output_path, "w") as f:
+            f.write(ast.unparse(new_module))
+        return True
+    except Exception as e:
+        logging.error(f"Error writing output to {output_path}: {e}")
+        return False
+
+def assemble_guppy(files, output_path, unique_index=0):
     all_imports = []
     renamed_bodies = []
     main_funcs = []
@@ -60,7 +273,7 @@ def assemble(files, output_path, unique_index=0):
                 top_level_nodes.append(node)
                 
             # Rename
-            renamer = CircuitRenamer(prefix, file_global_funcs)
+            renamer = GuppyCircuitRenamer(prefix, file_global_funcs)
             new_nodes = []
             for node in top_level_nodes:
                 # Filter out top-level executions like 'main.compile()' 
@@ -276,7 +489,14 @@ def assemble(files, output_path, unique_index=0):
         f.write(output_code)
     # print(f"Assembled {len(files)} files into {output_path}")
 
+def assemble(files, output_path, unique_index=0, language='guppy'):
+    if language == 'qiskit':
+        return assemble_qiskit(files, output_path, unique_index)
+    
+    return assemble_guppy(files, output_path, unique_index)
+
 if __name__ == "__main__":
+
     # Configuration via argparse
     parser = argparse.ArgumentParser(description="Assemble and test quantum circuits.")
     parser.add_argument("input_dir", nargs='?', default="local_saved_circuits/Correct_format/", help="Directory containing input circuit files")
@@ -285,6 +505,7 @@ if __name__ == "__main__":
     parser.add_argument("--min-files", type=int, default=2, help="Minimum number of files per assembly")
     parser.add_argument("--max-files", type=int, default=5, help="Maximum number of files per assembly")
     parser.add_argument("--log-file", default="local_saved_circuits/Correct_format/assembler.log", help="Path to log file")
+    parser.add_argument("--language", default="guppy", choices=["guppy", "qiskit"], help="Language of circuits (guppy or qiskit)")
     
     args = parser.parse_args()
 
@@ -308,7 +529,7 @@ if __name__ == "__main__":
         ]
     )
 
-    logging.info(f"Starting assembler with configurations: Input={INPUT_DIR}, Output={OUTPUT_DIR}, N={N_GENERATIONS}")
+    logging.info(f"Starting assembler with configurations: Input={INPUT_DIR}, Output={OUTPUT_DIR}, N={N_GENERATIONS}, Language={args.language}")
 
     # Ensure output directory exists
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -354,7 +575,7 @@ if __name__ == "__main__":
             output_file = os.path.join(OUTPUT_DIR, f"assembled_circuit_{generated_count}.py")
             
             try:
-                assemble(selected_files, output_file, generated_count)
+                assemble(selected_files, output_file, generated_count, language=args.language)
                 assembled_files.append(output_file)
                 generated_count += 1
                 pbar.update(1)

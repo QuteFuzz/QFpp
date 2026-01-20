@@ -25,7 +25,7 @@ def get_array_size_guppy(node):
                 return size_node.n
     return None
 
-class CircuitRenamer(ast.NodeTransformer):
+class GuppyCircuitRenamer(ast.NodeTransformer):
     def __init__(self, prefix, global_funcs):
         self.prefix = prefix
         self.global_funcs = global_funcs
@@ -124,3 +124,111 @@ def add_main_wrapper_guppy(code: str) -> str:
     wrapper_code += "\nmain_wrapper.compile()\n"
     
     return code + wrapper_code
+
+def add_main_wrapper_qiskit(code: str) -> str:
+    """
+    Parses the code to find the main function and adds a main block to execute it.
+    """
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return code
+
+    has_main = False
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef) and node.name == 'main':
+            has_main = True
+            break
+            
+    if not has_main:
+        return code
+
+    # Check if a main block already exists
+    has_main_block = False
+    for node in tree.body:
+         if isinstance(node, ast.If) and isinstance(node.test, ast.Compare):
+             if isinstance(node.test.left, ast.Name) and node.test.left.id == "__name__":
+                 has_main_block = True
+                 break
+
+    if has_main_block:
+        return code
+
+    wrapper_code =  "\nif __name__ == '__main__':\n\t main()\n"
+    
+    return code + wrapper_code
+
+
+class QiskitMainTransformer(ast.NodeTransformer):
+    def __init__(self):
+        self.max_qubits = 1
+        self.max_clbits = 1
+        self.in_main = False
+
+    def visit_FunctionDef(self, node):
+        # Only transform the main function
+        if node.name == 'main':
+            self.in_main = True
+            
+            # Add args: qc, qr, cr
+            new_args = [
+                ast.arg(arg='qc', annotation=None),
+                ast.arg(arg='qr', annotation=None),
+                ast.arg(arg='cr', annotation=None)
+            ]
+            node.args.args.extend(new_args)
+            
+            # Process body
+            self.generic_visit(node)
+            
+            self.in_main = False
+            return node
+        return node
+
+    def visit_Assign(self, node):
+        if not self.in_main:
+            return node
+            
+        if isinstance(node.value, ast.Call):
+            func_name = self._get_func_name(node.value.func)
+            
+            # Check for QuantumRegister
+            if 'QuantumRegister' in func_name:
+                size = self._get_size_from_args(node.value)
+                if size > self.max_qubits:
+                    self.max_qubits = size
+                # Replace with: target = qr
+                return ast.Assign(targets=node.targets, value=ast.Name(id='qr', ctx=ast.Load()))
+            
+            # Check for ClassicalRegister
+            if 'ClassicalRegister' in func_name:
+                size = self._get_size_from_args(node.value)
+                if size > self.max_clbits:
+                    self.max_clbits = size
+                # Replace with: target = cr
+                return ast.Assign(targets=node.targets, value=ast.Name(id='cr', ctx=ast.Load()))
+                
+            # Check for QuantumCircuit
+            if 'QuantumCircuit' in func_name:
+                # Replace with: target = qc
+                return ast.Assign(targets=node.targets, value=ast.Name(id='qc', ctx=ast.Load()))
+        
+        return node
+
+    def _get_func_name(self, func_node):
+        if isinstance(func_node, ast.Name):
+            return func_node.id
+        elif isinstance(func_node, ast.Attribute):
+            return func_node.attr
+        return ""
+
+    def _get_size_from_args(self, call_node):
+        if call_node.args:
+            arg0 = call_node.args[0]
+            if isinstance(arg0, ast.Constant): # python 3.8+
+                return arg0.value
+            elif isinstance(arg0, ast.Num): # python <3.8
+                return arg0.n
+        return 1
+
+
