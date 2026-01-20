@@ -97,7 +97,9 @@ class Node : public std::enable_shared_from_this<Node> {
 
         virtual ~Node() = default;
 
-        void add_child(const std::shared_ptr<Node> child, const std::optional<Node_constraint>& child_grammar_constraint = std::nullopt);
+        inline void add_child(const std::shared_ptr<Node> child){
+            children.push_back(child);
+        }
 
         inline void transition_to_done(){
             state = NB_DONE;
@@ -204,8 +206,7 @@ class Node : public std::enable_shared_from_this<Node> {
         }
 
         bool branch_satisfies_constraint(const Branch& branch){
-            return (!constraint.has_value() || constraint.value().passed(branch)) &&
-                   (!grammar_added_constraint.has_value() || grammar_added_constraint.value().passed(branch));
+            return (!constraint.has_value() || constraint.value().passed(branch));
         }
 
         void set_constraint(std::vector<Token_kind> rule_kinds, std::vector<unsigned int> occurances){
@@ -227,14 +228,6 @@ class Node : public std::enable_shared_from_this<Node> {
                 constraint.value().add(rule_kind, n_occurances);
             } else {
                 constraint = std::make_optional<Node_constraint>(rule_kind, n_occurances);
-            }
-        }
-
-        void add_grammar_constraint(const Token_kind& rule_kind, unsigned int n_occurances){
-            if(grammar_added_constraint.has_value()){
-                grammar_added_constraint.value().add(rule_kind, n_occurances);
-            } else {
-                grammar_added_constraint = std::make_optional<Node_constraint>(rule_kind, n_occurances);
             }
         }
 
@@ -260,7 +253,6 @@ class Node : public std::enable_shared_from_this<Node> {
 
     private:
         std::optional<Node_constraint> constraint;
-        std::optional<Node_constraint> grammar_added_constraint;
 };
 
 #endif

@@ -52,23 +52,23 @@ class Circuit : public Node {
         {}
 
         /// @brief Generating a random circuit from scratch
-        Circuit(std::string owner_name) :
+        Circuit(std::string owner_name, const Control& control) :
             Node("circuit", CIRCUIT),
             owner(owner_name),
-            target_num_qubits_external(random_uint(QuteFuzz::MAX_QUBITS, QuteFuzz::MIN_QUBITS)),
-            target_num_qubits_internal(random_uint(QuteFuzz::MAX_QUBITS, QuteFuzz::MIN_QUBITS)),
-            target_num_bits_external(random_uint(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)),
-            target_num_bits_internal(random_uint(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS))
+            target_num_qubits_external(random_uint(control.max_qubits, control.min_qubits)),
+            target_num_qubits_internal(random_uint(control.max_qubits, control.min_qubits)),
+            target_num_bits_external(random_uint(control.max_bits, control.min_bits)),
+            target_num_bits_internal(random_uint(control.max_bits, control.min_bits))
         {}
 
         /// @brief Generating a circuit with a specific number of external qubits (generating from DAG)
-        Circuit(std::string owner_name, unsigned int num_external_qubits) :
+        Circuit(std::string owner_name, unsigned int num_external_qubits, const Control& control) :
             Node("circuit", CIRCUIT),
             owner(owner_name),
             target_num_qubits_external(num_external_qubits),
-            target_num_qubits_internal(random_uint(QuteFuzz::MAX_QUBITS, QuteFuzz::MIN_QUBITS)),
-            target_num_bits_external(random_uint(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS)),
-            target_num_bits_internal(random_uint(QuteFuzz::MAX_BITS, QuteFuzz::MIN_BITS))
+            target_num_qubits_internal(random_uint(control.max_qubits, control.min_qubits)),
+            target_num_bits_external(random_uint(control.max_bits, control.min_bits)),
+            target_num_bits_internal(random_uint(control.max_bits, control.min_bits))
         {}
 
         inline bool owned_by(std::string other){return other == owner;}

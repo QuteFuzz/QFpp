@@ -4,7 +4,7 @@ BUILD_TYPE="Release"
 BUILD_DIR="build"
 
 while [[ $# -gt 0 ]]; do
-    case "$1" in
+    case $1 in
         -bt)
             BUILD_TYPE="$2"
             shift 2

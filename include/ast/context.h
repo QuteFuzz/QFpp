@@ -148,7 +148,13 @@ struct Context {
 
 		inline std::shared_ptr<Integer> get_circuit_id(){return std::make_shared<Integer>(ast_counter);}
 
-		void set_genome(const std::optional<Genome>& _genome);
+		inline void set_genome(const std::optional<Genome>& _genome){
+			genome = _genome;
+		}
+
+		inline void set_control(const Control& _control){
+			control = _control;
+		}
 
 		inline void print_circuit_info() const {
 			for(const std::shared_ptr<Circuit>& circuit : circuits){
@@ -168,18 +174,20 @@ struct Context {
 		unsigned int current_port;
 		unsigned int nested_depth;
 
-		std::shared_ptr<Qubit_definition> current_qubit_definition;
-		std::shared_ptr<Bit_definition> current_bit_definition;
-		std::shared_ptr<Qubit> current_qubit;
-		std::shared_ptr<Bit> current_bit;
-		std::shared_ptr<Gate> current_gate;
-		std::shared_ptr<Qubit_op> current_qubit_op;
-		std::shared_ptr<Subroutine_op_arg> current_subroutine_op_arg;
+		std::shared_ptr<Qubit_definition> current_qubit_definition = std::make_shared<Qubit_definition>();
+		std::shared_ptr<Bit_definition> current_bit_definition = std::make_shared<Bit_definition>();
+		std::shared_ptr<Qubit> current_qubit = std::make_shared<Qubit>();
+		std::shared_ptr<Bit> current_bit = std::make_shared<Bit>();
+		std::shared_ptr<Gate> current_gate = std::make_shared<Gate>();
+		std::shared_ptr<Qubit_op> current_qubit_op = std::make_shared<Qubit_op>();
+		std::shared_ptr<Subroutine_op_arg> current_subroutine_op_arg = std::make_shared<Subroutine_op_arg>();
 
 		std::optional<std::shared_ptr<Subroutine_defs>> subroutines_node = std::nullopt;
 		std::optional<Genome> genome;
 
 		bool can_copy_dag;
+
+		Control control;
 };
 
 

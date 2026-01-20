@@ -81,7 +81,7 @@ imports =
 
 compound_stmt =
     qubit_op
-    | if_stmt
+    # | if_stmt # TODO: fix this
     ;
 
 # Redefine compound_stmt and related rules

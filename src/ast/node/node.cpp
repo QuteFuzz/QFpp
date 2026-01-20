@@ -28,43 +28,6 @@ std::shared_ptr<Node> Node::find(Token_kind node_kind){
     return (maybe_find == nullptr) ? nullptr : *maybe_find;
 }
 
-/// @brief // Adds child to parent node, along with any grammar constraint from parent only if child doesn't have the same constraint already on that Rule
-/// @param child
-/// @param child_constraint
-void Node::add_child(const std::shared_ptr<Node> child, const std::optional<Node_constraint>& child_grammar_constraint){
-
-    // First merge child's grammar constraint with parent's grammar constraint, child priority.
-    if (child_grammar_constraint.has_value() && grammar_added_constraint.has_value()) {
-        for(const auto& [rule, occurances] : grammar_added_constraint->get_constraints()){
-            child->add_grammar_constraint(rule, occurances);
-        }
-
-        for(const auto& [rule, occurances] : child_grammar_constraint->get_constraints()){
-                if(child->grammar_added_constraint.has_value()){
-                    child->grammar_added_constraint->set_occurances_for_rule(rule, occurances);
-                } else {
-                    child->add_grammar_constraint(rule, occurances);
-                }
-        }
-    }
-    //If parent has no grammar constraints, just add child's constraints
-    else if (!grammar_added_constraint.has_value() && child_grammar_constraint.has_value()) {
-        for(const auto& [rule, occurances] : child_grammar_constraint->get_constraints()){
-            child->add_grammar_constraint(rule, occurances);
-        }
-    }
-
-    // Finally, merge child's constraints with child's grammar constraints, with grammar constraints
-    // taking precedence if both exist on the same rule
-    if (child->constraint.has_value() && child->grammar_added_constraint.has_value()) {
-        for(const auto& [rule, occurances] : child->grammar_added_constraint->get_constraints()){
-            child->constraint->set_occurances_for_rule(rule, occurances);
-        }
-    }
-
-    children.push_back(child);
-}
-
 void Node::print_ast(std::string indent) const {
     std::cout << content << std::endl;
 

@@ -17,7 +17,7 @@ void Context::reset(Reset_level l){
         genome = std::nullopt;
 
     } else if (l == RL_CIRCUIT){
-        nested_depth = QuteFuzz::NESTED_MAX_DEPTH;
+        nested_depth = control.nested_max_depth;
 
     } else if (l == RL_QUBIT_OP){
         get_current_circuit()->qubit_flag_reset();
@@ -140,16 +140,16 @@ std::shared_ptr<Circuit> Context::new_circuit_node(){
             std::cout << YELLOW("n ports: " + std::to_string(subroutine->get_n_ports())) << std::endl;
 
             current_circuit_owner = subroutine->get_content();
-            current_circuit = std::make_shared<Circuit>(current_circuit_owner, subroutine->get_n_ports());
+            current_circuit = std::make_shared<Circuit>(current_circuit_owner, subroutine->get_n_ports(), control);
 
         } else {
             current_circuit_owner = "sub"+std::to_string(subroutine_counter++);
-            current_circuit = std::make_shared<Circuit>(current_circuit_owner);
+            current_circuit = std::make_shared<Circuit>(current_circuit_owner, control);
         }
 
     } else {
         current_circuit_owner = QuteFuzz::TOP_LEVEL_CIRCUIT_NAME;
-        current_circuit = std::make_shared<Circuit>(QuteFuzz::TOP_LEVEL_CIRCUIT_NAME);
+        current_circuit = std::make_shared<Circuit>(QuteFuzz::TOP_LEVEL_CIRCUIT_NAME, control);
 
         subroutine_counter = 0;
 
@@ -355,12 +355,12 @@ std::shared_ptr<Compound_stmts> Context::get_compound_stmts(std::shared_ptr<Node
         return Compound_stmts::from_num_qubit_ops(parent->get_next_child_target());
 
     } else {
-        return Compound_stmts::from_num_compound_stmts(WILDCARD_MAX);
+        return Compound_stmts::from_num_compound_stmts(QuteFuzz::WILDCARD_MAX);
     }
 }
 
 std::shared_ptr<Subroutine_defs> Context::new_subroutines_node(){
-    unsigned int n_circuits = random_uint(QuteFuzz::MAX_SUBROUTINES);
+    unsigned int n_circuits = random_uint(control.max_subroutines);
 
     if(genome.has_value()){
         n_circuits = genome.value().dag.n_subroutines();
@@ -373,6 +373,3 @@ std::shared_ptr<Subroutine_defs> Context::new_subroutines_node(){
     return node;
 }
 
-void Context::set_genome(const std::optional<Genome>& _genome){
-    genome = _genome;
-}

@@ -20,7 +20,7 @@ class Run{
 
         void help();
 
-        void set_grammar();
+        void set_grammar(Control& control);
 
         void tokenise(const std::string& command, const char& delim);
 

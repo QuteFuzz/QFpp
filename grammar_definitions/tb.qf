@@ -2,13 +2,14 @@
 # META-GRAMMAR
 
 # default config
-EXTENSION = ".py";
+extension = ".py";
 MIN_NUM_QUBITS = 3;
 MIN_NUM_BITS = 1;
 MAX_NUM_QUBITS = 4;
 MAX_NUM_BITS = 2;
 MAX_NUM_SUBROUTINES = 5;
 NESTED_MAX_DEPTH = 4;
+WILDCARD_MAX = 10;
 
 INTERNAL {
     qubit_def = singular_qubit_def | register_qubit_def;

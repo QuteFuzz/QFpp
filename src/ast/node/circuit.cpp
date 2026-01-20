@@ -180,8 +180,8 @@ unsigned int Circuit::make_resource_definitions(U8& scope, Resource_kind rk, boo
         } else {
             return bit_defs.get_num_of(scope);
         }
-    } else {
 
+    } else {
         unsigned int target_num_resources = 0, total_num_definitions = 0;
         bool scope_is_external = (scope & EXTERNAL_SCOPE);
         bool classificaton_is_qubit = (rk == RK_QUBIT);

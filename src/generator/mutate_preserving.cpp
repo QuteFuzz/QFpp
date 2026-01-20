@@ -3,14 +3,11 @@
 #include <float_literal.h>
 #include <ast_utils.h>
 
-const std::set<Token_kind> X_BASIS = {X, RX};
-const std::set<Token_kind> Y_BASIS = {Y, RY};
-
 bool stmt_is_qubit_op(const std::shared_ptr<Node>& compound_stmt){
     return *compound_stmt->child_at(0) == QUBIT_OP;
 }
 
-bool diagonal_in_same_basis(const std::shared_ptr<Node>& compound_stmt_a, const std::shared_ptr<Node>& compound_stmt_b){
+bool diagonal_in_same_basis(const std::shared_ptr<Node>& compound_stmt_a, const std::shared_ptr<Node>& compound_stmt_b, std::set<Token_kind> basis){
     std::shared_ptr<Node> qubit_op_a = compound_stmt_a->find(QUBIT_OP)->child_at(0);
     std::shared_ptr<Node> qubit_op_b = compound_stmt_b->find(QUBIT_OP)->child_at(0);
 
@@ -32,8 +29,7 @@ bool diagonal_in_same_basis(const std::shared_ptr<Node>& compound_stmt_a, const 
         // qubit_b->print_ast("");
 
         if (gates_found && qubits_match){
-            return (X_BASIS.count(gate_a->get_kind()) && X_BASIS.count(gate_b->get_kind())) ||
-                (Y_BASIS.count(gate_a->get_kind()) && Y_BASIS.count(gate_b->get_kind()));
+            return (basis.count(gate_a->get_kind()) && basis.count(gate_b->get_kind()));
         } else {
             return false;
         }
@@ -48,7 +44,7 @@ void Commutation_rule::apply(std::shared_ptr<Node>& compound_stmts){
     std::shared_ptr<Node>* maybe_compound_stmt_b = compound_stmts->find_slot(COMPOUND_STMT, visited_slots, false);
 
     while((maybe_compound_stmt_a != nullptr) && (maybe_compound_stmt_b != nullptr)){
-        if(diagonal_in_same_basis(*maybe_compound_stmt_a, *maybe_compound_stmt_b)){
+        if(diagonal_in_same_basis(*maybe_compound_stmt_a, *maybe_compound_stmt_b, basis)){
             std::swap(*maybe_compound_stmt_a, *maybe_compound_stmt_b);
         }
 

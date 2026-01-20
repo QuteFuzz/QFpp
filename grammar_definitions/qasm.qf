@@ -1,0 +1,79 @@
+# qasm.qf
+
+EXTENSION = ".qasm";
+MAX_NUM_QUBITS = 10;
+
+# 1. OVERRIDES (Ignore Python stuff from meta-grammar)
+# ---------------------------------------------------
+# We override 'program' so we don't get 'from pytket import...' at the top of our .qasm file
+
+program = header NEWLINE NEWLINE registers NEWLINE body;
+
+# We override the EXTERNAL blocks to generate 'qreg' instead of 'add_q_register'
+EXTERNAL {
+    singular_qubit_def = "qreg " qubit_def_name "[1];";
+    register_qubit_def = "qreg " qubit_def_name "[" qubit_def_size "];";
+
+    singular_bit_def = "creg " bit_def_name "[1];";
+    register_bit_def = "creg " bit_def_name "[" bit_def_size "];";
+
+    qubit_defs = (qubit_def NEWLINE)+;
+
+    bit_defs = (bit_def NEWLINE)+;
+}
+
+
+# 2. QASM STRUCTURE
+# -----------------
+header = 'OPENQASM 2.0;' NEWLINE 'include "qelib1.inc";';
+
+# We reuse the meta-grammar's 'EXTERNAL::qubit_defs' which calls our new overrides above
+registers = EXTERNAL::qubit_defs NEWLINE EXTERNAL::bit_defs;
+
+body = (gate_op NEWLINE)+;
+
+
+# 3. GATES
+# --------
+# QASM syntax: name(params) arg1, arg2;
+
+singular_qubit = qubit_name "[0]";
+
+register_qubit = qubit_name "[" qubit_index "]";
+
+
+singular_bit = bit_name "[0]";
+
+register_bit = bit_name "[" bit_index "]";
+
+
+gate_op_args = "(" float_list ") " qubit_list | " " qubit_list;
+
+gate_op = gate_name gate_op_args ";";
+
+gate_name = h | x | y | z | s | sdg | t | tdg | cx | cy | cz | ch |
+    ccx | rx | ry | rz | u1 | u2 | u3;
+
+h = "h";
+x = "x";
+y = "y";
+z = "z";
+s = "s";
+sdg = "sdg";
+t = "t";
+tdg = "tdg";
+cx = "cx";
+cy = "cy";
+cz = "cz";
+ch = "ch";
+ccx = "ccx";
+rx = "rx";
+ry = "ry";
+rz = "rz";
+u1 = "u1";
+u2 = "u2";
+u3 = "u3";
+
+
+# NOTE: QASM 2.0 does not support if/else blocks in the standard body easily 
+# without opaque definitions, so we rely on flattened gate lists here.

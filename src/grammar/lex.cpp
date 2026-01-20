@@ -9,40 +9,65 @@ void Lexer::lex(){
 
     std::sregex_iterator end;
 
+    bool in_multiline_comment = false;
+
     while(std::getline(stream, input)){
-
+        
         std::sregex_iterator begin(input.begin(), input.end(), full_pattern);
+        std::sregex_iterator end;
 
-        for(std::sregex_iterator i = begin; (i != end); ++i){
-            std::smatch match = *i;
-            matched_string = match.str();
+        for(std::sregex_iterator i = begin; i != end; ++i){
+            std::string text = i->str();
 
-            if(string_is(matched_string, R"(#)")){
-                break;
+            /*
+                ignore comments
+            */
 
-            } else if(string_is(matched_string, R"(\(\*)")){
-                ignore = true;
-                break;
+            if (text == "(*") {
+                in_multiline_comment = true;
+                continue; // Skip this token
+            }
 
-            } else if (string_is(matched_string, R"(\*\))")){
-                ignore = false;
-                break;
+            if (text == "*)") {
+                in_multiline_comment = false;
+                continue; // Skip this token
+            }
+            
+            if (in_multiline_comment) {
+                continue;
+            }
+
+            if (text[0] == '#') {
+                continue; // Skip the whole comment string
+            }
+            
+            if (isspace(text[0])) {
+                continue;
+            }
+
+            // find exact qf tokens            
+            bool found_keyword = false;
+            
+            for(const Token_matcher& tm : TOKEN_RULES) {
+                if (text == tm.pattern) {
+                    tokens.push_back(Token{tm.replacement.value_or(text), tm.kind});
+                    found_keyword = true;
+                    break;
+                }
+            }
+
+            if (found_keyword) continue;
+
+            
+            // classify generics
+            if (isalpha(text[0]) || text[0] == '_') {
+                tokens.push_back(Token{text, RULE});
+
+            } else if (isdigit(text[0])) {
+                tokens.push_back(Token{text, SYNTAX});
 
             } else {
-
-                for(const Regex_matcher& rm : TOKEN_RULES){
-                    if(string_is(matched_string, rm.pattern)){
-
-                        if(rm.kind == SYNTAX){
-                            tokens.push_back(Token{remove_outer_quotes(rm.value.value_or(matched_string)), rm.kind});
-
-                        } else {
-                            tokens.push_back(Token{rm.value.value_or(matched_string), rm.kind});
-                        }
-
-                        break;
-                    }
-                }
+                tokens.push_back(Token{remove_outer_quotes(text), SYNTAX});
             }
         }
     }

@@ -58,13 +58,12 @@ float random_float(float max, float min){
 }
 
 
-std::optional<unsigned int> safe_stoul(const std::string& str) {
+unsigned int safe_stoul(const std::string& str, unsigned int default_value) {
     try {
-        unsigned int ret = (str == "") ? 1 : std::stoul(str);
-        return std::optional<unsigned int>(ret);
+        unsigned int ret = std::stoul(str);
+        return ret;
     } catch (const std::invalid_argument& e) {
-        ERROR("Please enter a valid integer or enter a valid command");
-        return std::nullopt;
+        return default_value;
     }
 }
 
@@ -205,7 +204,7 @@ void render(std::function<void(std::ostringstream&)> extend_dot_string, const fs
 
     dot_string << "}\n";
 
-    std::cout << dot_string.str() << std::endl;
+    // std::cout << dot_string.str() << std::endl;
 
     const std::string str = render_path.string();
     std::string command = "dot -Tpng -o " + str;

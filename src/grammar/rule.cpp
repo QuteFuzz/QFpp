@@ -43,10 +43,6 @@ Branch Rule::pick_branch(std::shared_ptr<Node> parent){
         return branch;
 
     } else {
-        #ifdef DEBUG
-        INFO(token.value + STR_SCOPE(scope) + " is an empty rule");
-        #endif
-
         return Branch();
     }
 }

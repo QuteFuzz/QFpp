@@ -22,7 +22,6 @@
 #include <iomanip>
 #include <functional>
 
-#define WILDCARD_MAX 5
 #define BIT64(pos) (1ULL << pos)
 #define UNUSED(x) (void)(x)
 
@@ -57,14 +56,37 @@ namespace fs = std::filesystem;
 
 struct Control {
     unsigned int GLOBAL_SEED_VAL;
-    bool render_dags;
+    bool render;
     bool swarm_testing;
     bool run_mutate;
+    std::string ext;
+    unsigned int min_qubits;
+    unsigned int min_bits;
+    unsigned int max_qubits;
+    unsigned int max_bits;
+    unsigned int max_subroutines; 
+    unsigned int nested_max_depth;
+
+    friend std::ostream& operator<<(std::ostream& stream, const Control& other){
+        stream << "Control:" << std::endl;
+        stream << "  . GLOBAL_SEED_VAL: " << other.GLOBAL_SEED_VAL << std::endl;
+        stream << "  . render: " << other.render << std::endl;
+        stream << "  . swarm_testing: " << other.swarm_testing << std::endl;
+        stream << "  . run_mutate: " << other.run_mutate << std::endl;
+        stream << "  . ext: " << other.ext << std::endl;
+        stream << "  . min_qubits: " << other.min_qubits << std::endl;
+        stream << "  . min_bits: " << other.min_bits << std::endl;
+        stream << "  . max_qubits: " << other.max_qubits << std::endl;
+        stream << "  . max_bits: " << other.max_bits << std::endl;
+        stream << "  . max_subroutines: " << other.max_subroutines << std::endl;
+        stream << "  . nested_max_depth: " << other.nested_max_depth << std::endl;
+        return stream;
+    }
 };
 
 void lower(std::string& str);
 
-std::ofstream get_stream(fs::path output_dir, std::string file_name = "circuit.py");
+std::ofstream get_stream(fs::path output_dir, std::string file_name);
 
 void init_global_seed(Control& control, std::optional<unsigned int> user_seed = std::nullopt);
 
@@ -74,7 +96,7 @@ unsigned int random_uint(unsigned int max = UINT32_MAX, unsigned int min = 0);
 
 float random_float(float max, float min = 0.0);
 
-std::optional<unsigned int> safe_stoul(const std::string& str);
+unsigned int safe_stoul(const std::string& str, unsigned int default_value);
 
 std::vector<std::vector<int>> n_choose_r(const int n, const int r);
 

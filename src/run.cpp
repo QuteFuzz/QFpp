@@ -53,7 +53,7 @@ Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
 
 }
 
-void Run::set_grammar(){
+void Run::set_grammar(Control& control){
 
     std::string grammar_name = tokens[0], entry_name;
     tokenise(tokens[1], ',');
@@ -72,6 +72,37 @@ void Run::set_grammar(){
     current_generator->set_grammar_entry(entry_name, scope);
 
     setup_output_dir(grammar_name);
+
+    control.ext = current_generator->get_grammar()->dig("EXTENSION");
+
+    if(control.ext == ""){
+        throw std::runtime_error(ANNOT("Grammar " + grammar_name + " does not define an extension"));
+    }
+
+    control.min_qubits = std::max(
+        safe_stoul(current_generator->get_grammar()->dig("MIN_NUM_QUBITS"), QuteFuzz::MIN_QUBITS), 
+        QuteFuzz::MIN_QUBITS);
+    control.min_bits = std::max(
+        safe_stoul(current_generator->get_grammar()->dig("MIN_NUM_BITS"), QuteFuzz::MIN_BITS), 
+        QuteFuzz::MIN_BITS);
+    control.max_qubits = std::min(
+        safe_stoul(current_generator->get_grammar()->dig("MAX_NUM_QUBITS"), QuteFuzz::MAX_QUBITS), 
+        QuteFuzz::MAX_QUBITS);
+    control.max_bits = std::min(
+        safe_stoul(current_generator->get_grammar()->dig("MAX_NUM_BITS"), QuteFuzz::MAX_BITS), 
+        QuteFuzz::MAX_BITS);
+    control.max_subroutines = std::min(
+        safe_stoul(current_generator->get_grammar()->dig("MAX_NUM_SUBROUTINES"), QuteFuzz::MAX_SUBROUTINES), 
+        QuteFuzz::MAX_SUBROUTINES);
+    control.nested_max_depth = std::min(
+        safe_stoul(current_generator->get_grammar()->dig("NESTED_MAX_DEPTH"), QuteFuzz::NESTED_MAX_DEPTH),
+        QuteFuzz::NESTED_MAX_DEPTH);
+
+    current_generator->set_grammar_control(control);
+
+    #ifdef DEBUG
+    std::cout << control << std::endl;
+    #endif
 }
 
 void Run::tokenise(const std::string& command, const char& delim){
@@ -107,7 +138,20 @@ void Run::help(){
 void Run::loop(){
 
     std::string current_command;
-    Control qf_control = {0};
+    Control qf_control = {
+        .GLOBAL_SEED_VAL = 0,
+        .render = false,
+        .swarm_testing = false,
+        .run_mutate = false,
+        .ext = ".text",
+        .min_qubits = QuteFuzz::MIN_QUBITS,
+        .min_bits = QuteFuzz::MIN_BITS,
+        .max_qubits = QuteFuzz::MAX_QUBITS,
+        .max_bits = QuteFuzz::MAX_BITS,
+        .max_subroutines = QuteFuzz::MAX_SUBROUTINES,
+        .nested_max_depth = QuteFuzz::NESTED_MAX_DEPTH,
+    };
+
     init_global_seed(qf_control);
 
     while(true){
@@ -118,14 +162,26 @@ void Run::loop(){
 
         if(tokens.size() == 2){
             if (is_grammar(tokens[0])){
-                set_grammar();
+                set_grammar(qf_control);
             } else if (tokens[0] == "seed") {
-                init_global_seed(qf_control, safe_stoul(tokens[1]));
+                init_global_seed(qf_control, safe_stoul(tokens[1], 0));
                 INFO("Global seed set to " + std::to_string(qf_control.GLOBAL_SEED_VAL));
             }
 
         } else if(current_command == "h"){
             help();
+
+        } else if (current_command == "render"){
+            qf_control.render = !qf_control.render;
+            INFO("Rendering " + FLAG_STATUS(qf_control.render));
+    
+        } else if (current_command == "swarm_testing") {
+                qf_control.swarm_testing = !qf_control.swarm_testing;
+                INFO("Swarm testing mode " + FLAG_STATUS(qf_control.swarm_testing));
+
+        } else if (current_command == "mutate"){
+            qf_control.run_mutate = !qf_control.run_mutate;
+            INFO("Mutation mode " + FLAG_STATUS(qf_control.run_mutate)); 
 
         } else if (current_command == "quit"){
             current_generator.reset();
@@ -133,16 +189,13 @@ void Run::loop(){
             break;
 
         } else if(current_generator != nullptr){
+            if (current_command == "pt") {
+                current_generator->print_tokens();
 
-            if (current_command == "swarm_testing") {
-                qf_control.swarm_testing = !qf_control.swarm_testing;
-                INFO("Swarm testing mode " + FLAG_STATUS(qf_control.swarm_testing));
+            } else if (current_command == "pg") {
+                current_generator->print_grammar();
 
-            } else if (current_command == "mutate"){
-                qf_control.run_mutate = !qf_control.run_mutate;
-                INFO("Mutation mode " + FLAG_STATUS(qf_control.run_mutate));
-
-            } else if ((n_programs = safe_stoul(current_command))){
+            } else if ((n_programs = safe_stoul(current_command, 1))){
                 remove_all_in_dir(current_output_dir);
 
                 for(size_t build_counter = 0; build_counter < n_programs.value_or(0); build_counter++){

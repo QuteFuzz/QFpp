@@ -13,7 +13,7 @@ See wiki for more details.
 
 1. Dependencies
 ```sh
-./scripts/setup/setup_deps.sh
+./scripts/setup/setup_env.sh
 ```
 
 2. Run
@@ -30,21 +30,7 @@ To run fuzzer on its own, setup cmake build dir using
 
 then running `build/fuzzer`.
 
-## Bugs found with the help of QuteFuzz 2.0
+3. Use `converage html` to generate html for coverage report 
 
-### Pytket:
+See `dev` for dev-specific docs
 
-| Compiler Bugs | Other Bugs |
-|---------------|------------|
-| [Issue 623 &#x1F41E;](https://github.com/CQCL/pytket-quantinuum/issues/623) | |
-| [Issue 2004  &#x1F41E;](https://github.com/CQCL/tket/issues/2004) |
-| | |
-
-### Guppy:
-
-| Compiler Bugs | Other Bugs |
-|---------------|------------|
-| [Issue 1122 &#x1F41E;](https://github.com/CQCL/guppylang/issues/1122)  | [Issue 1101 &#x1F41E;](https://github.com/CQCL/guppylang/issues/1101)|
-| [Issue 1224 &#x1F41E;](https://github.com/CQCL/guppylang/issues/1224) | |
-| [Issue 1079 &#x1F41E;](https://github.com/CQCL/guppylang/issues/1079) | |
-| | |

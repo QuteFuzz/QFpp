@@ -2,6 +2,7 @@
 #define COMPOUND_STMTS_H
 
 #include <node.h>
+#include <params.h>
 
 class Compound_stmts : public Node {
 
@@ -17,7 +18,7 @@ class Compound_stmts : public Node {
         static std::shared_ptr<Compound_stmts> from_num_qubit_ops(unsigned int target_num_qubit_ops){
             Compound_stmts stmts;
 
-            unsigned int n_children = (target_num_qubit_ops >= WILDCARD_MAX) ? WILDCARD_MAX : target_num_qubit_ops;
+            unsigned int n_children = (target_num_qubit_ops >= QuteFuzz::WILDCARD_MAX) ? QuteFuzz::WILDCARD_MAX : target_num_qubit_ops;
 
             stmts.add_constraint(COMPOUND_STMT, n_children);
             stmts.make_partition(target_num_qubit_ops, n_children);

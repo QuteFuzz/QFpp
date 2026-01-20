@@ -243,7 +243,7 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 		case BARRIER: {
 			std::shared_ptr<Circuit> current_circuit = context.get_current_circuit();
 
-			unsigned int n_qubits = std::min((unsigned int)WILDCARD_MAX, (unsigned int)current_circuit->num_qubits_of(ALL_SCOPES));
+			unsigned int n_qubits = std::min(QuteFuzz::WILDCARD_MAX, (unsigned int)current_circuit->num_qubits_of(ALL_SCOPES));
 			unsigned int random_barrier_width = random_uint(n_qubits, 1);
 
 			return context.new_gate(str, kind, random_barrier_width, 0, 0);
@@ -258,7 +258,7 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 
 }
 
-void Ast::write_branch(std::shared_ptr<Node> parent, const Term& term){
+void Ast::write_branch(std::shared_ptr<Node> parent, const Term& term, const Control& control, unsigned int depth){
 
 	if(term.is_rule()){
 
@@ -268,17 +268,11 @@ void Ast::write_branch(std::shared_ptr<Node> parent, const Term& term){
 
 			std::shared_ptr<Node> child_node = get_node(parent, child_term);
 
-			// Obtain grammar-added constraint from child term if it is a rule (defined in .qf file)
-			std::optional<Node_constraint> child_grammar_constraint = std::nullopt;
-			if (child_term.is_rule()) {
-				 child_grammar_constraint = child_term.get_rule()->get_constraint();
-			}
-
-			parent->add_child(child_node, child_grammar_constraint);
+			parent->add_child(child_node);
 
 			if(child_node->size()) continue;
 
-			write_branch(child_node, child_term);
+			write_branch(child_node, child_term, control, depth + 1);
 		}
 	}
 
@@ -286,24 +280,24 @@ void Ast::write_branch(std::shared_ptr<Node> parent, const Term& term){
 	parent->transition_to_done();
 }
 
-Result<Node> Ast::build(const std::optional<Genome>& genome, const std::optional<Node_constraint>& _swarm_testing_gateset){
+Result<Node> Ast::build(const std::optional<Genome>& genome, const std::optional<Node_constraint>& _swarm_testing_gateset, const Control& control){
 	Result<Node> res;
 
 	if(entry == nullptr){
 		res.set_error("Entry point not set");
 
 	} else {
-
 		swarm_testing_gateset = _swarm_testing_gateset;
 
 		context.reset(RL_PROGRAM);
 		context.set_genome(genome);
+		context.set_control(control);
 
 		Term entry_term(entry, entry->get_token().kind);
 
 		root = get_node(std::make_shared<Node>(""), entry_term);
 
-		write_branch(root, entry_term);
+		write_branch(root, entry_term, control);
 
 		if(genome.has_value()){
 			dag = std::make_shared<Dag>(genome.value().dag);

@@ -18,6 +18,7 @@ dependencies = [
     "tket",
     "selene-sim",
     "guppylang",
+    "coverage",
     "hugr-qir @ git+https://github.com/CQCL/hugr-qir.git", 
 ]
 

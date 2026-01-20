@@ -40,7 +40,7 @@ void Dag::add_edge(const Edge& edge, std::optional<int> maybe_dest_node_id, int 
         nodewise_data.push_back(Node_data{.node = source_node, .inputs = {}, .children = {}});
 
         // reserve memory for inputs depending on number of ports this gate has
-        nodewise_data.at(pos).inputs.resize(source_node->get_n_ports(), 0);
+        nodewise_data.at(pos).inputs.resize(source_node->get_n_ports() + 2, 0); // +1 is for 0-indexing, +1 is for safety
     }
 
     if(maybe_dest_node_id.has_value()) nodewise_data.at(pos).children.push_back(maybe_dest_node_id.value());
