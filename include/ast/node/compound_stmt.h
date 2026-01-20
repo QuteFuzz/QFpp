@@ -13,7 +13,6 @@ class Compound_stmt : public Node {
             Compound_stmt stmt;
 
             if(nested_depth == 0){
-                std::cout << "nested depth " << nested_depth << std::endl;
                 stmt.add_constraint(QUBIT_OP, 1);
             }
 
