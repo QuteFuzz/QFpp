@@ -108,7 +108,8 @@ def render_template(data, template_file: str, output_file: str):
         with open(output_path, "w") as f:
             f.write(output_content)
         print(
-            f"Successfully generated '{output_path}' using config '{data.get('yaml_source', 'YAML')}'"
+            f"Successfully generated '{output_path}' using config ' \
+                {data.get('yaml_source', 'YAML')}'"
         )
     except IOError as e:
         print(f"Error writing to output file '{output_path}': {e}", file=sys.stderr)
@@ -117,7 +118,8 @@ def render_template(data, template_file: str, output_file: str):
 
 def add_grammar_file_tokens(config_data):
     """
-    Go through grammars dir and add tokens for each of the grammars. These will be used later for scoping
+    Go through grammars dir and add tokens for each of the grammars.
+    These will be used later for scoping
     """
     enum_sections = config_data["enum_sections"]
     tokens = []
@@ -128,6 +130,7 @@ def add_grammar_file_tokens(config_data):
     for section in enum_sections:
         if section["start_marker"] == "GRAMMAR_SYNTAX_TOP":
             section["syntax_tokens"] += tokens
+
 
 def main():
     args = parse_arguments()
