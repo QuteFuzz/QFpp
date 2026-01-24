@@ -45,14 +45,46 @@
 #define EXTERNAL_SCOPE (1UL << 0)
 #define INTERNAL_SCOPE (1UL << 1)
 #define OWNED_SCOPE (1UL << 2)
-#define ALL_SCOPES (EXTERNAL_SCOPE | INTERNAL_SCOPE | OWNED_SCOPE)
+#define GLOBAL_SCOPE (1UL << 3)
+#define ALL_SCOPES (EXTERNAL_SCOPE | INTERNAL_SCOPE | OWNED_SCOPE | GLOBAL_SCOPE)
 
-#define STR_SCOPE(scope) (" [scope flag (OWD INT EXT): " + std::bitset<3>(scope).to_string() + "]")
+#define STR_SCOPE(scope) (" [scope flag (OWD INT EXT GLOB): " + std::bitset<4>(scope).to_string() + "]")
 
 using U64 = uint64_t;
 using U8 = uint8_t;
 
 namespace fs = std::filesystem;
+
+class Rule;
+
+enum Clamp_dir {
+    CLAMP_DOWN,
+    CLAMP_UP
+};
+
+template <typename T>
+struct Expected{
+    std::string rule_name;
+    U8 scope;
+    T value;
+    T dflt;
+    Clamp_dir cd;
+
+    Expected(std::string _rule_name, T _dflt, Clamp_dir _cd) :
+        rule_name(_rule_name),
+        scope(NO_SCOPE),
+        value(_dflt),
+        dflt(_dflt),
+        cd(_cd)
+    {}
+
+    Expected(std::string _rule_name, U8 _scope, T _dflt) :
+        rule_name(_rule_name),
+        scope(_scope),
+        value(_dflt),
+        dflt(_dflt)
+    {}
+};
 
 struct Control {
     unsigned int GLOBAL_SEED_VAL;
@@ -60,27 +92,28 @@ struct Control {
     bool swarm_testing;
     bool run_mutate;
     std::string ext;
-    unsigned int min_qubits;
-    unsigned int min_bits;
-    unsigned int max_qubits;
-    unsigned int max_bits;
-    unsigned int max_subroutines; 
-    unsigned int nested_max_depth;
 
-    friend std::ostream& operator<<(std::ostream& stream, const Control& other){
-        stream << "Control:" << std::endl;
-        stream << "  . GLOBAL_SEED_VAL: " << other.GLOBAL_SEED_VAL << std::endl;
-        stream << "  . render: " << other.render << std::endl;
-        stream << "  . swarm_testing: " << other.swarm_testing << std::endl;
-        stream << "  . run_mutate: " << other.run_mutate << std::endl;
-        stream << "  . ext: " << other.ext << std::endl;
-        stream << "  . min_qubits: " << other.min_qubits << std::endl;
-        stream << "  . min_bits: " << other.min_bits << std::endl;
-        stream << "  . max_qubits: " << other.max_qubits << std::endl;
-        stream << "  . max_bits: " << other.max_bits << std::endl;
-        stream << "  . max_subroutines: " << other.max_subroutines << std::endl;
-        stream << "  . nested_max_depth: " << other.nested_max_depth << std::endl;
-        return stream;
+    std::vector<Expected<unsigned int>> expected_values;
+    std::vector<Expected<std::shared_ptr<Rule>>> expected_rules;
+
+    unsigned int get_value(std::string name) const {
+        for(auto& exp : expected_values){
+            if(exp.rule_name == name){
+                return exp.value;
+            }
+        }
+
+        throw std::runtime_error("Expected value " + name + " not found in control");
+    }
+
+    std::shared_ptr<Rule> get_rule(std::string name, U8 scope) const {
+        for(auto& exp : expected_rules){
+            if((exp.rule_name == name) && (exp.scope == scope)){
+                return exp.value;
+            }
+        }
+
+        throw std::runtime_error("Expected rule " + name + STR_SCOPE(scope) + " not found in control");
     }
 };
 

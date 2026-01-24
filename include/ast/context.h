@@ -133,7 +133,7 @@ struct Context {
 
 		/// @brief Is the current circuit being generated a subroutine?
 		/// @return
-		inline bool current_circuit_is_subroutine(){
+		inline bool under_subroutines_node() const {
 			return subroutines_node.has_value() && (subroutines_node.value()->build_state() == NB_BUILD);
 		}
 
@@ -145,7 +145,8 @@ struct Context {
 
 		inline void set_control(const Control& _control){
 			control = _control;
-			nested_depth = control.nested_max_depth;
+			nested_depth = control.get_value("NESTED_MAX_DEPTH");
+			dummy_circuit->set_global_targets(control);
 		}
 
 		inline void print_circuit_info() const {

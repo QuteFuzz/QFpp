@@ -1,6 +1,6 @@
 # qiskit
 
-NESTED_MAX_DEPTH = 1;
+NESTED_MAX_DEPTH = 5;
 
 # Overwrites from meta-grammar
 if_stmt =

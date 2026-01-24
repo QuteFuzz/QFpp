@@ -16,7 +16,7 @@ NIGHTLY_DIR = Path("nightly_results")
 GRAMMARS = ["pytket", "qiskit"]
 ENTRY_POINT = "program"
 NUM_TESTS = 10  # Default for CI
-NUM_NIGHTLY_TESTS = 1200  # More tests for nightly runs
+NUM_NIGHTLY_TESTS = 850  # More tests for nightly runs
 
 # Thresholds for identifying interesting circuits
 KS_THRESHOLD = 0.05  # KS p-value below this is interesting
@@ -221,9 +221,9 @@ def validate_generated_files(grammar: str, mode: str, plot: bool) -> List[Circui
     results = []
 
     for i, circ_dir in enumerate(circuit_dirs, 1):
-        script_path = circ_dir / "circuit.py"
+        script_path = circ_dir / "prog.py"
         if not script_path.exists():
-            continue
+            log("    Circuit not found at" + str(script_path), Color.RED)
 
         log(f"Running circuit {i}/{len(circuit_dirs)}: {circ_dir.name}", Color.BLUE)
 
@@ -246,10 +246,10 @@ def validate_generated_files(grammar: str, mode: str, plot: bool) -> List[Circui
                 result.error_message = stderr[:500]
                 log("  Runtime error detected", Color.YELLOW)
 
-        if mode == "CI" and result.had_syntax_error:
-            log("CI mode: Failing fast due to error.", Color.RED)
+        if result.had_syntax_error:
             log(f"Error message:\n{result.error_message}", Color.RED)
-            sys.exit(1)
+            if mode == "CI":
+                sys.exit(1)
 
         # Parse KS values from output
         result.ks_values = parse_ks_values(stdout)

@@ -1,5 +1,12 @@
 
 # META-GRAMMAR
+(*
+    Rules:
+    - use `subroutines` node to encapsulate subroutine circuits
+    - `qubit_def` rule MUST be defined in at least INTERNAL or EXTERNAL scope (defining in both is fine)
+    - the node `body` MUST always be used to define the circuit body. All compound statements must be inside the 
+        `compound_stmts` node, then the `compound_stmts` node is used within body 
+*)
 
 # default config
 EXTENSION = ".py";
@@ -9,6 +16,12 @@ MAX_NUM_QUBITS = 4;
 MAX_NUM_BITS = 2;
 MAX_NUM_SUBROUTINES = 5;
 NESTED_MAX_DEPTH = 4;
+
+GLOBAL {
+    qubit_def = ;
+
+    bit_def = ;
+}
 
 INTERNAL {
     qubit_def = singular_qubit_def | register_qubit_def;

@@ -9,6 +9,15 @@ void Rule::add(const Branch& branch){
     }
 }
 
+bool Rule::contains_rule(const Token_kind& other_rule){
+    for(auto& branch : branches){
+        if (branch.count_rule_occurances(other_rule) != 0) return true;
+    }
+
+    return false;
+}
+
+
 /// @brief Pick a branch from the rule. The parent node here is the node created for this rule, and it contains a constriant which is used to pick
 /// the correct branch to make the child nodes
 /// @param parent 

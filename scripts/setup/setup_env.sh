@@ -46,5 +46,6 @@ if [ -n "$GITHUB_ENV" ]; then
     echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 fi
 
+
 echo ">>> Setup Complete!"
 echo "Run using: uv run scripts/run.py"

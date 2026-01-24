@@ -17,9 +17,11 @@ dependencies = [
     "qnexus",
     "tket",
     "selene-sim",
+    "jinja2",
     "guppylang",
     "coverage",
-    "hugr-qir @ git+https://github.com/CQCL/hugr-qir.git", 
+    "hugr-qir @ git+https://github.com/CQCL/hugr-qir.git",
+    "pyyaml>=6.0.3",
 ]
 
 [tool.uv]
@@ -43,3 +45,6 @@ ignore = []
 include = ["scripts", "diff_testing", "main.py"]
 pythonVersion = "3.12"
 typeCheckingMode = "basic"  # Ch
+
+[tool.hatch.build.targets.wheel]
+packages = ["diff_testing"]

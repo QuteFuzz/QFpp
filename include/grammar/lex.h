@@ -142,6 +142,7 @@ enum Token_kind {
     INTERNAL,
     EXTERNAL,
     OWNED,
+    GLOBAL,
     SCOPE_RES,
     /*
         Grammar syntax end, add new syntax above
@@ -149,27 +150,7 @@ enum Token_kind {
     GRAMMAR_SYNTAX_BOTTOM,                      /// ADD GRAMMAR SYNTAX ABOVE!
 };
 
-inline bool is_wildcard(const Token_kind& kind) {
-    return
-        (kind ==  OPTIONAL) ||
-        (kind == ZERO_OR_MORE) ||
-        (kind == ONE_OR_MORE)
-        ;
-}
-
-inline bool is_kind_of_rule(const Token_kind& kind){
-    return
-        (RULE_KINDS_TOP < kind) &&
-        (RULE_KINDS_BOTTOM > kind)
-        ;
-}
-
-inline bool is_quiet(const Token_kind& kind){
-    return
-        (kind == SCOPE_RES) ||
-        (kind == LBRACE) ||
-        (kind == ARROW);
-}
+inline std::string kind_as_str(const Token_kind& kind);
 
 struct Token{
     std::string value;
@@ -180,8 +161,8 @@ struct Token{
     }
 
     friend std::ostream& operator<<(std::ostream& stream, const Token t){
-        if(t.kind == SYNTAX) std::cout << t.kind << " " << std::quoted(t.value);
-        else std::cout << t.kind << " " << t.value;
+        if(t.kind == SYNTAX) std::cout << kind_as_str(t.kind) << " " << std::quoted(t.value);
+        else std::cout << kind_as_str(t.kind) << " " << t.value;
 
         return stream;
     }
@@ -319,6 +300,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("EXTERNAL", EXTERNAL),
     Token_matcher("INTERNAL", INTERNAL),
     Token_matcher("OWNED", OWNED),
+    Token_matcher("GLOBAL", GLOBAL),
 
     Token_matcher("::", SCOPE_RES),
     Token_matcher("->", ARROW),
@@ -384,5 +366,37 @@ class Lexer{
         bool ignore = false;
 
 };
+
+inline bool is_wildcard(const Token_kind& kind) {
+    return
+        (kind ==  OPTIONAL) ||
+        (kind == ZERO_OR_MORE) ||
+        (kind == ONE_OR_MORE)
+        ;
+}
+
+inline bool is_kind_of_rule(const Token_kind& kind){
+    return
+        (RULE_KINDS_TOP < kind) &&
+        (RULE_KINDS_BOTTOM > kind)
+        ;
+}
+
+inline bool is_quiet(const Token_kind& kind){
+    return
+        (kind == SCOPE_RES) ||
+        (kind == LBRACE) ||
+        (kind == ARROW);
+}
+
+inline std::string kind_as_str(const Token_kind& kind) {
+    for (auto tm : TOKEN_RULES){
+        if(tm.kind == kind){
+            return tm.pattern;
+        }
+    }
+
+    return "";
+}
 
 #endif

@@ -22,7 +22,7 @@ void Context::reset(Reset_level l){
         }
 
         case RL_CIRCUIT: 
-            nested_depth = control.nested_max_depth;
+            nested_depth = control.get_value("NESTED_MAX_DEPTH");
             [[fallthrough]];
 
         case RL_QUBIT_OP: {
@@ -94,11 +94,14 @@ unsigned int Context::get_max_external_bits(){
     return res;
 }
 
+/// In normal cases, current circuit is the last added circuit into the circuits vector. The exception is if we are no longer under the `subroutines`
+/// node in the AST, but the last added circuit is a subroutine. This implies that after the `subroutines` node, there's no `circuit` node to generate
+/// a new, main circuit. As such, qubit and bit definitions, qubits and bits may have been made globally, and therefore stored in the dummy circuit, so we return that
 std::shared_ptr<Circuit> Context::get_current_circuit() const {
-    if(circuits.size()) {
-        return circuits.back();
-    } else {
+    if((circuits.size() == 0) || (!under_subroutines_node() && circuits.back()->check_if_subroutine())){
         return dummy_circuit;
+    } else {
+        return circuits.back();
     }
 }
 
@@ -137,7 +140,7 @@ std::shared_ptr<Circuit> Context::new_circuit_node(){
 
     reset(RL_CIRCUIT);
 
-    if(current_circuit_is_subroutine()){
+    if(under_subroutines_node()){
 
         if(genome.has_value()){
             std::shared_ptr<Node> subroutine = genome.value().dag.get_next_subroutine_gate();
@@ -151,12 +154,12 @@ std::shared_ptr<Circuit> Context::new_circuit_node(){
 
         } else {
             current_circuit_owner = "sub"+std::to_string(subroutine_counter++);
-            current_circuit = std::make_shared<Circuit>(current_circuit_owner, control);
+            current_circuit = std::make_shared<Circuit>(current_circuit_owner, control, true);
         }
 
     } else {
         current_circuit_owner = QuteFuzz::TOP_LEVEL_CIRCUIT_NAME;
-        current_circuit = std::make_shared<Circuit>(QuteFuzz::TOP_LEVEL_CIRCUIT_NAME, control);
+        current_circuit = std::make_shared<Circuit>(QuteFuzz::TOP_LEVEL_CIRCUIT_NAME, control, false);
 
         subroutine_counter = 0;
 
@@ -177,7 +180,7 @@ std::shared_ptr<Qubit_defs> Context::get_qubit_defs_node(U8& scope){
         num_defs = current_circuit->make_resource_definitions(genome->dag, scope, RK_QUBIT);
 
     } else {
-        num_defs = current_circuit->make_resource_definitions(scope, RK_QUBIT);
+        num_defs = current_circuit->make_resource_definitions(scope, RK_QUBIT, control);
     }
 
     return std::make_shared<Qubit_defs>(num_defs);
@@ -192,7 +195,7 @@ std::shared_ptr<Qubit_defs> Context::get_qubit_defs_discard_node(U8& scope){
         num_defs = current_circuit->make_resource_definitions(genome->dag, scope, RK_QUBIT, true);
 
     } else {
-        num_defs = current_circuit->make_resource_definitions(scope, RK_QUBIT, true);
+        num_defs = current_circuit->make_resource_definitions(scope, RK_QUBIT, control, true);
     }
 
     return std::make_shared<Qubit_defs>(num_defs, true);
@@ -206,7 +209,7 @@ std::shared_ptr<Bit_defs> Context::get_bit_defs_node(U8& scope){
     if(can_copy_dag){
         num_defs = current_circuit->make_resource_definitions(genome->dag, scope, RK_BIT);
     } else {
-        num_defs = current_circuit->make_resource_definitions(scope, RK_BIT);
+        num_defs = current_circuit->make_resource_definitions(scope, RK_BIT, control);
     }
 
     return std::make_shared<Bit_defs>(num_defs);
@@ -363,7 +366,7 @@ std::shared_ptr<Compound_stmts> Context::get_compound_stmts(std::shared_ptr<Node
 }
 
 std::shared_ptr<Subroutine_defs> Context::new_subroutines_node(){
-    unsigned int n_circuits = random_uint(control.max_subroutines);
+    unsigned int n_circuits = random_uint(control.get_value("MAX_NUM_SUBROUTINES"));
 
     if(genome.has_value()){
         n_circuits = genome.value().dag.n_subroutines();

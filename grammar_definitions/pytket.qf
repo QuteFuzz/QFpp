@@ -1,4 +1,6 @@
 
+# import "qasm.qf"
+
 x = "X";
 y = "Y";
 z = "Z";

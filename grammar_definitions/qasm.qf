@@ -3,23 +3,32 @@
 EXTENSION = ".qasm";
 MAX_NUM_QUBITS = 10;
 
-# 1. OVERRIDES (Ignore Python stuff from meta-grammar)
-# ---------------------------------------------------
-# We override 'program' so we don't get 'from pytket import...' at the top of our .qasm file
-
-program = header NEWLINE NEWLINE registers NEWLINE body;
-
-# We override the EXTERNAL blocks to generate 'qreg' instead of 'add_q_register'
 EXTERNAL {
-    singular_qubit_def = "qreg " qubit_def_name "[1];";
+    singular_qubit_def = qubit_def_name;
+
+    singular_bit_def = bit_def_name;
+
+    qubit_defs = qubit_def (COMMA qubit_def)*;
+
+    bit_defs = bit_def (COMMA bit_def)*;
+
+    qubit_def = singular_qubit_def;
+
+    bit_def = singular_bit_def;
+}
+
+GLOBAL {
     register_qubit_def = "qreg " qubit_def_name "[" qubit_def_size "];";
 
-    singular_bit_def = "creg " bit_def_name "[1];";
     register_bit_def = "creg " bit_def_name "[" bit_def_size "];";
 
     qubit_defs = (qubit_def NEWLINE)+;
 
     bit_defs = (bit_def NEWLINE)+;
+
+    qubit_def = register_qubit_def;
+
+    bit_def = register_bit_def;
 }
 
 
@@ -27,22 +36,34 @@ EXTERNAL {
 # -----------------
 header = 'OPENQASM 2.0;' NEWLINE 'include "qelib1.inc";';
 
-# We reuse the meta-grammar's 'EXTERNAL::qubit_defs' which calls our new overrides above
-registers = EXTERNAL::qubit_defs NEWLINE EXTERNAL::bit_defs;
+program = header NEWLINE NEWLINE registers NEWLINE subroutine_defs NEWLINE body;
 
-body = (gate_op NEWLINE)+;
+registers = GLOBAL::qubit_defs NEWLINE GLOBAL::bit_defs;
 
+subroutine_defs = (subroutine_circuit NEWLINE)*;
+
+body = compound_stmts;
+
+subroutine_body = compound_stmts;
+
+compound_stmts = (compound_stmt NEWLINE)+;
+
+compound_stmt = qubit_op;
+
+subroutine_circuit = "gate " circuit_name " " EXTERNAL::qubit_defs " { " NEWLINE subroutine_body "}";
+
+subroutine_op = subroutine " " qubit_list 
 
 # 3. GATES
 # --------
 # QASM syntax: name(params) arg1, arg2;
 
-singular_qubit = qubit_name "[0]";
+singular_qubit = qubit_name;
 
 register_qubit = qubit_name "[" qubit_index "]";
 
 
-singular_bit = bit_name "[0]";
+singular_bit = bit_name;
 
 register_bit = bit_name "[" bit_index "]";
 

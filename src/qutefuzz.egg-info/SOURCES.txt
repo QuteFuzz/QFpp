@@ -1,7 +1,0 @@
-LICENSE
-README.md
-pyproject.toml
-src/qutefuzz.egg-info/PKG-INFO
-src/qutefuzz.egg-info/SOURCES.txt
-src/qutefuzz.egg-info/dependency_links.txt
-src/qutefuzz.egg-info/top_level.txt

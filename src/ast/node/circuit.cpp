@@ -1,4 +1,5 @@
 #include <circuit.h>
+#include <rule.h>
 
 std::shared_ptr<Qubit> Circuit::get_random_qubit(const U8& scope){
     size_t total_qubits = qubits.get_num_of(scope);
@@ -171,7 +172,7 @@ unsigned int Circuit::make_singular_resource_definition(U8& scope, Resource_kind
     return 1;
 }
 
-unsigned int Circuit::make_resource_definitions(U8& scope, Resource_kind rk, bool discard_defs){
+unsigned int Circuit::make_resource_definitions(U8& scope, Resource_kind rk, Control& control, bool discard_defs){
 
     if (discard_defs) {
         //Simply report back how many qubit defs are there
@@ -182,27 +183,41 @@ unsigned int Circuit::make_resource_definitions(U8& scope, Resource_kind rk, boo
         }
 
     } else {
-        unsigned int target_num_resources = 0, total_num_definitions = 0;
-        bool scope_is_external = (scope & EXTERNAL_SCOPE);
-        bool classificaton_is_qubit = (rk == RK_QUBIT);
+        unsigned int total_num_definitions = 0;
+        unsigned int target_num_resources = get_resource_target(scope, rk);
 
-        switch((scope_is_external << 1) | classificaton_is_qubit){
-            case 0b00: target_num_resources = target_num_bits_internal; break;
-            case 0b01: target_num_resources = target_num_qubits_internal; break;
-            case 0b10: target_num_resources = target_num_bits_external; break;
-            case 0b11: target_num_resources = target_num_qubits_external; break;
-            default: ERROR("Scope and rk failed to pick target num of resources!");
+        bool can_generate_register_resource = true;
+        bool can_generate_singular_resource = true;
+        std::shared_ptr<Rule> resource_def_rule;
+
+        if(rk == RK_QUBIT){
+            resource_def_rule = control.get_rule("qubit_def", scope);
+            can_generate_register_resource = resource_def_rule->contains_rule(REGISTER_QUBIT_DEF);
+            can_generate_singular_resource = resource_def_rule->contains_rule(SINGULAR_QUBIT_DEF);
+
+        } else {
+            resource_def_rule = control.get_rule("bit_def", scope);
+            can_generate_register_resource = resource_def_rule->contains_rule(REGISTER_BIT_DEF);
+            can_generate_singular_resource = resource_def_rule->contains_rule(SINGULAR_BIT_DEF);
         }
+
+        // std::cout << "reg re: " << can_generate_register_resource << " sig re: " << can_generate_singular_resource << std::endl;
+        // std::cout << owner << std::endl;
 
         while(target_num_resources > 0){
             /*
                 Use singular qubit or qubit register
+                Checks whether you have a choice depending on grammar definition
             */
-            if(random_uint(1)){
-                target_num_resources -= make_singular_resource_definition(scope, rk, total_num_definitions);
-
-            } else {
+            if(can_generate_register_resource && can_generate_singular_resource) {
+                target_num_resources -= (random_uint(1) ? make_singular_resource_definition(scope, rk, total_num_definitions) :
+                    make_register_resource_definition(target_num_resources, scope, rk, total_num_definitions));
+            } else if (can_generate_register_resource) {
                 target_num_resources -= make_register_resource_definition(target_num_resources, scope, rk, total_num_definitions);
+            } else if (can_generate_singular_resource) {
+                target_num_resources -= make_singular_resource_definition(scope, rk, total_num_definitions);
+            } else {
+                throw std::runtime_error("Resource def MUST have at least one register or singular resource definition");
             }
         }
 
@@ -240,10 +255,12 @@ void Circuit::print_info() const {
     std::cout << "Target num qubits " << std::endl;
     std::cout << " EXTERNAL: " << target_num_qubits_external << std::endl;
     std::cout << " INTERNAL: " << target_num_qubits_internal << std::endl;
+    std::cout << " GLOBAL: " << target_num_qubits_global << std::endl;
 
     std::cout << "Target num bits " << std::endl;
     std::cout << " EXTERNAL: " << target_num_bits_external << std::endl;
     std::cout << " INTERNAL: " << target_num_bits_internal << std::endl;
+    std::cout << " GLOBAL: " << target_num_bits_global << std::endl;
 
     std::cout << std::endl;
     std::cout << "Qubit definitions " << std::endl;

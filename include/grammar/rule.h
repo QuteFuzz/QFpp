@@ -43,10 +43,14 @@ class Rule {
 
         Branch pick_branch(std::shared_ptr<Node> rule_as_node);
 
+        bool contains_rule(const Token_kind& other_rule);
+
         bool operator==(const Rule& other) const {
             return (token == other.get_token()) && scope_matches(scope, other.get_scope());
         }
 
+        /// Checks that rule name and scope matches
+        /// Scope matching is done by == if both are NO_SCOPE, otherwise, & is used
         bool matches(const std::string& name, const U8& _scope) {
             return (token.value == name) && scope_matches(scope, _scope);
         }

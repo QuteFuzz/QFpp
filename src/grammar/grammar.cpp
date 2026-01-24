@@ -41,6 +41,7 @@ void Grammar::peek(){
 
 }
 
+/// Return value of given rule name if the value is 1 branch, with 1 syntax term (string or digit) 
 std::string Grammar::dig(const std::string& rule_name) const {
     std::shared_ptr<Rule> rule_ptr = get_rule_pointer_if_exists(rule_name); 
 
@@ -253,6 +254,15 @@ void Grammar::build_grammar(){
                 rule_decl_scope |= OWNED_SCOPE;
             } else {
                 rule_def_scope |= OWNED_SCOPE;
+            }
+
+        } else if (token.kind == GLOBAL){
+            next = next_token.get_ok();
+
+            if(next.kind == SCOPE_RES){
+                rule_decl_scope |= GLOBAL_SCOPE;
+            } else {
+                rule_def_scope |= GLOBAL_SCOPE;
             }
 
         } else if (is_quiet(token.kind)){

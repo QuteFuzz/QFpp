@@ -19,7 +19,7 @@ constexpr unsigned int MIN_QUBITS = 3;
 constexpr unsigned int MIN_BITS = 1;
 constexpr unsigned int MAX_QUBITS = 20;
 constexpr unsigned int MAX_BITS = 2;
-constexpr unsigned int MAX_SUBROUTINES = 10; 
+constexpr unsigned int MAX_NUM_SUBROUTINES = 10; 
 constexpr unsigned int NESTED_MAX_DEPTH = 7;
 
 // these values can maybe be calculated based on system stack size 

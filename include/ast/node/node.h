@@ -51,7 +51,7 @@ struct Node_constraints {
             stream << "====================================" << std::endl;
 
             for(const auto& [rule, occurances] : nc.rule_kinds_and_occurances){
-                stream << rule << " " << occurances << std::endl;               
+                stream << kind_as_str(rule) << " " << occurances << std::endl;               
             }
 
             stream << "====================================" << std::endl; 

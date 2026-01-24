@@ -52,28 +52,46 @@ class Circuit : public Node {
         {}
 
         /// @brief Generating a random circuit from scratch
-        Circuit(std::string owner_name, const Control& control) :
+        Circuit(std::string owner_name, const Control& control, bool _is_subroutine) :
             Node("circuit", CIRCUIT),
             owner(owner_name),
-            target_num_qubits_external(random_uint(control.max_qubits, control.min_qubits)),
-            target_num_qubits_internal(random_uint(control.max_qubits, control.min_qubits)),
-            target_num_bits_external(random_uint(control.max_bits, control.min_bits)),
-            target_num_bits_internal(random_uint(control.max_bits, control.min_bits))
+            is_subroutine(_is_subroutine),
+            target_num_qubits_external(random_uint(control.get_value("MAX_NUM_QUBITS"), control.get_value("MIN_NUM_QUBITS"))),
+            target_num_qubits_internal(random_uint(control.get_value("MAX_NUM_QUBITS"), control.get_value("MIN_NUM_QUBITS"))),
+            target_num_bits_external(random_uint(control.get_value("MAX_NUM_BITS"), control.get_value("MIN_NUM_BITS"))),
+            target_num_bits_internal(random_uint(control.get_value("MAX_NUM_BITS"), control.get_value("MIN_NUM_BITS")))
         {}
 
         /// @brief Generating a circuit with a specific number of external qubits (generating from DAG)
         Circuit(std::string owner_name, unsigned int num_external_qubits, const Control& control) :
             Node("circuit", CIRCUIT),
             owner(owner_name),
+            is_subroutine(false),
             target_num_qubits_external(num_external_qubits),
-            target_num_qubits_internal(random_uint(control.max_qubits, control.min_qubits)),
-            target_num_bits_external(random_uint(control.max_bits, control.min_bits)),
-            target_num_bits_internal(random_uint(control.max_bits, control.min_bits))
+            target_num_qubits_internal(random_uint(control.get_value("MAX_NUM_QUBITS"), control.get_value("MIN_NUM_QUBITS"))),
+            target_num_bits_external(random_uint(control.get_value("MAX_NUM_BITS"), control.get_value("MIN_NUM_BITS"))),
+            target_num_bits_internal(random_uint(control.get_value("MAX_NUM_BITS"), control.get_value("MIN_NUM_BITS")))
         {}
+
+        inline void set_global_targets(const Control& control){
+            target_num_qubits_global = random_uint(control.get_value("MAX_NUM_QUBITS"), control.get_value("MIN_NUM_QUBITS"));
+            target_num_bits_global = random_uint(control.get_value("MAX_NUM_BITS"), control.get_value("MIN_NUM_BITS"));
+        }
+
+        inline unsigned int get_resource_target(U8& scope, Resource_kind& rk){
+            switch(scope){
+                case EXTERNAL_SCOPE: return (rk == RK_QUBIT) ? target_num_qubits_external : target_num_bits_external;
+                case INTERNAL_SCOPE: return (rk == RK_QUBIT) ? target_num_qubits_internal : target_num_bits_internal;
+                case GLOBAL_SCOPE: return (rk == RK_QUBIT) ? target_num_qubits_global : target_num_bits_global;
+                default: return QuteFuzz::MIN_QUBITS;
+            }
+        }
 
         inline bool owned_by(std::string other){return other == owner;}
 
         inline std::string get_owner(){return owner;}
+
+        inline bool check_if_subroutine(){return is_subroutine;}
 
         void set_can_apply_subroutines(bool flag){
             can_apply_subroutines = flag;
@@ -163,7 +181,7 @@ class Circuit : public Node {
 
         unsigned int make_singular_resource_definition(U8& scope, Resource_kind rk, unsigned int& total_definitions);
 
-        unsigned int make_resource_definitions(U8& scope, Resource_kind rk, bool discard_defs = false);
+        unsigned int make_resource_definitions(U8& scope, Resource_kind rk, Control& control, bool discard_defs = false);
 
         unsigned int make_resource_definitions(const Dag& dag, const U8& scope, Resource_kind rk, bool discard_defs = false);
 
@@ -171,11 +189,15 @@ class Circuit : public Node {
 
     private:
         std::string owner;
+        bool is_subroutine = false;
 
         unsigned int target_num_qubits_external = QuteFuzz::MIN_QUBITS;
         unsigned int target_num_qubits_internal = 0;
+        unsigned int target_num_qubits_global = 0;
+
         unsigned int target_num_bits_external = QuteFuzz::MIN_BITS;
         unsigned int target_num_bits_internal = 0;
+        unsigned int target_num_bits_global = 0;
 
         bool can_apply_subroutines = false;
 

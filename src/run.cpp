@@ -79,24 +79,23 @@ void Run::set_grammar(Control& control){
         throw std::runtime_error(ANNOT("Grammar " + grammar_name + " does not define an extension"));
     }
 
-    control.min_qubits = std::max(
-        safe_stoul(current_generator->get_grammar()->dig("MIN_NUM_QUBITS"), QuteFuzz::MIN_QUBITS), 
-        QuteFuzz::MIN_QUBITS);
-    control.min_bits = std::max(
-        safe_stoul(current_generator->get_grammar()->dig("MIN_NUM_BITS"), QuteFuzz::MIN_BITS), 
-        QuteFuzz::MIN_BITS);
-    control.max_qubits = std::min(
-        safe_stoul(current_generator->get_grammar()->dig("MAX_NUM_QUBITS"), QuteFuzz::MAX_QUBITS), 
-        QuteFuzz::MAX_QUBITS);
-    control.max_bits = std::min(
-        safe_stoul(current_generator->get_grammar()->dig("MAX_NUM_BITS"), QuteFuzz::MAX_BITS), 
-        QuteFuzz::MAX_BITS);
-    control.max_subroutines = std::min(
-        safe_stoul(current_generator->get_grammar()->dig("MAX_NUM_SUBROUTINES"), QuteFuzz::MAX_SUBROUTINES), 
-        QuteFuzz::MAX_SUBROUTINES);
-    control.nested_max_depth = std::min(
-        safe_stoul(current_generator->get_grammar()->dig("NESTED_MAX_DEPTH"), QuteFuzz::NESTED_MAX_DEPTH),
-        QuteFuzz::NESTED_MAX_DEPTH);
+    std::shared_ptr<Grammar> current_grammar = current_generator->get_grammar();
+
+    for(auto& exp : control.expected_rules){
+        exp.value = current_grammar->get_rule_pointer_if_exists(exp.rule_name, exp.scope); 
+
+        if(exp.value == nullptr){
+            throw std::runtime_error("Rule " + exp.rule_name + STR_SCOPE(exp.scope) + "MUST be defined either by default in the meta-grammar, or redefined in the input grammar");
+        }
+    }
+
+    for(auto& exp : control.expected_values){
+        if(exp.cd == CLAMP_UP){
+            exp.value = std::max(safe_stoul(current_grammar->dig(exp.rule_name), exp.dflt), exp.dflt);
+        } else {
+            exp.value = std::min(safe_stoul(current_grammar->dig(exp.rule_name), exp.dflt), exp.dflt);
+        }
+    }
 
     current_generator->set_grammar_control(control);
 }
@@ -140,12 +139,22 @@ void Run::loop(){
         .swarm_testing = false,
         .run_mutate = false,
         .ext = ".text",
-        .min_qubits = QuteFuzz::MIN_QUBITS,
-        .min_bits = QuteFuzz::MIN_BITS,
-        .max_qubits = QuteFuzz::MAX_QUBITS,
-        .max_bits = QuteFuzz::MAX_BITS,
-        .max_subroutines = QuteFuzz::MAX_SUBROUTINES,
-        .nested_max_depth = QuteFuzz::NESTED_MAX_DEPTH,
+        .expected_values = {
+            Expected<unsigned int>("MIN_NUM_QUBITS", QuteFuzz::MIN_QUBITS, CLAMP_UP),
+            Expected<unsigned int>("MIN_NUM_BITS", QuteFuzz::MIN_BITS, CLAMP_UP),
+            Expected<unsigned int>("MAX_NUM_QUBITS", QuteFuzz::MAX_QUBITS, CLAMP_DOWN),
+            Expected<unsigned int>("MAX_NUM_BITS", QuteFuzz::MAX_BITS, CLAMP_DOWN),
+            Expected<unsigned int>("MAX_NUM_SUBROUTINES", QuteFuzz::MAX_NUM_SUBROUTINES, CLAMP_DOWN),
+            Expected<unsigned int>("NESTED_MAX_DEPTH", QuteFuzz::NESTED_MAX_DEPTH, CLAMP_DOWN)
+        },
+        .expected_rules = {
+            Expected<std::shared_ptr<Rule>>("qubit_def", INTERNAL_SCOPE, nullptr),
+            Expected<std::shared_ptr<Rule>>("qubit_def", EXTERNAL_SCOPE, nullptr),
+            Expected<std::shared_ptr<Rule>>("qubit_def", GLOBAL_SCOPE, nullptr),
+            Expected<std::shared_ptr<Rule>>("bit_def", INTERNAL_SCOPE, nullptr),
+            Expected<std::shared_ptr<Rule>>("bit_def", EXTERNAL_SCOPE, nullptr),
+            Expected<std::shared_ptr<Rule>>("bit_def", GLOBAL_SCOPE, nullptr)
+        },
     };
 
     init_global_seed(qf_control);
