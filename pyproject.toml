@@ -45,3 +45,6 @@ ignore = []
 include = ["scripts", "diff_testing", "main.py"]
 pythonVersion = "3.12"
 typeCheckingMode = "basic"  # Ch
+
+[tool.hatch.build.targets.wheel]
+packages = ["diff_testing"]
