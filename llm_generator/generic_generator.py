@@ -22,7 +22,7 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
     current_stats = {'cost': 0.0, 'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0}
     
     def get_elapsed():
-         return f"[Elapsed: {time.time() - start_time:.2f}s]"
+        return f"[Elapsed: {time.time() - start_time:.2f}s]"
 
     # Generate
     generation_prompt_path = os.path.join(prompt_dir, "generation_prompt.txt")
@@ -74,17 +74,17 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
             # fixing logic
             fixing_prompt_path = os.path.join(prompt_dir, "fixing_prompt_template.txt")
             if not os.path.exists(fixing_prompt_path):
-                 with log_lock:
-                     logfile.write(f"Fixing prompt not found at {fixing_prompt_path}, skipping fix.\n")
-                 break
+                with log_lock:
+                    logfile.write(f"Fixing prompt not found at {fixing_prompt_path}, skipping fix.\n")
+                break
 
             fixing_prompt = get_dynamic_prompt(fixing_prompt_path, faulty_code=current_code, error_message=current_error)
             fixed_code, stats = ask_any_model(model, fixing_prompt)
 
             if fixed_code is None:
-                 with log_lock:
-                     logfile.write(f"Failed to generate fix for {filename} cycle {cycle+1}\n\n")
-                 break
+                with log_lock:
+                    logfile.write(f"Failed to generate fix for {filename} cycle {cycle+1}\n\n")
+                break
             
             if stats:
                 current_stats['cost'] += stats.get('cost', 0.0)

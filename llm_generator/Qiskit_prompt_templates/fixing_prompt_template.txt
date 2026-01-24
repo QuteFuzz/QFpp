@@ -24,7 +24,6 @@ Role: You are an expert Qiskit Debugging and Fuzzing Specialist.
         
     - The `main()` function must still append these instructions to the global circuit.
         
-3. **Dynamic Features:** Do not remove `if_test` or `reset` operations unless they are the direct cause of a syntax impossibility. If fixing, preserve the intent of dynamic branching.
     
 4. **Clean Output:**
     

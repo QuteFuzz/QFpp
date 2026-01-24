@@ -166,27 +166,9 @@ def run_coverage_on_file(file_path: str, source_package: str = None, verbose: bo
                 code = f.read()
 
             if language == 'guppy':
-                # Check if main function has arguments
-                needs_wrapper = False
-                try:
-                    tree = ast.parse(code)
-                    for node in tree.body:
-                        if isinstance(node, ast.FunctionDef) and node.name == 'main':
-                            if len(node.args.args) > 0:
-                                needs_wrapper = True
-                                break
-                except Exception:
-                    pass # If parsing fails, rely on original code or handle downstream
-
-                # Conditionally apply wrapper
-                if needs_wrapper:
-                    wrapped_code = add_main_wrapper_guppy(code)
-                else:
-                    wrapped_code = code
+                wrapped_code = add_main_wrapper_guppy(code)
             elif language == 'qiskit':
                 wrapped_code = add_main_wrapper_qiskit(code)
-            else:
-                wrapped_code = code
             
             with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, dir='/tmp') as temp_file:
                 temp_file.write(wrapped_code)
@@ -230,14 +212,9 @@ def run_coverage_on_file(file_path: str, source_package: str = None, verbose: bo
                 env=env
             )
             # If the process failed, capture stderr.
-            # Also capture stderr if returncode is 0 but there is content in stderr (warnings/errors)
-            # though some tools output harmless warnings to stderr. 
-            # For strict checking of "validity", any stderr usually implies an issue in these generated scripts.
             if result.returncode != 0:
                 run_error = result.stderr if result.stderr else f"Process exited with code {result.returncode}"
             elif result.stderr:
-                 # Check if it's just a coverage warning or a real error
-                 # But to be safe and match user expectation of "Valid", let's treat stderr as potential error
                  run_error = result.stderr 
             else:
                 run_error = ""
