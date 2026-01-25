@@ -169,9 +169,9 @@ class Check_grammar:
         fuzzer_executable = BUILD_DIR / "fuzzer"
 
         if self.seed is None:
-            input_str = f"{self.name} {ENTRY_POINT}\nseed {self.seed}\n{self.num_tests}\n"
-        else:
             input_str = f"{self.name} {ENTRY_POINT}\n{self.num_tests}\n"
+        else:
+            input_str = f"{self.name} {ENTRY_POINT}\nseed {self.seed}\n{self.num_tests}\n"
 
         input_str += "quit\n"
 
