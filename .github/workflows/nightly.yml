@@ -43,7 +43,7 @@ jobs:
 
           uv run scripts/run.py \
             --nightly \
-            -- num-tests 1024 \
+            -- num-tests 10000 \
             --grammars $GRAMMARS
 
       - name: Upload Interesting Circuits
