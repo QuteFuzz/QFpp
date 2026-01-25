@@ -11,7 +11,7 @@ on:
       grammars:
         description: 'Grammars to test (space-separated)'
         required: false
-        default: 'pytket qiskit cirq'
+        default: 'pytket qiskit'
         type: string
 
 jobs:
@@ -39,10 +39,11 @@ jobs:
       - name: Run Nightly Pipeline
         run: |
           # Use workflow inputs if provided, otherwise defaults
-          GRAMMARS="${{ github.event.inputs.grammars || 'pytket qiskit cirq' }}"
+          GRAMMARS="${{ github.event.inputs.grammars || 'pytket qiskit' }}"
 
           uv run scripts/run.py \
             --nightly \
+            -- num-tests 512 \
             --grammars $GRAMMARS
 
       - name: Upload Interesting Circuits
@@ -53,11 +54,3 @@ jobs:
           path: nightly_results/
           retention-days: 90  # Keep for 90 days (max on free tier)
           compression-level: 9  # Maximum compression to save space
-
-      - name: Upload Summary Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: nightly-report-${{ github.run_number }}
-          path: nightly_results/*/report.txt
-          retention-days: 90
