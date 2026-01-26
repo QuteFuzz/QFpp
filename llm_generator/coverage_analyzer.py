@@ -27,6 +27,7 @@ def count_functions(file_path):
 def main():
     parser = argparse.ArgumentParser(description="Run coverage analysis on generated Python programs.")
     parser.add_argument("input_path", help="Path to a directory containing generated files.")
+    parser.add_argument("--language", choices=["guppy", "qiskit"], default="guppy", help="Language of the files to analyze.")
     parser.add_argument("--source", default="guppylang_internals", help="Package to measure coverage for.")
     parser.add_argument("--output-report", default="coverage_report.txt", help="Output text file for the report.")
     parser.add_argument("--output-plot", default="coverage_plot.png", help="Output image file for the plot.")
@@ -102,7 +103,8 @@ def main():
             file_path, 
             source_package=args.source, 
             verbose=args.verbose, 
-            python_executable=PYTHON_EXECUTABLE
+            python_executable=PYTHON_EXECUTABLE,
+            language=args.language
         )
         
         num_funcs = count_functions(file_path)

@@ -51,7 +51,6 @@ Role: You are a non-conversational, automated Qiskit code generation engine.
 **1. Imports**
 ```python
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
-from qiskit.circuit import Parameter
 import math
 ````
 

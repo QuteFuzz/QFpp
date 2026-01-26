@@ -10,13 +10,10 @@ from tqdm import tqdm
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import from local library
-from lib.utils import parse_time_metrics
-from lib.ast_ops import add_main_wrapper_guppy
 from lib.execution import run_generated_program
 
 
-
-def process_single_file(file_path, logfile, log_lock, verbose=False):
+def process_single_file(file_path, logfile, log_lock, verbose=False, language="guppy"):
     filename = os.path.basename(file_path)
     output_buffer = [] # Buffer to store all logs for this file
 
@@ -33,7 +30,7 @@ def process_single_file(file_path, logfile, log_lock, verbose=False):
                  logfile.write(f"Error reading {filename}: {e}\n\n")
             return False, {}
 
-        run_error, run_stdout, metrics, wrapped_code = run_generated_program(code, timeout=120)
+        run_error, run_stdout, metrics, wrapped_code = run_generated_program(code, timeout=120, language=language)
 
         output_buffer.append(f"{filename} Metrics: {metrics}\n")
         
@@ -65,6 +62,7 @@ def process_single_file(file_path, logfile, log_lock, verbose=False):
 def main():
     parser = argparse.ArgumentParser(description="Run tests on existing generated circuits without generating new ones.")
     parser.add_argument("input_dir", help="Directory containing .py files to test")
+    parser.add_argument("--language", choices=["guppy", "qiskit"], default="guppy", help="Language of the files to test")
     parser.add_argument("--workers", type=int, default=1, help="Number of concurrent workers")
     parser.add_argument("--verbose", action="store_true", help="Include wrapped code in the log output")
     parser.add_argument("--output-log", help="Optional path for the log file")
@@ -75,7 +73,7 @@ def main():
         print(f"Error: {input_dir} is not a directory.")
         return
 
-    # Find all .py files
+    # Find all .py files to run
     files = sorted([os.path.join(input_dir, f) for f in os.listdir(input_dir) if f.endswith('.py')])
     
     if not files:
@@ -85,7 +83,7 @@ def main():
     if args.output_log:
         logfile_path = args.output_log
     else:
-        logfile_path = os.path.join(input_dir, "retest_execution_log.txt")
+        logfile_path = os.path.join(input_dir, "test_execution_log.txt")
         
     log_lock = threading.Lock()
     
@@ -103,7 +101,7 @@ def main():
         logfile.write(f"Started at: {time.ctime(start_time)}\n\n")
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
-            futures = {executor.submit(process_single_file, f, logfile, log_lock, args.verbose): f for f in files}
+            futures = {executor.submit(process_single_file, f, logfile, log_lock, args.verbose, args.language): f for f in files}
             
             for future in tqdm(concurrent.futures.as_completed(futures), total=total_files, unit="files"):
                 is_success, metrics = future.result()
