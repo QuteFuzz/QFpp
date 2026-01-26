@@ -345,7 +345,7 @@ def main():
     args = parse()
     clean_and_build()
 
-    run_timestamp = datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
+    run_timestamp = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
 
     mode = Run_mode.NIGHTLY if args.nightly else Run_mode.CI
 
