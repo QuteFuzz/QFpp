@@ -69,15 +69,16 @@ class GuppyCircuitRenamer(ast.NodeTransformer):
             
         return node
 
-def add_main_wrapper_guppy(code: str) -> str:
+
+def _generate_guppy_wrapper_body(code: str) -> tuple[str, str]:
     """
-    Parses the code to find the main function, creates a wrapper function
-    that initializes arguments and calls main, and adds a compilation check.
+    Helper to generate the wrapper function for a Guppy main function.
+    Returns (wrapper_name, wrapper_code_string).
     """
     try:
         tree = ast.parse(code)
     except SyntaxError:
-        return code
+        return None, ""
 
     main_func = None
     for node in tree.body:
@@ -86,7 +87,7 @@ def add_main_wrapper_guppy(code: str) -> str:
             break
             
     if not main_func:
-        return code
+        return None, ""
 
     setup_code = []
     result_code = []
@@ -111,7 +112,11 @@ def add_main_wrapper_guppy(code: str) -> str:
                 setup_code.append(f"    {arg_name} = array(qubit() for _ in range({arr_size}))")
                 result_code.append(f'    result("{arg_name}", measure_array({arg_name}))')
                 call_args.append(arg_name)
-    
+
+    # If no args, we do not need a wrapper.
+    if not call_args and not setup_code:
+        return 'main', ""
+
     wrapper_code = "\n\n@guppy\ndef main_wrapper() -> None:\n"
     if setup_code:
         wrapper_code += "\n".join(setup_code) + "\n"
@@ -121,11 +126,33 @@ def add_main_wrapper_guppy(code: str) -> str:
     if result_code:
         wrapper_code += "\n".join(result_code) + "\n"
     
-    wrapper_code += "\nmain_wrapper.compile()\n"
-    
-    return code + wrapper_code
+    return 'main_wrapper', wrapper_code
 
-def add_main_wrapper_qiskit(code: str) -> str:
+def wrap_for_compilation_guppy(code: str) -> str:
+    wrapper_name, wrapper_code = _generate_guppy_wrapper_body(code)
+    if wrapper_name is None: return code
+    
+    if wrapper_code:
+        return code + wrapper_code + f"\n{wrapper_name}.compile()\n"
+    else:
+        # If no wrapper needed (e.g. main has no args), just compile main
+        return code + f"\n{wrapper_name}.compile()\n"
+
+def wrap_for_testing_guppy(code: str) -> str:
+    wrapper_name, wrapper_code = _generate_guppy_wrapper_body(code)
+    if wrapper_name is None: return code
+    
+    import_stmt = "from diff_testing.lib import guppyTesting\n"
+    
+    # Need to verify if imports already exist in code to avoid dupes? 
+    # Python doesn't crash on duplicate imports, so prepending is fine.
+    
+    test_harness = f"\n\ngt = guppyTesting()\ngt.ks_diff_test({wrapper_name}, 0)\n"
+    
+    return import_stmt + code + wrapper_code + test_harness
+
+
+def wrap_for_compilation_qiskit(code: str) -> str:
     """
     Parses the code to find the main function and adds a main block to execute it.
     """
@@ -155,8 +182,33 @@ def add_main_wrapper_qiskit(code: str) -> str:
         return code
 
     wrapper_code =  "\nif __name__ == '__main__':\n\t main()\n"
-    
     return code + wrapper_code
+
+def wrap_for_testing_qiskit(code: str) -> str:
+    # Basic check for main
+    try:
+        tree = ast.parse(code)
+        has_main = False
+        for node in tree.body:
+            if isinstance(node, ast.FunctionDef) and node.name == 'main':
+                has_main = True
+                break
+        if not has_main: return code
+    except: return code
+
+    import_stmt = "from diff_testing.lib import qiskitTesting\n"
+    
+    # We want to replace existing main block or append new one
+    # For simplicity, we just append. If there's an existing `if __name__ == "__main__": main()`,
+    # execution might fall through or run twice if we aren't careful.
+    # But usually generated code doesn't have the block yet.
+    
+    wrapper_code = """
+if __name__ == '__main__':
+    qt = qiskitTesting()
+    qt.ks_diff_test(main(), 0)
+"""
+    return import_stmt + code + wrapper_code
 
 
 class QiskitMainTransformer(ast.NodeTransformer):

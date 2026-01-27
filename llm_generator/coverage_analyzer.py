@@ -29,8 +29,8 @@ def main():
     parser.add_argument("input_path", help="Path to a directory containing generated files.")
     parser.add_argument("--language", choices=["guppy", "qiskit"], default="guppy", help="Language of the files to analyze.")
     parser.add_argument("--source", default="guppylang_internals", help="Package to measure coverage for.")
-    parser.add_argument("--output-report", default="coverage_report.txt", help="Output text file for the report.")
-    parser.add_argument("--output-plot", default="coverage_plot.png", help="Output image file for the plot.")
+    parser.add_argument("--report_dir", default="coverage_report.txt", help="Output text file for the report.")
+    parser.add_argument("--plot_dir", default="coverage_plot.png", help="Output image file for the plot.")
     parser.add_argument("-g", "--group-by-generated", action="store_true", help="Use strict grouping logic based on 'generated' directories. Default is recursive search.")
     parser.add_argument("-v", "--verbose", action="store_true", help="Include verbose coverage report in output.")
     
@@ -150,11 +150,11 @@ def main():
             tqdm.write(f"Timeout: {os.path.basename(file_path)}")
 
     # Generate outputs
-    print(f"\nGenerating report to {args.output_report}...")
-    generate_coverage_text_report(grouped_results, args.output_report)
+    print(f"\nGenerating report to {args.report_dir}...")
+    generate_coverage_text_report(grouped_results, args.report_dir)
     
-    print(f"Generating plot to {args.output_plot}...")
-    generate_coverage_plot(grouped_results, args.output_plot)
+    print(f"Generating plot to {args.plot_dir}...")
+    generate_coverage_plot(grouped_results, args.plot_dir)
     
     print("Analysis Complete.")
 

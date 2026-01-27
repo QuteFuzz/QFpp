@@ -1,11 +1,82 @@
 import os
 import shutil
-import time
-import json
-import math
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
+import re
+
+def parse_summary_log_file(file_path):
+    """
+    Parses an execution log file to extract performance metrics.
+    Looking for a block like:
+    
+    ============================================================
+      PERFORMANCE SUMMARY for <model_name>
+    ------------------------------------------------------------
+      Target Number of Programs : <int>
+      Total Valid Programs     : <int>
+      Total Time Taken         : <float> seconds
+      Avg Time per Valid Prog  : <float> seconds
+    ------------------------------------------------------------
+      Total Cost (Estimated)   : $<float>
+      ...
+    """
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+    except Exception as e:
+        print(f"  Error reading file {file_path}: {e}")
+        return None
+
+    # Find the PERFORMANCE SUMMARY block
+    # We look for the model name line followed by the block content
+    summary_match = re.search(r'PERFORMANCE SUMMARY for\s+(.+?)\s*\n(.*?)(?=============================================================|\Z)', content, re.DOTALL)
+    
+    if not summary_match:
+        # Fallback for slightly different separators or end of file
+        summary_match = re.search(r'PERFORMANCE SUMMARY for\s+(.+?)\s*\n(.*?)$', content, re.DOTALL)
+
+    if not summary_match:
+        return None
+
+    model_name = summary_match.group(1).strip()
+    block_content = summary_match.group(2)
+
+    stats = {'model': model_name}
+
+    # Extract metrics using regex
+    # Target Number of Programs : 20
+    total_programs_match = re.search(r'Target Number of Programs\s*:\s*(\d+)', block_content)
+    # Total Valid Programs     : 19
+    valid_programs_match = re.search(r'Total Valid Programs\s*:\s*(\d+)', block_content)
+    # Total Time Taken         : 271.04 seconds
+    total_time_match = re.search(r'Total Time Taken\s*:\s*([\d\.]+)', block_content)
+    # Total Cost (Estimated)   : $2.479694
+    total_cost_match = re.search(r'Total Cost \(Estimated\)\s*:\s*\$([\d\.]+)', block_content)
+
+    if valid_programs_match:
+        stats['valid_programs'] = int(valid_programs_match.group(1))
+    else:
+        # If we can't find valid programs count, this summary block might be malformed
+        return None
+
+    if total_programs_match:
+        stats['total_programs'] = int(total_programs_match.group(1))
+    else:
+        # Default or fallback? Let's assume valid count if total is missing (unlikely)
+        stats['total_programs'] = stats['valid_programs'] 
+
+    if total_time_match:
+        stats['total_time'] = float(total_time_match.group(1))
+    else:
+        stats['total_time'] = 0.0
+    
+    if total_cost_match:
+        stats['total_cost'] = float(total_cost_match.group(1))
+    else:
+        stats['total_cost'] = 0.0
+
+    return stats
 
 def strip_markdown_syntax(code: str) -> str:
     """

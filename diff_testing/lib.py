@@ -107,8 +107,6 @@ class Base():
                 key_str = ''.join(str(x) for x in k).replace(' ', '')
             else:
                 key_str = str(k).replace(' ', '')
-            
-            print(f"DEBUG: preprocess_counts key: '{k}' -> '{key_str}'")
 
             if not key_str:
                 print(f"Warning: Empty key string encounterd in counts: {k}. Skipping.")

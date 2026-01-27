@@ -83,7 +83,7 @@ def main():
     if args.output_log:
         logfile_path = args.output_log
     else:
-        logfile_path = os.path.join(input_dir, "test_execution_log.txt")
+        logfile_path = os.path.join(input_dir, "test_execution.log")
         
     log_lock = threading.Lock()
     

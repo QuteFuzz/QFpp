@@ -6,21 +6,16 @@ import time
 import json
 import ast
 from .utils import strip_markdown_syntax, parse_time_metrics
-from .ast_ops import add_main_wrapper_guppy, add_main_wrapper_qiskit
+from .ast_ops import (
+    wrap_for_compilation_guppy, 
+    wrap_for_testing_guppy, 
+    wrap_for_compilation_qiskit, 
+    wrap_for_testing_qiskit
+)
 
-def run_generated_program(program_code: str, timeout: int = 30, language: str = 'guppy', coverage_source: str = None):
+def _execute_python_code(program_code: str, timeout: int = 30, language: str = 'guppy', coverage_source: str = None):
     """
-    Execute generated Python program and capture error message and resource usage.
-    Automatically adds the main wrapper for execution based on language.
-    
-    Args:
-        program_code: The Python code to execute
-        timeout: Execution timeout in seconds
-        language: Language of the code ('guppy' or 'qiskit')
-        coverage_source: Package to trace for coverage
-        
-    Returns:
-        tuple: (Error message string or empty string, stdout string, Metrics dictionary, Wrapped code string)
+    Internal helper to execute prepared Python code with coverage and metrics tracking.
     """
     if coverage_source is None:
         coverage_source = "guppylang_internals" if language == 'guppy' else "qiskit"
@@ -29,34 +24,11 @@ def run_generated_program(program_code: str, timeout: int = 30, language: str = 
     metrics_file = None
     coverage_file = None
     json_report_file = None
-    clean_code = ""
     
     try:
-        # Create a temporary file to store the generated program
+        # Create a temporary file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, dir='/tmp') as temp_file:
-            # Strip markdown syntax before writing
-            clean_code = strip_markdown_syntax(program_code)
-            
-            if language == 'guppy':
-                # Check if main function has arguments
-                needs_wrapper = False
-                try:
-                    tree = ast.parse(clean_code)
-                    for node in tree.body:
-                        if isinstance(node, ast.FunctionDef) and node.name == 'main':
-                            if len(node.args.args) > 0:
-                                needs_wrapper = True
-                                break
-                except Exception:
-                    pass # If parsing fails, rely on original code or handle downstream
-                
-                if needs_wrapper:
-                    clean_code = add_main_wrapper_guppy(clean_code)
-            
-            elif language == 'qiskit':
-                clean_code = add_main_wrapper_qiskit(clean_code)
-
-            temp_file.write(clean_code)
+            temp_file.write(program_code)
             temp_file_path = temp_file.name
         
         metrics_file = temp_file_path + ".time"
@@ -66,10 +38,10 @@ def run_generated_program(program_code: str, timeout: int = 30, language: str = 
         try:
             start_time = time.time()
             
-            # Prepare environment for coverage
+            # Prepare environment
             env = os.environ.copy()
             env["COVERAGE_FILE"] = coverage_file
-             # Add project root to PYTHONPATH so local modules like diff_testing can be imported
+             # Add project root to PYTHONPATH
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
             
             current_pythonpath = env.get("PYTHONPATH", "")
@@ -78,7 +50,7 @@ def run_generated_program(program_code: str, timeout: int = 30, language: str = 
             else:
                 env["PYTHONPATH"] = project_root
             
-            # Execute the generated program with timeout, wrapped in /usr/bin/time and coverage run
+            # Execute
             cmd = [
                 "/usr/bin/time", "-v", "-o", metrics_file, 
                 sys.executable, "-m", "coverage", "run", 
@@ -101,7 +73,7 @@ def run_generated_program(program_code: str, timeout: int = 30, language: str = 
             
             metrics["wall_time"] = time.time() - start_time
             
-            # Process coverage info
+            # Process coverage
             if os.path.exists(coverage_file):
                 try:
                     subprocess.run(
@@ -128,10 +100,10 @@ def run_generated_program(program_code: str, timeout: int = 30, language: str = 
             
             if not error and result.stdout and ("Panic" in result.stdout or "Error running" in result.stdout):
                  error = f"Error detected in stdout: {result.stdout}"
-            return error, result.stdout, metrics, clean_code
+            return error, result.stdout, metrics
             
         finally:
-            # Clean up temporary files
+            # Clean up
             if temp_file_path and os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
             if metrics_file and os.path.exists(metrics_file):
@@ -142,9 +114,49 @@ def run_generated_program(program_code: str, timeout: int = 30, language: str = 
                 os.remove(json_report_file)
                 
     except subprocess.TimeoutExpired:
-        return f"ERROR: Program execution timed out after {timeout} seconds", "", {"wall_time": float(timeout), "note": "timed_out"}, clean_code
+        return f"ERROR: Program execution timed out after {timeout} seconds", "", {"wall_time": float(timeout), "note": "timed_out"}
     except Exception as e:
-        return f"ERROR: Failed to execute program: {str(e)}", "", {}, clean_code
+        return f"ERROR: Failed to execute program: {str(e)}", "", {}
+
+def compile_generated_program(program_code: str, timeout: int = 30, language: str = 'guppy', coverage_source: str = None):
+    """
+    Compiles (or checks syntax/imports) of generated Python program.
+    Does NOT run full tests, just verifies valid compilation/construction.
+    
+    Returns:
+        tuple: (Error message, stdout, Metrics, Wrapped code)
+    """
+    clean_code = strip_markdown_syntax(program_code)
+    
+    if language == 'guppy':
+        wrapped_code = wrap_for_compilation_guppy(clean_code)
+    elif language == 'qiskit':
+        wrapped_code = wrap_for_compilation_qiskit(clean_code)
+    else:
+        wrapped_code = clean_code
+        
+    error, stdout, metrics = _execute_python_code(wrapped_code, timeout, language, coverage_source)
+    return error, stdout, metrics, wrapped_code
+
+def run_generated_program(program_code: str, timeout: int = 30, language: str = 'guppy', coverage_source: str = None):
+    """
+    Execute generated Python program with full test harness (KS diff test).
+    
+    Returns:
+        tuple: (Error message, stdout, Metrics, Wrapped code)
+    """
+    clean_code = strip_markdown_syntax(program_code)
+    
+    if language == 'guppy':
+        wrapped_code = wrap_for_testing_guppy(clean_code)
+    elif language == 'qiskit':
+        wrapped_code = wrap_for_testing_qiskit(clean_code)
+    else:
+        wrapped_code = clean_code
+        
+    error, stdout, metrics = _execute_python_code(wrapped_code, timeout, language, coverage_source)
+    return error, stdout, metrics, wrapped_code
+
 
 def run_coverage_on_file(file_path: str, source_package: str = None, verbose: bool = False, python_executable=sys.executable, language: str = 'guppy'):
     """
@@ -166,9 +178,9 @@ def run_coverage_on_file(file_path: str, source_package: str = None, verbose: bo
                 code = f.read()
 
             if language == 'guppy':
-                wrapped_code = add_main_wrapper_guppy(code)
+                wrapped_code = wrap_for_compilation_guppy(code)
             elif language == 'qiskit':
-                wrapped_code = add_main_wrapper_qiskit(code)
+                wrapped_code = wrap_for_compilation_qiskit(code)
             
             with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, dir='/tmp') as temp_file:
                 temp_file.write(wrapped_code)

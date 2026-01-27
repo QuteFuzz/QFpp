@@ -9,16 +9,42 @@ from tqdm import tqdm
 
 # Add project root to path so we can import scripts
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from llm_generator.circuit_assembler import assemble
+from llm_generator.lib.circuit_assembler import assemble
 
 # Import from local library
+
 from llm_generator.lib.llm_client import ask_any_model, get_dynamic_prompt
 from llm_generator.lib.utils import save_text_to_file, generate_summary_plot
-from llm_generator.lib.execution import run_generated_program
+from llm_generator.lib.execution import run_generated_program, compile_generated_program
 
 # Defined for running multiple instances of program generation and fixing concurrently
-def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing_cycles, logfile, log_lock, start_time, language, prompt_dir):
-    filename = f"output{index+1}.py"
+def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing_cycles, logfile, log_lock, start_time, language, prompt_dir, verbose=False):
+    """
+    Logic for one program generation and fixing cycle. For every call, we:
+    1. Generate a program using the specified model and generation prompt.
+    2. Attempt to compile the generated program.
+    3. If compilation fails, enter a fixing loop where we:
+       a. Generate a fixing prompt using the faulty code and error message.
+       b. Attempt to compile the fixed code.
+       c. If compilation succeeds, run the program to check for runtime errors.
+       d. If runtime errors occur, we do not attempt further fixes and save to failed.
+    4. If at any point the program compiles and runs successfully, we save it to the generated directory.
+    
+    :param index: index of the program being processed
+    :param model: LLM model to use for generation and fixing
+    :param generated_dir: generated directory path
+    :param failed_dir: failed directory path
+    :param n_max_fixing_cycles: maximum number of fixing cycles to attempt
+    :param logfile: logfile object for writing logs
+    :param log_lock: threading lock for logfile access
+    :param start_time: start time of the entire process
+    :param language: programming language of the generated code
+    :param prompt_dir: directory containing prompt files
+    :param verbose: flag to enable verbose logging
+    :return: tuple containing the path to the saved program (or None) and statistics dictionary
+    :rtype: tuple[None, dict[str, Any]] | tuple[str, dict[str, Any]] | None
+    """
+    filename = f"{model.replace('/', '_')}output{index+1}.py"
     current_stats = {'cost': 0.0, 'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0}
     
     def get_elapsed():
@@ -51,23 +77,50 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
     with log_lock:
         logfile.write(f"--- {get_elapsed()} Testing generated {filename} ---\n")
     
-    run_error, _, metrics, _ = run_generated_program(generated_program, language=language)
+    # Check compilation first
+    compile_error, _, _, _ = compile_generated_program(generated_program, language=language)
     
-    with log_lock:
-        logfile.write(f"{filename} Metrics: {metrics}\n")
-
-    if run_error.strip() == "":
+    if compile_error:
+        run_error = compile_error
+        metrics = {}
         with log_lock:
-            logfile.write(f"{filename} ran successfully with no errors.\n\n")
-        save_path = os.path.join(generated_dir, filename)
-        save_text_to_file(generated_program, save_path)
-        return save_path, current_stats
+            logfile.write(f"{filename} Compilation Failed:\n{run_error}\n\n")
+            if verbose:
+                logfile.write(f"--- {filename} Code ---\n{generated_program}\n-----------------------\n\n")
     else:
+        run_error = ""
+
+    if run_error == "":
+        # Compiles successfully, now run it
         with log_lock:
-            logfile.write(f"{filename} Error Message:\n{run_error}\n\n")
+            logfile.write(f"--- {get_elapsed()} Running {filename} (Compilation passed) ---\n")
+            
+        run_error, _, metrics, _ = run_generated_program(generated_program, language=language)
         
+        with log_lock:
+             logfile.write(f"{filename} Metrics: {metrics}\n")
+
+        if run_error.strip() == "":
+             with log_lock:
+                logfile.write(f"{filename} ran successfully with no errors.\n\n")
+             save_path = os.path.join(generated_dir, filename)
+             save_text_to_file(generated_program, save_path)
+             return save_path, current_stats
+        else:
+             with log_lock:
+                logfile.write(f"{filename} Runtime Error (Skipping fix as it compiled):\n{run_error}\n\n")
+                if verbose:
+                     logfile.write(f"--- {filename} Code ---\n{generated_program}\n-----------------------\n\n")
+             
+             # Save to failed directory
+             save_path = os.path.join(failed_dir, filename)
+             save_text_to_file(generated_program, save_path)
+             return None, current_stats
+
+    else:
+        # Compilation failed. Enter fixing loop.
         current_code = generated_program
-        current_error = run_error
+        current_error = run_error # This is the compile error
         fixed = False
         
         for cycle in range(n_max_fixing_cycles):
@@ -95,28 +148,51 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
                     logfile.write(f"{filename} Fixing (Cycle {cycle+1}) Cost: ${stats.get('cost', 0.0):.6f}\n")
 
             with log_lock:
-                logfile.write(f"--- {get_elapsed()} Running fixed {filename} (Cycle {cycle+1}) ---\n")
+                logfile.write(f"--- {get_elapsed()} Verifying fixed {filename} (Cycle {cycle+1}) ---\n")
             
-            fixed_run_error, _, fixed_metrics, _ = run_generated_program(fixed_code, language=language)
+            # Check compilation only
+            fixed_compile_error, _, _, _ = compile_generated_program(fixed_code, language=language)
             
-            with log_lock:
-                logfile.write(f"{filename} Cycle {cycle+1} Metrics: {fixed_metrics}\n")
-            
-            if fixed_run_error.strip() == "":
+            if fixed_compile_error:
                 with log_lock:
-                    logfile.write(f"Fixed {filename} (Cycle {cycle+1}) ran successfully with no errors.\n\n")
-                save_path = os.path.join(generated_dir, filename)
-                save_text_to_file(fixed_code, save_path)
-                return save_path, current_stats
-            else:
-                with log_lock:
-                    logfile.write(f"Fixed {filename} (Cycle {cycle+1}) Error Message:\n{fixed_run_error}\n\n")
+                    logfile.write(f"Fixed {filename} (Cycle {cycle+1}) Compilation Failed:\n{fixed_compile_error}\n\n")
+                    if verbose:
+                         logfile.write(f"--- Fixed {filename} (Cycle {cycle+1}) Code ---\n{fixed_code}\n-----------------------------------\n\n")
                 current_code = fixed_code
-                current_error = fixed_run_error
+                current_error = fixed_compile_error
+            else:
+                # Compiled successfully!
+                with log_lock:
+                    logfile.write(f"Fixed {filename} (Cycle {cycle+1}) compiled successfully.\n")
+                
+                # Now run it
+                with log_lock:
+                    logfile.write(f"--- {get_elapsed()} Running fixed {filename} (Cycle {cycle+1}) ---\n")
+
+                fixed_run_error, _, fixed_metrics, _ = run_generated_program(fixed_code, language=language)
+                
+                with log_lock:
+                    logfile.write(f"{filename} Cycle {cycle+1} Metrics: {fixed_metrics}\n")
+
+                if fixed_run_error.strip() == "":
+                    with log_lock:
+                        logfile.write(f"Fixed {filename} (Cycle {cycle+1}) ran successfully with no errors.\n\n")
+                    save_path = os.path.join(generated_dir, filename)
+                    save_text_to_file(fixed_code, save_path)
+                    return save_path, current_stats
+                else:
+                    with log_lock:
+                        logfile.write(f"Fixed {filename} (Cycle {cycle+1}) compiled but failed Runtime:\n{fixed_run_error}\n\n")
+                        if verbose:
+                             logfile.write(f"--- Fixed {filename} (Cycle {cycle+1}) Code ---\n{fixed_code}\n-----------------------------------\n\n")
+                    
+                    fixed = False 
+                    current_code = fixed_code # Save this version
+                    break # Exit loop as we're done fixing compilation
         
         if not fixed:
             with log_lock:
-                logfile.write(f"Failed to fix {filename} after {n_max_fixing_cycles} cycles. Saving to failed_programs.\n\n")
+                logfile.write(f"Failed to fix {filename} or Runtime failed. Saving to failed_programs.\n\n")
             save_path = os.path.join(failed_dir, filename)
             save_text_to_file(current_code, save_path)
             return None, current_stats
@@ -130,6 +206,9 @@ def main():
     parser.add_argument("--n_programs", type=int, default=20, help="Number of programs to generate")
     parser.add_argument("--n_fixing_cycles", type=int, default=2, help="Max number of fixing cycles")
     parser.add_argument("--max_workers", type=int, default=10, help="Max concurrent workers")
+    parser.add_argument("--n_assemble", type=int, default=100, help="Number of circuit assemblies to create per model")
+    parser.add_argument("--n_circuits_per_assembly", type=int, default=2, help="Number of circuits to combine per assembly")
+    parser.add_argument("--verbose", action="store_true", help="Output failed program code to the log file")
     
     args = parser.parse_args()
 
@@ -154,9 +233,9 @@ def main():
     print(f"Generating for {args.language} using templates in {args.prompt_dir}")
     print(f"Outputting to {args.output_dir}")
 
-    # Program assembly settings (Only for Guppy currently)
-    n_circuits_per_assembly = 2
-    n_assemblies_to_create = 100
+    # Program assembly settings
+    n_circuits_per_assembly = args.n_circuits_per_assembly
+    n_assemblies_to_create = args.n_assemble
 
     # Generate timestamp for unique directory for this entire run
     timestamp = time.strftime("%Y%m%d_%H%M%S")
@@ -175,18 +254,18 @@ def main():
         total_prompt_tokens = 0
         total_completion_tokens = 0
 
-        # Setup directories for this specific model within the common run directory
+        # Setup directories within the common run directory
         model_safe_name = model.replace('/', '_')
-        model_run_dir = os.path.join(common_run_dir, model_safe_name)
+        model_run_dir = os.path.join(common_run_dir)
         
-        generated_dir = os.path.join(model_run_dir, "generated")
-        failed_dir = os.path.join(model_run_dir, "failed_programs")
+        generated_dir = os.path.join(model_run_dir, "generated") # Directory for all successful programs
+        failed_dir = os.path.join(model_run_dir, "failed_programs") # Directory for all failed programs
         
         # Create directories
         os.makedirs(generated_dir, exist_ok=True)
         os.makedirs(failed_dir, exist_ok=True)
         
-        logfile_path = os.path.join(model_run_dir, "execution_log.txt")
+        logfile_path = os.path.join(model_run_dir, "execution.log")
         log_lock = threading.Lock()
 
         # Combined generation and fixing loop
@@ -203,7 +282,7 @@ def main():
                 for i in range(args.n_programs):
                     futures.append(executor.submit(
                         process_single_program,
-                        i, model, generated_dir, failed_dir, args.n_fixing_cycles, logfile, log_lock, time.time(), args.language, args.prompt_dir
+                        i, model, generated_dir, failed_dir, args.n_fixing_cycles, logfile, log_lock, time.time(), args.language, args.prompt_dir, args.verbose
                     ))
                 
                 # Wait for completion and aggregate results
@@ -251,7 +330,7 @@ def main():
                 "valid_programs": len(successful_files)
             })
 
-        # Assemble successful circuits
+        # Assemble successful circuits after generation and fixing
         if successful_files:
             tqdm.write(f"Assembling circuits from {len(successful_files)} successful programs...")
             
