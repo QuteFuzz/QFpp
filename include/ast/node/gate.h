@@ -36,7 +36,7 @@ class Gate : public Node {
 
         unsigned int get_num_external_qubits();
 
-        unsigned int get_num_external_qubit_defs() const { return external_qubit_defs.size(); }
+        unsigned int get_num_external_qubit_defs() const;
 
         unsigned int get_num_external_bits() const { return num_external_bits;}
 
@@ -44,12 +44,11 @@ class Gate : public Node {
 
         std::shared_ptr<Qubit_definition> get_next_qubit_def();
 
-        std::shared_ptr<Qubit_definition> get_current_qubit_def();
+        std::shared_ptr<Qubit_definition> get_last_qubit_def();
 
     private:
-        Ptr_coll<Qubit_definition> external_qubit_defs;
-        std::shared_ptr<Qubit_definition> current_qubit_def;
-        unsigned int qubit_def_pointer = 0;
+        Ptr_coll<Qubit_definition> qubit_defs;
+        std::shared_ptr<Qubit_definition> last_qubit_def;
 
         unsigned int num_external_qubits = 0;
         unsigned int num_external_bits = 0;

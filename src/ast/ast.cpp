@@ -6,7 +6,7 @@
 #include <sstream>
 #include <result.h>
 
-/* 
+/*
 	node kinds
 */
 #include <circuit.h>
@@ -138,7 +138,7 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 			unsigned int num_qubits;
 
 			if(*parent == SUBROUTINE_OP_ARG){
-				num_qubits = current_gate->get_current_qubit_def()->get_size()->get_num();
+				num_qubits = current_gate->get_last_qubit_def()->get_size()->get_num();
 			} else {
 				num_qubits = current_gate->get_num_external_qubits();
 			}
@@ -182,7 +182,7 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 		case GATE_NAME:
 			return std::make_shared<Gate_name>(parent, context.get_current_circuit(), swarm_testing_gateset);
 
-		case SUBROUTINE: 
+		case SUBROUTINE:
 			return context.nn_gate_from_subroutine();
 
 		case SUBROUTINE_OP_ARGS:

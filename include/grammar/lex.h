@@ -125,6 +125,7 @@ enum Token_kind {
         Tokens that aren't special rule types, but rather, are syntax used in the language
         Add new syntax below
     */
+    NEXT,
     SEPARATOR,
     RULE_START,
     RULE_APPEND,

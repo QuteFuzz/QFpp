@@ -197,4 +197,3 @@ bool scope_matches(const U8& a, const U8& b){
         return a & b;
     }
 }
-

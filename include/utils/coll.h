@@ -55,7 +55,7 @@ inline std::shared_ptr<T> get_random_from_coll(const Ptr_coll<T>& collection, co
 template<typename T>
 inline std::shared_ptr<T> get_next_from_coll(const Ptr_coll<T>& collection, const U8& scope) {
     std::shared_ptr<T> elem = coll_elem_if_pass<T>(collection, [&scope](const auto& elem){return scope_matches(elem->get_scope(), scope) && !elem->is_used();});
-    
+
     elem->set_used();
     return elem;
 }
@@ -63,4 +63,3 @@ inline std::shared_ptr<T> get_next_from_coll(const Ptr_coll<T>& collection, cons
 
 
 #endif
-

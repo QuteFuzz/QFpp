@@ -237,7 +237,7 @@ std::shared_ptr<Gate> Context::nn_gate_from_subroutine(){
     std::shared_ptr<Circuit> subroutine_circuit = get_random_circuit();
     auto qubit_defs = subroutine_circuit->get_collection<Qubit_definition>();
     auto gate_name = subroutine_circuit->get_owner();
-    
+
     auto gate = std::make_shared<Gate>(gate_name, SUBROUTINE, qubit_defs);
     gate->add_child(std::make_shared<Variable>(gate_name));
 

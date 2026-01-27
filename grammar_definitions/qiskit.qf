@@ -12,12 +12,9 @@ else_stmt =
 
 branch_condition = 1 | 0;
 
-gate_name += s | sdg | t | tdg | u | u1 | u2 | u3 | measure;
+gate_name += s | sdg | t | tdg | u3 | measure;
 
-u = "u";
-u1 = "u1";
-u2 = "u2";
-u3 = "u3";
+u3 = "u";
 x = "x";
 y = "y";
 z = "z";
@@ -92,7 +89,8 @@ EXTERNAL {
 }
 
 imports =
-    "from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, Parameter" NEWLINE
+    "from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister" NEWLINE
+    "from qiskit.circuit import Parameter" NEWLINE
     "from qiskit.circuit.library import standard_gates" NEWLINE
     swarm_testing_imports NEWLINE
     "from diff_testing.qiskit import qiskitTesting" NEWLINE
@@ -139,4 +137,6 @@ parameter_binding = circuit_name " = " circuit_name ".bind_parameters({" paramet
 # TODO: find each node of that kind by iterating over the AST and performing the token concat given
 # parameter_bind_list = for_each(parameter_def_name, ": " FLOAT ", ");
 
-parameter_bind = parameter_name ": " FLOAT;
+next_parameter = NEXT(parameter_def_name);
+
+parameter_bind = next_parameter ": " FLOAT;

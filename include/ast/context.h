@@ -24,11 +24,11 @@ enum Reset_level {
 struct Current_nodes {
 
 	public:
-    
+
 		Current_nodes() {
 			reset_all();
 		}
-		
+
 		void reset_all() {
 			qubit_definition = std::make_shared<Qubit_definition>();
 			bit_definition = std::make_shared<Bit_definition>();
@@ -101,7 +101,7 @@ struct Current_nodes {
 				static_assert(always_false_v<T>, "Unsupported type");
 			}
 		}
-		
+
 		template<typename T>
 		void set(std::shared_ptr<T> value){
 			if constexpr (std::is_same_v<T, Gate>) {
@@ -187,7 +187,7 @@ struct Context {
 		std::shared_ptr<Subroutine_op_arg> nn_subroutine_op_arg();
 
 		std::shared_ptr<Qubit_definition> nn_qubit_definition(const U8& scope);
-	
+
 		std::shared_ptr<Bit_definition> nn_bit_definition(const U8& scope);
 
 		std::shared_ptr<Gate> nn_gate(const std::string& str, Token_kind& kind, int num_qubits, int num_bits, int num_params);
@@ -257,7 +257,7 @@ struct Context {
 		std::optional<Genome> genome;
 
 		std::vector<std::shared_ptr<Circuit>> circuits;
-		
+
 		unsigned int subroutine_counter = 0;
 		unsigned int current_port = 0;
 		unsigned int nested_depth; // default set when control is set

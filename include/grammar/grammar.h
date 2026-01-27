@@ -32,30 +32,11 @@ class Grammar{
 
         inline void reset_current_branches(){current_branches.clear();}
 
-        inline void add_current_branches_to_rule(){
-
-            if(current_branches.size() == 0){
-                current_rule->add(Branch());
-
-            } else {
-
-                for(Branch& current_branch : current_branches){
-                    #if 0
-                    std::cout << "Lazily adding ";
-                    current_branch.print(std::cout);
-                    std::cout << std::endl;
-                    #endif
-
-                    current_rule->add(current_branch);
-                }
-            }
-        }
+        void add_current_branches_to_rule();
 
         /// we just completed a rule, add the current branch to the rule
         /// Called at end of rule, and at each branch seprator
-        inline void complete_rule(){
-            add_current_branches_to_rule();
-        }
+        inline void complete_rule(){ add_current_branches_to_rule(); }
 
         inline void increment_nesting_depth_base(){
             if(nesting_depth == nesting_depth_base) {
@@ -84,13 +65,7 @@ class Grammar{
 
         void print_tokens() const;
 
-        inline bool is_rule(const std::string& rule_name, const U8& scope){
-            for(const auto& ptr : rule_pointers){
-                if((ptr->get_name() == rule_name) && (scope_matches(ptr->get_scope(), scope))){return true;}
-            }
-
-            return false;
-        }
+        bool is_rule(const std::string& rule_name, const U8& scope);
 
         inline std::string get_name(){return name;}
 

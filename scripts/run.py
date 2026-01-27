@@ -41,10 +41,9 @@ class CircuitResult:
 
     circuit_path: Path
     grammar: str
-    had_syntax_error: bool = False
-    had_runtime_error: bool = False
+    had_fuzzer_error: bool = False
+    had_compiler_error: bool = False
     ks_values: List[float] = field(default_factory=list)
-    is_interesting: bool = False
     reason: str = ""
 
 
@@ -240,17 +239,17 @@ class Check_grammar:
         stdout, stderr, returncode = self.run_circuit(circuit_path)
 
         if returncode != 0:
-            result.is_interesting = True
             # Analyze the error
             combined_output = stdout + stderr
 
             if any(
-                err in combined_output for err in ["SyntaxError", "IndentationError", "NameError"]
+                err in combined_output
+                for err in ["SyntaxError", "IndentationError", "NameError", "TypeError"]
             ):
-                result.had_syntax_error = True
+                result.had_fuzzer_error = True
                 result.reason = combined_output
             else:
-                result.had_runtime_error = True
+                result.had_compiler_error = True
                 result.reason = combined_output
 
         # Parse KS values from output
@@ -258,10 +257,10 @@ class Check_grammar:
         if result.ks_values:
             min_ks = min(result.ks_values)
             if min_ks < MIN_KS_VALUE:
-                result.is_interesting = True
+                result.had_compiler_error = True
                 result.reason = f"Low KS value: {min_ks:.4f} < {MIN_KS_VALUE}; "
 
-        if result.is_interesting:
+        if result.had_compiler_error:
             log(f"  INTERESTING: {circuit_path}", Color.YELLOW)
 
         return result
@@ -286,10 +285,16 @@ class Check_grammar:
                 i, circuit_dir = future_to_circuit[future]
                 try:
                     result = future.result()
-                    if result.is_interesting:
+                    if result.had_compiler_error:
                         interesting_results.append(result)
+
+                    if result.had_fuzzer_error:
+                        raise RuntimeError("Fuzzer has a bug")
+
                 except Exception as e:
-                    log(f"Error validating circuit {circuit_dir.name}: {e}", Color.RED)
+                    log(f"Error validating circuit at {circuit_dir}/prog.py: {e}", Color.RED)
+                    executor.shutdown(wait=False, cancel_futures=True)
+                    sys.exit(-1)
 
         log("Validation complete.", Color.GREEN)
 
@@ -322,8 +327,7 @@ class Check_grammar:
                 f.write(f"Circuit: {result.circuit_path.name}\n")
                 f.write(f"Grammar: {result.grammar}\n")
                 f.write(f"Reason: {result.reason}\n")
-                f.write(f"Had syntax error: {result.had_syntax_error}\n")
-                f.write(f"Had runtime error: {result.had_runtime_error}\n")
+                f.write(f"Had compiler error: {result.had_compiler_error}\n")
                 f.write(f"KS values: {result.ks_values}\n")
 
     def check(self):

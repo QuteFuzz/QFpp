@@ -10,7 +10,7 @@ unsigned int Circuit::make_register_resource_definition(U8& scope, Resource_kind
     else size = max_size;
 
     if (rk == RK_QUBIT) {
-        
+
         Register_qubit_definition def(
             Variable("qreg" + std::to_string(current_num_definitions)),
             Integer(size)
@@ -36,7 +36,7 @@ unsigned int Circuit::make_register_resource_definition(U8& scope, Resource_kind
 }
 
 unsigned int Circuit::make_singular_resource_definition(U8& scope, Resource_kind rk, unsigned int& total_definitions){
-    
+
     if (rk == RK_QUBIT) {
         Singular_qubit_definition def (
             Variable("qubit" + std::to_string(total_definitions))
@@ -54,7 +54,7 @@ unsigned int Circuit::make_singular_resource_definition(U8& scope, Resource_kind
         def.make_resources(bits, scope);
 
         bit_defs.push_back(std::make_shared<Bit_definition>(def, scope));
-    
+
     }
     total_definitions += 1;
 
@@ -90,13 +90,13 @@ unsigned int Circuit::make_resource_definitions(U8& scope, Resource_kind rk, Con
             target_num_resources -= (random_uint(1) ?
                 make_singular_resource_definition(scope, rk, total_num_definitions) :
                 make_register_resource_definition(scope, rk, target_num_resources, total_num_definitions));
-        
+
         } else if (can_generate_register_resource) {
             target_num_resources -= make_register_resource_definition(scope, rk, target_num_resources, total_num_definitions);
-        
+
         } else if (can_generate_singular_resource) {
             target_num_resources -= make_singular_resource_definition(scope, rk, total_num_definitions);
-        
+
         } else {
             throw std::runtime_error("Resource def MUST have at least one register or singular resource definition");
         }

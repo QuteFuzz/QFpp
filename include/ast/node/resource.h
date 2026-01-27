@@ -34,7 +34,7 @@ class Resource : public Node {
 
         U8 get_scope() const {
             return scope;
-        } 
+        }
 
         void reset(){
             std::visit([](auto&& val){

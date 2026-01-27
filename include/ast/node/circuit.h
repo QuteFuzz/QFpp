@@ -121,7 +121,7 @@ class Circuit : public Node {
                 elem->reset();
             }
         }
-            
+
         unsigned int make_register_resource_definition(U8& scope, Resource_kind rk, unsigned int max_size, unsigned int& total_definitions);
 
         unsigned int make_singular_resource_definition(U8& scope,  Resource_kind rk, unsigned int& total_definitions);
@@ -148,15 +148,6 @@ class Circuit : public Node {
         Ptr_coll<Qubit_definition> qubit_defs;
         Ptr_coll<Bit> bits;
         Ptr_coll<Bit_definition> bit_defs;
-
-        unsigned int qubit_def_pointer = 0;
-        unsigned int qubit_def_discard_pointer = 0;
-        unsigned int bit_def_pointer = 0;
-
-        // std::shared_ptr<Qubit> dummy_qubit = std::make_shared<Qubit>();
-        // std::shared_ptr<Bit> dummy_bit = std::make_shared<Bit>();
-        // std::shared_ptr<Qubit_definition> dummy_qubit_def = std::make_shared<Qubit_definition>();
-        // std::shared_ptr<Bit_definition> dummy_bit_def = std::make_shared<Bit_definition>();
 };
 
 

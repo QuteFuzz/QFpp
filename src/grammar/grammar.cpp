@@ -41,6 +41,33 @@ void Grammar::peek(){
 
 }
 
+bool Grammar::is_rule(const std::string& rule_name, const U8& scope){
+    for(const auto& ptr : rule_pointers){
+        if((ptr->get_name() == rule_name) && (scope_matches(ptr->get_scope(), scope))){return true;}
+    }
+
+    return false;
+}
+
+void Grammar::add_current_branches_to_rule(){
+
+    if(current_branches.size() == 0){
+        current_rule->add(Branch());
+
+    } else {
+
+        for(Branch& current_branch : current_branches){
+            #if 0
+            std::cout << "Lazily adding ";
+            current_branch.print(std::cout);
+            std::cout << std::endl;
+            #endif
+
+            current_rule->add(current_branch);
+        }
+    }
+}
+
 /// Return value of given rule name if the value is 1 branch, with 1 syntax term (string or digit)
 std::string Grammar::dig_to_syntax(const std::string& rule_name) const {
     std::shared_ptr<Rule> rule_ptr = get_rule_pointer_if_exists(rule_name);
