@@ -38,7 +38,7 @@ s = "s";
 measure = "measure";
 
 # Redefine base program structure to fit Qiskit
-program = imports NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;
+program = imports NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;
 
 parameter_defs = (parameter_def NEWLINE)*;
 
@@ -48,7 +48,8 @@ parameter_def = parameter_def_name " = Parameter('" parameter_def_name "')";
 # float_literal += parameter_name
 #               | parameter_expr;
 
-parameter_name = some(parameter_def_name);  # radomly pick some parameter_def_name node from the AST
+# TODO: radomly pick some parameter_def_name node from the AST
+# parameter_name = some(parameter_def_name);  
 
 parameter_expr = parameter_name " * " FLOAT
                | parameter_name " + " FLOAT
@@ -135,6 +136,7 @@ parameter_binding = circuit_name " = " circuit_name ".bind_parameters({" paramet
 
 # parameter_bind_list = parameter_bind ("," parameter_bind)*;
 
-parameter_bind_list = for_each(parameter_def_name, ": " FLOAT ", ");
+# TODO: find each node of that kind by iterating over the AST and performing the token concat given
+# parameter_bind_list = for_each(parameter_def_name, ": " FLOAT ", ");
 
 parameter_bind = parameter_name ": " FLOAT;
