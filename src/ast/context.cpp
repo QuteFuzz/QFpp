@@ -42,7 +42,7 @@ bool Context::can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit){
 
     std::shared_ptr<Circuit> current_circuit = get_current_circuit();
 
-    if(circuit->owned_by(QuteFuzz::TOP_LEVEL_CIRCUIT_NAME) || circuit->owned_by(current_circuit_owner)){
+    if(circuit->owned_by(QuteFuzz::TOP_LEVEL_CIRCUIT_NAME) || circuit->owned_by(get_current_circuit()->get_owner())){
         return false;
     }
 
@@ -99,7 +99,7 @@ unsigned int Context::get_max_external_bits(){
 /// a new, main circuit. As such, qubit and bit definitions, qubits and bits may have been made globally, and therefore stored in the dummy circuit, so we return that
 std::shared_ptr<Circuit> Context::get_current_circuit() const {
     if((circuits.size() == 0) || (!under_subroutines_node() && circuits.back()->check_if_subroutine())){
-        return dummy_circuit;
+        return dummies.circuit;
     } else {
         return circuits.back();
     }
@@ -131,11 +131,28 @@ std::shared_ptr<Circuit> Context::get_random_circuit(){
 
     } else {
         ERROR("No available circuits to use as subroutines!");
-        return dummy_circuit;
+        return dummies.circuit;
     }
 }
 
-std::shared_ptr<Circuit> Context::new_circuit_node(){
+
+std::shared_ptr<Qubit> Context::get_random_qubit(){
+    auto random_qubit = get_current_circuit()->get_random_qubit(ALL_SCOPES);
+
+    random_qubit->extend_flow_path(current.get<Qubit_op>(), current_port++);
+
+    current.set<Qubit>(random_qubit);
+
+    return random_qubit;
+}
+
+std::shared_ptr<Bit> Context::get_random_bit(){
+    auto random_bit = get_current_circuit()->get_random_bit(ALL_SCOPES);
+    current.set<Bit>(random_bit);
+    return random_bit;
+}
+
+std::shared_ptr<Circuit> Context::nn_circuit(){
     std::shared_ptr<Circuit> current_circuit;
 
     reset(RL_CIRCUIT);
@@ -149,20 +166,18 @@ std::shared_ptr<Circuit> Context::new_circuit_node(){
             std::cout << YELLOW("owner: " + subroutine->get_content()) << std::endl;
             std::cout << YELLOW("n ports: " + std::to_string(subroutine->get_n_ports())) << std::endl;
 
-            current_circuit_owner = subroutine->get_content();
-            current_circuit = std::make_shared<Circuit>(current_circuit_owner, subroutine->get_n_ports(), control);
+            // current_circuit_owner = subroutine->get_content();
+            current_circuit = std::make_shared<Circuit>(subroutine->get_content(), subroutine->get_n_ports(), control);
 
         } else {
-            current_circuit_owner = "sub"+std::to_string(subroutine_counter++);
-            current_circuit = std::make_shared<Circuit>(current_circuit_owner, control, true);
+            // current_circuit_owner = "sub"+std::to_string(subroutine_counter++);
+            current_circuit = std::make_shared<Circuit>("sub" + std::to_string(subroutine_counter++), control, true);
         }
 
     } else {
-        current_circuit_owner = QuteFuzz::TOP_LEVEL_CIRCUIT_NAME;
+        // current_circuit_owner = QuteFuzz::TOP_LEVEL_CIRCUIT_NAME;
         current_circuit = std::make_shared<Circuit>(QuteFuzz::TOP_LEVEL_CIRCUIT_NAME, control, false);
-
         subroutine_counter = 0;
-
         can_copy_dag = genome.has_value();
     }
 
@@ -171,7 +186,7 @@ std::shared_ptr<Circuit> Context::new_circuit_node(){
     return current_circuit;
 }
 
-std::shared_ptr<Qubit_defs> Context::get_qubit_defs_node(U8& scope){
+std::shared_ptr<Qubit_defs> Context::nn_qubit_defs(U8& scope){
     std::shared_ptr<Circuit> current_circuit = get_current_circuit();
 
     unsigned int num_defs;
@@ -186,22 +201,7 @@ std::shared_ptr<Qubit_defs> Context::get_qubit_defs_node(U8& scope){
     return std::make_shared<Qubit_defs>(num_defs);
 }
 
-std::shared_ptr<Qubit_defs> Context::get_qubit_defs_discard_node(U8& scope){
-    std::shared_ptr<Circuit> current_circuit = get_current_circuit();
-
-    unsigned int num_defs;
-
-    if(can_copy_dag){
-        num_defs = current_circuit->make_resource_definitions(genome->dag, scope, RK_QUBIT, true);
-
-    } else {
-        num_defs = current_circuit->make_resource_definitions(scope, RK_QUBIT, control, true);
-    }
-
-    return std::make_shared<Qubit_defs>(num_defs, true);
-}
-
-std::shared_ptr<Bit_defs> Context::get_bit_defs_node(U8& scope){
+std::shared_ptr<Bit_defs> Context::nn_bit_defs(U8& scope){
     std::shared_ptr<Circuit> current_circuit = get_current_circuit();
 
     unsigned int num_defs;
@@ -215,105 +215,60 @@ std::shared_ptr<Bit_defs> Context::get_bit_defs_node(U8& scope){
     return std::make_shared<Bit_defs>(num_defs);
 }
 
-std::optional<std::shared_ptr<Circuit>> Context::get_circuit(std::string owner){
-    for(const std::shared_ptr<Circuit>& circuit : circuits){
-        if(circuit->owned_by(owner)) return std::make_optional<std::shared_ptr<Circuit>>(circuit);
-    }
+std::shared_ptr<Subroutine_op_arg> Context::nn_subroutine_op_arg(){
+    // if((current_gate != nullptr) && *current_gate == SUBROUTINE){
+    //     current_subroutine_op_arg = std::make_shared<Subroutine_op_arg>(current_gate->get_next_qubit_def());
+    // }
 
-    INFO("Circuit owner by " + owner + " not defined!");
-
-    return std::nullopt;
+    auto arg = std::make_shared<Subroutine_op_arg>(current.get<Gate>()->get_next_qubit_def());
+    current.set<Subroutine_op_arg>(arg);
+    return arg;
 }
 
-std::shared_ptr<Qubit> Context::new_qubit(){
-    // U8 scope = (*current_gate == QuteFuzz::Measure) ? OWNED_SCOPE : ALL_SCOPES;
-
-    auto random_qubit = get_current_circuit()->get_random_qubit(ALL_SCOPES);
-
-    random_qubit->extend_flow_path(current_qubit_op, current_port++);
-
-    current_qubit = random_qubit;
-
-    return current_qubit;
+std::shared_ptr<Qubit_definition> Context::nn_qubit_definition(const U8& scope){
+    auto qubit_def = get_current_circuit()->get_next_qubit_def(scope);
+    current.set<Qubit_definition>(qubit_def);
+    return qubit_def;
 }
 
-std::shared_ptr<Integer> Context::get_current_qubit_index(){
-    if(current_qubit != nullptr){
-        return current_qubit->get_index();
-    } else {
-        WARNING("Current qubit not set but trying to get index! Using dummy instead");
-        return std::make_shared<Integer>(dummy_int);
-    }
+std::shared_ptr<Bit_definition> Context::nn_bit_definition(const U8& scope){
+    auto bit_def = get_current_circuit()->get_next_bit_def(scope);
+    current.set<Bit_definition>(bit_def);
+    return bit_def;
 }
 
-std::shared_ptr<Bit> Context::new_bit(){
-    auto random_bit = get_current_circuit()->get_random_bit(ALL_SCOPES);
-    current_bit = random_bit;
+std::shared_ptr<Gate> Context::nn_gate(const std::string& str, Token_kind& kind, int num_qubits, int num_bits, int num_params){
+    auto gate = std::make_shared<Gate>(str, kind, num_qubits, num_bits, num_params);
 
-    return current_bit;
+    current.set<Gate>(gate);
+    current.get<Qubit_op>()->set_gate_node(gate);
+
+    return gate;
 }
 
-std::shared_ptr<Integer> Context::get_current_bit_index(){
-    if(current_bit != nullptr){
-        return current_bit->get_index();
-    } else {
-        WARNING("Current bit not set but trying to get index! Using dummy instead");
-        return std::make_shared<Integer>(dummy_int);
-    }
+std::shared_ptr<Gate> Context::nn_gate_from_subroutine(){
+    /*
+        1. get random circuit to use as subroutine
+        2. get qubit defs inside subroutine, create the gate node
+        3. give the gate its name
+        4. set current gate to be this new node
+        5. give this gate to the current qubit op
+    */
+    std::shared_ptr<Circuit> subroutine_circuit = get_random_circuit();
+    auto qubit_defs = subroutine_circuit->get_qubit_defs();
+    auto gate_name = subroutine_circuit->get_owner();
+    
+    auto gate = std::make_shared<Gate>(gate_name, SUBROUTINE, qubit_defs);
+    gate->add_child(std::make_shared<Variable>(gate_name));
+
+    current.set<Gate>(gate);
+    current.get<Qubit_op>()->set_gate_node(gate);
+
+    return gate;
 }
 
-std::shared_ptr<Variable> Context::get_current_qubit_name(){
-    if(current_qubit != nullptr){
-        return current_qubit->get_name();
-    } else {
-        WARNING("Current qubit not set but trying to get name! Using dummy instead");
-        return std::make_shared<Variable>(dummy_var);
-    }
-}
-
-std::shared_ptr<Variable> Context::get_current_bit_name(){
-    if(current_bit != nullptr){
-        return current_bit->get_name();
-    } else {
-        WARNING("Current bit not set but trying to get name! Using dummy instead");
-        return std::make_shared<Variable>(dummy_var);
-    }
-}
-
-std::shared_ptr<Integer> Context::get_current_qubit_definition_size(){
-    if(current_qubit_definition != nullptr){
-        return current_qubit_definition->get_size();
-    } else  {
-        WARNING("Current qubit not set but trying to get size! Using dummy instead");
-        return std::make_shared<Integer>(dummy_int);
-    }
-}
-
-std::shared_ptr<Variable> Context::get_current_qubit_definition_name(){
-    if(current_qubit_definition != nullptr){
-        return current_qubit_definition->get_name();
-    } else {
-        WARNING("Current qubit not set but trying to get name! Using dummy instead");
-        return std::make_shared<Variable>(dummy_var);
-    }
-}
-
-std::shared_ptr<Integer> Context::get_current_bit_definition_size(){
-    if(current_bit_definition != nullptr && current_bit_definition->is_register_def()){
-        return current_bit_definition->get_size();
-    } else {
-        WARNING("Current bit definition not set or is singular but trying to get size! Using dummy instead");
-        return std::make_shared<Integer>(dummy_int);
-    }
-}
-
-std::shared_ptr<Variable> Context::get_current_bit_definition_name(){
-    if(current_bit_definition != nullptr){
-        return current_bit_definition->get_name();
-    } else {
-        WARNING("Current bit definition not set but trying to get name! Using dummy instead");
-        return std::make_shared<Variable>(dummy_var);
-    }
+std::shared_ptr<Integer> Context::nn_circuit_id() {
+    return std::make_shared<Integer>(ast_counter);
 }
 
 /// @brief Any stmt that is nested (if, elif, else) is a nested stmt. Any time such a node is used, reduce nested depth
@@ -321,7 +276,9 @@ std::shared_ptr<Variable> Context::get_current_bit_definition_name(){
 /// @param kind
 /// @param parent
 /// @return
-std::shared_ptr<Nested_stmt> Context::get_nested_stmt(const std::string& str, const Token_kind& kind, std::shared_ptr<Node> parent){
+std::shared_ptr<Nested_stmt> Context::nn_nested_stmt(const std::string& str, const Token_kind& kind, std::shared_ptr<Node> parent){
+    reset(RL_QUBIT_OP);
+
     nested_depth = (nested_depth == 0) ? 0 : nested_depth - 1;
 
     if(can_copy_dag){
@@ -332,7 +289,7 @@ std::shared_ptr<Nested_stmt> Context::get_nested_stmt(const std::string& str, co
     }
 }
 
-std::shared_ptr<Compound_stmt> Context::get_compound_stmt(std::shared_ptr<Node> parent){
+std::shared_ptr<Compound_stmt> Context::nn_compound_stmt(std::shared_ptr<Node> parent){
 
     if(can_copy_dag){
         return Compound_stmt::from_num_qubit_ops(parent->get_next_child_target());
@@ -342,7 +299,7 @@ std::shared_ptr<Compound_stmt> Context::get_compound_stmt(std::shared_ptr<Node> 
 
 }
 
-std::shared_ptr<Compound_stmts> Context::get_compound_stmts(std::shared_ptr<Node> parent){
+std::shared_ptr<Compound_stmts> Context::nn_compound_stmts(std::shared_ptr<Node> parent){
 
     /*
         this check is to make sure we only call the function for the compound statements rule in the circuit body, as opposed to each nested
@@ -365,7 +322,7 @@ std::shared_ptr<Compound_stmts> Context::get_compound_stmts(std::shared_ptr<Node
     }
 }
 
-std::shared_ptr<Subroutine_defs> Context::new_subroutines_node(){
+std::shared_ptr<Subroutine_defs> Context::nn_subroutines(){
     unsigned int n_circuits = random_uint(control.get_value("MAX_NUM_SUBROUTINES"));
 
     if(genome.has_value()){
@@ -379,9 +336,18 @@ std::shared_ptr<Subroutine_defs> Context::new_subroutines_node(){
     return node;
 }
 
-std::shared_ptr<Qubit_op> Context::new_qubit_op_node(){
+std::shared_ptr<Qubit_op> Context::nn_qubit_op(){
     reset(RL_QUBIT_OP);
-    current_qubit_op = can_copy_dag ? genome.value().dag.get_next_node() : std::make_shared<Qubit_op>(get_current_circuit());
 
-    return current_qubit_op;
+    auto qubit_op = can_copy_dag ? genome.value().dag.get_next_node() : std::make_shared<Qubit_op>(get_current_circuit());
+    current.set<Qubit_op>(qubit_op);
+    return qubit_op;
+}
+
+std::shared_ptr<Parameter_def> Context::nn_parameter_def(){
+    auto def = std::make_shared<Parameter_def>();
+    
+    current.set<Parameter_def>(def);
+
+    return def;
 }

@@ -38,7 +38,7 @@ s = "s";
 measure = "measure";
 
 # Redefine base program structure to fit Qiskit
-program = imports NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;
+program = imports NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;
 
 parameter_defs = (parameter_def NEWLINE)*;
 

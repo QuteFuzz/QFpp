@@ -7,14 +7,10 @@ class Qubit_defs : public Node {
 
     public:
 
-        Qubit_defs(unsigned int num_defs, bool def_discard = false):
+        Qubit_defs(unsigned int num_defs):
             Node("qubit_defs", QUBIT_DEFS, indentation_tracker)
         {
-            if (def_discard) {
-                add_constraint(QUBIT_DEF_DISCARD, num_defs);
-            } else {
-                add_constraint(QUBIT_DEF, num_defs);
-            }
+            add_constraint(QUBIT_DEF, num_defs);
         }
 
     private:

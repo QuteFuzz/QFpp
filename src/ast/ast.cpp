@@ -1,8 +1,14 @@
 #include <ast.h>
 
+/*
+	utils
+*/
 #include <sstream>
 #include <result.h>
 
+/* 
+	node kinds
+*/
 #include <circuit.h>
 #include <gate.h>
 #include <compound_stmts.h>
@@ -20,7 +26,7 @@
 #include <compare_op_bitwise_or_pair_child.h>
 #include <expression.h>
 #include <gate_name.h>
-#include <generator.h>
+#include <parameter_def.h>
 
 std::string Node::indentation_tracker = "";
 
@@ -67,20 +73,19 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 			return std::make_shared<Integer>(Node::indentation_tracker.size());
 
 		case CIRCUIT:
-			return context.new_circuit_node();
+			return context.nn_circuit();
 
 		case BODY:
 			return std::make_shared<Node>(str, kind);
 
 		case COMPOUND_STMTS:
-			return context.get_compound_stmts(parent);
+			return context.nn_compound_stmts(parent);
 
 		case COMPOUND_STMT:
-			return context.get_compound_stmt(parent);
+			return context.nn_compound_stmt(parent);
 
 		case IF_STMT: case ELIF_STMT: case ELSE_STMT:
-			context.reset(RL_QUBIT_OP);
-			return context.get_nested_stmt(str, kind, parent);
+			return context.nn_nested_stmt(str, kind, parent);
 
 		case DISJUNCTION:
 			return std::make_shared<Disjunction>();
@@ -92,55 +97,50 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 			return std::make_shared<Expression>();
 
 		case CIRCUIT_ID:
-			return context.get_circuit_id();
+			return context.nn_circuit_id();
 
 		case SUBROUTINE_DEFS:
-			return context.new_subroutines_node();
+			return context.nn_subroutines();
 
 		case QUBIT_OP:
-			return context.new_qubit_op_node();
+			return context.nn_qubit_op();
 
 		case CIRCUIT_NAME:
-			return std::make_shared<Variable>(context.get_current_circuit_owner());
+			return std::make_shared<Variable>(context.get_current_circuit()->get_owner());
 
 		case QUBIT_DEF_SIZE:
-			return context.get_current_qubit_definition_size();
+			return context.get_current_node_size<Qubit_definition>();
 
 		case QUBIT_DEF_NAME:
-			return context.get_current_qubit_definition_name();
+			return context.get_current_node_name<Qubit_definition>();
 
 		case QUBIT_DEFS:
-			return context.get_qubit_defs_node(scope);
-
-		case QUBIT_DEFS_DISCARD:
-			return context.get_qubit_defs_discard_node(scope);
+			return context.nn_qubit_defs(scope);
 
 		case BIT_DEFS:
-			return context.get_bit_defs_node(scope);
+			return context.nn_bit_defs(scope);
 
 		case QUBIT_DEF:
-			return context.new_qubit_definition(scope);
-
-		case QUBIT_DEF_DISCARD:
-			return context.new_qubit_def_discard(scope);
+			return context.nn_qubit_definition(scope);
 
 		case BIT_DEF:
-			return context.new_bit_definition(scope);
+			return context.nn_bit_definition(scope);
 
 		case BIT_DEF_SIZE:
-			return context.get_current_bit_definition_size();
+			return context.get_current_node_size<Bit_definition>();
 
 		case BIT_DEF_NAME:
-			return context.get_current_bit_definition_name();
+			return context.get_current_node_name<Bit_definition>();
 
 		case QUBIT_LIST: {
+			auto current_gate = context.get_current_node<Gate>();
 
 			unsigned int num_qubits;
 
 			if(*parent == SUBROUTINE_OP_ARG){
-				num_qubits = context.get_current_gate()->get_current_qubit_def()->get_size()->get_num();
+				num_qubits = current_gate->get_current_qubit_def()->get_size()->get_num();
 			} else {
-				num_qubits = context.get_current_gate()->get_num_external_qubits();
+				num_qubits = current_gate->get_num_external_qubits();
 			}
 
 			context.reset(RL_QUBIT_OP);
@@ -150,29 +150,28 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 
 		case BIT_LIST:
 			context.reset(RL_QUBIT_OP);
-
-			return std::make_shared<Bit_list>(context.get_current_gate()->get_num_external_bits());
+			return std::make_shared<Bit_list>(context.get_current_node<Gate>()->get_num_external_bits());
 
 		case FLOAT_LIST:
-			return std::make_shared<Float_list>(context.get_current_gate()->get_num_floats());
+			return std::make_shared<Float_list>(context.get_current_node<Gate>()->get_num_floats());
 
 		case QUBIT_INDEX:
-			return context.get_current_qubit_index();
+			return context.get_current_node_index<Qubit>();
 
 		case QUBIT_NAME:
-			return context.get_current_qubit_name();
+			return context.get_current_node_name<Qubit>();
 
 		case QUBIT:
-			return context.new_qubit();
+			return context.get_random_qubit();
 
 		case BIT_INDEX:
-			return context.get_current_bit_index();
+			return context.get_current_node_index<Bit>();
 
 		case BIT_NAME:
-			return context.get_current_bit_name();
+			return context.get_current_node_name<Bit>();
 
 		case BIT:
-			return context.new_bit();
+			return context.get_random_bit();
 
 		case FLOAT:
 			return std::make_shared<Float>();
@@ -183,48 +182,40 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 		case GATE_NAME:
 			return std::make_shared<Gate_name>(parent, context.get_current_circuit(), swarm_testing_gateset);
 
-		case SUBROUTINE: {
-			std::shared_ptr<Circuit> subroutine_circuit = context.get_random_circuit();
-
-			subroutine_circuit->print_info();
-
-			std::shared_ptr<Gate> subroutine_gate = context.new_gate(str, kind, subroutine_circuit->get_qubit_defs());
-			subroutine_gate->add_child(std::make_shared<Variable>(subroutine_circuit->get_owner()));
-
-			return subroutine_gate;
-		}
+		case SUBROUTINE: 
+			return context.nn_gate_from_subroutine();
 
 		case SUBROUTINE_OP_ARGS:
-			return std::make_shared<Subroutine_op_args>(context.get_current_gate()->get_num_external_qubit_defs());
+			return std::make_shared<Subroutine_op_args>(context.get_current_node<Gate>()->get_num_external_qubit_defs());
 
 		case SUBROUTINE_OP_ARG:
-			return context.new_arg();
+			return context.nn_subroutine_op_arg();
 
 		case H: case X: case Y: case Z: case T:
 		case TDG: case S: case SDG: case PROJECT_Z: case MEASURE_AND_RESET:
 		case V: case VDG:
-			return context.new_gate(str, kind, 1, 0, 0);
+			return context.nn_gate(str, kind, 1, 0, 0);
 
 		case CX : case CY: case CZ: case CNOT: case CH: case SWAP:
-			return context.new_gate(str, kind, 2, 0, 0);
+			return context.nn_gate(str, kind, 2, 0, 0);
 
 		case CRZ: case CRX: case CRY:
-			return context.new_gate(str, kind, 2, 0, 1);
+			return context.nn_gate(str, kind, 2, 0, 1);
 
 		case CCX: case CSWAP: case TOFFOLI:
-			return context.new_gate(str, kind, 3, 0, 0);
+			return context.nn_gate(str, kind, 3, 0, 0);
 
 		case U1: case RX: case RY: case RZ:
-			return context.new_gate(str, kind, 1, 0, 1);
+			return context.nn_gate(str, kind, 1, 0, 1);
 
 		case U2: case PHASED_X:
-			return context.new_gate(str, kind, 1, 0, 2);
+			return context.nn_gate(str, kind, 1, 0, 2);
 
 		case U3: case U:
-			return context.new_gate(str, kind, 1, 0, 3);
+			return context.nn_gate(str, kind, 1, 0, 3);
 
 		case MEASURE:
-			return context.new_gate(str, kind, 1, 1, 0);
+			return context.nn_gate(str, kind, 1, 1, 0);
 
 		case BARRIER: {
 			std::shared_ptr<Circuit> current_circuit = context.get_current_circuit();
@@ -232,11 +223,17 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 			unsigned int n_qubits = std::min(QuteFuzz::WILDCARD_MAX, (unsigned int)current_circuit->num_qubits_of(ALL_SCOPES));
 			unsigned int random_barrier_width = random_uint(n_qubits, 1);
 
-			return context.new_gate(str, kind, random_barrier_width, 0, 0);
+			return context.nn_gate(str, kind, random_barrier_width, 0, 0);
 		}
 
 		case GATE_OP_ARGS:
-			return std::make_shared<Gate_op_args>(context.get_current_gate());
+			return std::make_shared<Gate_op_args>(context.get_current_node<Gate>());
+
+		case PARAMETER_DEF:
+			return context.nn_parameter_def();
+
+		case PARAMETER_DEF_NAME:
+			return context.get_current_node_name<Parameter_def>();
 
 		default:
 			return std::make_shared<Node>(str, kind);

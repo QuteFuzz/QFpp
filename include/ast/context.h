@@ -12,6 +12,7 @@
 #include <subroutine_defs.h>
 #include <genome.h>
 #include <nested_stmt.h>
+#include <parameter_def.h>
 
 
 enum Reset_level {
@@ -19,6 +20,141 @@ enum Reset_level {
 	RL_CIRCUIT,
 	RL_QUBIT_OP,
 };
+
+template<typename T>
+inline constexpr bool always_false_v = false;
+
+struct Current_nodes {
+
+	public:
+    
+		Current_nodes() {
+			reset_all();
+		}
+		
+		void reset_all() {
+			qubit_definition = std::make_shared<Qubit_definition>();
+			bit_definition = std::make_shared<Bit_definition>();
+			qubit = std::make_shared<Qubit>();
+			bit = std::make_shared<Bit>();
+			gate = std::make_shared<Gate>();
+			qubit_op = std::make_shared<Qubit_op>();
+			subroutine_op_arg = std::make_shared<Subroutine_op_arg>();
+			parameter_def = std::make_shared<Parameter_def>();
+		}
+
+		template<typename T>
+		std::shared_ptr<Variable> get_name() const {
+			if constexpr (std::is_same_v<T, Qubit>) {
+				return qubit->get_name();
+			} else if constexpr (std::is_same_v<T, Bit>) {
+				return bit->get_name();
+			} else if constexpr (std::is_same_v<T, Qubit_definition>) {
+				return qubit_definition->get_name();
+			} else if constexpr (std::is_same_v<T, Bit_definition>) {
+				return bit_definition->get_name();
+			} else if constexpr (std::is_same_v<T, Parameter_def>){
+				return parameter_def->get_name();
+			} else {
+				static_assert(always_false_v<T>, "Given type does not contain a name node");
+			}
+		}
+
+		template<typename T>
+		std::shared_ptr<Integer> get_size() const {
+			if constexpr (std::is_same_v<T, Qubit_definition>) {
+				return qubit_definition->get_size();
+			} else if constexpr (std::is_same_v<T, Bit_definition>) {
+				return bit_definition->get_size();
+			} else {
+				static_assert(always_false_v<T>, "Given type does not contain a size node");
+			}
+		}
+
+		template<typename T>
+		std::shared_ptr<Integer> get_index() const {
+			if constexpr (std::is_same_v<T, Qubit>) {
+				return qubit->get_index();
+			} else if constexpr (std::is_same_v<T, Bit>) {
+				return bit->get_index();
+			} else {
+				static_assert(always_false_v<T>, "Given type does not contain a size node");
+			}
+		}
+
+		template<typename T>
+		std::shared_ptr<T> get() const {
+			if constexpr (std::is_same_v<T, Gate>) {
+				return gate;
+			} else if constexpr (std::is_same_v<T, Qubit>) {
+				return qubit;
+			} else if constexpr (std::is_same_v<T, Bit>) {
+				return bit;
+			} else if constexpr (std::is_same_v<T, Qubit_definition>) {
+				return qubit_definition;
+			} else if constexpr (std::is_same_v<T, Bit_definition>) {
+				return bit_definition;
+			} else if constexpr (std::is_same_v<T, Qubit_op>) {
+				return qubit_op;
+			} else if constexpr (std::is_same_v<T, Subroutine_op_arg>) {
+				return subroutine_op_arg;
+			} else if constexpr (std::is_same_v<T, Parameter_def>) {
+				return parameter_def;
+			} else {
+				static_assert(always_false_v<T>, "Unsupported type");
+			}
+		}
+		
+		template<typename T>
+		void set(std::shared_ptr<T> value){
+			if constexpr (std::is_same_v<T, Gate>) {
+				gate = value;
+			} else if constexpr (std::is_same_v<T, Qubit>) {
+				qubit = value;
+			} else if constexpr (std::is_same_v<T, Bit>) {
+				bit = value;
+			} else if constexpr (std::is_same_v<T, Qubit_definition>) {
+				qubit_definition = value;
+			} else if constexpr (std::is_same_v<T, Bit_definition>) {
+				bit_definition = value;
+			} else if constexpr (std::is_same_v<T, Qubit_op>) {
+				qubit_op = value;
+			} else if constexpr (std::is_same_v<T, Subroutine_op_arg>) {
+				subroutine_op_arg = value;
+			} else if constexpr (std::is_same_v<T, Parameter_def>) {
+				parameter_def = value;
+			} else {
+				static_assert(always_false_v<T>, "Unsupported type");
+			}
+		}
+
+	private:
+		std::shared_ptr<Qubit_definition> qubit_definition;
+		std::shared_ptr<Bit_definition> bit_definition;
+		std::shared_ptr<Qubit> qubit;
+		std::shared_ptr<Bit> bit;
+		std::shared_ptr<Gate> gate;
+		std::shared_ptr<Qubit_op> qubit_op;
+		std::shared_ptr<Subroutine_op_arg> subroutine_op_arg;
+		std::shared_ptr<Parameter_def> parameter_def;
+};
+
+struct Dummy_nodes {
+	std::shared_ptr<Circuit> circuit;
+	std::shared_ptr<Integer> integer;
+	std::shared_ptr<Variable> var;
+
+	Dummy_nodes() {
+		reset_all();
+	}
+
+	void reset_all() {
+		circuit = std::make_shared<Circuit>();
+		integer = std::make_shared<Integer>();
+		var = std::make_shared<Variable>();
+	}
+};
+
 
 struct Context {
 	static int ast_counter;
@@ -29,10 +165,6 @@ struct Context {
 		}
 
 		void reset(Reset_level l);
-
-		inline std::string get_current_circuit_owner(){
-			return current_circuit_owner;
-		}
 
 		bool can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit);
 
@@ -46,98 +178,65 @@ struct Context {
 
 		std::shared_ptr<Circuit> get_random_circuit();
 
-		std::shared_ptr<Circuit> new_circuit_node();
+		std::shared_ptr<Qubit> get_random_qubit();
 
-		std::shared_ptr<Qubit_defs> get_qubit_defs_node(U8& scope);
+		std::shared_ptr<Bit> get_random_bit();
 
-		std::shared_ptr<Qubit_defs> get_qubit_defs_discard_node(U8& scope);
+		std::shared_ptr<Circuit> nn_circuit();
 
-		std::shared_ptr<Bit_defs> get_bit_defs_node(U8& scope);
+		std::shared_ptr<Qubit_defs> nn_qubit_defs(U8& scope);
 
-		std::optional<std::shared_ptr<Circuit>> get_circuit(std::string owner);
+		std::shared_ptr<Bit_defs> nn_bit_defs(U8& scope);
 
-		std::shared_ptr<Qubit> new_qubit();
+		std::shared_ptr<Subroutine_op_arg> nn_subroutine_op_arg();
 
-		std::shared_ptr<Variable> get_current_qubit_name();
+		std::shared_ptr<Qubit_definition> nn_qubit_definition(const U8& scope);
+	
+		std::shared_ptr<Bit_definition> nn_bit_definition(const U8& scope);
 
-		std::shared_ptr<Integer> get_current_qubit_index();
+		std::shared_ptr<Gate> nn_gate(const std::string& str, Token_kind& kind, int num_qubits, int num_bits, int num_params);
 
-		std::shared_ptr<Bit> new_bit();
+		std::shared_ptr<Nested_stmt> nn_nested_stmt(const std::string& str, const Token_kind& kind, std::shared_ptr<Node> parent);
 
-		std::shared_ptr<Variable> get_current_bit_name();
+		std::shared_ptr<Compound_stmt> nn_compound_stmt(std::shared_ptr<Node> parent);
 
-		std::shared_ptr<Integer> get_current_bit_index();
+		std::shared_ptr<Compound_stmts> nn_compound_stmts(std::shared_ptr<Node> parent);
 
-		inline std::shared_ptr<Subroutine_op_arg> new_arg(){
-			if((current_gate != nullptr) && *current_gate == SUBROUTINE){
-				current_subroutine_op_arg = std::make_shared<Subroutine_op_arg>(current_gate->get_next_qubit_def());
-			}
+		std::shared_ptr<Subroutine_defs> nn_subroutines();
 
-			return current_subroutine_op_arg;
+		std::shared_ptr<Qubit_op> nn_qubit_op();
+
+		std::shared_ptr<Integer> nn_circuit_id();
+
+		std::shared_ptr<Gate> nn_gate_from_subroutine();
+
+		std::shared_ptr<Parameter_def> nn_parameter_def();
+
+		template<typename T>
+		inline std::shared_ptr<Integer> get_current_node_index(){
+			return current.get_index<T>();
 		}
 
-		inline std::shared_ptr<Subroutine_op_arg> get_current_arg(){
-			return current_subroutine_op_arg;
+		template<typename T>
+		inline std::shared_ptr<Integer> get_current_node_size(){
+			return current.get_size<T>();
 		}
 
-		inline std::shared_ptr<Qubit_definition> new_qubit_definition(const U8& scope){
-			current_qubit_definition = get_current_circuit()->get_next_qubit_def(scope);
-			return current_qubit_definition;
+		template<typename T>
+		inline std::shared_ptr<Variable> get_current_node_name(){
+			return current.get_name<T>();
 		}
 
-		inline std::shared_ptr<Qubit_definition> new_qubit_def_discard(const U8& scope){
-			current_qubit_definition = get_current_circuit()->get_next_qubit_def_discard(scope);
-			return current_qubit_definition;
+		template<typename T>
+		inline std::shared_ptr<T> get_current_node(){
+			return current.get<T>();
 		}
-
-		std::shared_ptr<Variable> get_current_qubit_definition_name();
-
-		std::shared_ptr<Integer> get_current_qubit_definition_size();
-
-		inline std::shared_ptr<Bit_definition> new_bit_definition(const U8& scope){
-			current_bit_definition = get_current_circuit()->get_next_bit_def(scope);
-			return current_bit_definition;
-		}
-
-		std::shared_ptr<Variable> get_current_bit_definition_name();
-
-		std::shared_ptr<Integer> get_current_bit_definition_size();
-
-		inline std::shared_ptr<Gate> new_gate(const std::string& str, Token_kind& kind, int num_qubits, int num_bits, int num_params){
-			current_gate = std::make_shared<Gate>(str, kind, num_qubits, num_bits, num_params);
-
-			if(current_qubit_op != nullptr) current_qubit_op->set_gate_node(current_gate);
-
-			return current_gate;
-		}
-
-		inline std::shared_ptr<Gate> new_gate(const std::string& str, Token_kind& kind, const Collection<Qubit_definition>& qubit_defs){
-			current_gate = std::make_shared<Gate>(str, kind, qubit_defs);
-
-			if(current_qubit_op != nullptr) current_qubit_op->set_gate_node(current_gate);
-
-			return current_gate;
-		}
-
-		inline std::shared_ptr<Gate> get_current_gate(){return current_gate;}
-
-		std::shared_ptr<Nested_stmt> get_nested_stmt(const std::string& str, const Token_kind& kind, std::shared_ptr<Node> parent);
-
-		std::shared_ptr<Compound_stmt> get_compound_stmt(std::shared_ptr<Node> parent);
-
-		std::shared_ptr<Compound_stmts> get_compound_stmts(std::shared_ptr<Node> parent);
-
-		std::shared_ptr<Subroutine_defs> new_subroutines_node();
-
-		std::shared_ptr<Qubit_op> new_qubit_op_node();
 
 		/// @brief Is the current circuit being generated a subroutine?
 		/// @return
 		inline bool under_subroutines_node() const {
 			return subroutines_node.has_value() && (subroutines_node.value()->build_state() == NB_BUILD);
 		}
-
-		inline std::shared_ptr<Integer> get_circuit_id(){return std::make_shared<Integer>(ast_counter);}
 
 		inline void set_genome(const std::optional<Genome>& _genome){
 			genome = _genome;
@@ -146,7 +245,7 @@ struct Context {
 		inline void set_control(const Control& _control){
 			control = _control;
 			nested_depth = control.get_value("NESTED_MAX_DEPTH");
-			dummy_circuit->set_global_targets(control);
+			dummies.circuit->set_global_targets(control);
 		}
 
 		inline void print_circuit_info() const {
@@ -156,31 +255,19 @@ struct Context {
 		}
 
 	private:
-		std::string current_circuit_owner;
+		Control control;
+		Current_nodes current;
+		Dummy_nodes dummies;
+		std::optional<Genome> genome;
+		bool can_copy_dag;
+
 		std::vector<std::shared_ptr<Circuit>> circuits;
-
-		std::shared_ptr<Circuit> dummy_circuit = std::make_shared<Circuit>();
-		Integer dummy_int;
-		Variable dummy_var;
-
+		
 		unsigned int subroutine_counter = 0;
 		unsigned int current_port = 0;
 		unsigned int nested_depth; // default set when control is set
 
-		std::shared_ptr<Qubit_definition> current_qubit_definition = std::make_shared<Qubit_definition>();
-		std::shared_ptr<Bit_definition> current_bit_definition = std::make_shared<Bit_definition>();
-		std::shared_ptr<Qubit> current_qubit = std::make_shared<Qubit>();
-		std::shared_ptr<Bit> current_bit = std::make_shared<Bit>();
-		std::shared_ptr<Gate> current_gate = std::make_shared<Gate>();
-		std::shared_ptr<Qubit_op> current_qubit_op = std::make_shared<Qubit_op>();
-		std::shared_ptr<Subroutine_op_arg> current_subroutine_op_arg = std::make_shared<Subroutine_op_arg>();
-
 		std::optional<std::shared_ptr<Subroutine_defs>> subroutines_node = std::nullopt;
-		std::optional<Genome> genome;
-
-		bool can_copy_dag;
-
-		Control control;
 };
 
 
