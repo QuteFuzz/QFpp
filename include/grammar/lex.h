@@ -288,7 +288,6 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("FLOAT", FLOAT),
     Token_matcher("INTEGER", INTEGER),
 
-    Token_matcher("NEXT", NEXT),
     Token_matcher("LPAREN", SYNTAX, "("),
     Token_matcher("RPAREN", SYNTAX, ")"),
     Token_matcher("LBRACK", SYNTAX, "["),
