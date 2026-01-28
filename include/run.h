@@ -6,6 +6,7 @@
 #include <iomanip>
 
 #include <generator.h>
+#include <run_utils.h>
 
 class Run{
 

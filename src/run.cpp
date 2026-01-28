@@ -5,6 +5,12 @@
 
 const fs::path Run::OUTPUT_DIR = fs::path(__FILE__).parent_path().parent_path() / fs::path(QuteFuzz::OUTPUTS_FOLDER_NAME);
 
+void init_global_seed(Control& control, std::optional<unsigned int> user_seed) {
+    std::random_device rd;
+    control.GLOBAL_SEED_VAL = user_seed.value_or(rd());
+    rng().seed(control.GLOBAL_SEED_VAL);
+}
+
 Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
     std::vector<Token> meta_grammar_tokens;
 
@@ -60,16 +66,16 @@ void Run::set_grammar(Control& control){
 
     entry_name = tokens[0];
 
-    U8 scope = 0;
+    Scope entry_scope = ALL_SCOPES;
 
-    for(const auto& t : tokens){
-        scope |= ((t == "E") & EXTERNAL_SCOPE);
-        scope |= ((t == "I") & INTERNAL_SCOPE);
-        scope |= ((t == "O") & OWNED_SCOPE);
-    }
+    // for(const auto& t : tokens){
+    //     scope |= ((t == "E") & EXTERNAL_SCOPE);
+    //     scope |= ((t == "I") & INTERNAL_SCOPE);
+    //     scope |= ((t == "O") & OWNED_SCOPE);
+    // }
 
     current_generator = generators[grammar_name];
-    current_generator->set_grammar_entry(entry_name, scope);
+    current_generator->set_grammar_entry(entry_name, entry_scope);
 
     setup_output_dir(grammar_name);
 
@@ -97,7 +103,7 @@ void Run::set_grammar(Control& control){
         }
     }
 
-    current_generator->set_grammar_control(control);
+    // current_generator->set_grammar_control(control);
 }
 
 void Run::tokenise(const std::string& command, const char& delim){
@@ -148,12 +154,12 @@ void Run::loop(){
             Expected<unsigned int>("NESTED_MAX_DEPTH", QuteFuzz::NESTED_MAX_DEPTH, CLAMP_DOWN)
         },
         .expected_rules = {
-            Expected<std::shared_ptr<Rule>>("qubit_def", INTERNAL_SCOPE, nullptr),
-            Expected<std::shared_ptr<Rule>>("qubit_def", EXTERNAL_SCOPE, nullptr),
-            Expected<std::shared_ptr<Rule>>("qubit_def", GLOBAL_SCOPE, nullptr),
-            Expected<std::shared_ptr<Rule>>("bit_def", INTERNAL_SCOPE, nullptr),
-            Expected<std::shared_ptr<Rule>>("bit_def", EXTERNAL_SCOPE, nullptr),
-            Expected<std::shared_ptr<Rule>>("bit_def", GLOBAL_SCOPE, nullptr)
+            Expected<std::shared_ptr<Rule>>("qubit_def", Scope::INT, nullptr),
+            Expected<std::shared_ptr<Rule>>("qubit_def", Scope::EXT, nullptr),
+            Expected<std::shared_ptr<Rule>>("qubit_def", Scope::GLOB, nullptr),
+            Expected<std::shared_ptr<Rule>>("bit_def", Scope::INT, nullptr),
+            Expected<std::shared_ptr<Rule>>("bit_def", Scope::EXT, nullptr),
+            Expected<std::shared_ptr<Rule>>("bit_def", Scope::GLOB, nullptr)
         },
     };
 

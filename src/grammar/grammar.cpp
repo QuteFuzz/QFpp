@@ -41,9 +41,11 @@ void Grammar::peek(){
 
 }
 
-bool Grammar::is_rule(const std::string& rule_name, const U8& scope){
+bool Grammar::is_rule(const std::string& rule_name, const Scope& scope){
+    auto other = std::make_pair(rule_name, scope);
+
     for(const auto& ptr : rule_pointers){
-        if((ptr->get_name() == rule_name) && (scope_matches(ptr->get_scope(), scope))){return true;}
+        if(*ptr == other){return true;}
     }
 
     return false;
@@ -70,7 +72,7 @@ void Grammar::add_current_branches_to_rule(){
 
 /// Return value of given rule name if the value is 1 branch, with 1 syntax term (string or digit)
 std::string Grammar::dig_to_syntax(const std::string& rule_name) const {
-    std::shared_ptr<Rule> rule_ptr = get_rule_pointer_if_exists(rule_name);
+    std::shared_ptr<Rule> rule_ptr = get_rule_pointer_if_exists(rule_name, ALL_SCOPES);
 
     if(rule_ptr == nullptr) return "";
 
@@ -97,10 +99,11 @@ std::string Grammar::dig_to_syntax(const std::string& rule_name) const {
 /// @param name
 /// @param scope
 /// @return
-std::shared_ptr<Rule> Grammar::get_rule_pointer_if_exists(const std::string& name, const U8& scope) const {
+std::shared_ptr<Rule> Grammar::get_rule_pointer_if_exists(const std::string& name, const Scope& scope) const {
+    auto other = std::make_pair(name, scope);
 
     for(const auto& rp : rule_pointers){
-        if(rp->matches(name, scope)){return rp;}
+        if(*rp == other){return rp;}
     }
 
     return nullptr;
@@ -110,7 +113,7 @@ std::shared_ptr<Rule> Grammar::get_rule_pointer_if_exists(const std::string& nam
 /// @param token
 /// @param scope
 /// @return
-std::shared_ptr<Rule> Grammar::get_rule_pointer(const Token& token, const U8& scope){
+std::shared_ptr<Rule> Grammar::get_rule_pointer(const Token& token, const Scope& scope){
     auto dummy = std::make_shared<Rule>(token, scope);
 
     for(const auto& rp : rule_pointers){
@@ -135,8 +138,7 @@ void Grammar::add_term_to_branch(const Token& token, Branch& branch){
             if explicitly specified like EXTERNAL::term, then the term takes on that scope, otherwise, it
             takes on the scope of the current rule (i.e the rule def)
         */
-        U8 scope = (rule_decl_scope == NO_SCOPE) && (current_rule != nullptr) ? current_rule->get_scope() : rule_decl_scope;
-
+        Scope scope = (rule_decl_scope == Scope::GLOB) && (current_rule != nullptr) ? current_rule->get_scope() : rule_decl_scope;
         branch.add(Term(get_rule_pointer(token, scope), token.kind, nesting_depth));
 
     } else {
@@ -204,6 +206,11 @@ void Grammar::build_grammar(){
     if(curr_token.is_ok()){
         Token token = curr_token.get_ok();
 
+        if (((static_cast<int>(rule_def_scope) % 2) != 0) || ((static_cast<int>(rule_decl_scope) % 2) != 0)){
+            std::cout << token << std::endl;
+            std::cout << "rd: " << STR_SCOPE(rule_def_scope) << " rdecl: " << STR_SCOPE(rule_decl_scope) << std::endl;
+        }
+
         // cannot set here because if curr token is EOF, next should be an error.
         // I set this for only the specific cases where I use it to avoid an extra if statement checking for ok here
         Token next;
@@ -219,7 +226,7 @@ void Grammar::build_grammar(){
             // rules that are within branches, rules before `RULE_START` are handled at `RULE_START`
             if(current_rule != nullptr){
                 add_term_to_current_branches(token);
-                rule_decl_scope = NO_SCOPE;
+                rule_decl_scope = Scope::GLOB; // reset to GLOB scope by default
             }
 
         } else if (token.kind == RULE_START) {
@@ -253,43 +260,30 @@ void Grammar::build_grammar(){
         } else if (is_wildcard(token.kind)){
             extend_current_branches(token);
 
+        } else if (token.kind == LBRACE){
+            // scope has been set to some other scope
+            assert(rule_def_scope != Scope::GLOB);
+
         } else if (token.kind == RBRACE){
-            rule_def_scope = NO_SCOPE;
+            // reset to GLOB scope as default
+            rule_def_scope = Scope::GLOB;
 
         } else if (token.kind == EXTERNAL){
             next = next_token.get_ok();
 
             if(next.kind == SCOPE_RES){
-                rule_decl_scope |= EXTERNAL_SCOPE;
+                rule_decl_scope = Scope::EXT;
             } else {
-                rule_def_scope |= EXTERNAL_SCOPE;
+                rule_def_scope = Scope::EXT;
             }
 
         } else if (token.kind == INTERNAL){
             next = next_token.get_ok();
 
             if(next.kind == SCOPE_RES){
-                rule_decl_scope |= INTERNAL_SCOPE;
+                rule_decl_scope = Scope::INT;
             } else {
-                rule_def_scope |= INTERNAL_SCOPE;
-            }
-
-        } else if (token.kind == OWNED){
-            next = next_token.get_ok();
-
-            if(next.kind == SCOPE_RES){
-                rule_decl_scope |= OWNED_SCOPE;
-            } else {
-                rule_def_scope |= OWNED_SCOPE;
-            }
-
-        } else if (token.kind == GLOBAL){
-            next = next_token.get_ok();
-
-            if(next.kind == SCOPE_RES){
-                rule_decl_scope |= GLOBAL_SCOPE;
-            } else {
-                rule_def_scope |= GLOBAL_SCOPE;
+                rule_def_scope = Scope::INT;
             }
 
         } else if (is_quiet(token.kind)){

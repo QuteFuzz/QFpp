@@ -2,7 +2,7 @@
 #include <rule.h>
 
 
-unsigned int Circuit::make_register_resource_definition(U8& scope, Resource_kind rk, unsigned int max_size, unsigned int& current_num_definitions){
+unsigned int Circuit::make_register_resource_definition(Scope& scope, Resource_kind rk, unsigned int max_size, unsigned int& current_num_definitions){
 
     unsigned int size;
 
@@ -35,7 +35,7 @@ unsigned int Circuit::make_register_resource_definition(U8& scope, Resource_kind
     return size;
 }
 
-unsigned int Circuit::make_singular_resource_definition(U8& scope, Resource_kind rk, unsigned int& total_definitions){
+unsigned int Circuit::make_singular_resource_definition(Scope& scope, Resource_kind rk, unsigned int& total_definitions){
 
     if (rk == RK_QUBIT) {
         Singular_qubit_definition def (
@@ -61,7 +61,7 @@ unsigned int Circuit::make_singular_resource_definition(U8& scope, Resource_kind
     return 1;
 }
 
-unsigned int Circuit::make_resource_definitions(U8& scope, Resource_kind rk, Control& control){
+unsigned int Circuit::make_resource_definitions(Scope& scope, Resource_kind rk, Control& control){
 
     unsigned int total_num_definitions = 0;
     unsigned int target_num_resources = get_resource_target(scope, rk);

@@ -12,12 +12,6 @@ std::ofstream get_stream(fs::path output_dir, std::string file_name){
     return stream;
 }
 
-void init_global_seed(Control& control, std::optional<unsigned int> user_seed) {
-    std::random_device rd;
-    control.GLOBAL_SEED_VAL = user_seed.value_or(rd());
-    rng().seed(control.GLOBAL_SEED_VAL);
-}
-
 void lower(std::string& str){
     std::transform(str.begin(), str.end(), str.begin(),
         [](char c){return std::tolower(c);}
@@ -190,10 +184,3 @@ void render(std::function<void(std::ostringstream&)> extend_dot_string, const fs
     pipe_to_command(command, dot_string.str());
 }
 
-bool scope_matches(const U8& a, const U8& b){
-    if((a == NO_SCOPE) || (b == NO_SCOPE)){
-        return a == b;
-    } else {
-        return a & b;
-    }
-}

@@ -24,7 +24,6 @@ measure = "Measure";
 
 circuit = circuit_def_header NEWLINE body NEWLINE;
 
-# gate_name = x | rx;
 
 EXTERNAL {
 

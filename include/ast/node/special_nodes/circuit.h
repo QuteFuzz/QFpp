@@ -5,6 +5,7 @@
 #include <resource_definition.h>
 #include <resource.h>
 #include <params.h>
+#include <run_utils.h>
 
 /*
     Circuits contain external and internal qubits, external and internal bits, which are set targets that must be satisfied
@@ -77,11 +78,11 @@ class Circuit : public Node {
             target_num_bits_global = random_uint(control.get_value("MAX_NUM_BITS"), control.get_value("MIN_NUM_BITS"));
         }
 
-        inline unsigned int get_resource_target(U8& scope, Resource_kind& rk){
+        inline unsigned int get_resource_target(Scope& scope, Resource_kind& rk){
             switch(scope){
-                case EXTERNAL_SCOPE: return (rk == RK_QUBIT) ? target_num_qubits_external : target_num_bits_external;
-                case INTERNAL_SCOPE: return (rk == RK_QUBIT) ? target_num_qubits_internal : target_num_bits_internal;
-                case GLOBAL_SCOPE: return (rk == RK_QUBIT) ? target_num_qubits_global : target_num_bits_global;
+                case Scope::EXT: return (rk == RK_QUBIT) ? target_num_qubits_external : target_num_bits_external;
+                case Scope::INT: return (rk == RK_QUBIT) ? target_num_qubits_internal : target_num_bits_internal;
+                case Scope::GLOB: return (rk == RK_QUBIT) ? target_num_qubits_global : target_num_bits_global;
                 default: return QuteFuzz::MIN_QUBITS;
             }
         }
@@ -122,11 +123,11 @@ class Circuit : public Node {
             }
         }
 
-        unsigned int make_register_resource_definition(U8& scope, Resource_kind rk, unsigned int max_size, unsigned int& total_definitions);
+        unsigned int make_register_resource_definition(Scope& scope, Resource_kind rk, unsigned int max_size, unsigned int& total_definitions);
 
-        unsigned int make_singular_resource_definition(U8& scope,  Resource_kind rk, unsigned int& total_definitions);
+        unsigned int make_singular_resource_definition(Scope& scope,  Resource_kind rk, unsigned int& total_definitions);
 
-        unsigned int make_resource_definitions(U8& scope, Resource_kind rk, Control& control);
+        unsigned int make_resource_definitions(Scope& scope, Resource_kind rk, Control& control);
 
         void print_info() const;
 

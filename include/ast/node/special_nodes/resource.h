@@ -20,19 +20,19 @@ class Resource : public Node {
             value(Singular_resource())
         {}
 
-        Resource(const std::string& str, const Token_kind& kind, const Register_resource& resource, const U8& _scope) :
+        Resource(const std::string& str, const Token_kind& kind, const Register_resource& resource, const Scope& _scope) :
             Node(str, kind),
             value(resource),
             scope(_scope)
         {}
 
-        Resource(const std::string& str, const Token_kind& kind, const Singular_resource& resource, const U8& _scope) :
+        Resource(const std::string& str, const Token_kind& kind, const Singular_resource& resource, const Scope& _scope) :
             Node(str, kind),
             value(resource),
             scope(_scope)
         {}
 
-        U8 get_scope() const {
+        Scope get_scope() const {
             return scope;
         }
 
@@ -87,7 +87,7 @@ class Resource : public Node {
 
     private:
         std::variant<Register_resource, Singular_resource> value;
-        U8 scope;
+        Scope scope;
 
 };
 
@@ -96,13 +96,13 @@ class Qubit : public Resource {
     public:
         Qubit() : Resource() {}
 
-        Qubit(const Register_qubit& qubit, const U8& scope) :
+        Qubit(const Register_qubit& qubit, const Scope& scope) :
             Resource("qubit", QUBIT, qubit, scope)
         {
             add_constraint(REGISTER_QUBIT, 1);
         }
 
-        Qubit(const Singular_qubit& qubit, const U8& scope) :
+        Qubit(const Singular_qubit& qubit, const Scope& scope) :
             Resource("qubit", QUBIT, qubit, scope)
         {
             add_constraint(SINGULAR_QUBIT, 1);
@@ -131,13 +131,13 @@ class Bit : public Resource {
     public:
         Bit() : Resource() {}
 
-        Bit(const Register_bit& bit, const U8& scope) :
+        Bit(const Register_bit& bit, const Scope& scope) :
             Resource("bit", BIT, bit, scope)
         {
             add_constraint(REGISTER_BIT, 1);
         }
 
-        Bit(const Singular_bit& bit, const U8& scope) :
+        Bit(const Singular_bit& bit, const Scope& scope) :
             Resource("bit", BIT, bit, scope)
         {
             add_constraint(SINGULAR_BIT, 1);

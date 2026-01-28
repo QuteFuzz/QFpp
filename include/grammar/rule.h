@@ -4,6 +4,7 @@
 #include <branch.h>
 #include "node.h"
 #include "utils.h"
+#include <rule_utils.h>
 
 class Node;
 
@@ -12,7 +13,7 @@ class Rule {
     public:
         Rule(){}
 
-        Rule(const Token& _token, const U8& _scope) :
+        Rule(const Token& _token, const Scope& _scope) :
             token(_token),
             scope(_scope)
         {}
@@ -27,7 +28,7 @@ class Rule {
 
         Token get_token() const {return token;}
 
-        U8 get_scope() const {return scope;}
+        Scope get_scope() const {return scope;}
 
         bool get_recursive_flag() const {return recursive;}
 
@@ -49,10 +50,8 @@ class Rule {
             return (token == other.get_token()) && scope_matches(scope, other.get_scope());
         }
 
-        /// Checks that rule name and scope matches
-        /// Scope matching is done by == if both are NO_SCOPE, otherwise, & is used
-        bool matches(const std::string& name, const U8& _scope) {
-            return (token.value == name) && scope_matches(scope, _scope);
+        bool operator==(const std::pair<std::string, Scope> other) const {
+            return (token.value == other.first) && scope_matches(scope, other.second);
         }
 
         friend std::ostream& operator<<(std::ostream& stream, const Rule& rule){
@@ -70,7 +69,7 @@ class Rule {
 
     private:
         Token token;
-        U8 scope = NO_SCOPE;
+        Scope scope = Scope::GLOB;
         std::vector<Branch> branches;
         bool recursive = false;
 };

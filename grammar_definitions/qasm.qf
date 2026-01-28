@@ -17,19 +17,17 @@ EXTERNAL {
     bit_def = singular_bit_def;
 }
 
-GLOBAL {
-    register_qubit_def = "qreg " qubit_def_name "[" qubit_def_size "];";
+register_qubit_def = "qreg " qubit_def_name "[" qubit_def_size "];";
 
-    register_bit_def = "creg " bit_def_name "[" bit_def_size "];";
+register_bit_def = "creg " bit_def_name "[" bit_def_size "];";
 
-    qubit_defs = (qubit_def NEWLINE)+;
+qubit_defs = (qubit_def NEWLINE)+;
 
-    bit_defs = (bit_def NEWLINE)+;
+bit_defs = (bit_def NEWLINE)+;
 
-    qubit_def = register_qubit_def;
+qubit_def = register_qubit_def;
 
-    bit_def = register_bit_def;
-}
+bit_def = register_bit_def;
 
 
 # 2. QASM STRUCTURE
@@ -38,7 +36,7 @@ header = 'OPENQASM 2.0;' NEWLINE 'include "qelib1.inc";';
 
 program = header NEWLINE NEWLINE registers NEWLINE subroutine_defs NEWLINE body;
 
-registers = GLOBAL::qubit_defs NEWLINE GLOBAL::bit_defs;
+registers = qubit_defs NEWLINE bit_defs;
 
 subroutine_defs = (subroutine_circuit NEWLINE)*;
 

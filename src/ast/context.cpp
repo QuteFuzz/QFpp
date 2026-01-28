@@ -45,7 +45,7 @@ bool Context::can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit){
         return false;
     }
 
-    auto pred = [](const auto& elem){ return scope_matches(elem->get_scope(), EXTERNAL_SCOPE); };
+    auto pred = [](const auto& elem){ return scope_matches(elem->get_scope(), Scope::EXT); };
 
     auto qubits = current_circuit->get_collection<Qubit>();
     auto bits = current_circuit->get_collection<Bit>();
@@ -81,7 +81,7 @@ void Context::set_can_apply_subroutines(){
 template<typename T>
 unsigned int Context::get_max_external_resources(){
     size_t res = QuteFuzz::MIN_BITS;
-    auto pred = [](const auto& elem){ return scope_matches(elem->get_scope(), EXTERNAL_SCOPE); };
+    auto pred = [](const auto& elem){ return scope_matches(elem->get_scope(), Scope::EXT); };
 
     for(const std::shared_ptr<Circuit>& circuit : circuits){
         res = std::max(res, coll_size<T>(circuit->get_collection<T>(), pred));
@@ -180,7 +180,7 @@ std::shared_ptr<Circuit> Context::nn_circuit(){
     return current_circuit;
 }
 
-std::shared_ptr<Qubit_defs> Context::nn_qubit_defs(U8& scope){
+std::shared_ptr<Qubit_defs> Context::nn_qubit_defs(Scope& scope){
     std::shared_ptr<Circuit> current_circuit = get_current_circuit();
 
     unsigned int num_defs = current_circuit->make_resource_definitions(scope, RK_QUBIT, control);
@@ -188,7 +188,7 @@ std::shared_ptr<Qubit_defs> Context::nn_qubit_defs(U8& scope){
     return std::make_shared<Qubit_defs>(num_defs);
 }
 
-std::shared_ptr<Bit_defs> Context::nn_bit_defs(U8& scope){
+std::shared_ptr<Bit_defs> Context::nn_bit_defs(Scope& scope){
     std::shared_ptr<Circuit> current_circuit = get_current_circuit();
 
     unsigned int num_defs = current_circuit->make_resource_definitions(scope, RK_BIT, control);
@@ -205,13 +205,13 @@ std::shared_ptr<Subroutine_op_arg> Context::nn_subroutine_op_arg(){
     return arg;
 }
 
-std::shared_ptr<Qubit_definition> Context::nn_qubit_definition(const U8& scope){
+std::shared_ptr<Qubit_definition> Context::nn_qubit_definition(const Scope& scope){
     auto qubit_def = get_next_from_coll(get_current_circuit()->get_collection<Qubit_definition>(), scope);
     current.set<Qubit_definition>(qubit_def);
     return qubit_def;
 }
 
-std::shared_ptr<Bit_definition> Context::nn_bit_definition(const U8& scope){
+std::shared_ptr<Bit_definition> Context::nn_bit_definition(const Scope& scope){
     auto bit_def = get_next_from_coll(get_current_circuit()->get_collection<Bit_definition>(), scope);
     current.set<Bit_definition>(bit_def);
     return bit_def;

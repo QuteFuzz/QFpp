@@ -5,6 +5,7 @@
 #include <lex.h>
 
 class Rule;
+enum class Scope;
 
 class Term {
     public:
@@ -22,7 +23,7 @@ class Term {
 
         std::string get_string() const;
 
-        U8 get_scope() const;
+        Scope get_scope() const;
 
         bool is_syntax() const;
 

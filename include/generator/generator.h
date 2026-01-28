@@ -21,14 +21,14 @@ struct Generator {
             grammar(std::make_shared<Grammar>(_grammar))
         {}
 
-        inline void set_grammar_entry(std::string& _entry_name, U8& _scope){
+        inline void set_grammar_entry(std::string& _entry_name, Scope& _entry_scope){
             entry_name = _entry_name;
-            scope = _scope;
+            entry_scope = _entry_scope;
         }
 
-        inline void set_grammar_control(const Control& control){
-            grammar->set_control(control);
-        }
+        // inline void set_grammar_control(const Control& control){
+        //     grammar->set_control(control);
+        // }
 
         std::shared_ptr<Ast> setup_builder();
 
@@ -60,7 +60,7 @@ struct Generator {
     private:
         std::shared_ptr<Grammar> grammar;
         std::string entry_name;
-        U8 scope;
+        Scope entry_scope;
 
         int n_epochs = 100;
         float elitism = 0.2;

@@ -5,11 +5,11 @@
 std::shared_ptr<Ast> Generator::setup_builder(){
     std::shared_ptr<Ast> builder = std::make_shared<Ast>();
 
-    if(grammar->is_rule(entry_name, scope)){
-        builder->set_entry(grammar->get_rule_pointer_if_exists(entry_name, scope));
+    if(grammar->is_rule(entry_name, entry_scope)){
+        builder->set_entry(grammar->get_rule_pointer_if_exists(entry_name, entry_scope));
 
     } else if(builder->entry_set()){
-        WARNING("Rule " + entry_name + STR_SCOPE(scope) + " is not defined for grammar " + grammar->get_name() + ". Will use previous entry instead");
+        WARNING("Rule " + entry_name + STR_SCOPE(entry_scope) + " is not defined for grammar " + grammar->get_name() + ". Will use previous entry instead");
 
     } else {
         ERROR("Rule " + entry_name + " is not defined for grammar " + grammar->get_name());
@@ -79,10 +79,10 @@ void Generator::ast_to_program(fs::path output_dir, const Control& control, unsi
 std::vector<Token_kind> Generator::get_available_gates(){
     std::vector<Token_kind> out;
 
-    std::shared_ptr<Rule> gate_name = grammar->get_rule_pointer_if_exists("gate_name");
+    std::shared_ptr<Rule> gate_name = grammar->get_rule_pointer_if_exists("gate_name", Scope::GLOB);
 
     if(gate_name == nullptr){
-        ERROR("No gates have been defined in the grammar!");
+        ERROR("No gates have been defined in the grammar in GLOB scope!");
 
     } else {
 

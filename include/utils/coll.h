@@ -2,6 +2,7 @@
 #define COLL_H
 
 #include <utils.h>
+#include <rule_utils.h>
 
 template<typename T>
 using Ptr_coll = std::vector<std::shared_ptr<T>>;
@@ -31,7 +32,7 @@ inline std::shared_ptr<T> elem_at(const Ptr_coll<T>& collection, size_t index) {
 }
 
 template<typename T>
-inline std::shared_ptr<T> get_random_from_coll(const Ptr_coll<T>& collection, const U8& scope) {
+inline std::shared_ptr<T> get_random_from_coll(const Ptr_coll<T>& collection, const Scope& scope) {
     unsigned int total = collection.size();
     unsigned int total_valid = coll_size<T>(collection, [&scope](const auto& elem){return scope_matches(elem->get_scope(), scope) && !elem->is_used();});
 
@@ -53,7 +54,7 @@ inline std::shared_ptr<T> get_random_from_coll(const Ptr_coll<T>& collection, co
 }
 
 template<typename T>
-inline std::shared_ptr<T> get_next_from_coll(const Ptr_coll<T>& collection, const U8& scope) {
+inline std::shared_ptr<T> get_next_from_coll(const Ptr_coll<T>& collection, const Scope& scope) {
     std::shared_ptr<T> elem = coll_elem_if_pass<T>(collection, [&scope](const auto& elem){return scope_matches(elem->get_scope(), scope) && !elem->is_used();});
 
     elem->set_used();

@@ -110,9 +110,6 @@ enum Token_kind {
     INDENTATION_DEPTH,
     INTEGER,
     FLOAT,
-    /*
-        these aren't used in the lexer, but in the AST node creation. maybe will be used in the lexer if these rules are needed later
-    */
     REGISTER_RESOURCE,
     REGISTER_RESOURCE_DEF,
     SINGULAR_RESOURCE,
@@ -145,8 +142,8 @@ enum Token_kind {
     ARROW,
     INTERNAL,
     EXTERNAL,
-    OWNED,
-    GLOBAL,
+    // OWNED,
+    // GLOBAL,
     SCOPE_RES,
     /*
         Grammar syntax end, add new syntax above
@@ -305,9 +302,9 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("DEDENT", DEDENT),
     Token_matcher("EXTERNAL", EXTERNAL),
     Token_matcher("INTERNAL", INTERNAL),
-    Token_matcher("OWNED", OWNED),
-    Token_matcher("GLOBAL", GLOBAL),
-
+    // Token_matcher("OWNED", OWNED),
+    // Token_matcher("GLOBAL", GLOBAL),
+    
     Token_matcher("::", SCOPE_RES),
     Token_matcher("->", ARROW),
     Token_matcher("+=", RULE_APPEND),
@@ -391,7 +388,6 @@ inline bool is_kind_of_rule(const Token_kind& kind){
 inline bool is_quiet(const Token_kind& kind){
     return
         (kind == SCOPE_RES) ||
-        (kind == LBRACE) ||
         (kind == ARROW);
 }
 

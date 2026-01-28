@@ -46,7 +46,7 @@ class Singular_qubit_definition : public Singular_resource_definition {
             Singular_resource_definition(*qubit.get_name())
         {}
 
-        void make_resources(Ptr_coll<Qubit>& output, U8& scope) const {
+        void make_resources(Ptr_coll<Qubit>& output, Scope& scope) const {
             Singular_qubit singular_qubit(name);
             output.push_back(std::make_shared<Qubit>(singular_qubit, scope));
         }
@@ -66,7 +66,7 @@ class Singular_bit_definition : public Singular_resource_definition {
             Singular_resource_definition(*bit.get_name())
         {}
 
-        void make_resources(Ptr_coll<Bit>& output, U8& scope) const {
+        void make_resources(Ptr_coll<Bit>& output, Scope& scope) const {
             Singular_bit singular_bit(name);
             output.push_back(std::make_shared<Bit>(singular_bit, scope));
         }

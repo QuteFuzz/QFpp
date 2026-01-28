@@ -26,9 +26,9 @@ class Grammar{
 
         std::string dig_to_syntax(const std::string& rule_name) const;
 
-        std::shared_ptr<Rule> get_rule_pointer_if_exists(const std::string& name, const U8& scope = NO_SCOPE) const;
+        std::shared_ptr<Rule> get_rule_pointer_if_exists(const std::string& name, const Scope& scope) const;
 
-        std::shared_ptr<Rule> get_rule_pointer(const Token& token, const U8& scope = NO_SCOPE);
+        std::shared_ptr<Rule> get_rule_pointer(const Token& token, const Scope& scope);
 
         inline void reset_current_branches(){current_branches.clear();}
 
@@ -65,15 +65,15 @@ class Grammar{
 
         void print_tokens() const;
 
-        bool is_rule(const std::string& rule_name, const U8& scope);
+        bool is_rule(const std::string& rule_name, const Scope& scope);
 
         inline std::string get_name(){return name;}
 
         inline std::string get_path(){return path.string();}
 
-        inline void set_control(const Control& _control){
-            control = _control;
-        }
+        // inline void set_control(const Control& _control){
+        //     control = _control;
+        // }
 
     private:
         std::vector<Token> tokens;
@@ -83,13 +83,12 @@ class Grammar{
         Result<Token> next_token;
         Token prev_token;
 
-        std::string range_start = "", range_end = "";
-
         std::vector<Branch> current_branches;
         std::shared_ptr<Rule> current_rule = nullptr;
 
-        U8 rule_def_scope = NO_SCOPE;
-        U8 rule_decl_scope = NO_SCOPE;
+        // default scopes for all rules
+        Scope rule_def_scope = Scope::GLOB;
+        Scope rule_decl_scope = Scope::GLOB;
 
         unsigned int nesting_depth_base = 0;
         unsigned int nesting_depth = nesting_depth_base;
@@ -99,7 +98,7 @@ class Grammar{
         std::string name;
         fs::path path;
 
-        Control control;
+        // Control control;
 };
 
 #endif

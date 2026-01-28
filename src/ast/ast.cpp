@@ -47,7 +47,7 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 		return std::make_shared<Node>(term.get_syntax());
 	}
 
-	U8 scope = term.get_scope();
+	Scope scope = term.get_scope();
 
 	std::string str = term.get_string();
 	Token_kind kind = term.get_kind();

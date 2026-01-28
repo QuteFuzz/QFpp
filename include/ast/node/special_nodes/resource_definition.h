@@ -15,19 +15,19 @@ class Resource_definition : public Node {
             value(Register_resource_definition())
         {}
 
-        Resource_definition(const Register_resource_definition& def, const U8& _scope) :
+        Resource_definition(const Register_resource_definition& def, const Scope& _scope) :
             Node("register_resource_def", REGISTER_RESOURCE_DEF),
             value(def),
             scope(_scope)
         {}
 
-        Resource_definition(const Singular_resource_definition& def, const U8& _scope) :
+        Resource_definition(const Singular_resource_definition& def, const Scope& _scope) :
             Node("singular_resource_def", SINGULAR_RESOURCE_DEF),
             value(def),
             scope(_scope)
         {}
 
-        U8 get_scope() const { return scope; }
+        Scope get_scope() const { return scope; }
 
         inline std::shared_ptr<Variable> get_name() const {
             return std::visit([](auto&& val) -> std::shared_ptr<Variable> {
@@ -80,7 +80,7 @@ class Resource_definition : public Node {
 
     private:
         std::variant<Register_resource_definition, Singular_resource_definition> value;
-        U8 scope;
+        Scope scope;
 
 };
 
@@ -89,7 +89,7 @@ class Qubit_definition : public Resource_definition {
     public:
         Qubit_definition() : Resource_definition() {}
 
-        Qubit_definition(const Register_resource_definition& def, const U8& scope, bool def_discard = false):
+        Qubit_definition(const Register_resource_definition& def, const Scope& scope, bool def_discard = false):
             Resource_definition(
                 def,
                 scope
@@ -102,7 +102,7 @@ class Qubit_definition : public Resource_definition {
             }
         }
 
-        Qubit_definition(const Singular_resource_definition& def, const U8& scope, bool def_discard = false):
+        Qubit_definition(const Singular_resource_definition& def, const Scope& scope, bool def_discard = false):
             Resource_definition(
                 def,
                 scope
@@ -124,7 +124,7 @@ class Bit_definition : public Resource_definition {
     public:
         Bit_definition() : Resource_definition() {}
 
-        Bit_definition(const Register_resource_definition& def, const U8& scope):
+        Bit_definition(const Register_resource_definition& def, const Scope& scope):
             Resource_definition(
                 def,
                 scope
@@ -133,7 +133,7 @@ class Bit_definition : public Resource_definition {
             add_constraint(REGISTER_BIT_DEF, 1);
         }
 
-        Bit_definition(const Singular_resource_definition& def, const U8& scope):
+        Bit_definition(const Singular_resource_definition& def, const Scope& scope):
             Resource_definition(
                 def,
                 scope

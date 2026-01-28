@@ -180,15 +180,15 @@ struct Context {
 
 		std::shared_ptr<Circuit> nn_circuit();
 
-		std::shared_ptr<Qubit_defs> nn_qubit_defs(U8& scope);
+		std::shared_ptr<Qubit_defs> nn_qubit_defs(Scope& scope);
 
-		std::shared_ptr<Bit_defs> nn_bit_defs(U8& scope);
+		std::shared_ptr<Bit_defs> nn_bit_defs(Scope& scope);
 
 		std::shared_ptr<Subroutine_op_arg> nn_subroutine_op_arg();
 
-		std::shared_ptr<Qubit_definition> nn_qubit_definition(const U8& scope);
+		std::shared_ptr<Qubit_definition> nn_qubit_definition(const Scope& scope);
 
-		std::shared_ptr<Bit_definition> nn_bit_definition(const U8& scope);
+		std::shared_ptr<Bit_definition> nn_bit_definition(const Scope& scope);
 
 		std::shared_ptr<Gate> nn_gate(const std::string& str, Token_kind& kind, int num_qubits, int num_bits, int num_params);
 

@@ -57,6 +57,12 @@ parameter_expr = parameter_name " * " FLOAT
 
 circuit = circuit_def_header NEWLINE body NEWLINE;
 
+(*
+    subroutines cannot contain classical bits as then it cannot be converted into a gate
+    by extension, any gates like measure that need classical bits will never be generated inside a subroutine
+*)
+subroutine_body = EXTERNAL::qubit_defs NEWLINE (qubit_op NEWLINE)+;
+
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
 
 subroutine_def_footer = circuit_name " = " circuit_name ".to_gate()" NEWLINE;

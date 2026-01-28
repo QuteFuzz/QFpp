@@ -6,6 +6,10 @@
     - `qubit_def` rule MUST be defined in at least INTERNAL or EXTERNAL scope (defining in both is fine)
     - the node `body` MUST always be used to define the circuit body. All compound statements must be inside the
         `compound_stmts` node, then the `compound_stmts` node is used within body
+    
+
+    Notes:
+    - all rules have scope GLOBAL by default
 *)
 
 # default config
@@ -17,11 +21,9 @@ MAX_NUM_BITS = 2;
 MAX_NUM_SUBROUTINES = 5;
 NESTED_MAX_DEPTH = 4;
 
-GLOBAL {
-    qubit_def = ;
+qubit_def = ;
 
-    bit_def = ;
-}
+bit_def = ;
 
 INTERNAL {
     qubit_def = singular_qubit_def | register_qubit_def;
@@ -42,7 +44,7 @@ program_footer = compiler_call;
 subroutine_defs = (subroutine_circuit NEWLINE subroutine_def_footer)*;
 
 # all subroutines have just qubit ops and no if-else statements
-subroutine_body = EXTERNAL::qubit_defs NEWLINE (qubit_op NEWLINE)+;
+subroutine_body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE (qubit_op NEWLINE)+;
 
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
 

@@ -63,7 +63,7 @@ class Register_qubit_definition : public Register_resource_definition {
             )
         {}
 
-        void make_resources(Ptr_coll<Qubit>& output, const U8& scope) const {
+        void make_resources(Ptr_coll<Qubit>& output, const Scope& scope) const {
 
             for(size_t i = 0; i < (size_t)size.get_num(); i++){
                 Register_qubit reg_qubit(name, Integer(std::to_string(i)));
@@ -92,7 +92,7 @@ class Register_bit_definition : public Register_resource_definition {
             )
         {}
 
-        void make_resources(Ptr_coll<Bit>& output, const U8& scope) const {
+        void make_resources(Ptr_coll<Bit>& output, const Scope& scope) const {
             for(size_t i = 0; i < (size_t)size.get_num(); i++){
                 Register_bit reg_bit(name, Integer(std::to_string(i)));
                 output.push_back(std::make_shared<Bit>(reg_bit, scope));
