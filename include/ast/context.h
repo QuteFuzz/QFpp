@@ -13,6 +13,7 @@
 #include <genome.h>
 #include <nested_stmt.h>
 #include <parameter_def.h>
+#include <ast_utils.h>
 
 
 enum Reset_level {
@@ -208,6 +209,8 @@ struct Context {
 
 		std::shared_ptr<Parameter_def> nn_parameter_def();
 
+		std::shared_ptr<Node> nn_next(Node& ast_root, const Token_kind& kind);
+
 		template<typename T>
 		inline std::shared_ptr<Integer> get_current_node_index(){
 			return current.get_index<T>();
@@ -254,15 +257,16 @@ struct Context {
 		Control control;
 		Current_nodes current;
 		Dummy_nodes dummies;
-		std::optional<Genome> genome;
 
 		std::vector<std::shared_ptr<Circuit>> circuits;
+		std::unordered_map<Token_kind, std::unique_ptr<Node_gen>> node_generators;
 
 		unsigned int subroutine_counter = 0;
 		unsigned int current_port = 0;
 		unsigned int nested_depth; // default set when control is set
 
 		std::optional<std::shared_ptr<Subroutine_defs>> subroutines_node = std::nullopt;
+		std::optional<Genome> genome;
 };
 
 

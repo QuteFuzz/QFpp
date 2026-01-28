@@ -29,6 +29,10 @@ Scope Term::get_scope() const {
     return is_rule() ? std::get<std::shared_ptr<Rule>>(value)->get_scope() : Scope::GLOB;
 }
 
+Meta_func Term::get_meta_func() const {
+    return is_rule() ? std::get<std::shared_ptr<Rule>>(value)->get_meta_func() : Meta_func::NONE;
+}
+
 bool Term::is_syntax() const {
     return std::holds_alternative<std::string>(value);
 }

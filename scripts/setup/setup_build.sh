@@ -1,7 +1,7 @@
 #!/bin/bash
 
 BUILD_TYPE="Release"
-BUILD_DIR="build"
+BUILD_DIR="build/"
 
 while [[ $# -gt 0 ]]; do
     case $1 in

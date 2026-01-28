@@ -21,13 +21,10 @@ ENABLE_BITMASK_OPERATORS(Scope)
 
 #define scope_matches(a, b) ((a & b) != Scope::NONE)
 
-// bool scope_matches(Scope a, Scope b){
-//     if ((a == Scope::GLOB) || (b == Scope::GLOB)){
-//         return a == b;
-//     } else {
-//         return (a & b) != Scope::NONE;
-//     }
-// }
-
+enum class Meta_func {
+    NONE = BIT32(0),
+    NEXT = BIT32(1),
+    NODE_CHILDREN_COUNT = BIT32(2),
+};
 
 #endif

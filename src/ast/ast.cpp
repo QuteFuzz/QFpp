@@ -38,24 +38,45 @@ std::string Node::indentation_tracker = "";
 /// @return
 std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Term& term){
 
-	if(parent == nullptr){
-		throw std::runtime_error(ANNOT("Node must have a parent!"));
-	}
-
-	if(term.is_syntax()){
-		// std::cout << term.get_syntax() << std::endl;
-		return std::make_shared<Node>(term.get_syntax());
-	}
-
 	Scope scope = term.get_scope();
+	Meta_func meta_func = term.get_meta_func();
 
 	std::string str = term.get_string();
 	Token_kind kind = term.get_kind();
 
+	if(parent == nullptr){
+		throw std::runtime_error(ANNOT("Node must have a parent!"));
+	}
+
+	/**
+	* 			SYNTAX TERM
+	*/
+	if(term.is_syntax()){
+		return std::make_shared<Node>(term.get_syntax());
+	}
+
+	/**
+	* 			SPECIAL CHILD NODES DUE TO PARENT
+	*/
 	if(*parent == COMPARE_OP_BITWISE_OR_PAIR){
 		return std::make_shared<Compare_op_bitwise_or_pair_child>(str, kind);
 	}
 
+	/**
+	* 			TODO: META FUNCTIONS
+	*/
+	// if (meta_func == Meta_func::NEXT){
+	// 	return context.nn_next(*root, kind);
+	// }
+
+	// if (meta_func == Meta_func::NODE_CHILDREN_COUNT){
+	// 	unsigned int n_children = root->find(kind)->get_children().size();
+	// 	return std::make_shared<Integer>(n_children);
+	// }
+
+	/**
+	* 			OTHER RULES
+	*/
 	switch(kind){
 
 		case INDENT:

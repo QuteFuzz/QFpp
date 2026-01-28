@@ -130,19 +130,18 @@ singular_bit = bit_name "[0]";
 
 register_bit = bit_name "[" bit_index "]";
 
-# program_footer = parameter_binding NEWLINE compiler_call;
-
 compiler_call = "qt = qiskitTesting()" NEWLINE testing_method;
 
 testing_method = "qt.ks_diff_test(main_circuit" COMMA circuit_id RPAREN NEWLINE;
 
-parameter_binding = circuit_name " = " circuit_name ".bind_parameters({" parameter_bind_list "})";
+(*
+    TODO: may need to make the semantics of `NEXT` more complex
+*)
+
+# program_footer = parameter_binding NEWLINE compiler_call;
+
+# parameter_binding = circuit_name " = " circuit_name ".bind_parameters({" parameter_bind_list "})";
 
 # parameter_bind_list = parameter_bind ("," parameter_bind)*;
 
-# TODO: find each node of that kind by iterating over the AST and performing the token concat given
-# parameter_bind_list = for_each(parameter_def_name, ": " FLOAT ", ");
-
-next_parameter = NEXT(parameter_def_name);
-
-parameter_bind = next_parameter ": " FLOAT;
+# parameter_bind = NEXT<parameter_def_name> ": " FLOAT;

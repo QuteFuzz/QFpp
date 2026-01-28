@@ -28,8 +28,15 @@ class Node_gen {
                 }
 
                 // Arrow operator
-                std::shared_ptr<Node>* operator->() {
+                Slot_type operator->() {
                     return _current_slot;
+                }
+
+                // Post-increment (it++): Stores current iterator to return it later, then uses ++it to modify in-place
+                Iterator operator++(int) {
+                    Iterator it = *this;
+                    ++(*this);
+                    return it;
                 }
 
                 // Pre-increment (++it): Finds the next slot

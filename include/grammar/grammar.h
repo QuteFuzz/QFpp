@@ -28,7 +28,7 @@ class Grammar{
 
         std::shared_ptr<Rule> get_rule_pointer_if_exists(const std::string& name, const Scope& scope) const;
 
-        std::shared_ptr<Rule> get_rule_pointer(const Token& token, const Scope& scope);
+        std::shared_ptr<Rule> get_rule_pointer(const Token& token, const Scope& scope, const Meta_func& meta_func);
 
         inline void reset_current_branches(){current_branches.clear();}
 
@@ -49,7 +49,7 @@ class Grammar{
 
         void add_term_to_current_branches(const Token& tokens);
 
-        void add_term_to_branch(const Token& token, Branch& branch);
+        void add_term_to_branch(Branch& branch, const Token& token);
 
         void build_grammar();
 
@@ -89,6 +89,7 @@ class Grammar{
         // default scopes for all rules
         Scope rule_def_scope = Scope::GLOB;
         Scope rule_decl_scope = Scope::GLOB;
+        Meta_func rule_decl_meta_func = Meta_func::NONE;
 
         unsigned int nesting_depth_base = 0;
         unsigned int nesting_depth = nesting_depth_base;

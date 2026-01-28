@@ -3,9 +3,9 @@
 
 #include <utils.h>
 #include <lex.h>
+#include <rule_utils.h>
 
 class Rule;
-enum class Scope;
 
 class Term {
     public:
@@ -24,6 +24,8 @@ class Term {
         std::string get_string() const;
 
         Scope get_scope() const;
+
+        Meta_func get_meta_func() const;
 
         bool is_syntax() const;
 

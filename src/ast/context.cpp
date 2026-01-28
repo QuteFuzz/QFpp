@@ -307,3 +307,12 @@ std::shared_ptr<Parameter_def> Context::nn_parameter_def(){
     current.set<Parameter_def>(def);
     return def;
 }
+
+std::shared_ptr<Node> Context::nn_next(Node& ast_root, const Token_kind& kind){
+
+    if (node_generators.find(kind) == node_generators.end()){
+        node_generators[kind] = std::make_unique<Node_gen>(ast_root, kind);
+    }
+
+    return *node_generators[kind]->begin()++;
+}
