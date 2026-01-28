@@ -266,7 +266,7 @@ void Grammar::build_grammar(){
         } else if (token.kind == LANGLE_BRACKET){
             assert(rule_decl_meta_func != Meta_func::NONE);
             // some meta func has been set by previous token
-            
+
         } else if (token.kind == RANGLE_BRACKET){
             rule_decl_meta_func = Meta_func::NONE; // reset to NONE as default
 
@@ -288,7 +288,7 @@ void Grammar::build_grammar(){
                 rule_def_scope = Scope::INT;
             }
 
-        } else if (token.kind == NEXT){ 
+        } else if (token.kind == NEXT){
             rule_decl_meta_func = Meta_func::NEXT;
 
         } else if (token.kind == NODE_CHILDREN_COUNT){

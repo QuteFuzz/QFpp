@@ -32,7 +32,7 @@ class Gate_name : public Node {
             if (*parent == GATE_OP) {
                 add_constraint(SUBROUTINE, 0);
 
-                // if current circuit has no bit definitions (and therefore bits) in any scope (EXT or INT), then do not generate MEASURE                
+                // if current circuit has no bit definitions (and therefore bits) in any scope (EXT or INT), then do not generate MEASURE
                 if (current_circuit->get_collection<Bit>().size() == 0){
                     add_constraint(MEASURE, 0);
                 }

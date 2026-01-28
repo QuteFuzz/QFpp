@@ -183,4 +183,3 @@ void render(std::function<void(std::ostringstream&)> extend_dot_string, const fs
 
     pipe_to_command(command, dot_string.str());
 }
-

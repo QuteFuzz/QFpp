@@ -69,7 +69,7 @@ std::shared_ptr<Node>* Node::find_slot(Token_kind node_kind, std::vector<std::sh
     return nullptr;
 }
 
-/// Find first occurance of node of node_kind. Therefore, does NOT mark visited nodes 
+/// Find first occurance of node of node_kind. Therefore, does NOT mark visited nodes
 std::shared_ptr<Node> Node::find(Token_kind node_kind) {
     if(kind == node_kind){
         return shared_from_this();

@@ -308,7 +308,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("NEXT", NEXT),
     Token_matcher("NODE_CHILDREN_COUNT", NODE_CHILDREN_COUNT),
 
-    
+
     Token_matcher("::", SCOPE_RES),
     Token_matcher("->", ARROW),
     Token_matcher("+=", RULE_APPEND),
