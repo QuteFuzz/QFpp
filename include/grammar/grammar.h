@@ -28,7 +28,7 @@ class Grammar{
 
         std::shared_ptr<Rule> get_rule_pointer_if_exists(const std::string& name, const Scope& scope) const;
 
-        std::shared_ptr<Rule> get_rule_pointer(const Token& token, const Scope& scope, const Meta_func& meta_func);
+        std::shared_ptr<Rule> get_rule_pointer(const Token& token, const Scope& scope);
 
         inline void reset_current_branches(){current_branches.clear();}
 
@@ -70,6 +70,14 @@ class Grammar{
         inline std::string get_name(){return name;}
 
         inline std::string get_path(){return path.string();}
+
+        inline void set_meta_func(const Token_kind& kind){
+            switch (kind){
+                case NEXT: rule_decl_meta_func = Meta_func::NEXT; break;
+                case NAME: rule_decl_meta_func = Meta_func::NAME; break;
+                default: throw std::runtime_error("Unknown meta function");
+            }
+        }
 
         // inline void set_control(const Control& _control){
         //     control = _control;

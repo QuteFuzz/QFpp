@@ -237,10 +237,6 @@ struct Context {
 			return subroutines_node.has_value() && (subroutines_node.value()->build_state() == NB_BUILD);
 		}
 
-		inline void set_genome(const std::optional<Genome>& _genome){
-			genome = _genome;
-		}
-
 		inline void set_control(const Control& _control){
 			control = _control;
 			nested_depth = control.get_value("NESTED_MAX_DEPTH");
@@ -266,7 +262,6 @@ struct Context {
 		unsigned int nested_depth; // default set when control is set
 
 		std::optional<std::shared_ptr<Subroutine_defs>> subroutines_node = std::nullopt;
-		std::optional<Genome> genome;
 };
 
 

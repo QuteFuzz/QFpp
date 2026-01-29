@@ -32,16 +32,16 @@ qubit_defs = (qubit_def NEWLINE)+;
 bit_defs = (bit_def NEWLINE)+;
 
 singular_qubit_def =
-    qubit_def_name ' = Qubit("'  qubit_def_name '",0)' NEWLINE circuit_name ".add_qubit(" qubit_def_name ")";
+    qubit_def_name ' = Qubit("'  qubit_def_name '",0)' NEWLINE CIRCUIT_NAME ".add_qubit(" qubit_def_name ")";
 
 register_qubit_def =
-    qubit_def_name " = " circuit_name '.add_q_register("' qubit_def_name '",' qubit_def_size ")";
+    qubit_def_name " = " CIRCUIT_NAME '.add_q_register("' qubit_def_name '",' qubit_def_size ")";
 
 singular_bit_def =
-    bit_def_name ' = Bit("' bit_def_name '", 0)' NEWLINE circuit_name ".add_bit(" bit_def_name ")";
+    bit_def_name ' = Bit("' bit_def_name '", 0)' NEWLINE CIRCUIT_NAME ".add_bit(" bit_def_name ")";
 
 register_bit_def =
-    bit_def_name " = " circuit_name '.add_c_register("' bit_def_name '",' bit_def_size ")";
+    bit_def_name " = " CIRCUIT_NAME '.add_c_register("' bit_def_name '",' bit_def_size ")";
 }
 
 
@@ -53,16 +53,16 @@ imports =
     ;
 
 
-subroutine_def_footer = circuit_name " = CircBox(" circuit_name ")" NEWLINE;
+subroutine_def_footer = CIRCUIT_NAME " = CircBox(" CIRCUIT_NAME ")" NEWLINE;
 
-circuit_def_header = circuit_name " = Circuit()";
+circuit_def_header = CIRCUIT_NAME " = Circuit()";
 
 compound_stmt = qubit_op;
 
 
-gate_op = circuit_name "." gate_name "(" gate_op_args ")";
+gate_op = CIRCUIT_NAME "." gate_name "(" gate_op_args ")";
 
-subroutine_op = circuit_name ".add_gate(" subroutine ",[" qubit_list "])";
+subroutine_op = CIRCUIT_NAME ".add_gate(" subroutine ",[" qubit_list "])";
 
 condition_value = "condition_value=1"
                 | "condition_value=0";
@@ -80,8 +80,8 @@ register_bit = bit_name "[" bit_index "]";
 
 compiler_call = "pt = pytketTesting() " NEWLINE testing_method;
 
-testing_method = circuit_name ".measure_all() " NEWLINE "pt.ks_diff_test(" circuit_name COMMA circuit_id RPAREN
-                # | "pt.run_guppy_pytket_diff(" circuit_name COMMA circuit_id COMMA LBRACK qubit_def_list RBRACK COMMA LBRACK bit_def_list RBRACK RPAREN NEWLINE
+testing_method = CIRCUIT_NAME ".measure_all() " NEWLINE "pt.ks_diff_test(" CIRCUIT_NAME COMMA circuit_id RPAREN
+                # | "pt.run_guppy_pytket_diff(" CIRCUIT_NAME COMMA circuit_id COMMA LBRACK qubit_def_list RBRACK COMMA LBRACK bit_def_list RBRACK RPAREN NEWLINE
                 ;
 
 qubit_def_list = qubit_def_size (COMMA SPACE qubit_def_size)*;

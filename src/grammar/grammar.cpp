@@ -113,8 +113,8 @@ std::shared_ptr<Rule> Grammar::get_rule_pointer_if_exists(const std::string& nam
 /// @param token
 /// @param scope
 /// @return
-std::shared_ptr<Rule> Grammar::get_rule_pointer(const Token& token, const Scope& scope, const Meta_func& meta_func){
-    auto dummy = std::make_shared<Rule>(token, scope, meta_func);
+std::shared_ptr<Rule> Grammar::get_rule_pointer(const Token& token, const Scope& scope){
+    auto dummy = std::make_shared<Rule>(token, scope);
 
     for(const auto& rp : rule_pointers){
         if(*rp == *dummy){return rp;}
@@ -128,6 +128,7 @@ std::shared_ptr<Rule> Grammar::get_rule_pointer(const Token& token, const Scope&
 /// @brief Convert a single token into a term and add it to the given branch
 /// @param token
 void Grammar::add_term_to_branch(Branch& branch, const Token& token){
+    assert(current_rule != nullptr);
 
     if(token.kind == SYNTAX){
         branch.add(Term(token.value, token.kind, nesting_depth));
@@ -138,14 +139,19 @@ void Grammar::add_term_to_branch(Branch& branch, const Token& token){
             if explicitly specified like EXTERNAL::term, then the term takes on that scope, otherwise, it
             takes on the scope of the current rule (i.e the rule def)
         */
-        Scope scope = (rule_decl_scope == Scope::GLOB) && (current_rule != nullptr) ? current_rule->get_scope() : rule_decl_scope;
-        branch.add(Term(get_rule_pointer(token, scope, rule_decl_meta_func), token.kind, nesting_depth));
+        Scope scope = (rule_decl_scope == Scope::GLOB) ? current_rule->get_scope() : rule_decl_scope;
+        branch.add(Term(get_rule_pointer(token, scope), token.kind, rule_decl_meta_func, nesting_depth));
 
+    } else if (is_meta(token.kind)){
+        assert(rule_decl_meta_func == Meta_func::NONE); // this is a meta-func used for node creation, should not have a meta func applied to itself
+        assert(rule_decl_scope == Scope::GLOB); // also should not have scope set explictly
+        branch.add(Term(get_rule_pointer(token, current_rule->get_scope()), token.kind, Meta_func::NONE, nesting_depth));
+        
     } else {
-        throw std::runtime_error(ANNOT("Build branch should only be called on syntax or rule tokens!"));
+        throw std::runtime_error(ANNOT("add_term_to_branch should only be called on syntax or rule tokens!"));
     }
 
-    if((current_rule != nullptr) && (token.value == current_rule->get_name()) && is_kind_of_rule(token.kind)){
+    if((token.value == current_rule->get_name()) && is_kind_of_rule(token.kind)){
         branch.set_recursive_flag();
     }
 }
@@ -215,23 +221,27 @@ void Grammar::build_grammar(){
             return;
         }
 
-        if(is_kind_of_rule(token.kind) || token.kind == SYNTAX){
+        if (is_meta(token.kind) && (next.kind != LANGLE_BRACKET)){
+            // if next token is `<`, this is a meta func application, handled at `<` using previous token
+            add_term_to_current_branches(token);
+        
+        } else if(is_kind_of_rule(token.kind) || token.kind == SYNTAX){
             next = next_token.get_ok();
 
             // rules that are within branches, rules before `RULE_START` are handled at `RULE_START`
-            if(current_rule != nullptr){
+            if(current_rule != nullptr){                           
                 add_term_to_current_branches(token);
                 rule_decl_scope = Scope::GLOB; // reset to GLOB scope as default
             }
 
         } else if (token.kind == RULE_START) {
             reset_current_branches();
-            current_rule = get_rule_pointer(prev_token, rule_def_scope, Meta_func::NONE);
+            current_rule = get_rule_pointer(prev_token, rule_def_scope);
             current_rule->clear();
 
         } else if (token.kind == RULE_APPEND){
             reset_current_branches();
-            current_rule = get_rule_pointer(prev_token, rule_def_scope, Meta_func::NONE);
+            current_rule = get_rule_pointer(prev_token, rule_def_scope);
 
         } else if (token.kind == RULE_END){
             complete_rule(); current_rule = nullptr;
@@ -264,8 +274,9 @@ void Grammar::build_grammar(){
             rule_def_scope = Scope::GLOB;
 
         } else if (token.kind == LANGLE_BRACKET){
-            assert(rule_decl_meta_func != Meta_func::NONE);
-            // some meta func has been set by previous token
+            // use previous token to set meta function
+            // std::cout << prev_token << " " << next_token.get_ok() << std::endl;
+            set_meta_func(prev_token.kind);
 
         } else if (token.kind == RANGLE_BRACKET){
             rule_decl_meta_func = Meta_func::NONE; // reset to NONE as default
@@ -287,12 +298,6 @@ void Grammar::build_grammar(){
             } else {
                 rule_def_scope = Scope::INT;
             }
-
-        } else if (token.kind == NEXT){
-            rule_decl_meta_func = Meta_func::NEXT;
-
-        } else if (token.kind == NODE_CHILDREN_COUNT){
-            rule_decl_meta_func = Meta_func::NODE_CHILDREN_COUNT;
 
         } else if (is_quiet(token.kind)){
 

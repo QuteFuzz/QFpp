@@ -1,5 +1,5 @@
-#ifndef QUBIT_NAME_H
-#define QUBIT_NAME_H
+#ifndef VARIABLE_H
+#define VARIABLE_H
 
 #include <node.h>
 

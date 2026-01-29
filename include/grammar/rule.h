@@ -13,14 +13,9 @@ class Rule {
     public:
         Rule(){}
 
-        Rule(const Token& _token, const Scope& _scope, const Meta_func& _meta_func) :
+        Rule(const Token& _token, const Scope& _scope) :
             token(_token),
-            scope(_scope),
-            meta_func(_meta_func)
-        {}
-
-        Rule(const std::vector<Branch>& _branches) :
-            branches(_branches)
+            scope(_scope)
         {}
 
         ~Rule(){}
@@ -30,8 +25,6 @@ class Rule {
         Token get_token() const {return token;}
 
         Scope get_scope() const {return scope;}
-
-        Meta_func get_meta_func() const {return meta_func;}
 
         bool get_recursive_flag() const {return recursive;}
 
@@ -65,7 +58,7 @@ class Rule {
                 if(i < rule.branches.size() - 1) stream << " | ";
             }
 
-            stream << " ; " << STR_SCOPE(rule.scope) << std::endl;
+            stream << " ; " << STR_SCOPE(rule.scope) << " " << std::endl;
 
             return stream;
         }
@@ -73,7 +66,6 @@ class Rule {
     private:
         Token token;
         Scope scope = Scope::GLOB;
-        Meta_func meta_func = Meta_func::NONE;
         std::vector<Branch> branches;
         bool recursive = false;
 };

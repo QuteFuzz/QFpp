@@ -27,6 +27,7 @@
 #include <expression.h>
 #include <gate_name.h>
 #include <parameter_def.h>
+#include <name.h>
 
 std::string Node::indentation_tracker = "";
 
@@ -43,6 +44,10 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 
 	std::string str = term.get_string();
 	Token_kind kind = term.get_kind();
+
+	if (kind == PARAMETER_DEF){
+		std::cout << *term.get_rule() << std::endl;
+	}
 
 	if(parent == nullptr){
 		throw std::runtime_error(ANNOT("Node must have a parent!"));
@@ -69,15 +74,27 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 	// 	return context.nn_next(*root, kind);
 	// }
 
-	// if (meta_func == Meta_func::NODE_CHILDREN_COUNT){
-	// 	unsigned int n_children = root->find(kind)->get_children().size();
-	// 	return std::make_shared<Integer>(n_children);
-	// }
+	if (meta_func == Meta_func::NAME){
+		auto node = root->find(kind);
+
+		// TODO: throw an error saying that they have tried to get the name of a node that could not have been defined at this point in the AST
+		assert(node != nullptr);
+
+		std::cout << *node << std::endl;
+		std::cout << "============ DEF =========" << std::endl;
+
+		return node->find(NAME);
+	}
 
 	/**
 	* 			OTHER RULES
 	*/
 	switch(kind){
+
+		case NAME: {
+			auto maybe_name = parent->find(NAME);
+			return (maybe_name == nullptr) ? std::make_shared<Name>() : maybe_name;
+		}
 
 		case INDENT:
 			Node::indentation_tracker += "\t";
@@ -253,9 +270,6 @@ std::shared_ptr<Node> Ast::get_node(const std::shared_ptr<Node> parent, const Te
 		case PARAMETER_DEF:
 			return context.nn_parameter_def();
 
-		case PARAMETER_DEF_NAME:
-			return context.get_current_node_name<Parameter_def>();
-
 		default:
 			return std::make_shared<Node>(str, kind);
 	}
@@ -295,7 +309,7 @@ void Ast::write_branch(std::shared_ptr<Node> term_as_node, const Term& term, con
 	term_as_node->transition_to_done();
 }
 
-Result<Node> Ast::build(const std::optional<Genome>& genome, const std::optional<Node_constraints>& _swarm_testing_gateset, const Control& control){
+Result<Node> Ast::build(const std::optional<Node_constraints>& _swarm_testing_gateset, const Control& control){
 	Result<Node> res;
 
 	if(entry == nullptr){
@@ -304,24 +318,19 @@ Result<Node> Ast::build(const std::optional<Genome>& genome, const std::optional
 	} else {
 		swarm_testing_gateset = _swarm_testing_gateset;
 
-		context.set_genome(genome);
 		context.set_control(control);
 		context.reset(RL_PROGRAM);
 
 		Token_kind entry_token_kind = entry->get_token().kind;
 
-		Term entry_term(entry, entry_token_kind);
+		Term entry_term(entry, entry_token_kind, Meta_func::NONE);
 
 		root = get_node(std::make_shared<Node>(""), entry_term);
 
 		write_branch(root, entry_term, control);
 
-		if(genome.has_value()){
-			dag = std::make_shared<Dag>(genome.value().dag);
-		} else {
-			std::shared_ptr<Circuit> main_circuit_circuit = context.get_current_circuit();
-			dag = std::make_shared<Dag>(main_circuit_circuit);
-		}
+		std::shared_ptr<Circuit> main_circuit_circuit = context.get_current_circuit();
+		dag = std::make_shared<Dag>(main_circuit_circuit);
 
 		// context.print_circuit_info();
 
