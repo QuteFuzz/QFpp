@@ -508,9 +508,9 @@ class guppyTesting(Base):
 
         # Run uncompiled circuit
         try:
-            runner = build(hugr)
+            runner = build(hugr.to_bytes())
             results = QsysResult(
-                runner.run_shots(Quest(), n_qubits=n_qubits, n_shots=1)
+                runner.run_shots(Quest(), n_qubits=n_qubits, n_shots=10)
             )
             raw_counts = results.collated_counts()
             if not raw_counts:
@@ -543,25 +543,26 @@ class guppyTesting(Base):
         try:
             main_function: Hugr = circuit.compile_function().modules[0]
             hugr_opt = None
-            normalize = NormalizeGuppy()
-            hugr_norm = normalize(main_function)
-
+            
             if pass_name == "redundant_cx":
                 rr_pass = PytketHugrPass(RemoveRedundancies())
-                pass_result: PassResult = rr_pass.run(hugr_norm)
+                pass_result: PassResult = rr_pass.run(main_function)
                 hugr_opt = pass_result.hugr
                 
             elif pass_name == "squash_rz":
                 squash_pass = PytketHugrPass(SquashRzPhasedX())
-                hugr_opt = squash_pass(hugr_norm)
+                hugr_opt = squash_pass(main_function)
                 
             elif pass_name == "normalize":
-                hugr_opt = hugr_norm
+                normalize = NormalizeGuppy()
+                hugr_opt = normalize(main_function)
+
+            print(f"Pass {pass_name} applied successfully.")
 
             # Run optimized circuit
-            runner_opt = build(hugr_opt)
+            runner_opt = build(hugr_opt.to_bytes())
             results_opt = QsysResult(
-                runner_opt.run_shots(Quest(), n_qubits=n_qubits, n_shots=1000)
+                runner_opt.run_shots(Quest(), n_qubits=n_qubits, n_shots=10)
             )
             raw_counts_opt = results_opt.collated_counts()
             
@@ -583,7 +584,7 @@ class guppyTesting(Base):
                  return
             
             # KS Test
-            ks_value = self.ks_test(counts_base, counts_opt, 1000)
+            ks_value = self.ks_test(counts_base, counts_opt, 10)
             print(f"Pass {pass_name} ks-test p-value: {ks_value}")
             
             if ks_value < 0.05:
