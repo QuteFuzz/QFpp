@@ -47,9 +47,9 @@ imports =
     ;
 
 
-subroutine_def_footer = circuit_name " = cirq.CircuitOperation(" circuit_name ".freeze())" NEWLINE;
+subroutine_def_footer = CIRCUIT_NAME " = cirq.CircuitOperation(" CIRCUIT_NAME ".freeze())" NEWLINE;
 
-circuit_def_header = circuit_name " = cirq.Circuit()";
+circuit_def_header = CIRCUIT_NAME " = cirq.Circuit()";
 
 compound_stmts = (compound_stmt NEWLINE)+;
 
@@ -60,13 +60,13 @@ compound_stmt =
     ;
 
 # Cirq has append strategies, currently just default
-gate_op = circuit_name ".append(" gate_name gate_op_args ")";
+gate_op = CIRCUIT_NAME ".append(" gate_name gate_op_args ")";
 
 gate_op_args = "(" qubit_list ")"
     | "(" float_list ")(" qubit_list ")"
     ;
 
-subroutine_op = circuit_name ".append(" subroutine "(" subroutine_op_args "))";
+subroutine_op = CIRCUIT_NAME ".append(" subroutine "(" subroutine_op_args "))";
 
 subroutine_op_arg =
       qubit
@@ -74,7 +74,7 @@ subroutine_op_arg =
     ;
 
 # Measurement in Cirq appends a measure operation with a string key
-# measure_op = circuit_name ".append(" measure "(" qubit_list ", key='" qubit_list "'))";
+# measure_op = CIRCUIT_NAME ".append(" measure "(" qubit_list ", key='" qubit_list "'))";
 
 gate_name = rx
             | ry

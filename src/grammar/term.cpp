@@ -1,9 +1,10 @@
 #include "../../include/grammar/term.h"
 #include <rule.h>
 
-Term::Term(const std::shared_ptr<Rule> rule, const Token_kind& _kind, unsigned int _branch_nesting_depth){
+Term::Term(const std::shared_ptr<Rule> rule, const Token_kind& _kind, const Meta_func& _meta_func, unsigned int _branch_nesting_depth){
     value = rule;
     kind = _kind;
+    meta_func = _meta_func;
     branch_nesting_depth = _branch_nesting_depth;
 }
 
@@ -27,6 +28,10 @@ std::string Term::get_string() const {
 
 Scope Term::get_scope() const {
     return is_rule() ? std::get<std::shared_ptr<Rule>>(value)->get_scope() : Scope::GLOB;
+}
+
+Meta_func Term::get_meta_func() const {
+    return meta_func;
 }
 
 bool Term::is_syntax() const {

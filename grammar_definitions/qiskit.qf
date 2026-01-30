@@ -4,11 +4,11 @@ NESTED_MAX_DEPTH = 5;
 
 # Overwrites from meta-grammar
 if_stmt =
-    'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT elif_stmt
-    | 'with ' circuit_name '.if_test((' bit COMMA branch_condition ')) as else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
+    'with ' CIRCUIT_NAME '.if_test((' bit COMMA branch_condition ')) as else_' INDENTATION_DEPTH ':' NEWLINE INDENT compound_stmts DEDENT elif_stmt
+    | 'with ' CIRCUIT_NAME '.if_test((' bit COMMA branch_condition ')) as else_' INDENTATION_DEPTH ':' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
 elif_stmt = ;
 else_stmt =
-    'with else_' indentation_depth ':' NEWLINE INDENT compound_stmts DEDENT;
+    'with else_' INDENTATION_DEPTH ':' NEWLINE INDENT compound_stmts DEDENT;
 
 branch_condition = 1 | 0;
 
@@ -39,7 +39,23 @@ program = imports NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuit
 
 parameter_defs = (parameter_def NEWLINE)*;
 
-parameter_def = parameter_def_name " = Parameter('" parameter_def_name "')";
+# parameter_def = parameter_def_name " = Parameter('" parameter_def_name "')";
+
+parameter_def = NAME " = Parameter('" NAME "')";
+
+(*
+    One easy way to implement getting the name of a parameter would be
+    1. define a special node for `parameter_name`
+    2. when this term is reached, get a random parameter def and get it's name
+
+    I do not want to have to define a special rule for this. A more general way would be to define 2 functions
+    i. gets some random node corresponding to given rule
+    ii. gets specific child node of that rule
+
+    combine these 2 implement parameter_name.
+
+    I think this can also be used to remove other special rules
+*)
 
 # Modify float_literal to optionally use parameters
 # float_literal += parameter_name
@@ -48,12 +64,12 @@ parameter_def = parameter_def_name " = Parameter('" parameter_def_name "')";
 # TODO: radomly pick some parameter_def_name node from the AST
 # parameter_name = some(parameter_def_name);
 
-parameter_expr = parameter_name " * " FLOAT
-               | parameter_name " + " FLOAT
-               | parameter_name " / " FLOAT
-               | parameter_name " - " FLOAT
-               | FLOAT " * " parameter_name
-               ;
+# parameter_expr = parameter_name " * " FLOAT
+#                | parameter_name " + " FLOAT
+#                | parameter_name " / " FLOAT
+#                | parameter_name " - " FLOAT
+#                | FLOAT " * " parameter_name
+#                ;
 
 circuit = circuit_def_header NEWLINE body NEWLINE;
 
@@ -65,9 +81,9 @@ subroutine_body = EXTERNAL::qubit_defs NEWLINE (qubit_op NEWLINE)+;
 
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
 
-subroutine_def_footer = circuit_name " = " circuit_name ".to_gate()" NEWLINE;
+subroutine_def_footer = CIRCUIT_NAME " = " CIRCUIT_NAME ".to_gate()" NEWLINE;
 
-circuit_def_header = NEWLINE circuit_name " = QuantumCircuit(0)";
+circuit_def_header = NEWLINE CIRCUIT_NAME " = QuantumCircuit(0)";
 
 # Redefine EXTERNAL scope for Qiskit register and circuit definitions
 EXTERNAL {
@@ -79,19 +95,19 @@ EXTERNAL {
     # Qiskit registers are defined by size and name, not individually
     singular_qubit_def =
         qubit_def_name " = QuantumRegister(1, '" qubit_def_name "')" NEWLINE
-                        circuit_name ".add_register(" qubit_def_name ")";
+                        CIRCUIT_NAME ".add_register(" qubit_def_name ")";
 
     register_qubit_def =
         qubit_def_name " = QuantumRegister(" qubit_def_size ", '" qubit_def_name "')" NEWLINE
-                        circuit_name ".add_register(" qubit_def_name ")";
+                        CIRCUIT_NAME ".add_register(" qubit_def_name ")";
 
     singular_bit_def =
         bit_def_name " = ClassicalRegister(1, '" bit_def_name "')" NEWLINE
-                        circuit_name ".add_register(" bit_def_name ")";
+                        CIRCUIT_NAME ".add_register(" bit_def_name ")";
 
     register_bit_def =
         bit_def_name " = ClassicalRegister(" bit_def_size ", '" bit_def_name "')" NEWLINE
-                        circuit_name ".add_register(" bit_def_name ")";
+                        CIRCUIT_NAME ".add_register(" bit_def_name ")";
 }
 
 imports =
@@ -111,9 +127,9 @@ compound_stmt =
 compound_stmts = (compound_stmt NEWLINE)+;
 
 # Redefine gate_op for Qiskit syntax: circuit.gate(args)
-gate_op = circuit_name "." gate_name "(" gate_op_args ")";
+gate_op = CIRCUIT_NAME "." gate_name "(" gate_op_args ")";
 
-subroutine_op = circuit_name ".append(" subroutine ",[" subroutine_op_args "])";
+subroutine_op = CIRCUIT_NAME ".append(" subroutine ",[" subroutine_op_args "])";
 
 subroutine_op_arg =
     qubit
@@ -130,19 +146,20 @@ singular_bit = bit_name "[0]";
 
 register_bit = bit_name "[" bit_index "]";
 
-# program_footer = parameter_binding NEWLINE compiler_call;
-
 compiler_call = "qt = qiskitTesting()" NEWLINE testing_method;
 
 testing_method = "qt.ks_diff_test(main_circuit" COMMA circuit_id RPAREN NEWLINE;
 
-parameter_binding = circuit_name " = " circuit_name ".bind_parameters({" parameter_bind_list "})";
+(*
+    TODO: 
+    - find a way of controlling the number of nodes of parameter_bind_list depending on the number of nodes in parameter_def_list
+    - using the meta-function here just returns the first node of that kind
+*)
+
+# program_footer = parameter_binding NEWLINE compiler_call;
+
+# parameter_binding = CIRCUIT_NAME " = " CIRCUIT_NAME ".bind_parameters({" parameter_bind_list "})";
 
 # parameter_bind_list = parameter_bind ("," parameter_bind)*;
 
-# TODO: find each node of that kind by iterating over the AST and performing the token concat given
-# parameter_bind_list = for_each(parameter_def_name, ": " FLOAT ", ");
-
-next_parameter = NEXT(parameter_def_name);
-
-parameter_bind = next_parameter ": " FLOAT;
+# parameter_bind = NAME<parameter_def> ": " FLOAT;

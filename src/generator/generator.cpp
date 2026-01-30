@@ -46,7 +46,7 @@ void Generator::ast_to_program(fs::path output_dir, const Control& control, unsi
     }
 
     std::shared_ptr<Ast> builder = setup_builder();
-    Result<Node> maybe_ast_root = builder->build(std::nullopt, gateset, control);
+    Result<Node> maybe_ast_root = builder->build(gateset, control);
 
     if(maybe_ast_root.is_ok()){
         Node ast_root = maybe_ast_root.get_ok();

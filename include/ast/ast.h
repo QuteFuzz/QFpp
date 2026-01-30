@@ -27,7 +27,7 @@ class Ast{
 
         std::shared_ptr<Node> get_node(const std::shared_ptr<Node> parent, const Term& term);
 
-        Result<Node> build(const std::optional<Genome>& genome, const std::optional<Node_constraints>& swarm_testing_gateset, const Control& control);
+        Result<Node> build(const std::optional<Node_constraints>& swarm_testing_gateset, const Control& control);
 
         Genome genome();
 

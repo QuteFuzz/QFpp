@@ -1,5 +1,10 @@
 # qasm.qf
 
+(*
+    TODO:
+    - figure out why programs don't use the subroutines they generate
+*)
+
 EXTENSION = ".qasm";
 MAX_NUM_QUBITS = 10;
 
@@ -48,7 +53,7 @@ compound_stmts = (compound_stmt NEWLINE)+;
 
 compound_stmt = qubit_op;
 
-subroutine_circuit = "gate " circuit_name " " EXTERNAL::qubit_defs " { " NEWLINE subroutine_body "}";
+subroutine_circuit = "gate " CIRCUIT_NAME " " EXTERNAL::qubit_defs " { " NEWLINE subroutine_body "}";
 
 subroutine_op = subroutine " " qubit_list
 

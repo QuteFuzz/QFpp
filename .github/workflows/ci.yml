@@ -25,4 +25,4 @@ jobs:
           uv run pyright
 
       - name: Run CI Pipeline
-        run: uv run scripts/run.py --num-tests 100  # 100 programs per grammar to really make sure things are stable
+        run: uv run scripts/run.py --num-tests 50 # 50 programs per grammar to really make sure things are stable

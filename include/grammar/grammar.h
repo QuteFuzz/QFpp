@@ -49,7 +49,7 @@ class Grammar{
 
         void add_term_to_current_branches(const Token& tokens);
 
-        void add_term_to_branch(const Token& token, Branch& branch);
+        void add_term_to_branch(Branch& branch, const Token& token);
 
         void build_grammar();
 
@@ -71,6 +71,14 @@ class Grammar{
 
         inline std::string get_path(){return path.string();}
 
+        inline void set_meta_func(const Token_kind& kind){
+            switch (kind){
+                case NEXT: rule_decl_meta_func = Meta_func::NEXT; break;
+                case NAME: rule_decl_meta_func = Meta_func::NAME; break;
+                default: throw std::runtime_error("Unknown meta function");
+            }
+        }
+
         // inline void set_control(const Control& _control){
         //     control = _control;
         // }
@@ -89,6 +97,7 @@ class Grammar{
         // default scopes for all rules
         Scope rule_def_scope = Scope::GLOB;
         Scope rule_decl_scope = Scope::GLOB;
+        Meta_func rule_decl_meta_func = Meta_func::NONE;
 
         unsigned int nesting_depth_base = 0;
         unsigned int nesting_depth = nesting_depth_base;

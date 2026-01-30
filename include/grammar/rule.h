@@ -18,10 +18,6 @@ class Rule {
             scope(_scope)
         {}
 
-        Rule(const std::vector<Branch>& _branches) :
-            branches(_branches)
-        {}
-
         ~Rule(){}
 
         std::string get_name() const {return token.value;}
@@ -62,7 +58,7 @@ class Rule {
                 if(i < rule.branches.size() - 1) stream << " | ";
             }
 
-            stream << " ; " << STR_SCOPE(rule.scope) << std::endl;
+            stream << " ; " << STR_SCOPE(rule.scope) << " " << std::endl;
 
             return stream;
         }

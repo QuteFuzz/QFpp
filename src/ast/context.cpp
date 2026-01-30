@@ -16,7 +16,6 @@ void Context::reset(Reset_level l){
             circuits.clear();
 
             subroutines_node = std::nullopt;
-            genome = std::nullopt;
             [[fallthrough]];
         }
 
@@ -153,24 +152,9 @@ std::shared_ptr<Circuit> Context::nn_circuit(){
     reset(RL_CIRCUIT);
 
     if(under_subroutines_node()){
-
-        if(genome.has_value()){
-            std::shared_ptr<Node> subroutine = genome.value().dag.get_next_subroutine_gate();
-
-            std::cout << YELLOW("setting circuit from DAG ") << std::endl;
-            std::cout << YELLOW("owner: " + subroutine->get_content()) << std::endl;
-            std::cout << YELLOW("n ports: " + std::to_string(subroutine->get_n_ports())) << std::endl;
-
-            // current_circuit_owner = subroutine->get_content();
-            current_circuit = std::make_shared<Circuit>(subroutine->get_content(), subroutine->get_n_ports(), control);
-
-        } else {
-            // current_circuit_owner = "sub"+std::to_string(subroutine_counter++);
-            current_circuit = std::make_shared<Circuit>("sub" + std::to_string(subroutine_counter++), control, true);
-        }
+        current_circuit = std::make_shared<Circuit>("sub" + std::to_string(subroutine_counter++), control, true);
 
     } else {
-        // current_circuit_owner = QuteFuzz::TOP_LEVEL_CIRCUIT_NAME;
         current_circuit = std::make_shared<Circuit>(QuteFuzz::TOP_LEVEL_CIRCUIT_NAME, control, false);
         subroutine_counter = 0;
     }
@@ -283,10 +267,6 @@ std::shared_ptr<Compound_stmts> Context::nn_compound_stmts(std::shared_ptr<Node>
 std::shared_ptr<Subroutine_defs> Context::nn_subroutines(){
     unsigned int n_circuits = random_uint(control.get_value("MAX_NUM_SUBROUTINES"));
 
-    if(genome.has_value()){
-        n_circuits = genome.value().dag.n_subroutines();
-    }
-
     std::shared_ptr<Subroutine_defs> node = std::make_shared<Subroutine_defs>(n_circuits);
 
     subroutines_node = std::make_optional<std::shared_ptr<Subroutine_defs>>(node);
@@ -306,4 +286,13 @@ std::shared_ptr<Parameter_def> Context::nn_parameter_def(){
     auto def = std::make_shared<Parameter_def>();
     current.set<Parameter_def>(def);
     return def;
+}
+
+std::shared_ptr<Node> Context::nn_next(Node& ast_root, const Token_kind& kind){
+
+    if (node_generators.find(kind) == node_generators.end()){
+        node_generators[kind] = std::make_unique<Node_gen>(ast_root, kind);
+    }
+
+    return *node_generators[kind]->begin()++;
 }

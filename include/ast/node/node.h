@@ -118,14 +118,7 @@ class Node : public std::enable_shared_from_this<Node> {
             return get_content();
         }
 
-        inline bool visited(std::vector<std::shared_ptr<Node>*>& visited_slots, std::shared_ptr<Node>* slot, bool track_visited){
-            for(auto vslot : visited_slots){
-                if(vslot == slot) return true;
-            }
-
-            if(track_visited) visited_slots.push_back(slot);
-            return false;
-        }
+        bool visited(std::vector<std::shared_ptr<Node>*>& visited_slots, std::shared_ptr<Node>* slot, bool track_visited);
 
         std::shared_ptr<Node>* find_slot(Token_kind node_kind, std::vector<std::shared_ptr<Node>*>& visited_slots, bool track_visited = true);
 
