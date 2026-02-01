@@ -177,6 +177,8 @@ def generate_summary_plot(stats_summary, output_dir):
             # We show total sunk cost here as a proxy, or could be 0.
             costs_per_valid.append(s['total_cost']) 
 
+    avg_scores = [s.get('avg_quality_score', 0.0) for s in stats_summary]
+
     x = np.arange(len(models)) 
 
     # --- Plot 1: Validity ---
@@ -224,6 +226,21 @@ def generate_summary_plot(stats_summary, output_dir):
     tqdm.write(f"Cost plot saved to {plot_path3}")
     plt.close(fig3)
 
+    # --- Plot 4: Quality Score ---
+    fig4, ax4 = plt.subplots(figsize=(10, 6))
+    ax4.bar(x, avg_scores, color='violet')
+    ax4.set_title('Avg Quality Score')
+    ax4.set_ylabel('Score')
+    ax4.set_xticks(x)
+    ax4.set_xticklabels(short_models, rotation=45, ha='right')
+    ax4.grid(axis='y', linestyle='--', alpha=0.7)
+
+    fig4.tight_layout()
+    plot_path4 = os.path.join(output_dir, "performance_quality.png")
+    plt.savefig(plot_path4, bbox_inches='tight')
+    tqdm.write(f"Quality Score plot saved to {plot_path4}")
+    plt.close(fig4)
+
 def generate_coverage_text_report(grouped_results, output_file):
     """Generates a structured text report of coverage results."""
     with open(output_file, 'w') as f:
@@ -264,6 +281,66 @@ def generate_coverage_text_report(grouped_results, output_file):
                 f.write(f"    Valid Programs: 0/{len(files)}\n")
             
             f.write("\n" + "-"*40 + "\n\n")
+
+def generate_complexity_scatter_plots(all_metrics, output_dir):
+    """
+    Generates scatter plots comparing complexity metrics against compilation/execution time.
+    all_metrics: list of dicts with 'model', 'metrics' keys.
+    """
+    if not all_metrics:
+        return
+
+    # Metrics to plot against Time
+    plot_configs = [
+        ('line_count', 'Line Count', 'Line Count vs Time'),
+        ('function_count', 'Function Count', 'Function Count vs Time'),
+        ('nesting_depth', 'Nesting Depth', 'Nesting Depth vs Time'),
+        ('coverage_percent', 'Coverage (%)', 'Coverage vs Time')
+    ]
+    
+    # Extract unique models for color coding
+    models = sorted(list(set(m['model'] for m in all_metrics)))
+    colors = plt.cm.tab10(np.linspace(0, 1, len(models)))
+    model_color_map = dict(zip(models, colors))
+    
+    for metric_key, xlabel, title in plot_configs:
+        fig, ax = plt.subplots(figsize=(10, 6))
+        
+        has_data = False
+        for model in models:
+            model_data = [m for m in all_metrics if m['model'] == model]
+            
+            x_vals = []
+            y_vals = []
+            
+            for entry in model_data:
+                metrics = entry.get('metrics', {})
+                if metric_key in metrics and 'wall_time' in metrics:
+                   # Only plot if we have valid data (e.g. coverage > 0 if plotting coverage)
+                   # For coverage, we might only want ran programs.
+                   if metric_key == 'coverage_percent' and metrics.get(metric_key, 0) == 0:
+                       continue 
+
+                   x_vals.append(metrics[metric_key])
+                   y_vals.append(metrics['wall_time'])
+            
+            if x_vals:
+                ax.scatter(x_vals, y_vals, label=model.split('/')[-1], color=model_color_map[model], alpha=0.6, edgecolors='w', s=50)
+                has_data = True
+        
+        if has_data:
+            ax.set_xlabel(xlabel)
+            ax.set_ylabel('Time (s)')
+            ax.set_title(title)
+            ax.legend()
+            ax.grid(True, linestyle='--', alpha=0.6)
+            
+            safe_title = title.replace(" ", "_").lower()
+            plot_path = os.path.join(output_dir, f"complexity_{safe_title}.png")
+            plt.savefig(plot_path, bbox_inches='tight')
+            tqdm.write(f"Saved plot: {plot_path}")
+        
+        plt.close(fig)
 
 def generate_coverage_plot(grouped_results, output_file):
     """

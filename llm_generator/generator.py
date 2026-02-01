@@ -5,6 +5,7 @@ import threading
 import concurrent.futures
 import random
 import argparse
+import yaml
 from tqdm import tqdm
 
 # Add project root to path so we can import scripts
@@ -14,7 +15,7 @@ from llm_generator.lib.circuit_assembler import assemble
 # Import from local library
 
 from llm_generator.lib.llm_client import ask_any_model, get_dynamic_prompt
-from llm_generator.lib.utils import save_text_to_file, generate_summary_plot
+from llm_generator.lib.utils import save_text_to_file, generate_summary_plot, generate_complexity_scatter_plots
 from llm_generator.lib.execution import run_generated_program, compile_generated_program
 
 # Defined for running multiple instances of program generation and fixing concurrently
@@ -45,7 +46,7 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
     :rtype: tuple[None, dict[str, Any]] | tuple[str, dict[str, Any]] | None
     """
     filename = f"{model.replace('/', '_')}output{index+1}.py"
-    current_stats = {'cost': 0.0, 'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0}
+    current_stats = {'cost': 0.0, 'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0, 'quality_score': None, 'metrics': {}}
     
     def get_elapsed():
         return f"[Elapsed: {time.time() - start_time:.2f}s]"
@@ -78,11 +79,13 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
         logfile.write(f"--- {get_elapsed()} Testing generated {filename} ---\n")
     
     # Check compilation first
-    compile_error, _, _, _ = compile_generated_program(generated_program, language=language)
+    compile_error, _, compile_metrics, _ = compile_generated_program(generated_program, language=language)
     
     if compile_error:
         run_error = compile_error
-        metrics = {}
+        metrics = compile_metrics
+        current_stats['quality_score'] = metrics.get('quality_score', 0.0)
+        current_stats['metrics'] = metrics
         with log_lock:
             logfile.write(f"{filename} Compilation Failed:\n{run_error}\n\n")
             if verbose:
@@ -97,6 +100,9 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
             
         run_error, _, metrics, _ = run_generated_program(generated_program, language=language)
         
+        current_stats['metrics'] = metrics
+        current_stats['quality_score'] = metrics.get('quality_score', 0.0)
+
         with log_lock:
              logfile.write(f"{filename} Metrics: {metrics}\n")
 
@@ -151,9 +157,11 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
                 logfile.write(f"--- {get_elapsed()} Verifying fixed {filename} (Cycle {cycle+1}) ---\n")
             
             # Check compilation only
-            fixed_compile_error, _, _, _ = compile_generated_program(fixed_code, language=language)
+            fixed_compile_error, _, fixed_compile_metrics, _ = compile_generated_program(fixed_code, language=language)
             
             if fixed_compile_error:
+                current_stats['metrics'] = fixed_compile_metrics
+                current_stats['quality_score'] = fixed_compile_metrics.get('quality_score', 0.0)
                 with log_lock:
                     logfile.write(f"Fixed {filename} (Cycle {cycle+1}) Compilation Failed:\n{fixed_compile_error}\n\n")
                     if verbose:
@@ -171,6 +179,9 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
 
                 fixed_run_error, _, fixed_metrics, _ = run_generated_program(fixed_code, language=language)
                 
+                current_stats['quality_score'] = fixed_metrics.get('quality_score', 0.0)
+                current_stats['metrics'] = fixed_metrics
+
                 with log_lock:
                     logfile.write(f"{filename} Cycle {cycle+1} Metrics: {fixed_metrics}\n")
 
@@ -199,6 +210,8 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
 
 def main():
     parser = argparse.ArgumentParser(description="Generic LLM Circuit Generator")
+    parser.add_argument("--config_file", type=str, help="Path to YAML configuration file")
+    parser.add_argument("--run_name", type=str, help="Unique name for this run (overrides timestamp generation)")
     parser.add_argument("--language", type=str, default="guppy", choices=["guppy", "qiskit"], help="Target language (guppy or qiskit)")
     parser.add_argument("--output_dir", type=str, help="Base output directory for saved circuits")
     parser.add_argument("--prompt_dir", type=str, help="Directory containing prompt templates")
@@ -210,7 +223,21 @@ def main():
     parser.add_argument("--n_circuits_per_assembly", type=int, default=2, help="Number of circuits to combine per assembly")
     parser.add_argument("--verbose", action="store_true", help="Output failed program code to the log file")
     
-    args = parser.parse_args()
+    # First parse to check for config file
+    args, remaining_argv = parser.parse_known_args()
+    
+    if args.config_file:
+        try:
+            with open(args.config_file, 'r') as f:
+                config = yaml.safe_load(f)
+                parser.set_defaults(**config)
+                # Re-parse args to apply defaults from config while keeping command line overrides
+                args = parser.parse_args()
+        except Exception as e:
+            print(f"Error loading config file: {e}")
+            sys.exit(1)
+    else:
+        args = parser.parse_args()
 
     start_time = time.time()
     
@@ -238,11 +265,16 @@ def main():
     n_assemblies_to_create = args.n_assemble
 
     # Generate timestamp for unique directory for this entire run
-    timestamp = time.strftime("%Y%m%d_%H%M%S")
-    common_run_dir = os.path.join(args.output_dir, timestamp)
+    if args.run_name:
+        run_identifier = args.run_name
+    else:
+        run_identifier = time.strftime("%Y%m%d_%H%M%S")
+        
+    common_run_dir = os.path.join(args.output_dir, run_identifier)
     os.makedirs(common_run_dir, exist_ok=True)
 
     stats_summary = []
+    all_program_metrics = []
 
     # Cycle through different LLMs
     for model in args.models:
@@ -251,11 +283,10 @@ def main():
         
         # Track costs and token usage
         total_cost = 0.0
-        total_prompt_tokens = 0
-        total_completion_tokens = 0
-
+        total_prompt_tokens, total_completion_tokens = 0, 0
+        quality_scores = []
+        
         # Setup directories within the common run directory
-        model_safe_name = model.replace('/', '_')
         model_run_dir = os.path.join(common_run_dir)
         
         generated_dir = os.path.join(model_run_dir, "generated") # Directory for all successful programs
@@ -269,7 +300,7 @@ def main():
         log_lock = threading.Lock()
 
         # Combined generation and fixing loop
-        with open(logfile_path, "w") as logfile:
+        with open(logfile_path, "a", buffering=1) as logfile:
             logfile.write(f"Execution Log for programs in generated\n")
             logfile.write(f"Language: {args.language}\n")
             logfile.write(f"Started at: {time.ctime(start_time)}\n\n")
@@ -295,6 +326,14 @@ def main():
                             total_cost += stats['cost']
                             total_prompt_tokens += stats['prompt_tokens']
                             total_completion_tokens += stats['completion_tokens']
+                            if stats.get('quality_score') is not None:
+                                quality_scores.append(stats['quality_score'])
+                            
+                            if 'metrics' in stats and stats['metrics']:
+                                all_program_metrics.append({
+                                    'model': model,
+                                    'metrics': stats['metrics']
+                                })
                         
                         if save_path:
                             successful_files.append(save_path)
@@ -314,6 +353,9 @@ def main():
             avg_valid_time = total_duration / len(successful_files) if successful_files else 0
             logfile.write(f"  Avg Time per Valid Prog  : {avg_valid_time:.2f} seconds\n")
             
+            avg_quality_score = sum(quality_scores) / len(quality_scores) if quality_scores else 0.0
+            logfile.write(f"  Avg Quality Score        : {avg_quality_score:.4f}\n")
+            
             logfile.write("-" * 60 + "\n")
             logfile.write(f"  Total Cost (Estimated)   : ${total_cost:.6f}\n")
             logfile.write(f"  Total Prompt Tokens      : {total_prompt_tokens}\n")
@@ -327,37 +369,77 @@ def main():
                 "total_cost": total_cost,
                 "total_time": total_duration,
                 "total_programs": args.n_programs,
-                "valid_programs": len(successful_files)
+                "valid_programs": len(successful_files),
+                "avg_quality_score": avg_quality_score
             })
 
-        # Assemble successful circuits after generation and fixing
-        if successful_files:
+        # Assemble similar circuits after generation and fixing
+        if successful_files and len(successful_files) >= 1:
             tqdm.write(f"Assembling circuits from {len(successful_files)} successful programs...")
             
-            assembled_dir = os.path.join(model_run_dir, "assembled_circuits")
+            assembled_dir = os.path.join(model_run_dir, "assembled")
             os.makedirs(assembled_dir, exist_ok=True)
             
-            for i in range(n_assemblies_to_create):
-                # Select circuits for this assembly
-                if len(successful_files) >= n_circuits_per_assembly:
-                    files_to_assemble = random.sample(successful_files, n_circuits_per_assembly)
-                else:
-                    # If we don't have enough unique files, sample with replacement to reach target n
-                    files_to_assemble = random.choices(successful_files, k=n_circuits_per_assembly)
+            seen_combinations = set()
+            generated_count = 0
+            MAX_RETRIES = 1000  # Prevent infinite loops
+            failed_attempts = 0
+            
+            MIN_FILES = 1
+            MAX_FILES = n_circuits_per_assembly
+            
+            # Using a tqdm bar for assembly progress
+            pbar = tqdm(total=n_assemblies_to_create, desc=f"Assembling {model}")
+            
+            while generated_count < n_assemblies_to_create:
+                if failed_attempts >= MAX_RETRIES:
+                    tqdm.write(f"Stopped assembling for {model}: Could not find new unique combinations after {MAX_RETRIES} attempts.")
+                    break
+                    
+                # Determine size of this combination
+                # logic from circuit_assembler.py: k is random between MIN and min(MAX, len)
+                upper_bound = min(MAX_FILES, len(successful_files))
+                if upper_bound < MIN_FILES:
+                    failed_attempts += 1 # Should not happen given outer check, but safe
+                    continue
+                    
+                k = random.randint(MIN_FILES, upper_bound)
                 
-                assembled_filename = f"assembled_circuits_{i+1}.py"
+                # Sample k files
+                files_to_assemble = random.sample(successful_files, k)
+                
+                # Create a representation to check for duplicates
+                # Do not sort, as order of assembly matters for circuit execution
+                combo_key = tuple(files_to_assemble)
+                
+                if combo_key in seen_combinations:
+                    failed_attempts += 1
+                    continue
+                
+                # Found a unique combination
+                seen_combinations.add(combo_key)
+                failed_attempts = 0
+                
+                assembled_filename = f"{model.replace('/', '_')}_assembled_{generated_count+1}.py"
                 assembled_path = os.path.join(assembled_dir, assembled_filename)
                 
                 try:
-                    assemble(files_to_assemble, assembled_path, language=args.language)
-                    # tqdm.write(f"Successfully assembled {len(files_to_assemble)} circuits into {assembled_path}")
+                    assemble(files_to_assemble, assembled_path, unique_index=generated_count, language=args.language)
+                    generated_count += 1
+                    pbar.update(1)
                 except Exception as e:
                     tqdm.write(f"Error assembling circuits: {e}")
+            
+            pbar.close()
 
 
     # Generate summary plot
     if stats_summary:
         generate_summary_plot(stats_summary, common_run_dir)
+        
+    # Generate complexity plots
+    if all_program_metrics:
+        generate_complexity_scatter_plots(all_program_metrics, common_run_dir)
 
 
 if __name__ == "__main__":

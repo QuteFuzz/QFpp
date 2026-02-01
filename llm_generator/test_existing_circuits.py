@@ -10,10 +10,11 @@ from tqdm import tqdm
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import from local library
-from lib.execution import run_generated_program
+from lib.execution import run_generated_program, compile_generated_program
+from lib.utils import generate_complexity_scatter_plots
 
 
-def process_single_file(file_path, logfile, log_lock, verbose=False, language="guppy"):
+def process_single_file(file_path, logfile, log_lock, verbose=False, language="guppy", compile_only=False):
     filename = os.path.basename(file_path)
     output_buffer = [] # Buffer to store all logs for this file
 
@@ -30,7 +31,10 @@ def process_single_file(file_path, logfile, log_lock, verbose=False, language="g
                  logfile.write(f"Error reading {filename}: {e}\n\n")
             return False, {}
 
-        run_error, run_stdout, metrics, wrapped_code = run_generated_program(code, timeout=120, language=language)
+        if compile_only:
+            run_error, run_stdout, metrics, wrapped_code = compile_generated_program(code, timeout=120, language=language)
+        else:
+            run_error, run_stdout, metrics, wrapped_code = run_generated_program(code, timeout=120, language=language)
 
         output_buffer.append(f"{filename} Metrics: {metrics}\n")
         
@@ -63,9 +67,10 @@ def main():
     parser = argparse.ArgumentParser(description="Run tests on existing generated circuits without generating new ones.")
     parser.add_argument("input_dir", help="Directory containing .py files to test")
     parser.add_argument("--language", choices=["guppy", "qiskit"], default="guppy", help="Language of the files to test")
-    parser.add_argument("--workers", type=int, default=1, help="Number of concurrent workers")
+    parser.add_argument("--workers", type=int, default=2, help="Number of concurrent workers")
     parser.add_argument("--verbose", action="store_true", help="Include wrapped code in the log output")
     parser.add_argument("--output-log", help="Optional path for the log file")
+    parser.add_argument("--compile-only", action="store_true", help="Only compile the programs, do not run them.")
     args = parser.parse_args()
 
     input_dir = os.path.abspath(args.input_dir)
@@ -93,20 +98,29 @@ def main():
 
     successful_count = 0
     total_files = len(files)
+    all_metrics = []
     
     start_time = time.time()
+
+    model_name = os.path.basename(input_dir) or "retest_run"
 
     with open(logfile_path, "w") as logfile:
         logfile.write(f"Retest Execution Log for {input_dir}\n")
         logfile.write(f"Started at: {time.ctime(start_time)}\n\n")
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as executor:
-            futures = {executor.submit(process_single_file, f, logfile, log_lock, args.verbose, args.language): f for f in files}
+            futures = {executor.submit(process_single_file, f, logfile, log_lock, args.verbose, args.language, args.compile_only): f for f in files}
             
             for future in tqdm(concurrent.futures.as_completed(futures), total=total_files, unit="files"):
                 is_success, metrics = future.result()
                 if is_success:
                     successful_count += 1
+                
+                if metrics:
+                    all_metrics.append({
+                        'model': model_name,
+                        'metrics': metrics
+                    })
 
         end_time = time.time()
         duration = end_time - start_time
@@ -122,6 +136,10 @@ def main():
         avg_time = duration / total_files if total_files > 0 else 0
         logfile.write(f"  Avg Time per File        : {avg_time:.2f} seconds\n")
         logfile.write("="*60 + "\n")
+    
+    if all_metrics:
+        print("Generating complexity scatter plots...")
+        generate_complexity_scatter_plots(all_metrics, input_dir)
 
     print(f"Finished. {successful_count}/{total_files} passed.")
     print(f"Full log available at: {logfile_path}")

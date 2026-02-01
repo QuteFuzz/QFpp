@@ -1,5 +1,5 @@
 import ast
-import logging
+from .utils import strip_markdown_syntax
 
 def is_qubit_guppy(node):
     return isinstance(node, ast.Name) and node.id == 'qubit'
@@ -24,6 +24,66 @@ def get_array_size_guppy(node):
             elif isinstance(size_node, ast.Num):
                 return size_node.n
     return None
+
+
+class NestingDepthVisitor(ast.NodeVisitor):
+    def __init__(self):
+        self.max_depth = 0
+        self.current_depth = 0
+
+    def generic_visit(self, node):
+        # Nodes that increase nesting depth
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, 
+                             ast.For, ast.AsyncFor, ast.While, ast.If, ast.Try, 
+                             ast.With, ast.AsyncWith, ast.ExceptHandler)):
+            self.current_depth += 1
+            if self.current_depth > self.max_depth:
+                self.max_depth = self.current_depth
+            super().generic_visit(node)
+            self.current_depth -= 1
+        else:
+            super().generic_visit(node)
+
+def calculate_max_nesting_depth(code: str) -> int:
+    """
+    Calculates the maximum nesting depth of the provided Python code using AST.
+    """
+    try:
+        # Strip markdown if present to avoid syntax errors
+        clean_code = strip_markdown_syntax(code)
+        tree = ast.parse(clean_code)
+        visitor = NestingDepthVisitor()
+        visitor.visit(tree)
+        return visitor.max_depth
+    except Exception:
+        return 0
+
+def get_code_complexity_metrics(code: str) -> dict:
+    """
+    Returns a dictionary of complexity metrics:
+    - nesting_depth
+    - function_count
+    """
+    metrics = {"nesting_depth": 0, "function_count": 0}
+    try:
+        clean_code = strip_markdown_syntax(code)
+        tree = ast.parse(clean_code)
+        
+        # Nesting Depth
+        visitor = NestingDepthVisitor()
+        visitor.visit(tree)
+        metrics["nesting_depth"] = visitor.max_depth
+        
+        # Function Count
+        func_count = 0
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                func_count += 1
+        metrics["function_count"] = func_count
+        
+    except Exception:
+        pass
+    return metrics
 
 class GuppyCircuitRenamer(ast.NodeTransformer):
     def __init__(self, prefix, global_funcs):

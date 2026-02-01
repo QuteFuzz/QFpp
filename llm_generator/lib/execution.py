@@ -10,7 +10,8 @@ from .ast_ops import (
     wrap_for_compilation_guppy, 
     wrap_for_testing_guppy, 
     wrap_for_compilation_qiskit, 
-    wrap_for_testing_qiskit
+    wrap_for_testing_qiskit,
+    get_code_complexity_metrics
 )
 
 def _execute_python_code(program_code: str, timeout: int = 30, language: str = 'guppy', coverage_source: str = None):
@@ -66,10 +67,17 @@ def _execute_python_code(program_code: str, timeout: int = 30, language: str = '
                 env=env
             )
             
+            
             metrics = {}
             if os.path.exists(metrics_file):
                 with open(metrics_file, 'r') as f:
                     metrics = parse_time_metrics(f.read())
+            
+            # Calculate static analysis metrics
+            complexity = get_code_complexity_metrics(program_code)
+            metrics["nesting_depth"] = complexity["nesting_depth"]
+            metrics["function_count"] = complexity["function_count"]
+            metrics["line_count"] = len(strip_markdown_syntax(program_code).splitlines())
             
             metrics["wall_time"] = time.time() - start_time
             
@@ -92,6 +100,17 @@ def _execute_python_code(program_code: str, timeout: int = 30, language: str = '
                 except Exception as e:
                     metrics["coverage_error"] = str(e)
             
+            # Calculate combined quality score
+            # Heuristic: maximize coverage, maximize nesting depth (complexity) and wall time (complexity)
+            cov = metrics.get("coverage_percent", 0.0)
+            depth = metrics.get("nesting_depth", 0)
+            w_time = metrics.get("wall_time", 0.0)
+            
+            # ---------------------------------------------------- #
+            # ------------ Heuristic Quality Score --------------- #
+            # ---------------------------------------------------- #
+            metrics["quality_score"] = cov + (depth * 2.0) + (w_time * 5.0)
+
             # Return error (if any)
             if result.returncode != 0:
                  error = result.stderr if result.stderr else f"Process exited with code {result.returncode}"
@@ -134,7 +153,8 @@ def compile_generated_program(program_code: str, timeout: int = 30, language: st
         wrapped_code = wrap_for_compilation_qiskit(clean_code)
     else:
         wrapped_code = clean_code
-        
+    
+    # Here, the wall_time metric will reflect compilation time only.
     error, stdout, metrics = _execute_python_code(wrapped_code, timeout, language, coverage_source)
     return error, stdout, metrics, wrapped_code
 
@@ -153,7 +173,8 @@ def run_generated_program(program_code: str, timeout: int = 30, language: str = 
         wrapped_code = wrap_for_testing_qiskit(clean_code)
     else:
         wrapped_code = clean_code
-        
+    
+    # Here, the wall_time metric will reflect full execution time, including execution and compilation.
     error, stdout, metrics = _execute_python_code(wrapped_code, timeout, language, coverage_source)
     return error, stdout, metrics, wrapped_code
 
