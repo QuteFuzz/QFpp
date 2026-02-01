@@ -118,10 +118,10 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
                 if verbose:
                      logfile.write(f"--- {filename} Code ---\n{generated_program}\n-----------------------\n\n")
              
-             # Save to failed directory
-             save_path = os.path.join(failed_dir, filename)
+             # Save to generated directory since it compiled, even if runtime failed
+             save_path = os.path.join(generated_dir, filename)
              save_text_to_file(generated_program, save_path)
-             return None, current_stats
+             return save_path, current_stats
 
     else:
         # Compilation failed. Enter fixing loop.
@@ -197,9 +197,10 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
                         if verbose:
                              logfile.write(f"--- Fixed {filename} (Cycle {cycle+1}) Code ---\n{fixed_code}\n-----------------------------------\n\n")
                     
-                    fixed = False 
-                    current_code = fixed_code # Save this version
-                    break # Exit loop as we're done fixing compilation
+                    # Save to generated directory since it compiled, even if runtime failed
+                    save_path = os.path.join(generated_dir, filename)
+                    save_text_to_file(fixed_code, save_path)
+                    return save_path, current_stats
         
         if not fixed:
             with log_lock:

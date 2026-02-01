@@ -200,8 +200,7 @@ For any gate taking >1 qubit (CNOT, Toffoli, etc.), you MUST use distinct qubits
     rx(qubit1, angle(0.123))
     ry(qreg0[1], angle(pi / 3)) # Uses pi, so function must be @guppy.comptime
     rz(qubit1, angle(1.98))
-    ```
-    
+```
 
 **C. 2-Qubit Gates (No Angle)**
 
@@ -226,8 +225,8 @@ For any gate taking >1 qubit (CNOT, Toffoli, etc.), you MUST use distinct qubits
 ```Python
     crz(qubit1, qreg0[0], angle(1.1))
     crz(qreg0[1], qreg0[2], angle(0.45 * pi)) # Uses pi, so function must be @guppy.comptime
-    ```
-    
+```
+
 
 **E. 3-Qubit Gate**
 
@@ -238,66 +237,6 @@ For any gate taking >1 qubit (CNOT, Toffoli, etc.), you MUST use distinct qubits
     ```Python
     toffoli(qubit1, qreg0[0], qreg0[2])
     ```
-    
-
-**7. Linearity and Control Flow (Example)** Combine all rules. Notice how `q_in` (borrowed) is not measured, but `q_local` (owned) is. All control flow is deterministic, depending on the function argument `control_val`.
-
-```Python
-@guppy.comptime
-def fuzzer_example(q_in: qubit, control_val: float) -> int:
-    # Define local, "owned" qubits
-    q_local = qubit()
-    q_reg = array(qubit() for _ in range(3)) 
-
-    # VALID CONTROL FLOW (Branching on measurement):
-    m_res = measure_and_reset(q_local)
-    if m_res:
-         h(q_in)
-    else:
-         x(q_in)
-
-    # Consume "owned" qubits by measuring them
-    m_local = measure(q_local)
-    measure_array(q_reg) 
-
-    return m_local
-```
-
-**8. Structure Example (Inter-function calls & Main)**
-
-```Python
-@guppy.comptime
-def sub_routine(q: qubit) -> None:
-    # Standard gates
-    v(q)
-    # Non-destructive measure (acts like a gate, q is still alive)
-    res = measure_and_reset(q)
-    if res:
-        x(q)
-
-@guppy
-def complex_logic(q_in: qubit, q_reg: array[qubit, 2]) -> None:
-    # This function uses @guppy, so it CANNOT use 'pi'
-    sub_routine(q_in)
-	
-	# Hardcoded check is allowed (compile time constant)
-    if 1 < 2:
-        cx(q_in, q_reg[0])
-        # Branching on array measurement
-        if measure_and_reset(q_reg[0]):
-            z(q_in)
-    else:
-        vdg(q_in)
-
-# MAIN: External arguments only, no internal qubits, no destructive cleanup
-@guppy
-def main(q1: qubit, q_reg: array[qubit, 2]) -> None:
-    # Invoke Functions on borrowed qubits
-    complex_logic(q1, q_reg)
-    
-    # Optional non-destructive operations allowed
-    measure_and_reset(q1)
-```
 
 **Your Task:** Generate a new, random-looking, **fully deterministic** block of Guppy code. It must include:
 
