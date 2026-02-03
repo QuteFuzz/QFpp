@@ -1,17 +1,15 @@
 #include "../../include/grammar/term.h"
 #include <rule.h>
 
-Term::Term(const std::shared_ptr<Rule> rule, const Token_kind& _kind, const Meta_func& _meta_func, unsigned int _branch_nesting_depth){
+Term::Term(const std::shared_ptr<Rule> rule, const Token_kind& _kind, const Meta_func& _meta_func){
     value = rule;
     kind = _kind;
     meta_func = _meta_func;
-    branch_nesting_depth = _branch_nesting_depth;
 }
 
-Term::Term(const std::string& syntax, const Token_kind& _kind, unsigned int _branch_nesting_depth){
+Term::Term(const std::string& syntax, const Token_kind& _kind){
     value = syntax;
     kind = _kind;
-    branch_nesting_depth = _branch_nesting_depth;
 }
 
 std::shared_ptr<Rule> Term::get_rule() const {
@@ -47,7 +45,7 @@ std::ostream& operator<<(std::ostream& stream, Term term){
         stream << std::quoted(term.get_syntax());
 
     } else {
-        stream << term.get_rule()->get_name();
+        stream << term.get_rule()->get_name() << term.constraint;
     }
 
     return stream;

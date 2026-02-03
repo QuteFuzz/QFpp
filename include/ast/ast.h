@@ -23,9 +23,9 @@ class Ast{
 
         inline bool entry_set(){return entry != nullptr;}
 
-        void write_branch(std::shared_ptr<Node> term_as_node, const Term& term, const Control& control, unsigned int depth = 0);
+        void term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& term, unsigned int depth = 0);
 
-        std::shared_ptr<Node> get_node(const std::shared_ptr<Node> parent, const Term& term);
+        std::shared_ptr<Node> get_child_node(const std::shared_ptr<Node> parent, const Term& term);
 
         Result<Node> build(const std::optional<Node_constraints>& swarm_testing_gateset, const Control& control);
 

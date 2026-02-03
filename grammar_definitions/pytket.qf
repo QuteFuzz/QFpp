@@ -32,16 +32,16 @@ qubit_defs = (qubit_def NEWLINE)+;
 bit_defs = (bit_def NEWLINE)+;
 
 singular_qubit_def =
-    qubit_def_name ' = Qubit("'  qubit_def_name '",0)' NEWLINE CIRCUIT_NAME ".add_qubit(" qubit_def_name ")";
+    NAME ' = Qubit("'  NAME '",0)' NEWLINE CIRCUIT_NAME ".add_qubit(" NAME ")";
 
 register_qubit_def =
-    qubit_def_name " = " CIRCUIT_NAME '.add_q_register("' qubit_def_name '",' qubit_def_size ")";
+    NAME " = " CIRCUIT_NAME '.add_q_register("' NAME '",' SIZE ")";
 
 singular_bit_def =
-    bit_def_name ' = Bit("' bit_def_name '", 0)' NEWLINE CIRCUIT_NAME ".add_bit(" bit_def_name ")";
+    NAME ' = Bit("' NAME '", 0)' NEWLINE CIRCUIT_NAME ".add_bit(" NAME ")";
 
 register_bit_def =
-    bit_def_name " = " CIRCUIT_NAME '.add_c_register("' bit_def_name '",' bit_def_size ")";
+    NAME " = " CIRCUIT_NAME '.add_c_register("' NAME '",' SIZE ")";
 }
 
 
@@ -68,14 +68,14 @@ condition_value = "condition_value=1"
                 | "condition_value=0";
 
 
-singular_qubit = qubit_name;
+singular_qubit = NAME;
 
-register_qubit = qubit_name "[" qubit_index "]";
+register_qubit = NAME "[" INDEX "]";
 
 
-singular_bit = bit_name;
+singular_bit = NAME;
 
-register_bit = bit_name "[" bit_index "]";
+register_bit = NAME "[" INDEX "]";
 
 
 compiler_call = "pt = pytketTesting() " NEWLINE testing_method;

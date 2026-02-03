@@ -94,20 +94,20 @@ EXTERNAL {
 
     # Qiskit registers are defined by size and name, not individually
     singular_qubit_def =
-        qubit_def_name " = QuantumRegister(1, '" qubit_def_name "')" NEWLINE
-                        CIRCUIT_NAME ".add_register(" qubit_def_name ")";
+        NAME " = QuantumRegister(1, '" NAME "')" NEWLINE
+                        CIRCUIT_NAME ".add_register(" NAME ")";
 
     register_qubit_def =
-        qubit_def_name " = QuantumRegister(" qubit_def_size ", '" qubit_def_name "')" NEWLINE
-                        CIRCUIT_NAME ".add_register(" qubit_def_name ")";
+        NAME " = QuantumRegister(" SIZE ", '" NAME "')" NEWLINE
+                        CIRCUIT_NAME ".add_register(" NAME ")";
 
     singular_bit_def =
-        bit_def_name " = ClassicalRegister(1, '" bit_def_name "')" NEWLINE
-                        CIRCUIT_NAME ".add_register(" bit_def_name ")";
+        NAME " = ClassicalRegister(1, '" NAME "')" NEWLINE
+                        CIRCUIT_NAME ".add_register(" NAME ")";
 
     register_bit_def =
-        bit_def_name " = ClassicalRegister(" bit_def_size ", '" bit_def_name "')" NEWLINE
-                        CIRCUIT_NAME ".add_register(" bit_def_name ")";
+        NAME " = ClassicalRegister(" SIZE ", '" NAME "')" NEWLINE
+                        CIRCUIT_NAME ".add_register(" NAME ")";
 }
 
 imports =
@@ -138,13 +138,13 @@ subroutine_op_arg =
 
 
 # Qiskit requires qubit and bit indexing from registers
-singular_qubit = qubit_name "[0]";
+singular_qubit = NAME "[0]";
 
-register_qubit = qubit_name "[" qubit_index "]";
+register_qubit = NAME "[" INDEX "]";
 
-singular_bit = bit_name "[0]";
+singular_bit = NAME "[0]";
 
-register_bit = bit_name "[" bit_index "]";
+register_bit = NAME "[" INDEX "]";
 
 compiler_call = "qt = qiskitTesting()" NEWLINE testing_method;
 
@@ -161,5 +161,7 @@ testing_method = "qt.ks_diff_test(main_circuit" COMMA circuit_id RPAREN NEWLINE;
 # parameter_binding = CIRCUIT_NAME " = " CIRCUIT_NAME ".bind_parameters({" parameter_bind_list "})";
 
 # parameter_bind_list = parameter_bind ("," parameter_bind)*;
+
+# parameter_bind_list = parameter_bind[COUNT<parameter_def>];
 
 # parameter_bind = NAME<parameter_def> ": " FLOAT;

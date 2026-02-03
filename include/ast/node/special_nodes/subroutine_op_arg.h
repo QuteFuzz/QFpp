@@ -3,13 +3,13 @@
 
 #include <node.h>
 
-class Qubit_definition;
+class Resource_def;
 
 class Subroutine_op_arg : public Node {
     public:
         Subroutine_op_arg();
 
-        Subroutine_op_arg(const std::shared_ptr<Qubit_definition>& qubit_def);
+        Subroutine_op_arg(const std::shared_ptr<Resource_def>& qubit_def);
 
     private:
 };

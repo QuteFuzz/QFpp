@@ -2,7 +2,7 @@
 #define PARAMETER_DEF_H
 
 #include <node.h>
-#include <variable.h>
+#include <name.h>
 
 class Parameter_def : public Node {
 
@@ -11,12 +11,12 @@ class Parameter_def : public Node {
             Node("parameter_def", PARAMETER_DEF)
         {}
 
-        std::shared_ptr<Variable> get_name(){
-            return std::make_shared<Variable>(_name);
+        std::shared_ptr<Name> get_name() const override {
+            return std::make_shared<Name>(_name);
         }
 
     private:
-        Variable _name;
+        Name _name;
 
 };
 

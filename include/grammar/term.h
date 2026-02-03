@@ -4,6 +4,7 @@
 #include <utils.h>
 #include <lex.h>
 #include <rule_utils.h>
+#include <term_constraint.h>
 
 class Rule;
 
@@ -11,11 +12,19 @@ class Term {
     public:
         Term(){}
 
-        Term(const std::shared_ptr<Rule> rule, const Token_kind& _kind, const Meta_func& _meta_func, unsigned int _branch_nesting_depth = 0);
+        Term(const std::shared_ptr<Rule> rule, const Token_kind& _kind, const Meta_func& _meta_func);
 
-        Term(const std::string& syntax, const Token_kind& _kind, unsigned int _branch_nesting_depth = 0);
+        Term(const std::string& syntax, const Token_kind& RULE_KINDS_TOP);
 
         ~Term() = default;
+
+        inline void add_constraint(const Term_constraint& _constraint){
+            constraint = _constraint;
+        }
+
+        Term_constraint get_constaint() const {
+            return constraint;
+        }
 
         std::shared_ptr<Rule> get_rule() const;
 
@@ -37,14 +46,11 @@ class Term {
 
         Token_kind get_kind() const {return kind;}
 
-        unsigned int get_branch_nesting_depth() const { return branch_nesting_depth; }
-
     private:
         std::variant<std::shared_ptr<Rule>, std::string> value;
         Token_kind kind;
         Meta_func meta_func = Meta_func::NONE;
-
-        unsigned int branch_nesting_depth = 0;
+        Term_constraint constraint;
 };
 
 #endif

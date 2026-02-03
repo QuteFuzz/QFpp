@@ -3,6 +3,8 @@
 
 namespace QuteFuzz {
 
+constexpr std::string_view LETTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+constexpr std::string_view ALPHA = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 /*
     names
@@ -15,6 +17,9 @@ constexpr char META_GRAMMAR_NAME[] = "meta-grammar";
     parameters - maximums set to reasonable values to prevent excessive resource usage
 */
 // TODO: perform exploration on these
+
+constexpr unsigned int MAX_REG_SIZE = 10;
+
 constexpr unsigned int MIN_QUBITS = 3;
 constexpr unsigned int MIN_BITS = 1;
 constexpr unsigned int MAX_QUBITS = 20;

@@ -32,19 +32,21 @@ class Branch {
             }
         }
 
-        bool get_recursive_flag() const {return recursive;}
+        inline bool get_recursive_flag() const {return recursive;}
 
         inline void set_recursive_flag(){recursive = true;}
 
-        void add(const Term& term);
+        inline void add(const Term& term){
+            terms.push_back(term);
+        }
 
-        size_t size() const {return terms.size();}
+        inline size_t size() const {return terms.size();}
 
-        const Term& at(size_t index) const {return terms.at(index);}
+        inline const Term& at(size_t index) const {return terms.at(index);}
 
-        Term& at(size_t index) {return terms.at(index);}
+        inline Term& at(size_t index) {return terms.at(index);}
 
-        unsigned int count_rule_occurances(const Token_kind& kind) const {
+        inline unsigned int count_rule_occurances(const Token_kind& kind) const {
 
             unsigned int out = 0;
 
@@ -55,11 +57,9 @@ class Branch {
             return out;
         }
 
-        bool is_empty() const {return terms.empty();}
+        inline bool is_empty() const {return terms.empty();}
 
-        std::vector<Term> get_terms() const {return terms;}
-
-        void setup_basis(Branch_multiply& basis, unsigned int nesting_depth) const;
+        inline std::vector<Term> get_terms() const {return terms;}
 
         friend std::ostream& operator<<(std::ostream& stream, const Branch& branch){
             for(const auto& elem : branch.terms){
@@ -85,9 +85,12 @@ class Branch {
             return terms.end();
         }
 
+        inline void clear(){
+            terms.clear();
+        }
+
     private:
         bool recursive = false;
-
         std::vector<Term> terms;
 };
 

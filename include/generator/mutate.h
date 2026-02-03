@@ -2,7 +2,6 @@
 #define MUTATE_H
 
 #include <node.h>
-#include <compound_stmts.h>
 #include <cassert>
 
 namespace QuteFuzz {

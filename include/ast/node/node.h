@@ -3,66 +3,22 @@
 
 #include <utils.h>
 #include <lex.h>
-#include <lex.h>
 #include <branch.h>
-#include <lex.h>
+#include <node_constraints.h>
+#include <rule.h>
 
 enum Node_build_state {
     NB_DONE,
     NB_BUILD,
 };
 
-
 enum Node_kind {
     TERMINAL,
     NON_TERMINAL,
 };
 
-
-struct Node_constraints {
-
-    public:
-
-        Node_constraints(){}
-
-        Node_constraints(Token_kind rule, unsigned int _occurances):
-            rule_kinds_and_occurances{{rule, _occurances}}
-        {}
-
-        Node_constraints(std::unordered_map<Token_kind, unsigned int> _rule_kinds_and_occurances):
-            rule_kinds_and_occurances(std::move(_rule_kinds_and_occurances))
-        {}
-
-        bool passed(const Branch& branch);
-
-        void set_occurances_for_rule(const Token_kind& rule, unsigned int n_occurances);
-
-        inline unsigned int n_constraints() const {
-            return rule_kinds_and_occurances.size();
-        }
-
-        void add(const Token_kind& rule, unsigned int n_occurances);
-
-        inline const std::unordered_map<Token_kind, unsigned int>& get_constraints() const {
-            return rule_kinds_and_occurances;
-        }
-
-        friend std::ostream& operator<<(std::ostream& stream, Node_constraints& nc) {
-            stream << "====================================" << std::endl;
-
-            for(const auto& [rule, occurances] : nc.rule_kinds_and_occurances){
-                stream << kind_as_str(rule) << " " << occurances << std::endl;
-            }
-
-            stream << "====================================" << std::endl;
-
-            return stream;
-        }
-
-    private:
-        std::unordered_map<Token_kind, unsigned int> rule_kinds_and_occurances;
-
-};
+class Integer;
+class Name;
 
 /// @brief A node is a term with pointers to other nodes
 class Node : public std::enable_shared_from_this<Node> {
@@ -134,6 +90,16 @@ class Node : public std::enable_shared_from_this<Node> {
             return res;
         }
 
+        inline int count_nodes(Token_kind _kind) const {
+            int res = (kind == _kind);
+
+            for(auto child : children){
+                res += child->count_nodes();
+            }
+
+            return res;
+        }
+
         virtual void print(std::ostream& stream) const {
             if(kind == SYNTAX){
                 stream << content;
@@ -196,8 +162,6 @@ class Node : public std::enable_shared_from_this<Node> {
             }
         }
 
-        virtual unsigned int get_n_ports() const {return 1;}
-
         int get_next_child_target();
 
         void make_partition(int target, int n_children);
@@ -215,6 +179,18 @@ class Node : public std::enable_shared_from_this<Node> {
                 stream << GREEN("NO CONSTRAINTS") << std::endl;
             }
         }
+
+        inline void remove_constraints(){
+            constraints = std::nullopt;
+        }
+
+        virtual unsigned int get_n_ports() const {return 1;}
+
+        virtual std::shared_ptr<Name> get_name() const;
+
+        virtual std::shared_ptr<Integer> get_size(unsigned int default_size = 1) const;
+
+        virtual std::shared_ptr<Integer> get_index() const;
 
     protected:
         int id = 0;

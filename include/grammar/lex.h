@@ -58,17 +58,16 @@ enum Token_kind {
     QUBIT_DEF,
     BIT_DEF,
     REGISTER_QUBIT_DEF,
-    REGISTER_QUBIT_DEF_DISCARD,
-    SINGULAR_QUBIT_DEF,
-    SINGULAR_QUBIT_DEF_DISCARD,
     REGISTER_BIT_DEF,
+    SINGULAR_QUBIT_DEF,
     SINGULAR_BIT_DEF,
     FLOAT_LIST,
     FLOAT_LITERAL,
-    // PARAMETER_DEF_NAME,
     PARAMETER_DEF,
-    QUBIT_DEF_NAME,
-    BIT_DEF_NAME,
+    REGISTER_QUBIT,
+    REGISTER_BIT,
+    SINGULAR_QUBIT,
+    SINGULAR_BIT,
     QUBIT,
     BIT,
     QUBIT_OP,
@@ -78,17 +77,7 @@ enum Token_kind {
     QUBIT_LIST,
     BIT_LIST,
     QUBIT_DEF_LIST,
-    QUBIT_DEF_SIZE,
     BIT_DEF_LIST,
-    BIT_DEF_SIZE,
-    SINGULAR_QUBIT,
-    REGISTER_QUBIT,
-    SINGULAR_BIT,
-    REGISTER_BIT,
-    QUBIT_NAME,
-    BIT_NAME,
-    QUBIT_INDEX,
-    BIT_INDEX,
     SUBROUTINE,
     CIRCUIT_ID,
     IF_STMT,
@@ -104,10 +93,6 @@ enum Token_kind {
     SUBROUTINE_OP_ARG,
     COMPOUND_STMT,
     COMPOUND_STMTS,
-    REGISTER_RESOURCE,
-    REGISTER_RESOURCE_DEF,
-    SINGULAR_RESOURCE,
-    SINGULAR_RESOURCE_DEF,
     RESOURCE_DEF,
     RULE_KINDS_BOTTOM,                            /// ADD NEW RULES ABOVE!
 
@@ -120,7 +105,10 @@ enum Token_kind {
     FLOAT,
     NEXT,
     NAME,
+    SIZE,
+    INDEX,
     RANDOM,
+    COUNT,
     META_FUNC_BOTTOM,                             /// ADD META FUNCS ABOVE!
 
     GRAMMAR_SYNTAX_TOP,                           /// ADD GRAMMAR SYNTAX BELOW!
@@ -201,20 +189,18 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("subroutine_body", BODY),
     Token_matcher("qubit_defs", QUBIT_DEFS),
     Token_matcher("bit_defs", BIT_DEFS),
-    Token_matcher("qubit_def", QUBIT_DEF),
-    Token_matcher("bit_def", BIT_DEF),
     Token_matcher("register_qubit_def", REGISTER_QUBIT_DEF),
     Token_matcher("singular_qubit_def", SINGULAR_QUBIT_DEF),
-    Token_matcher("register_qubit_def_discard", REGISTER_QUBIT_DEF_DISCARD),
-    Token_matcher("singular_qubit_def_discard", SINGULAR_QUBIT_DEF_DISCARD),
     Token_matcher("register_bit_def", REGISTER_BIT_DEF),
     Token_matcher("singular_bit_def", SINGULAR_BIT_DEF),
-    Token_matcher("float_list", FLOAT_LIST),
-    Token_matcher("float_literal", FLOAT_LITERAL),
-    Token_matcher("qubit_def_name", QUBIT_DEF_NAME),
-    Token_matcher("bit_def_name", BIT_DEF_NAME),
+    Token_matcher("singular_qubit", SINGULAR_QUBIT),
+    Token_matcher("register_qubit", REGISTER_QUBIT),
+    Token_matcher("singular_bit", SINGULAR_BIT),
+    Token_matcher("register_bit", REGISTER_BIT),
     Token_matcher("qubit", QUBIT),
     Token_matcher("bit", BIT),
+    Token_matcher("float_list", FLOAT_LIST),
+    Token_matcher("float_literal", FLOAT_LITERAL),
     Token_matcher("qubit_op", QUBIT_OP),
     Token_matcher("gate_op", GATE_OP),
     Token_matcher("subroutine_op", SUBROUTINE_OP),
@@ -222,17 +208,11 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("qubit_list", QUBIT_LIST),
     Token_matcher("bit_list", BIT_LIST),
     Token_matcher("qubit_def_list", QUBIT_DEF_LIST),
-    Token_matcher("qubit_def_size", QUBIT_DEF_SIZE),
     Token_matcher("bit_def_list", BIT_DEF_LIST),
-    Token_matcher("bit_def_size", BIT_DEF_SIZE),
     Token_matcher("singular_qubit", SINGULAR_QUBIT),
     Token_matcher("register_qubit", REGISTER_QUBIT),
     Token_matcher("singular_bit", SINGULAR_BIT),
     Token_matcher("register_bit", REGISTER_BIT),
-    Token_matcher("qubit_name", QUBIT_NAME),
-    Token_matcher("bit_name", BIT_NAME),
-    Token_matcher("qubit_index", QUBIT_INDEX),
-    Token_matcher("bit_index", BIT_INDEX),
     Token_matcher("subroutine", SUBROUTINE),
     Token_matcher("circuit_id", CIRCUIT_ID),
     Token_matcher("if_stmt", IF_STMT),
@@ -248,7 +228,6 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("subroutine_op_arg", SUBROUTINE_OP_ARG),
     Token_matcher("compound_stmt", COMPOUND_STMT),
     Token_matcher("compound_stmts", COMPOUND_STMTS),
-    // Token_matcher("parameter_def_name", PARAMETER_DEF_NAME),
     Token_matcher("parameter_def", PARAMETER_DEF),
     Token_matcher("h", H),
     Token_matcher("x", X),
@@ -303,6 +282,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("NAME", NAME),
     Token_matcher("CIRCUIT_NAME", CIRCUIT_NAME),
     Token_matcher("RANDOM", RANDOM),
+    Token_matcher("COUNT", COUNT),
     // meta functions ish, that get immediately converted into syntax because we know before hand what the replacement should be
     Token_matcher("LPAREN", SYNTAX, "("),
     Token_matcher("RPAREN", SYNTAX, ")"),
@@ -471,14 +451,6 @@ class Lexer{
         bool ignore = false;
 
 };
-
-inline bool is_wildcard(const Token_kind& kind) {
-    return
-        (kind ==  OPTIONAL) ||
-        (kind == ZERO_OR_MORE) ||
-        (kind == ONE_OR_MORE)
-        ;
-}
 
 inline bool is_kind_of_rule(const Token_kind& kind){
     return

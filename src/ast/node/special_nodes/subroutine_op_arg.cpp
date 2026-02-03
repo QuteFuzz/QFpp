@@ -1,12 +1,12 @@
 #include <subroutine_op_arg.h>
-#include <resource_definition.h>
+#include <resource_def.h>
 
 /// @brief Dummy argument
 Subroutine_op_arg::Subroutine_op_arg() :
     Node("subroutine_op_arg", SUBROUTINE_OP_ARG)
 {}
 
-Subroutine_op_arg::Subroutine_op_arg(const std::shared_ptr<Qubit_definition>& qubit_def) :
+Subroutine_op_arg::Subroutine_op_arg(const std::shared_ptr<Resource_def>& qubit_def) :
     Node("subroutine_op_arg", SUBROUTINE_OP_ARG)
 {
 

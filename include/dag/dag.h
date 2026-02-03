@@ -4,10 +4,8 @@
 #include <node.h>
 #include <qubit_op.h>
 
-class Qubit_definition;
-class Bit_definition;
-class Qubit;
-class Bit;
+class Resource_def;
+class Resource;
 
 class Edge {
 
@@ -70,7 +68,7 @@ class Dag {
 
         Dag(const std::shared_ptr<Circuit> circuit);
 
-        inline Ptr_coll<Qubit_definition> get_qubit_defs() const {
+        inline Ptr_coll<Resource_def> get_qubit_defs() const {
             return qubit_defs;
         }
 
@@ -144,8 +142,8 @@ class Dag {
         std::vector<std::shared_ptr<Node>> subroutine_gates;
         unsigned int sub_pointer = 0;
 
-        Ptr_coll<Qubit> qubits;
-        Ptr_coll<Qubit_definition> qubit_defs;
+        Ptr_coll<Resource> qubits;
+        Ptr_coll<Resource_def> qubit_defs;
 
         std::shared_ptr<Node> dummy_node = std::make_shared<Node>("");
         std::shared_ptr<Qubit_op> dummy_qubit_op = std::make_shared<Qubit_op>();

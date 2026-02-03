@@ -9,9 +9,9 @@ EXTENSION = ".qasm";
 MAX_NUM_QUBITS = 10;
 
 EXTERNAL {
-    singular_qubit_def = qubit_def_name;
+    singular_qubit_def = NAME;
 
-    singular_bit_def = bit_def_name;
+    singular_bit_def = NAME;
 
     qubit_defs = qubit_def (COMMA qubit_def)*;
 
@@ -22,9 +22,9 @@ EXTERNAL {
     bit_def = singular_bit_def;
 }
 
-register_qubit_def = "qreg " qubit_def_name "[" qubit_def_size "];";
+register_qubit_def = "qreg " NAME "[" SIZE "];";
 
-register_bit_def = "creg " bit_def_name "[" bit_def_size "];";
+register_bit_def = "creg " NAME "[" SIZE "];";
 
 qubit_defs = (qubit_def NEWLINE)+;
 
@@ -55,20 +55,20 @@ compound_stmt = qubit_op;
 
 subroutine_circuit = "gate " CIRCUIT_NAME " " EXTERNAL::qubit_defs " { " NEWLINE subroutine_body "}";
 
-subroutine_op = subroutine " " qubit_list
+subroutine_op = subroutine " " qubit_list;
 
 # 3. GATES
 # --------
 # QASM syntax: name(params) arg1, arg2;
 
-singular_qubit = qubit_name;
+singular_qubit = NAME;
 
-register_qubit = qubit_name "[" qubit_index "]";
+register_qubit = NAME "[" INDEX "]";
 
 
-singular_bit = bit_name;
+singular_bit = NAME;
 
-register_bit = bit_name "[" bit_index "]";
+register_bit = NAME "[" INDEX "]";
 
 
 gate_op_args = "(" float_list ") " qubit_list | " " qubit_list;

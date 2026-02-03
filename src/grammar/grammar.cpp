@@ -51,25 +51,6 @@ bool Grammar::is_rule(const std::string& rule_name, const Scope& scope){
     return false;
 }
 
-void Grammar::add_current_branches_to_rule(){
-
-    if(current_branches.size() == 0){
-        current_rule->add(Branch());
-
-    } else {
-
-        for(Branch& current_branch : current_branches){
-            #if 0
-            std::cout << "Lazily adding ";
-            current_branch.print(std::cout);
-            std::cout << std::endl;
-            #endif
-
-            current_rule->add(current_branch);
-        }
-    }
-}
-
 /// Return value of given rule name if the value is 1 branch, with 1 syntax term (string or digit)
 std::string Grammar::dig_to_syntax(const std::string& rule_name) const {
     std::shared_ptr<Rule> rule_ptr = get_rule_pointer_if_exists(rule_name, ALL_SCOPES);
@@ -125,86 +106,54 @@ std::shared_ptr<Rule> Grammar::get_rule_pointer(const Token& token, const Scope&
     return dummy;
 }
 
-/// @brief Convert a single token into a term and add it to the given branch
-/// @param token
-void Grammar::add_term_to_branch(Branch& branch, const Token& token){
+void Grammar::add_term_to_current_branch(const Token& token){
+    std::shared_ptr<Rule>& current_rule = stack.top().rule;
+    Branch& current_branch = stack.top().branch;
+
     assert(current_rule != nullptr);
 
     if(token.kind == SYNTAX){
-        branch.add(Term(token.value, token.kind, nesting_depth));
+        current_branch.add(Term(token.value, token.kind));
 
-    } else if (is_kind_of_rule(token.kind)){
+    } else if ((token.kind)){
         /*
             each term within the branch of a rule has a scope associated with it
-            if explicitly specified like EXTERNAL::term, then the term takes on that scope, otherwise, it
+            if explicitis_kind_of_rulely specified like EXTERNAL::term, then the term takes on that scope, otherwise, it
             takes on the scope of the current rule (i.e the rule def)
         */
         Scope scope = (rule_decl_scope == Scope::GLOB) ? current_rule->get_scope() : rule_decl_scope;
-        branch.add(Term(get_rule_pointer(token, scope), token.kind, rule_decl_meta_func, nesting_depth));
+        current_branch.add(Term(get_rule_pointer(token, scope), token.kind, rule_decl_meta_func));
 
     } else if (is_meta(token.kind)){
         assert(rule_decl_meta_func == Meta_func::NONE); // this is a meta-func used for node creation, should not have a meta func applied to itself
         assert(rule_decl_scope == Scope::GLOB); // also should not have scope set explictly
-        branch.add(Term(get_rule_pointer(token, current_rule->get_scope()), token.kind, Meta_func::NONE, nesting_depth));
+        current_branch.add(Term(get_rule_pointer(token, current_rule->get_scope()), token.kind, Meta_func::NONE));
         
     } else {
         throw std::runtime_error(ANNOT("add_term_to_branch should only be called on syntax or rule tokens!"));
     }
 
     if((token.value == current_rule->get_name()) && is_kind_of_rule(token.kind)){
-        branch.set_recursive_flag();
+        current_branch.set_recursive_flag();
     }
 }
 
-/// @brief The token into a term and add it to all current branches
-/// @param tokens
-void Grammar::add_term_to_current_branches(const Token& token){
-    if(current_branches.size() == 0){
-        Branch b;
+void Grammar::add_branch_to_current_rule(){
+    Branch& current_branch = stack.top().branch;
+    stack.top().rule->add(current_branch);
+    stack.top().branch.clear();
+}
 
-        add_term_to_branch(b, token);
-        current_branches.push_back(b);
+void Grammar::add_constraint_to_last_term(const Term_constraint& constraint){
+    Branch& current_branch = stack.top().branch;
 
+    size_t branch_size = current_branch.size();
+
+    if (branch_size == 0){
+        ERROR("Current branch should have at least one term to add constraint to");
     } else {
-        for(Branch& current_branch : current_branches){
-            add_term_to_branch(current_branch, token);
-        }
+        current_branch.at(branch_size - 1).add_constraint(constraint);
     }
-}
-
-void Grammar::extend_current_branches(const Token& wildcard){
-    // loop through current heads, and multiply
-    std::vector<Branch> extensions;
-    Branch_multiply basis;
-
-    for(const Branch& current_branch : current_branches){
-        if(!current_branch.is_empty()){
-            basis.clear();
-            current_branch.setup_basis(basis, nesting_depth);
-
-            if(wildcard.kind == OPTIONAL){
-                extensions.push_back(Branch(basis.remainders));
-                break;
-
-            } else if (wildcard.kind == ZERO_OR_MORE){
-                extensions.push_back(Branch(basis.remainders));
-            }
-
-            // use basis to get extensions depending on the wildcard being processed
-            for(unsigned int mult = 2; mult <= QuteFuzz::WILDCARD_MAX; ++mult){
-
-                auto terms = append_vectors(basis.remainders, multiply_vector(basis.mults, mult));
-
-                Branch extension(terms);
-                extensions.push_back(extension);
-            }
-
-        }
-    }
-
-    increment_nesting_depth_base(); // must be done after wildcards are processed
-
-    current_branches.insert(current_branches.end(), extensions.begin(), extensions.end());
 }
 
 void Grammar::build_grammar(){
@@ -223,47 +172,74 @@ void Grammar::build_grammar(){
 
         if (is_meta(token.kind) && (next.kind != LANGLE_BRACKET)){
             // if next token is `<`, this is a meta func application, handled at `<` using previous token
-            add_term_to_current_branches(token);
+            // add_term_to_current_branches(token);
+            add_term_to_current_branch(token);
         
         } else if(is_kind_of_rule(token.kind) || token.kind == SYNTAX){
             next = next_token.get_ok();
 
-            // rules that are within branches, rules before `RULE_START` are handled at `RULE_START`
-            if(current_rule != nullptr){                           
-                add_term_to_current_branches(token);
+            // rules that are within branches, rules before `RULE_START` and `RULE_APPEND` are handled at `RULE_START` and `RULE_APPEND`
+            if(!stack.empty()){        
+                add_term_to_current_branch(token);
+                // add_term_to_current_branches(token);
                 rule_decl_scope = Scope::GLOB; // reset to GLOB scope as default
             }
 
         } else if (token.kind == RULE_START) {
-            reset_current_branches();
-            current_rule = get_rule_pointer(prev_token, rule_def_scope);
-            current_rule->clear();
-
-        } else if (token.kind == RULE_APPEND){
-            reset_current_branches();
-            current_rule = get_rule_pointer(prev_token, rule_def_scope);
-
-        } else if (token.kind == RULE_END){
-            complete_rule(); current_rule = nullptr;
-
-        } else if (token.kind == LPAREN){
-            nesting_depth += 1;
-
-        } else if (token.kind == RPAREN){
-            nesting_depth -= 1;
-
-            next = next_token.get_ok();
-
-            if(!is_wildcard(next.kind)){
-                increment_nesting_depth_base();
+            if (stack.empty()){
+                stack.push(Current(get_rule_pointer(prev_token, rule_def_scope)));
+                stack.top().rule->clear();
+            } else {
+                std::cout << "Grammar: " << name << std::endl;
+                std::cout << "STACK_SIZE: " << stack.size() << std::endl;
+                std::cout << "STACK TOP: " << *stack.top().rule << std::endl;
+                throw std::runtime_error("At RULE_START current stack is expected to be empty");
             }
 
-        } else if (token.kind == SEPARATOR){
-            add_current_branches_to_rule();
-            reset_current_branches();
+        } else if (token.kind == RULE_APPEND){
+            if (stack.empty()){
+                stack.push(Current(get_rule_pointer(prev_token, rule_def_scope)));
+            } else {
+                std::cout << "Grammar: " << name << std::endl;
+                std::cout << "STACK_SIZE: " << stack.size() << std::endl;
+                std::cout << *stack.top().rule << std::endl;
+                throw std::runtime_error("At RULE_APPEND current stack is expected to be empty");
+            }
 
-        } else if (is_wildcard(token.kind)){
-            extend_current_branches(token);
+        } else if (token.kind == RULE_END){
+            complete_rule();
+
+        } else if (token.kind == LPAREN){
+            Token new_rule_token{.value = "NR_" + std::to_string(new_rule_counter++), .kind = RULE};
+            stack.push(Current(get_rule_pointer(new_rule_token, Scope::GLOB)));
+
+        } else if (token.kind == RPAREN){
+            std::shared_ptr<Rule>& new_rule_ptr = stack.top().rule;
+
+            complete_rule();
+
+            // add new rule term to current branch
+            add_term_to_current_branch(new_rule_ptr->get_token());
+
+        } else if (token.kind == SEPARATOR){
+            add_branch_to_current_rule();
+
+            // add_current_branches_to_rule();
+            // reset_current_branches();
+
+        } else if (token.kind == OPTIONAL){
+            Term_constraint constraint(random_uint(1, 0));
+            add_constraint_to_last_term(constraint);
+
+
+        } else if (token.kind == ONE_OR_MORE){
+            Term_constraint constraint(random_uint(QuteFuzz::WILDCARD_MAX, 1));
+            add_constraint_to_last_term(constraint);
+
+
+        } else if (token.kind == ZERO_OR_MORE){
+            Term_constraint constraint(random_uint(QuteFuzz::WILDCARD_MAX, 0));
+            add_constraint_to_last_term(constraint);
 
         } else if (token.kind == LBRACE){
             // scope has been set to some other scope

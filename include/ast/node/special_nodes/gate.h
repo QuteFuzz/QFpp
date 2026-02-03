@@ -4,7 +4,7 @@
 #include <node.h>
 #include <coll.h>
 
-class Qubit_definition;
+class Resource_def;
 
 class Gate : public Node {
 
@@ -26,7 +26,7 @@ class Gate : public Node {
         /// @param str
         /// @param kind
         /// @param qubit_defs
-        Gate(const std::string& str, const Token_kind& kind, const Ptr_coll<Qubit_definition>& qubit_defs);
+        Gate(const std::string& str, const Token_kind& kind, const Ptr_coll<Resource_def>& _qubit_defs);
 
         std::string get_id_as_str(){
             return std::to_string(id);
@@ -42,13 +42,13 @@ class Gate : public Node {
 
         unsigned int get_num_floats() const {return num_floats;}
 
-        std::shared_ptr<Qubit_definition> get_next_qubit_def();
+        std::shared_ptr<Resource_def> get_next_qubit_def();
 
-        std::shared_ptr<Qubit_definition> get_last_qubit_def();
+        std::shared_ptr<Resource_def> get_last_qubit_def();
 
     private:
-        Ptr_coll<Qubit_definition> qubit_defs;
-        std::shared_ptr<Qubit_definition> last_qubit_def;
+        Ptr_coll<Resource_def> qubit_defs;
+        std::shared_ptr<Resource_def> last_qubit_def;
 
         unsigned int num_external_qubits = 0;
         unsigned int num_external_bits = 0;

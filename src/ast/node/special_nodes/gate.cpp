@@ -1,5 +1,5 @@
 #include <gate.h>
-#include <resource_definition.h>
+#include <resource_def.h>
 #include "assert.h"
 #include <coll.h>
 
@@ -10,7 +10,7 @@ Gate::Gate(const std::string& str, const Token_kind& kind, unsigned int qubits, 
     num_floats(floats)
 {}
 
-Gate::Gate(const std::string& str, const Token_kind& kind, const Ptr_coll<Qubit_definition>& _qubit_defs) :
+Gate::Gate(const std::string& str, const Token_kind& kind, const Ptr_coll<Resource_def>& _qubit_defs) :
     Node(str, kind),
     qubit_defs(_qubit_defs)
 {
@@ -24,12 +24,13 @@ Gate::Gate(const std::string& str, const Token_kind& kind, const Ptr_coll<Qubit_
     }
 }
 
-std::shared_ptr<Qubit_definition> Gate::get_next_qubit_def(){
-    last_qubit_def = get_next_from_coll(qubit_defs, Scope::EXT);
+std::shared_ptr<Resource_def> Gate::get_next_qubit_def(){
+    auto pred = [](const auto& elem){return scope_matches(elem->get_scope(), Scope::EXT);};
+    last_qubit_def = get_next_from_coll(filter<Resource_def>(qubit_defs, pred));
     return last_qubit_def;
 }
 
-std::shared_ptr<Qubit_definition> Gate::get_last_qubit_def(){
+std::shared_ptr<Resource_def> Gate::get_last_qubit_def(){
     return last_qubit_def;
 }
 
@@ -39,5 +40,5 @@ unsigned int Gate::get_num_external_qubits(){
 
 unsigned int Gate::get_num_external_qubit_defs() const {
     auto pred = [](const auto& elem){return scope_matches(elem->get_scope(), Scope::EXT);};
-    return coll_size<Qubit_definition>(qubit_defs, pred);
+    return filter<Resource_def>(qubit_defs, pred).size();
 }

@@ -14,8 +14,8 @@ bool diagonal_in_same_basis(const std::shared_ptr<Node>& compound_stmt_a, const 
     bool qubit_ops_found = ((qubit_op_a != nullptr) && (qubit_op_b != nullptr));
 
     if(qubit_ops_found){
-        std::shared_ptr<Qubit> qubit_a = std::dynamic_pointer_cast<Qubit>(qubit_op_a->find(QUBIT));
-        std::shared_ptr<Qubit> qubit_b = std::dynamic_pointer_cast<Qubit>(qubit_op_b->find(QUBIT));
+        std::shared_ptr<Resource> qubit_a = std::dynamic_pointer_cast<Resource>(qubit_op_a->find(QUBIT));
+        std::shared_ptr<Resource> qubit_b = std::dynamic_pointer_cast<Resource>(qubit_op_b->find(QUBIT));
 
         std::shared_ptr<Node> gate_a = qubit_op_a->find(GATE_NAME)->child_at(0);
         std::shared_ptr<Node> gate_b = qubit_op_b->find(GATE_NAME)->child_at(0);

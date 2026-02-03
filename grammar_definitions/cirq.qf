@@ -33,11 +33,11 @@ EXTERNAL {
 
 
     singular_qubit_def =
-        qubit_def_name " = cirq.NamedQubit('" qubit_def_name "')";
+        NAME " = cirq.NamedQubit('" NAME "')";
 
     register_qubit_def =
         # qubit_def_name " = [cirq.NamedQubit('" qubit_def_name "') for _ in range(" qubit_def_size ")]";
-        qubit_def_name " = cirq.NamedQubit.range(" qubit_def_size ", prefix='" qubit_def_name "')";
+        NAME " = cirq.NamedQubit.range(" SIZE ", prefix='" NAME "')";
 }
 
 imports =
@@ -91,8 +91,8 @@ gate_name = rx
             | ccx
             | ch;
 
-singular_qubit = qubit_name;
+singular_qubit = NAME;
 
-register_qubit = qubit_name "[" qubit_index "]";
+register_qubit = NAME "[" INDEX "]";
 
 compiler_call = ;

@@ -6,9 +6,9 @@
 #include <singular_resource.h>
 #include <dag.h>
 
-enum Resource_kind {
-    RK_QUBIT,
-    RK_BIT
+enum class Resource_kind {
+    QUBIT,
+    BIT
 };
 
 class Resource : public Node {
@@ -16,24 +16,30 @@ class Resource : public Node {
 
         /// @brief Dummy resource
         Resource() :
-            Node("dummy", SINGULAR_RESOURCE),
+            Node("dummy", QUBIT),
             value(Singular_resource())
         {}
 
-        Resource(const std::string& str, const Token_kind& kind, const Register_resource& resource, const Scope& _scope) :
-            Node(str, kind),
+        Resource(const Register_resource& resource, const Scope& _scope, Resource_kind rk) :
+            Node("register_resource", (rk == (Resource_kind::QUBIT) ? QUBIT : BIT)),
             value(resource),
-            scope(_scope)
+            scope(_scope),
+            resource_kind(rk)
         {}
 
-        Resource(const std::string& str, const Token_kind& kind, const Singular_resource& resource, const Scope& _scope) :
-            Node(str, kind),
+        Resource(const Singular_resource& resource, const Scope& _scope, Resource_kind rk) :
+            Node("singular_resource", (rk == (Resource_kind::QUBIT) ? QUBIT : BIT)),
             value(resource),
-            scope(_scope)
+            scope(_scope),
+            resource_kind(rk)
         {}
 
         Scope get_scope() const {
             return scope;
+        }
+
+        Resource_kind get_kind() const {
+            return resource_kind;
         }
 
         void reset(){
@@ -54,22 +60,22 @@ class Resource : public Node {
             }, value);
         }
 
-        inline std::shared_ptr<Variable> get_name() const {
-            return std::visit([](auto&& val) -> std::shared_ptr<Variable> {
+        inline std::shared_ptr<Name> get_name() const override {
+            return std::visit([](auto&& val) -> std::shared_ptr<Name> {
                 return val.get_name();
             }, value);
         }
 
-        inline bool is_register_def() const {
-            return std::holds_alternative<Register_resource>(value);
-        }
-
-        inline std::shared_ptr<Integer> get_index() const {
+        inline std::shared_ptr<Integer> get_index() const override {
             if(is_register_def()){
                 return std::get<Register_resource>(value).get_index();
             } else {
                 return std::make_shared<Integer>();
             }
+        }
+
+        inline bool is_register_def() const {
+            return std::holds_alternative<Register_resource>(value);
         }
 
         std::string resolved_name() const override;
@@ -85,29 +91,6 @@ class Resource : public Node {
             }
         }
 
-    private:
-        std::variant<Register_resource, Singular_resource> value;
-        Scope scope;
-
-};
-
-class Qubit : public Resource {
-
-    public:
-        Qubit() : Resource() {}
-
-        Qubit(const Register_qubit& qubit, const Scope& scope) :
-            Resource("qubit", QUBIT, qubit, scope)
-        {
-            add_constraint(REGISTER_QUBIT, 1);
-        }
-
-        Qubit(const Singular_qubit& qubit, const Scope& scope) :
-            Resource("qubit", QUBIT, qubit, scope)
-        {
-            add_constraint(SINGULAR_QUBIT, 1);
-        }
-
         void extend_flow_path(const std::shared_ptr<Qubit_op> qubit_op, unsigned int current_port);
 
         void extend_dot_string(std::ostringstream& ss) const;
@@ -118,33 +101,14 @@ class Qubit : public Resource {
             return flow_path;
         }
 
-
     private:
+        std::variant<Register_resource, Singular_resource> value;
+        Scope scope;
+        Resource_kind resource_kind;
+
         std::vector<Edge> flow_path;
         std::string flow_path_colour = random_hex_colour();
         size_t flow_path_length = 0;
-
-};
-
-class Bit : public Resource {
-
-    public:
-        Bit() : Resource() {}
-
-        Bit(const Register_bit& bit, const Scope& scope) :
-            Resource("bit", BIT, bit, scope)
-        {
-            add_constraint(REGISTER_BIT, 1);
-        }
-
-        Bit(const Singular_bit& bit, const Scope& scope) :
-            Resource("bit", BIT, bit, scope)
-        {
-            add_constraint(SINGULAR_BIT, 1);
-        }
-
-    private:
-
 };
 
 

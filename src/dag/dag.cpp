@@ -5,8 +5,8 @@
 Dag::Dag(const std::shared_ptr<Circuit> circuit){
     reset();
 
-    qubits = circuit->get_collection<Qubit>();
-    qubit_defs = circuit->get_collection<Qubit_definition>();
+    qubits = circuit->get_coll<Resource>(Resource_kind::QUBIT);
+    qubit_defs = circuit->get_coll<Resource_def>(Resource_kind::QUBIT);
 
     for(const auto& qubit : qubits){
         qubit->add_path_to_dag(*this);

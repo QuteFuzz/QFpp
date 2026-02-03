@@ -1,36 +1,6 @@
 #include <node.h>
-
-/*
-    CONSTRAINTS HANDLING
-*/
-
-bool Node_constraints::passed(const Branch& branch){
-    // Count the number of occurances of each rule in the branch and return true if they match the expected occurances
-    for(const auto& [rule, occurances] : rule_kinds_and_occurances){
-        if(branch.count_rule_occurances(rule) != occurances){
-            return false;
-        }
-    }
-    return true;
-}
-
-void Node_constraints::set_occurances_for_rule(const Token_kind& rule, unsigned int n_occurances){
-    rule_kinds_and_occurances[rule] = n_occurances;
-}
-
-
-void Node_constraints::add(const Token_kind& rule, unsigned int n_occurances){
-    //Check if rule is in rule_kinds_and_occurances
-    if(rule_kinds_and_occurances.find(rule) != rule_kinds_and_occurances.end()){
-        rule_kinds_and_occurances[rule] += n_occurances;
-    } else {
-        rule_kinds_and_occurances[rule] = n_occurances;
-    }
-}
-
-/*
-    NODE LOGIC
-*/
+#include <integer.h>
+#include <name.h>
 
 int Node::node_counter = 0;
 
@@ -190,4 +160,16 @@ void Node::make_control_flow_partition(int target, int n_children){
         add_constraint(ELIF_STMT, 1);
 
     }
+}
+
+std::shared_ptr<Name> Node::get_name() const {
+    return std::make_shared<Name>();
+}
+
+std::shared_ptr<Integer> Node::get_size(unsigned int default_size) const {
+    return std::make_shared<Integer>(default_size);
+}
+
+std::shared_ptr<Integer> Node::get_index() const {
+    return std::make_shared<Integer>();
 }

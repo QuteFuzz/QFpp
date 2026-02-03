@@ -2,7 +2,7 @@
 #define CIRCUIT_H
 
 #include <node.h>
-#include <resource_definition.h>
+#include <resource_def.h>
 #include <resource.h>
 #include <params.h>
 #include <run_utils.h>
@@ -52,40 +52,11 @@ class Circuit : public Node {
         {}
 
         /// @brief Generating a random circuit from scratch
-        Circuit(std::string owner_name, const Control& control, bool _is_subroutine) :
+        Circuit(std::string owner_name, bool _is_subroutine) :
             Node("circuit", CIRCUIT),
             owner(owner_name),
-            is_subroutine(_is_subroutine),
-            target_num_qubits_external(random_uint(control.get_value("MAX_NUM_QUBITS"), control.get_value("MIN_NUM_QUBITS"))),
-            target_num_qubits_internal(random_uint(control.get_value("MAX_NUM_QUBITS"), control.get_value("MIN_NUM_QUBITS"))),
-            target_num_bits_external(random_uint(control.get_value("MAX_NUM_BITS"), control.get_value("MIN_NUM_BITS"))),
-            target_num_bits_internal(random_uint(control.get_value("MAX_NUM_BITS"), control.get_value("MIN_NUM_BITS")))
+            is_subroutine(_is_subroutine)
         {}
-
-        /// @brief Generating a circuit with a specific number of external qubits (generating from DAG)
-        Circuit(std::string owner_name, unsigned int num_external_qubits, const Control& control) :
-            Node("circuit", CIRCUIT),
-            owner(owner_name),
-            is_subroutine(false),
-            target_num_qubits_external(num_external_qubits),
-            target_num_qubits_internal(random_uint(control.get_value("MAX_NUM_QUBITS"), control.get_value("MIN_NUM_QUBITS"))),
-            target_num_bits_external(random_uint(control.get_value("MAX_NUM_BITS"), control.get_value("MIN_NUM_BITS"))),
-            target_num_bits_internal(random_uint(control.get_value("MAX_NUM_BITS"), control.get_value("MIN_NUM_BITS")))
-        {}
-
-        inline void set_global_targets(const Control& control){
-            target_num_qubits_global = random_uint(control.get_value("MAX_NUM_QUBITS"), control.get_value("MIN_NUM_QUBITS"));
-            target_num_bits_global = random_uint(control.get_value("MAX_NUM_BITS"), control.get_value("MIN_NUM_BITS"));
-        }
-
-        inline unsigned int get_resource_target(Scope& scope, Resource_kind& rk){
-            switch(scope){
-                case Scope::EXT: return (rk == RK_QUBIT) ? target_num_qubits_external : target_num_bits_external;
-                case Scope::INT: return (rk == RK_QUBIT) ? target_num_qubits_internal : target_num_bits_internal;
-                case Scope::GLOB: return (rk == RK_QUBIT) ? target_num_qubits_global : target_num_bits_global;
-                default: return QuteFuzz::MIN_QUBITS;
-            }
-        }
 
         inline bool owned_by(std::string other){return other == owner;}
 
@@ -101,54 +72,67 @@ class Circuit : public Node {
             return can_apply_subroutines;
         }
 
-        template<typename T>
-        inline Ptr_coll<T> get_collection() const {
-            if constexpr (std::is_same_v<T, Qubit>) {
-				return qubits;
-			} else if constexpr (std::is_same_v<T, Qubit_definition>) {
-				return qubit_defs;
-			} else if constexpr (std::is_same_v<T, Bit>) {
-				return bits;
-			} else if constexpr (std::is_same_v<T, Bit_definition>) {
-				return bit_defs;
-			} else {
-                static_assert(always_false_v<T>, "Given type cannot be in a ptr collection used in `CIRCUIT`");
+        template <typename T> 
+        inline Ptr_coll<T> get_coll() const {
+            if constexpr (std::is_same_v<T, Resource>) {
+                return resources;
+
+            } else if constexpr (std::is_same_v<T, Resource_def>) {
+                return resource_defs;
+
+            } else {
+                throw std::runtime_error("Unknown collection type in circuit");
             }
         }
 
-        template<typename T>
+        template <typename T>
+        inline Ptr_coll<T> get_coll(Resource_kind rk) const {
+            auto pred = [&rk](const auto& elem){ return elem->get_kind() == rk; };
+            return filter<T>(get_coll<T>(), pred);
+        }
+
+        void make_resources_from_def(std::shared_ptr<Resource_def> def){
+            auto name = def->get_name();
+            auto scope = def->get_scope();
+            auto rk = def->get_kind();
+
+            std::shared_ptr<Resource> resource;
+
+            if(def->is_register_def()) {
+                auto size = def->get_size();
+
+                for(size_t i = 0; i < (size_t)size->get_num(); i++){
+                    Register_resource reg_resource(*name, Integer(std::to_string(i)));
+                    resource = std::make_shared<Resource>(reg_resource, scope, rk);
+                    resource->add_constraint((rk == Resource_kind::QUBIT ? REGISTER_QUBIT : REGISTER_BIT), 1);
+
+                    resources.push_back(resource);
+                }
+            } else {                
+                Singular_resource reg_resource(*name);
+                resource = std::make_shared<Resource>(reg_resource, scope, rk);
+                resource->add_constraint((rk == Resource_kind::QUBIT ? SINGULAR_QUBIT : SINGULAR_BIT), 1);
+            
+                resources.push_back(resource);
+            }
+
+            resource_defs.push_back(def);
+        }
+    
         inline void reset(){
-            for (const auto& elem : get_collection<T>()){
+            for (const auto& elem : resources){
                 elem->reset();
             }
         }
-
-        unsigned int make_register_resource_definition(Scope& scope, Resource_kind rk, unsigned int max_size, unsigned int& total_definitions);
-
-        unsigned int make_singular_resource_definition(Scope& scope,  Resource_kind rk, unsigned int& total_definitions);
-
-        unsigned int make_resource_definitions(Scope& scope, Resource_kind rk, Control& control);
 
         void print_info() const;
 
     private:
         std::string owner;
         bool is_subroutine = false;
-
-        unsigned int target_num_qubits_external = QuteFuzz::MIN_QUBITS;
-        unsigned int target_num_qubits_internal = 0;
-        unsigned int target_num_qubits_global = 0;
-
-        unsigned int target_num_bits_external = QuteFuzz::MIN_BITS;
-        unsigned int target_num_bits_internal = 0;
-        unsigned int target_num_bits_global = 0;
-
         bool can_apply_subroutines = false;
-
-        Ptr_coll<Qubit> qubits;
-        Ptr_coll<Qubit_definition> qubit_defs;
-        Ptr_coll<Bit> bits;
-        Ptr_coll<Bit_definition> bit_defs;
+        Ptr_coll<Resource> resources;
+        Ptr_coll<Resource_def> resource_defs;
 };
 
 

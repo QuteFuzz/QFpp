@@ -12,6 +12,7 @@
 #include <random>
 #include <fstream>
 #include <set>
+#include <string_view>
 #include <filesystem>
 #include <unordered_map>
 #include <algorithm>
@@ -102,6 +103,8 @@ std::string random_hex_colour();
 std::string escape_string(const std::string& input);
 
 void render(std::function<void(std::ostringstream&)> extend_dot_string, const fs::path& render_path);
+
+std::string random_str(size_t length = 12);
 
 template<typename T>
 inline std::vector<T> append_vectors(std::vector<T> vec1, std::vector<T> vec2){
