@@ -3,8 +3,13 @@ import time
 import random
 import dotenv
 from jinja2 import Template
+import litellm
 from litellm import completion, completion_cost
 from tqdm import tqdm
+
+# Suppress verbose output from litellm that interferes with tqdm
+litellm.suppress_debug_info = True
+# litellm.set_verbose = False # Uncomment if needed, but suppress_debug_info usually suffices
 
 # Setup your keys (You can also set these in your OS environment variables)
 # We try to load from .env file up the tree
@@ -53,7 +58,7 @@ def ask_any_model(model_name, prompt):
                 "cost": cost
             }
             
-            return answer, stats
+            return answer, stats, None
             
         except Exception as e:
             error_str = str(e).lower()
@@ -61,8 +66,8 @@ def ask_any_model(model_name, prompt):
             # Check for rate limit or quota exceeded errors
             if "rate_limit" in error_str or "quota" in error_str or "429" in error_str or "503" in error_str:
                 if attempt + 1 == max_retries:
-                    tqdm.write(f"Max retries ({max_retries}) reached for {model_name}. Last error: {e}")
-                    return None, None
+                    tqdm.write(f"Max retries ({max_retries}) reached for {model_name}.")
+                    return None, None, str(e)
                 
                 # Exponential backoff with jitter
                 delay = min(max_delay, base_delay * (2 ** attempt))
@@ -73,5 +78,5 @@ def ask_any_model(model_name, prompt):
                 time.sleep(wait_time)
             else:
                 tqdm.write(f"Error for {model_name}: {e}")
-                return None, None
-    return None, None
+                return None, None, str(e)
+    return None, None, "Unknown error (loop finished without return)"

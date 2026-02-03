@@ -59,11 +59,11 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
         return None, current_stats
 
     generation_prompt = get_dynamic_prompt(generation_prompt_path)
-    generated_program, stats = ask_any_model(model, generation_prompt)
+    generated_program, stats, gen_error = ask_any_model(model, generation_prompt)
     
     if generated_program is None:
         with log_lock:
-            logfile.write(f"Failed to generate output for {filename}\n\n")
+            logfile.write(f"Failed to generate output for {filename}. Error: {gen_error}\n\n")
         return None, current_stats
 
     if stats:
@@ -138,11 +138,11 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
                 break
 
             fixing_prompt = get_dynamic_prompt(fixing_prompt_path, faulty_code=current_code, error_message=current_error)
-            fixed_code, stats = ask_any_model(model, fixing_prompt)
+            fixed_code, stats, fix_error = ask_any_model(model, fixing_prompt)
 
             if fixed_code is None:
                 with log_lock:
-                    logfile.write(f"Failed to generate fix for {filename} cycle {cycle+1}\n\n")
+                    logfile.write(f"Failed to generate fix for {filename} cycle {cycle+1}. Error: {fix_error}\n\n")
                 break
             
             if stats:
@@ -204,7 +204,7 @@ def process_single_program(index, model, generated_dir, failed_dir, n_max_fixing
         
         if not fixed:
             with log_lock:
-                logfile.write(f"Failed to fix {filename} or Runtime failed. Saving to failed_programs.\n\n")
+                logfile.write(f"Failed to fix {filename}. Saving to failed_programs.\n\n")
             save_path = os.path.join(failed_dir, filename)
             save_text_to_file(current_code, save_path)
             return None, current_stats
@@ -436,11 +436,15 @@ def main():
 
     # Generate summary plot
     if stats_summary:
-        generate_summary_plot(stats_summary, common_run_dir)
+        perf_plots_dir = os.path.join(common_run_dir, "plots", "performance_plots")
+        os.makedirs(perf_plots_dir, exist_ok=True)
+        generate_summary_plot(stats_summary, perf_plots_dir)
         
     # Generate complexity plots
     if all_program_metrics:
-        generate_complexity_scatter_plots(all_program_metrics, common_run_dir)
+        comp_plots_dir = os.path.join(common_run_dir, "plots", "complexity_plots")
+        os.makedirs(comp_plots_dir, exist_ok=True)
+        generate_complexity_scatter_plots(all_program_metrics, comp_plots_dir)
 
 
 if __name__ == "__main__":
