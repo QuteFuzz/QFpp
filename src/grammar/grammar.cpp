@@ -170,6 +170,12 @@ void Grammar::build_grammar(){
             return;
         }
 
+        if (setting_term_constraint) {
+            Term_constraint constraint(safe_stoul(token.value, 1));
+            add_constraint_to_last_term(constraint);
+            return;
+        }
+
         if (is_meta(token.kind) && (next.kind != LANGLE_BRACKET)){
             // if next token is `<`, this is a meta func application, handled at `<` using previous token
             // add_term_to_current_branches(token);
@@ -241,6 +247,12 @@ void Grammar::build_grammar(){
             Term_constraint constraint(random_uint(QuteFuzz::WILDCARD_MAX, 0));
             add_constraint_to_last_term(constraint);
 
+        } else if (token.kind == LBRACK){ 
+            setting_term_constraint = true;            
+
+        } else if (token.kind == RBRACK){
+            setting_term_constraint = false;
+        
         } else if (token.kind == LBRACE){
             // scope has been set to some other scope
             assert(rule_def_scope != Scope::GLOB);

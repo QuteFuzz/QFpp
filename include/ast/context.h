@@ -8,7 +8,6 @@
 #include <subroutine_op_arg.h>
 #include <compound_stmt.h>
 #include <gate.h>
-#include <subroutine_defs.h>
 #include <genome.h>
 #include <nested_stmt.h>
 #include <parameter_def.h>
@@ -136,7 +135,7 @@ struct Context {
 
 		std::shared_ptr<Compound_stmt> nn_compound_stmt();
 
-		std::shared_ptr<Subroutine_defs> nn_subroutines();
+		std::shared_ptr<Node> nn_subroutines();
 
 		std::shared_ptr<Qubit_op> nn_qubit_op();
 
@@ -183,7 +182,7 @@ struct Context {
 		unsigned int current_port = 0;
 		unsigned int nested_depth; // default set when control is set
 
-		std::optional<std::shared_ptr<Subroutine_defs>> subroutines_node = std::nullopt;
+		std::optional<std::shared_ptr<Node>> subroutines_node = std::nullopt;
 };
 
 

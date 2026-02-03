@@ -108,6 +108,7 @@ class Grammar{
         Scope rule_def_scope = Scope::GLOB;
         Scope rule_decl_scope = Scope::GLOB;
         Meta_func rule_decl_meta_func = Meta_func::NONE;
+        bool setting_term_constraint = false;
 
         // unsigned int nesting_depth_base = 0;
         unsigned int new_rule_counter = 0;

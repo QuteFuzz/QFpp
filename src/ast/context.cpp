@@ -227,13 +227,11 @@ std::shared_ptr<Compound_stmt> Context::nn_compound_stmt(){
     return Compound_stmt::from_nested_depth(nested_depth);
 }
 
-std::shared_ptr<Subroutine_defs> Context::nn_subroutines(){
-    unsigned int n_circuits = random_uint(control.get_value("MAX_NUM_SUBROUTINES"));
+std::shared_ptr<Node> Context::nn_subroutines(){
+    // unsigned int n_circuits = random_uint(control.get_value("MAX_NUM_SUBROUTINES"));
 
-    std::shared_ptr<Subroutine_defs> node = std::make_shared<Subroutine_defs>(n_circuits);
-
-    subroutines_node = std::make_optional<std::shared_ptr<Subroutine_defs>>(node);
-
+    std::shared_ptr<Node> node = std::make_shared<Node>("", SUBROUTINE_DEFS);
+    subroutines_node = std::make_optional<std::shared_ptr<Node>>(node);
     return node;
 }
 

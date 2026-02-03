@@ -9,7 +9,8 @@ class Integer : public Node {
         using Node::Node;
 
         Integer() :
-            Node(std::to_string(random_uint(10)))
+            Node(std::to_string(random_uint(10))),
+            num(safe_stoul(content, 0))
         {}
 
         Integer(int i) :

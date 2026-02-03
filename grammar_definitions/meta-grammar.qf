@@ -78,11 +78,19 @@ subroutine_op_arg =
     | "[" qubit_list "]"
     ;
 
-qubit_list  = qubit (", " qubit)*;
+# qubit_list  = qubit (", " qubit)*;
+
+# qubit_list  = qubit (", " qubit)[COUNT<EXTERNAL::qubit> - 1];
+
+# qubit_list  = qubit (", " qubit)[1];
+
+# TODO: extend term constraints feature to make this easier
+qubit_list = qubit | qubit ", " qubit | qubit ", " qubit ", " qubit;
 
 float_literal = FLOAT;
 
-float_list = float_literal (", " float_literal)*;
+# TODO: extend term constraints feature to make this easier
+float_list = float_literal | float_literal ", " float_literal | float_literal ", " float_literal ", " float_literal;
 
 qubit =
     singular_qubit

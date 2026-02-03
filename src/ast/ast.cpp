@@ -17,8 +17,8 @@
 #include <subroutine_op_args.h>
 #include <qubit_op.h>
 #include <gate_op_args.h>
-#include <subroutine_defs.h>
 #include <compound_stmt.h>
+#include <resource.h>
 #include <disjunction.h>
 #include <conjunction.h>
 #include <compare_op_bitwise_or_pair_child.h>
@@ -32,8 +32,6 @@ std::string Node::indentation_tracker = "";
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, const Term& term){
-
-	std::cout << *parent << std::endl;
 
 	Scope scope = term.get_scope();
 	Meta_func meta_func = term.get_meta_func();
@@ -171,9 +169,11 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 		case BIT:
 			return context.get_random_resource(Resource_kind::BIT);
 
-		case REGISTER_QUBIT: case REGISTER_BIT: case SINGULAR_QUBIT: case SINGULAR_BIT:
+		case REGISTER_QUBIT: case REGISTER_BIT: case SINGULAR_QUBIT: case SINGULAR_BIT: {
 			parent->remove_constraints();
-			return parent;
+			auto resource_node = std::dynamic_pointer_cast<Resource>(parent);
+			return std::make_shared<Resource>(*resource_node);
+		}
 
 		case REGISTER_QUBIT_DEF:
 			return context.nn_register_resource_def(scope, Resource_kind::QUBIT);
@@ -259,6 +259,10 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 		throw std::runtime_error(ANNOT("Recursion limit reached when writing branch for term: " + parent->get_content()));
 	}
 
+	std::cout << "parent node: " << parent->get_name() << std::endl;
+	std::cout << "term: " << term << std::endl;
+	getchar();
+
 	Term_constraint constraint;
 	unsigned int count;
 
@@ -267,8 +271,6 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 		Branch branch = term.get_rule()->pick_branch(parent);
 
 		for(const Term& child_term : branch){
-			auto child_node = get_child_node(parent, child_term);
-
 			/*
 				`Term_constraint` tells us the number of nodes of the term that should be produced, so we use that here
 			*/
@@ -288,6 +290,8 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 			// add as many children to the parent node as specified by the term constraint
 			// then use the term to get the next branch to write, where this new child node is the parent
 			for (unsigned int i = 0; i < count; i++){
+				auto child_node = get_child_node(parent, child_term);
+
 				parent->add_child(child_node);
 				term_branch_to_child_nodes(child_node, child_term, depth + 1);
 			}
@@ -313,7 +317,7 @@ Result<Node> Ast::build(const std::optional<Node_constraints>& _swarm_testing_ga
 		Token_kind entry_token_kind = entry->get_token().kind;
 		Term entry_term(entry, entry_token_kind, Meta_func::NONE);
 
-		root = std::make_shared<Node>("", RULE);
+		root = std::make_shared<Node>(entry->get_name(), entry_token_kind);
 
 		term_branch_to_child_nodes(root, entry_term);
 

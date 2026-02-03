@@ -25,14 +25,26 @@ class Resource : public Node {
             value(resource),
             scope(_scope),
             resource_kind(rk)
-        {}
+        {
+            if (rk == Resource_kind::QUBIT){
+                add_constraint(REGISTER_QUBIT, 1);
+            } else {
+                add_constraint(REGISTER_BIT, 1);
+            }
+        }
 
         Resource(const Singular_resource& resource, const Scope& _scope, Resource_kind rk) :
             Node("singular_resource", (rk == (Resource_kind::QUBIT) ? QUBIT : BIT)),
             value(resource),
             scope(_scope),
             resource_kind(rk)
-        {}
+        {
+            if (rk == Resource_kind::QUBIT){
+                add_constraint(SINGULAR_QUBIT, 1);
+            } else {
+                add_constraint(SINGULAR_BIT, 1);
+            }
+        }
 
         Scope get_scope() const {
             return scope;

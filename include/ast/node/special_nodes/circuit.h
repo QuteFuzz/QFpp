@@ -104,15 +104,11 @@ class Circuit : public Node {
                 for(size_t i = 0; i < (size_t)size->get_num(); i++){
                     Register_resource reg_resource(*name, Integer(std::to_string(i)));
                     resource = std::make_shared<Resource>(reg_resource, scope, rk);
-                    resource->add_constraint((rk == Resource_kind::QUBIT ? REGISTER_QUBIT : REGISTER_BIT), 1);
-
                     resources.push_back(resource);
                 }
             } else {                
                 Singular_resource reg_resource(*name);
                 resource = std::make_shared<Resource>(reg_resource, scope, rk);
-                resource->add_constraint((rk == Resource_kind::QUBIT ? SINGULAR_QUBIT : SINGULAR_BIT), 1);
-            
                 resources.push_back(resource);
             }
 

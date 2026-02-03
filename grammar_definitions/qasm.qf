@@ -65,7 +65,6 @@ singular_qubit = NAME;
 
 register_qubit = NAME "[" INDEX "]";
 
-
 singular_bit = NAME;
 
 register_bit = NAME "[" INDEX "]";
