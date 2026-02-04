@@ -1,22 +1,7 @@
 #ifndef BRANCH_H
 #define BRANCH_H
 
-#include <term.h>
-
-struct Branch_multiply {
-    std::vector<Term> remainders;
-    std::vector<Term> mults;
-
-    bool is_empty(){
-        return remainders.empty() && mults.empty();
-    }
-
-    void clear(){
-        remainders.clear();
-        mults.clear();
-    }
-
-};
+#include <qf_term.h>
 
 class Branch {
 

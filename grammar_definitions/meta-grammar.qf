@@ -83,7 +83,9 @@ subroutine_op_arg =
 # qubit_list  = qubit (", " qubit)[1];
 
 # TODO: extend term constraints feature to make this easier
-qubit_list = qubit | qubit ", " qubit | qubit ", " qubit ", " qubit;
+# qubit_list = qubit | qubit ", " qubit | qubit ", " qubit ", " qubit;
+
+qubit_list = qubit (", " qubit)[NUM_QUBITS - 1];
 
 float_literal = FLOAT;
 

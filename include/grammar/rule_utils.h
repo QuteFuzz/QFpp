@@ -15,7 +15,7 @@ ENABLE_BITMASK_OPERATORS(Scope)
 #define str_bitset(val, n) (std::bitset<n>(static_cast<unsigned long>(val)).to_string() )
 
 #define STR_SCOPE(s) ( \
-    "SCOPE[INT EXT GLOB]: " + str_bitset(s, 3) \
+    "SCOPE[INT EXT GLOB]: " + str_bitset(s, 4) \
 )
 
 #define ALL_SCOPES (Scope::GLOB | Scope::EXT | Scope::INT)
@@ -24,16 +24,11 @@ ENABLE_BITMASK_OPERATORS(Scope)
 
 enum class Meta_func {
     NONE = 0,
-    NEXT = BIT32(0),
     NAME = BIT32(1),
-    SIZE = BIT32(2),
-    INDEX = BIT32(3),
-    COUNT = BIT32(4),
-    NUM_QUBITS = BIT32(5),
 };
 
 #define STR_META_FUNC(mf) ( \
-    str_bitset(mf, 6) \
+    str_bitset(mf, 2) \
 )
 
 #endif

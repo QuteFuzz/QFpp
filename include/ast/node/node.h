@@ -3,7 +3,6 @@
 
 #include <utils.h>
 #include <lex.h>
-#include <branch.h>
 #include <node_constraints.h>
 #include <rule.h>
 
@@ -19,6 +18,7 @@ enum Node_kind {
 
 class Integer;
 class Name;
+class Branch;
 
 /// @brief A node is a term with pointers to other nodes
 class Node : public std::enable_shared_from_this<Node> {

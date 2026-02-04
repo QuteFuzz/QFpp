@@ -99,6 +99,7 @@ enum Token_kind {
     META_FUNC_TOP,                                /// ADD META FUNCS BELOW!
     CIRCUIT_NAME,
     INDENTATION_DEPTH,
+    NUM_QUBITS,
     INDENT,
     DEDENT,
     INTEGER,
@@ -107,8 +108,6 @@ enum Token_kind {
     NAME,
     SIZE,
     INDEX,
-    RANDOM,
-    COUNT,
     META_FUNC_BOTTOM,                             /// ADD META FUNCS ABOVE!
 
     GRAMMAR_SYNTAX_TOP,                           /// ADD GRAMMAR SYNTAX BELOW!
@@ -281,8 +280,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("NEXT", NEXT),
     Token_matcher("NAME", NAME),
     Token_matcher("CIRCUIT_NAME", CIRCUIT_NAME),
-    Token_matcher("RANDOM", RANDOM),
-    Token_matcher("COUNT", COUNT),
+    Token_matcher("NUM_QUBITS", NUM_QUBITS),
     // meta functions ish, that get immediately converted into syntax because we know before hand what the replacement should be
     Token_matcher("LPAREN", SYNTAX, "("),
     Token_matcher("RPAREN", SYNTAX, ")"),

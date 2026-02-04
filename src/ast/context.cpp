@@ -182,7 +182,7 @@ std::shared_ptr<Subroutine_op_arg> Context::nn_subroutine_op_arg(){
 }
 
 std::shared_ptr<Gate> Context::nn_gate(const std::string& str, Token_kind& kind, unsigned int n_qubits){
-    auto gate = std::make_shared<Gate>(str, kind);
+    auto gate = std::make_shared<Gate>(str, kind, n_qubits);
 
     current.set<Gate>(gate);
     current.get<Qubit_op>()->set_gate_node(gate);
@@ -257,4 +257,13 @@ std::shared_ptr<Node> Context::nn_next(Node& ast_root, const Token_kind& kind){
     }
 
     return *node_generators[kind]->begin()++;
+}
+
+unsigned int Context::operator()(Token_kind kind) const {
+    if (kind == NUM_QUBITS) {
+        auto gate = get_current_node<Gate>();
+        return gate->get_num_external_qubits();
+    }
+
+    return 0;
 }

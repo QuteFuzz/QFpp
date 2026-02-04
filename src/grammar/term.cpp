@@ -1,4 +1,4 @@
-#include "../../include/grammar/term.h"
+#include "../../include/grammar/qf_term.h"
 #include <rule.h>
 
 Term::Term(const std::shared_ptr<Rule> rule, const Token_kind& _kind, const Meta_func& _meta_func){

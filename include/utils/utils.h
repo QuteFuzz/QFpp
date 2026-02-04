@@ -86,6 +86,8 @@ unsigned int random_uint(unsigned int max = UINT32_MAX, unsigned int min = 0);
 
 unsigned int safe_stoul(const std::string& str, unsigned int default_value);
 
+int safe_stoi(const std::string& str, int default_value);
+
 std::vector<std::vector<int>> n_choose_r(const int n, const int r);
 
 int vector_sum(std::vector<int> in);

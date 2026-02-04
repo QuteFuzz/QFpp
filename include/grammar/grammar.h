@@ -3,7 +3,7 @@
 
 #include <lex.h>
 #include "node.h"
-#include "term.h"
+#include "qf_term.h"
 #include <errno.h>
 #include <math.h>
 #include <unordered_map>
@@ -29,6 +29,12 @@ class Grammar{
         Grammar(){}
 
         Grammar(const fs::path& filename, std::vector<Token>& meta_grammar_tokens);
+
+        inline void error(const std::string& msg, Token token){
+            std::cout << *stack.top().rule << std::endl;
+            std::cout << "Token: " << token << std::endl;
+            throw std::runtime_error(msg); 
+        }
 
         void consume(int n);
 
@@ -67,9 +73,7 @@ class Grammar{
         }
 
         inline void set_meta_func(const Token_kind& kind){
-            if (kind == NEXT){
-                rule_decl_meta_func = Meta_func::NEXT;
-            } else if (kind == NAME){
+            if (kind == NAME){
                 rule_decl_meta_func = Meta_func::NAME;
             } else {
                 throw std::runtime_error("Unknown meta function");

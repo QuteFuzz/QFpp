@@ -1,5 +1,5 @@
 #include <grammar.h>
-#include <term.h>
+#include <qf_term.h>
 #include <params.h>
 
 Grammar::Grammar(const fs::path& filename, std::vector<Token>& meta_grammar_tokens): lexer(filename.string()), name(filename.stem()), path(filename) {
@@ -168,11 +168,44 @@ void Grammar::build_grammar(){
         if (token.kind == _EOF) {
             // must not peek if at EOF
             return;
-        
+
+        } else if (token.kind == LBRACK){ 
+            setting_term_constraint = true;
+
+        } else if (token.kind == RBRACK){
+            setting_term_constraint = false;
+            
         } else if (setting_term_constraint) {
-            Term_constraint constraint(Term_constraint_kind::RANGE_FIXED_MAX, 0, safe_stoul(token.value, 1));
-            add_constraint_to_last_term(constraint);
-        
+
+            if (is_meta(token.kind)) {
+                Token_kind meta_dependency = token.kind;
+                int offset = 0;
+            
+                Token lookahead = next_token.get_ok();
+                
+                if (lookahead.value == "-" || lookahead.value == "+") {
+                    consume(1); // consume META
+                    Token op = curr_token.get_ok(); // get +/-
+                    
+                    consume(1); // consume op
+                    Token num = curr_token.get_ok(); // get number
+                    
+                    int val = safe_stoi(num.value, 0);
+                    offset = (op.value == "-") ? -val : val;
+                }
+
+                Term_constraint constraint(meta_dependency, offset);
+                add_constraint_to_last_term(constraint);
+            
+            } else if (token.kind == SYNTAX){
+                // numbers are also treated as SYNTAX
+                Term_constraint constraint(Term_constraint_kind::FIXED_MAX, 0, safe_stoul(token.value, 1));
+                add_constraint_to_last_term(constraint);
+
+            } else {
+                error("Token kind cannot be used to set constraint", token);
+            }
+
         } else if (is_meta(token.kind) && (next.kind != LANGLE_BRACKET)){
             // if next token is `<`, this is a meta func application, handled at `<` using previous token
             // add_term_to_current_branches(token);
@@ -231,25 +264,19 @@ void Grammar::build_grammar(){
             // reset_current_branches();
 
         } else if (token.kind == OPTIONAL){
-            Term_constraint constraint(Term_constraint_kind::RANGE_FIXED_MAX, 0, 1);
+            Term_constraint constraint(Term_constraint_kind::FIXED_MAX, 0, 1);
             add_constraint_to_last_term(constraint);
 
 
         } else if (token.kind == ONE_OR_MORE){
-            Term_constraint constraint(Term_constraint_kind::RANGE_RAND_MAX, 1, QuteFuzz::WILDCARD_MAX);
+            Term_constraint constraint(Term_constraint_kind::RANDOM_MAX, 1, QuteFuzz::WILDCARD_MAX);
             add_constraint_to_last_term(constraint);
 
 
         } else if (token.kind == ZERO_OR_MORE){
-            Term_constraint constraint(Term_constraint_kind::RANGE_RAND_MAX, 0, QuteFuzz::WILDCARD_MAX);
+            Term_constraint constraint(Term_constraint_kind::RANDOM_MAX, 0, QuteFuzz::WILDCARD_MAX);
             add_constraint_to_last_term(constraint);
 
-        } else if (token.kind == LBRACK){ 
-            setting_term_constraint = true;
-
-        } else if (token.kind == RBRACK){
-            setting_term_constraint = false;
-        
         } else if (token.kind == LBRACE){
             // scope has been set to some other scope
             assert(rule_def_scope != Scope::GLOB);

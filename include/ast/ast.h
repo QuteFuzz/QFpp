@@ -3,7 +3,7 @@
 
 #include <optional>
 #include <algorithm>
-#include <term.h>
+#include <qf_term.h>
 #include <grammar.h>
 #include <node.h>
 #include <context.h>

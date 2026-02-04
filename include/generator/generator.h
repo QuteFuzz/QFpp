@@ -5,7 +5,7 @@
 #include <ast.h>
 #include <genome.h>
 #include <dag.h>
-#include <term.h>
+#include <qf_term.h>
 #include <mutate.h>
 
 struct Generator {

@@ -3,13 +3,6 @@
 #include "assert.h"
 #include <coll.h>
 
-Gate::Gate(const std::string& str, const Token_kind& kind, unsigned int n_qubits):
-    Node(str, kind),
-    info(kind, n_qubits)
-{
-    assert(kind == BARRIER);
-}
-
 Gate::Gate(const std::string& str, const Token_kind& kind) :
     Node(str, kind)
 {
@@ -18,6 +11,13 @@ Gate::Gate(const std::string& str, const Token_kind& kind) :
             info = _info;
         }
     }
+}
+
+Gate::Gate(const std::string& str, const Token_kind& kind, unsigned int n_qubits):
+    Node(str, kind),
+    info(kind, n_qubits)
+{
+    assert(kind == BARRIER);
 }
 
 Gate::Gate(const std::string& str, const Token_kind& kind, const Ptr_coll<Resource_def>& _qubit_defs) :

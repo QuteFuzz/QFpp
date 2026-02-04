@@ -148,7 +148,7 @@ struct Context {
 		std::shared_ptr<Node> nn_next(Node& ast_root, const Token_kind& kind);
 
 		template<typename T>
-		inline std::shared_ptr<T> get_current_node(){
+		inline std::shared_ptr<T> get_current_node() const {
 			return current.get<T>();
 		}
 
@@ -169,6 +169,8 @@ struct Context {
 				circuit->print_info();
 			}
 		}
+
+		unsigned int operator()(Token_kind kind) const;
 
 	private:
 		Control control;

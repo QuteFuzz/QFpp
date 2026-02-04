@@ -60,6 +60,15 @@ unsigned int safe_stoul(const std::string& str, unsigned int default_value) {
     }
 }
 
+int safe_stoi(const std::string& str, int default_value) {
+    try {
+        int ret = std::stoi(str);
+        return ret;
+    } catch (const std::invalid_argument& e) {
+        return default_value;
+    }
+}
+
 /// @brief Find all possible combinations that can be chosen from numbers in [0, n-1]
 /// Knew the solution had something to do with counting in binary, but I didn't come up with this algorithm myself
 /// https://stackoverflow.com/questions/12991758/creating-all-possible-k-combinations-of-n-items-in-c

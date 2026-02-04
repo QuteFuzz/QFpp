@@ -135,11 +135,14 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 			return context.nn_subroutines();
 
 		case QUBIT_OP:
+			context.reset(RL_QUBIT_OP);
 			return context.nn_qubit_op();
 
 		case CIRCUIT_NAME:
 			return std::make_shared<Variable>(context.get_current_circuit()->get_owner());
 
+
+		/// TODO: make these lists use the term constraint feature 
 		case QUBIT_LIST: {
 			auto current_gate = context.get_current_node<Gate>();
 
@@ -151,13 +154,13 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 				num_qubits = current_gate->get_num_external_qubits();
 			}
 
-			context.reset(RL_QUBIT_OP);
+			// context.reset(RL_QUBIT_OP);
 
 			return std::make_shared<Qubit_list>(num_qubits);
 		}
 
 		case BIT_LIST:
-			context.reset(RL_QUBIT_OP);
+			// context.reset(RL_QUBIT_OP);
 			return std::make_shared<Bit_list>(context.get_current_node<Gate>()->get_num_external_bits());
 
 		case FLOAT_LIST:
@@ -250,7 +253,7 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 
 		for(const Term& child_term : branch){
 			Term_constraint constraint = child_term.get_constaint();
-			Range r = constraint.resolve();
+			Range r = constraint.resolve(std::ref(context));
 
 			// add as many children to the parent node as specified by the term constraint
 			// then use the term to get the next branch to write, where this new child node is the parent
@@ -259,7 +262,8 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 
 				parent->add_child(child_node);
 				term_branch_to_child_nodes(child_node, child_term, depth + 1);
-			}		}
+			}
+		}
 	}
 
 	// done
