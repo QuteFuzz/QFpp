@@ -129,7 +129,7 @@ struct Context {
 
 		std::shared_ptr<Subroutine_op_arg> nn_subroutine_op_arg();
 
-		std::shared_ptr<Gate> nn_gate(const std::string& str, Token_kind& kind, int num_qubits, int num_bits, int num_params);
+		std::shared_ptr<Gate> nn_gate(const std::string& str, Token_kind& kind, unsigned int n_qubits = 0);
 
 		std::shared_ptr<Nested_stmt> nn_nested_stmt(const std::string& str, const Token_kind& kind);
 

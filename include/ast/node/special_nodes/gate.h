@@ -3,6 +3,7 @@
 
 #include <node.h>
 #include <coll.h>
+#include <supported_gates.h>
 
 class Resource_def;
 
@@ -17,10 +18,9 @@ class Gate : public Node {
         /// @brief Use for predefined gates
         /// @param str
         /// @param kind
-        /// @param _qubits
-        /// @param _bits
-        /// @param _floats
-        Gate(const std::string& str, const Token_kind& kind, unsigned int qubits, unsigned int bits, unsigned int floats);
+        Gate(const std::string& str, const Token_kind& kind);
+
+        Gate(const std::string& str, const Token_kind& kind, unsigned int n_qubits);
 
         /// @brief Use for subroutines
         /// @param str
@@ -32,27 +32,24 @@ class Gate : public Node {
             return std::to_string(id);
         }
 
-        unsigned int get_n_ports() const override {return num_external_qubits;}
+        unsigned int get_n_ports() const override {return get_num_external_qubits();}
 
-        unsigned int get_num_external_qubits();
+        unsigned int get_num_external_qubits() const;
 
         unsigned int get_num_external_qubit_defs() const;
 
-        unsigned int get_num_external_bits() const { return num_external_bits;}
+        unsigned int get_num_external_bits() const { return info.n_bits;}
 
-        unsigned int get_num_floats() const {return num_floats;}
+        unsigned int get_num_floats() const {return info.n_floats;}
 
         std::shared_ptr<Resource_def> get_next_qubit_def();
 
-        std::shared_ptr<Resource_def> get_last_qubit_def();
+        std::shared_ptr<Resource_def> get_last_qubit_def() const;
 
     private:
         Ptr_coll<Resource_def> qubit_defs;
         std::shared_ptr<Resource_def> last_qubit_def;
-
-        unsigned int num_external_qubits = 0;
-        unsigned int num_external_bits = 0;
-        unsigned int num_floats = 0;
+        Gate_info info;   // may need defaults for empty constructor
 };
 
 

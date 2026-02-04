@@ -52,7 +52,7 @@ std::shared_ptr<Node> Node::find(Token_kind node_kind) {
 }
 
 void Node::print_ast(std::string indent) const {
-    std::cout << content << std::endl;
+    std::cout << kind << "(" << this << ")" << std::endl;
 
     for(const std::shared_ptr<Node>& child : children){
         std::cout << indent;

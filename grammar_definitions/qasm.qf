@@ -43,7 +43,11 @@ program = header NEWLINE NEWLINE registers NEWLINE subroutine_defs NEWLINE body;
 
 registers = qubit_defs NEWLINE bit_defs;
 
-subroutine_defs = (subroutine_circuit NEWLINE)*;
+# subroutine_defs = (subroutine_circuit NEWLINE)*;
+
+# subroutine_defs = (subroutine_circuit NEWLINE)[2];
+
+subroutine_defs = (subroutine_circuit NEWLINE);
 
 body = compound_stmts;
 

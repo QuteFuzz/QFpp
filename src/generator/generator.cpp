@@ -37,16 +37,16 @@ void Generator::ast_to_program(fs::path output_dir, const Control& control, unsi
 
     stream = get_stream(output_dir, "prog" + control.ext);
 
-    std::optional<Node_constraints> gateset;
+    // std::optional<Node_constraints> gateset;
 
-    if (control.swarm_testing) {
-        gateset = get_swarm_testing_gateset();
-    } else {
-        gateset = std::nullopt;
-    }
+    // if (control.swarm_testing) {
+    //     gateset = get_swarm_testing_gateset();
+    // } else {
+    //     gateset = std::nullopt;
+    // }
 
     std::shared_ptr<Ast> builder = setup_builder();
-    Result<Node> maybe_ast_root = builder->build(gateset, control);
+    Result<Node> maybe_ast_root = builder->build(control);
 
     if(maybe_ast_root.is_ok()){
         Node ast_root = maybe_ast_root.get_ok();

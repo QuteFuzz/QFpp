@@ -168,15 +168,12 @@ void Grammar::build_grammar(){
         if (token.kind == _EOF) {
             // must not peek if at EOF
             return;
-        }
-
-        if (setting_term_constraint) {
-            Term_constraint constraint(safe_stoul(token.value, 1));
+        
+        } else if (setting_term_constraint) {
+            Term_constraint constraint(Term_constraint_kind::RANGE_FIXED_MAX, 0, safe_stoul(token.value, 1));
             add_constraint_to_last_term(constraint);
-            return;
-        }
-
-        if (is_meta(token.kind) && (next.kind != LANGLE_BRACKET)){
+        
+        } else if (is_meta(token.kind) && (next.kind != LANGLE_BRACKET)){
             // if next token is `<`, this is a meta func application, handled at `<` using previous token
             // add_term_to_current_branches(token);
             add_term_to_current_branch(token);
@@ -234,21 +231,21 @@ void Grammar::build_grammar(){
             // reset_current_branches();
 
         } else if (token.kind == OPTIONAL){
-            Term_constraint constraint(random_uint(1, 0));
+            Term_constraint constraint(Term_constraint_kind::RANGE_FIXED_MAX, 0, 1);
             add_constraint_to_last_term(constraint);
 
 
         } else if (token.kind == ONE_OR_MORE){
-            Term_constraint constraint(random_uint(QuteFuzz::WILDCARD_MAX, 1));
+            Term_constraint constraint(Term_constraint_kind::RANGE_RAND_MAX, 1, QuteFuzz::WILDCARD_MAX);
             add_constraint_to_last_term(constraint);
 
 
         } else if (token.kind == ZERO_OR_MORE){
-            Term_constraint constraint(random_uint(QuteFuzz::WILDCARD_MAX, 0));
+            Term_constraint constraint(Term_constraint_kind::RANGE_RAND_MAX, 0, QuteFuzz::WILDCARD_MAX);
             add_constraint_to_last_term(constraint);
 
         } else if (token.kind == LBRACK){ 
-            setting_term_constraint = true;            
+            setting_term_constraint = true;
 
         } else if (token.kind == RBRACK){
             setting_term_constraint = false;
@@ -294,9 +291,7 @@ void Grammar::build_grammar(){
         }
 
         prev_token = token;
-
         consume(1);
-
         // always peek to prepare for next token
         peek();
 

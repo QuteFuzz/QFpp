@@ -3,12 +3,22 @@
 #include "assert.h"
 #include <coll.h>
 
-Gate::Gate(const std::string& str, const Token_kind& kind, unsigned int qubits, unsigned int bits, unsigned int floats) :
+Gate::Gate(const std::string& str, const Token_kind& kind, unsigned int n_qubits):
     Node(str, kind),
-    num_external_qubits(qubits),
-    num_external_bits(bits),
-    num_floats(floats)
-{}
+    info(kind, n_qubits)
+{
+    assert(kind == BARRIER);
+}
+
+Gate::Gate(const std::string& str, const Token_kind& kind) :
+    Node(str, kind)
+{
+    for (auto _info : SUPPORTED_GATES){
+        if(_info.gate == kind){
+            info = _info;
+        }
+    }
+}
 
 Gate::Gate(const std::string& str, const Token_kind& kind, const Ptr_coll<Resource_def>& _qubit_defs) :
     Node(str, kind),
@@ -16,26 +26,30 @@ Gate::Gate(const std::string& str, const Token_kind& kind, const Ptr_coll<Resour
 {
     assert(kind == SUBROUTINE);
 
+    info.gate = SUBROUTINE;
+
     // count number of external qubits depending on size of qubit defs
     for(const auto& qubit_def : qubit_defs){
         if(scope_matches(qubit_def->get_scope(), Scope::EXT)){
-            num_external_qubits += qubit_def->get_size()->get_num();
+            info.n_qubits += qubit_def->get_size()->get_num();
         }
     }
 }
 
 std::shared_ptr<Resource_def> Gate::get_next_qubit_def(){
-    auto pred = [](const auto& elem){return scope_matches(elem->get_scope(), Scope::EXT);};
-    last_qubit_def = get_next_from_coll(filter<Resource_def>(qubit_defs, pred));
+    Ptr_pred_type<Resource_def> pred = [](const auto& elem){return scope_matches(elem->get_scope(), Scope::EXT) && !elem->is_used();};
+    last_qubit_def = get_next_from_coll(qubit_defs, pred);
+    last_qubit_def->set_used();
+
     return last_qubit_def;
 }
 
-std::shared_ptr<Resource_def> Gate::get_last_qubit_def(){
+std::shared_ptr<Resource_def> Gate::get_last_qubit_def() const {
     return last_qubit_def;
 }
 
-unsigned int Gate::get_num_external_qubits(){
-    return num_external_qubits;
+unsigned int Gate::get_num_external_qubits() const {
+    return info.n_qubits;
 }
 
 unsigned int Gate::get_num_external_qubit_defs() const {

@@ -94,6 +94,7 @@ std::shared_ptr<Circuit> Context::get_current_circuit() const {
 /// @brief This loop is guaranteed to stop. If this function is called, then `set_can_apply_subroutines` must've passed
 /// So you just need to return a current circuit that's not the main circuit, or the current circuit and needs <= num qubits in current circuit
 /// Qubit comparison needed because `set_can_apply_subroutines` only tells you that there's at least one circuit that can be picked
+/// TODO: maybe collection of circuits?
 /// @return
 std::shared_ptr<Circuit> Context::get_random_circuit(){
 
@@ -122,8 +123,10 @@ std::shared_ptr<Circuit> Context::get_random_circuit(){
 }
 
 std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk){
-    auto random_resource = get_random_from_coll<Resource>(get_current_circuit()->get_coll<Resource>(rk));
-
+    Ptr_pred_type<Resource> unused_pred = [](const std::shared_ptr<Resource>& elem){ return !elem->is_used(); };
+    auto random_resource = get_random_from_coll<Resource>(get_current_circuit()->get_coll<Resource>(rk), unused_pred);
+    
+    random_resource->set_used();
     random_resource->extend_flow_path(current.get<Qubit_op>(), current_port++);
 
     current.set<Resource>(random_resource);
@@ -178,8 +181,8 @@ std::shared_ptr<Subroutine_op_arg> Context::nn_subroutine_op_arg(){
     return arg;
 }
 
-std::shared_ptr<Gate> Context::nn_gate(const std::string& str, Token_kind& kind, int num_qubits, int num_bits, int num_params){
-    auto gate = std::make_shared<Gate>(str, kind, num_qubits, num_bits, num_params);
+std::shared_ptr<Gate> Context::nn_gate(const std::string& str, Token_kind& kind, unsigned int n_qubits){
+    auto gate = std::make_shared<Gate>(str, kind);
 
     current.set<Gate>(gate);
     current.get<Qubit_op>()->set_gate_node(gate);
@@ -228,8 +231,6 @@ std::shared_ptr<Compound_stmt> Context::nn_compound_stmt(){
 }
 
 std::shared_ptr<Node> Context::nn_subroutines(){
-    // unsigned int n_circuits = random_uint(control.get_value("MAX_NUM_SUBROUTINES"));
-
     std::shared_ptr<Node> node = std::make_shared<Node>("", SUBROUTINE_DEFS);
     subroutines_node = std::make_optional<std::shared_ptr<Node>>(node);
     return node;

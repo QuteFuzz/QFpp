@@ -80,8 +80,6 @@ subroutine_op_arg =
 
 # qubit_list  = qubit (", " qubit)*;
 
-# qubit_list  = qubit (", " qubit)[COUNT<EXTERNAL::qubit> - 1];
-
 # qubit_list  = qubit (", " qubit)[1];
 
 # TODO: extend term constraints feature to make this easier

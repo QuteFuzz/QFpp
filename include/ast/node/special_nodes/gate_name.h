@@ -9,8 +9,8 @@ class Gate_name : public Node {
     public:
         using Node::Node;
 
-        Gate_name(const std::shared_ptr<Node> parent, const std::shared_ptr<Circuit> current_circuit, const std::optional<Node_constraints>& swarm_testing_gateset) :
-            Node("gate_name", GATE_NAME, swarm_testing_gateset)
+        Gate_name(const std::shared_ptr<Node> parent, const std::shared_ptr<Circuit> current_circuit) :
+            Node("gate_name", GATE_NAME)
         {
 
             /*

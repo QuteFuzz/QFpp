@@ -194,7 +194,7 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 			return std::make_shared<Integer>();
 
 		case GATE_NAME:
-			return std::make_shared<Gate_name>(parent, context.get_current_circuit(), swarm_testing_gateset);
+			return std::make_shared<Gate_name>(parent, context.get_current_circuit());
 
 		case SUBROUTINE:
 			return context.nn_gate_from_subroutine();
@@ -205,31 +205,11 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 		case SUBROUTINE_OP_ARG:
 			return context.nn_subroutine_op_arg();
 
-		case H: case X: case Y: case Z: case T:
-		case TDG: case S: case SDG: case PROJECT_Z: case MEASURE_AND_RESET:
-		case V: case VDG:
-			return context.nn_gate(str, kind, 1, 0, 0);
-
-		case CX : case CY: case CZ: case CNOT: case CH: case SWAP:
-			return context.nn_gate(str, kind, 2, 0, 0);
-
-		case CRZ: case CRX: case CRY:
-			return context.nn_gate(str, kind, 2, 0, 1);
-
-		case CCX: case CSWAP: case TOFFOLI:
-			return context.nn_gate(str, kind, 3, 0, 0);
-
-		case U1: case RX: case RY: case RZ:
-			return context.nn_gate(str, kind, 1, 0, 1);
-
-		case U2: case PHASED_X:
-			return context.nn_gate(str, kind, 1, 0, 2);
-
-		case U3: case U:
-			return context.nn_gate(str, kind, 1, 0, 3);
-
-		case MEASURE:
-			return context.nn_gate(str, kind, 1, 1, 0);
+		case H: case X: case Y: case Z: case T: case TDG: case S: case SDG: case PROJECT_Z:
+		case MEASURE_AND_RESET: case V: case VDG: case CX : case CY: case CZ: case CNOT: 
+		case CH: case SWAP: case CRZ: case CRX: case CRY: case CCX: case CSWAP: case TOFFOLI:
+		case U1: case RX: case RY: case RZ: case U2: case PHASED_X: case U3: case U: case MEASURE:
+			return context.nn_gate(str, kind);
 
 		case BARRIER: {
 			std::shared_ptr<Circuit> current_circuit = context.get_current_circuit();
@@ -238,7 +218,7 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 			unsigned int n_qubits = std::min(QuteFuzz::WILDCARD_MAX, num_qubits);
 			unsigned int random_barrier_width = random_uint(n_qubits, 1);
 
-			return context.nn_gate(str, kind, random_barrier_width, 0, 0);
+			return context.nn_gate(str, kind, random_barrier_width);
 		}
 
 		case GATE_OP_ARGS:
@@ -259,66 +239,47 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 		throw std::runtime_error(ANNOT("Recursion limit reached when writing branch for term: " + parent->get_content()));
 	}
 
-	std::cout << "parent node: " << parent->get_name() << std::endl;
-	std::cout << "term: " << term << std::endl;
+	// std::cout << "parent node: " << parent->get_name() << std::endl;
+	// std::cout << "term: " << term << std::endl;
+	root->print_ast("");
 	getchar();
-
-	Term_constraint constraint;
-	unsigned int count;
 
 	if(term.is_rule()){
 
 		Branch branch = term.get_rule()->pick_branch(parent);
 
 		for(const Term& child_term : branch){
-			/*
-				`Term_constraint` tells us the number of nodes of the term that should be produced, so we use that here
-			*/
-			constraint = child_term.get_constaint();
-
-			if(constraint.is_empty()){
-				count = 1;
-			
-			} else if(std::holds_alternative<unsigned int>(constraint.value)){
-				count = std::get<unsigned int>(constraint.value);
-			
-			} else {
-				std::cout << child_term << std::endl;
-				throw std::runtime_error("Countable term constraints not supported");
-			}
+			Term_constraint constraint = child_term.get_constaint();
+			Range r = constraint.resolve();
 
 			// add as many children to the parent node as specified by the term constraint
 			// then use the term to get the next branch to write, where this new child node is the parent
-			for (unsigned int i = 0; i < count; i++){
+			for (unsigned int i = r.min; i <= r.max; i++){
 				auto child_node = get_child_node(parent, child_term);
 
 				parent->add_child(child_node);
 				term_branch_to_child_nodes(child_node, child_term, depth + 1);
-			}
-		}
+			}		}
 	}
 
 	// done
 	parent->transition_to_done();
 }
 
-Result<Node> Ast::build(const std::optional<Node_constraints>& _swarm_testing_gateset, const Control& control){
+Result<Node> Ast::build(const Control& control){
 	Result<Node> res;
 
 	if(entry == nullptr){
 		res.set_error("Entry point not set");
 
 	} else {
-		swarm_testing_gateset = _swarm_testing_gateset;
-
 		context.set_control(control);
 		context.reset(RL_PROGRAM);
 
 		Token_kind entry_token_kind = entry->get_token().kind;
 		Term entry_term(entry, entry_token_kind, Meta_func::NONE);
 
-		root = std::make_shared<Node>(entry->get_name(), entry_token_kind);
-
+		root = get_child_node(std::make_shared<Node>("", RULE), entry_term); // need this call such that the entry node also calls the factory function
 		term_branch_to_child_nodes(root, entry_term);
 
 		std::shared_ptr<Circuit> main_circuit_circuit = context.get_current_circuit();
