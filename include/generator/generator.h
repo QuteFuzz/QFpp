@@ -62,10 +62,7 @@ struct Generator {
         std::string entry_name;
         Scope entry_scope;
 
-        int n_epochs = 100;
-        float elitism = 0.2;
-
-        std::vector<Genome> population;
+        // std::vector<Genome> population;
 };
 
 

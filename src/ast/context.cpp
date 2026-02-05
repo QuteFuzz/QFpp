@@ -127,7 +127,7 @@ std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk){
     auto random_resource = get_random_from_coll<Resource>(get_current_circuit()->get_coll<Resource>(rk), unused_pred);
     
     random_resource->set_used();
-    random_resource->extend_flow_path(current.get<Qubit_op>(), current_port++);
+    // random_resource->extend_flow_path(current.get<Qubit_op>(), current_port++);
 
     current.set<Resource>(random_resource);
     return random_resource;
@@ -175,14 +175,8 @@ std::shared_ptr<Circuit> Context::nn_circuit(){
     return current_circuit;
 }
 
-std::shared_ptr<Subroutine_op_arg> Context::nn_subroutine_op_arg(){
-    auto arg = std::make_shared<Subroutine_op_arg>(current.get<Gate>()->get_next_qubit_def());
-    current.set<Subroutine_op_arg>(arg);
-    return arg;
-}
-
-std::shared_ptr<Gate> Context::nn_gate(const std::string& str, Token_kind& kind, unsigned int n_qubits){
-    auto gate = std::make_shared<Gate>(str, kind, n_qubits);
+std::shared_ptr<Gate> Context::nn_gate(const std::string& str, Token_kind& kind){
+    auto gate = std::make_shared<Gate>(str, kind);
 
     current.set<Gate>(gate);
     current.get<Qubit_op>()->set_gate_node(gate);
@@ -260,9 +254,14 @@ std::shared_ptr<Node> Context::nn_next(Node& ast_root, const Token_kind& kind){
 }
 
 unsigned int Context::operator()(Token_kind kind) const {
+    auto gate = get_current_node<Gate>();
+    
     if (kind == NUM_QUBITS) {
-        auto gate = get_current_node<Gate>();
         return gate->get_num_external_qubits();
+    } else if (kind == NUM_BITS) {
+        return gate->get_num_external_bits();
+    } else if (kind == NUM_FLOATS) {
+        return gate->get_num_floats();
     }
 
     return 0;

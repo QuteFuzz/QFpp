@@ -12,11 +12,7 @@
 #include <circuit.h>
 #include <gate.h>
 #include <float_literal.h>
-#include <float_list.h>
-#include <resource_list.h>
-#include <subroutine_op_args.h>
 #include <qubit_op.h>
-#include <gate_op_args.h>
 #include <compound_stmt.h>
 #include <resource.h>
 #include <disjunction.h>
@@ -41,13 +37,6 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 
 	if(parent == nullptr){
 		throw std::runtime_error(ANNOT("Node must have a parent!"));
-	}
-
-	/**
-	* 			SYNTAX TERM
-	*/
-	if(term.is_syntax()){
-		return std::make_shared<Node>(term.get_syntax());
 	}
 
 	/**
@@ -77,6 +66,9 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 	* 			OTHER RULES
 	*/
 	switch(kind){
+
+		case SYNTAX:
+			return std::make_shared<Node>(str);
 
 		case NAME:
 			return parent->get_name();
@@ -141,31 +133,6 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 		case CIRCUIT_NAME:
 			return std::make_shared<Variable>(context.get_current_circuit()->get_owner());
 
-
-		/// TODO: make these lists use the term constraint feature 
-		case QUBIT_LIST: {
-			auto current_gate = context.get_current_node<Gate>();
-
-			unsigned int num_qubits;
-
-			if(*parent == SUBROUTINE_OP_ARG){
-				num_qubits = current_gate->get_last_qubit_def()->get_size()->get_num();
-			} else {
-				num_qubits = current_gate->get_num_external_qubits();
-			}
-
-			// context.reset(RL_QUBIT_OP);
-
-			return std::make_shared<Qubit_list>(num_qubits);
-		}
-
-		case BIT_LIST:
-			// context.reset(RL_QUBIT_OP);
-			return std::make_shared<Bit_list>(context.get_current_node<Gate>()->get_num_external_bits());
-
-		case FLOAT_LIST:
-			return std::make_shared<Float_list>(context.get_current_node<Gate>()->get_num_floats());
-
 		case QUBIT:
 			return context.get_random_resource(Resource_kind::QUBIT);
 			
@@ -196,36 +163,17 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 		case INTEGER:
 			return std::make_shared<Integer>();
 
-		case GATE_NAME:
-			return std::make_shared<Gate_name>(parent, context.get_current_circuit());
-
 		case SUBROUTINE:
 			return context.nn_gate_from_subroutine();
 
-		case SUBROUTINE_OP_ARGS:
-			return std::make_shared<Subroutine_op_args>(context.get_current_node<Gate>()->get_num_external_qubit_defs());
-
-		case SUBROUTINE_OP_ARG:
-			return context.nn_subroutine_op_arg();
+		case GATE_NAME:
+			return std::make_shared<Gate_name>(context.get_current_circuit());
 
 		case H: case X: case Y: case Z: case T: case TDG: case S: case SDG: case PROJECT_Z:
 		case MEASURE_AND_RESET: case V: case VDG: case CX : case CY: case CZ: case CNOT: 
 		case CH: case SWAP: case CRZ: case CRX: case CRY: case CCX: case CSWAP: case TOFFOLI:
 		case U1: case RX: case RY: case RZ: case U2: case PHASED_X: case U3: case U: case MEASURE:
 			return context.nn_gate(str, kind);
-
-		case BARRIER: {
-			std::shared_ptr<Circuit> current_circuit = context.get_current_circuit();
-			unsigned int num_qubits = current_circuit->get_coll<Resource>(Resource_kind::QUBIT).size();
-
-			unsigned int n_qubits = std::min(QuteFuzz::WILDCARD_MAX, num_qubits);
-			unsigned int random_barrier_width = random_uint(n_qubits, 1);
-
-			return context.nn_gate(str, kind, random_barrier_width);
-		}
-
-		case GATE_OP_ARGS:
-			return std::make_shared<Gate_op_args>(context.get_current_node<Gate>());
 
 		case PARAMETER_DEF:
 			return context.nn_parameter_def();
@@ -244,8 +192,8 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 
 	// std::cout << "parent node: " << parent->get_name() << std::endl;
 	// std::cout << "term: " << term << std::endl;
-	root->print_ast("");
-	getchar();
+	// root->print_ast("");
+	// getchar();
 
 	if(term.is_rule()){
 
@@ -287,7 +235,7 @@ Result<Node> Ast::build(const Control& control){
 		term_branch_to_child_nodes(root, entry_term);
 
 		std::shared_ptr<Circuit> main_circuit_circuit = context.get_current_circuit();
-		dag = std::make_shared<Dag>(main_circuit_circuit);
+		// dag = std::make_shared<Dag>(main_circuit_circuit);
 
 		// context.print_circuit_info();
 
@@ -297,6 +245,6 @@ Result<Node> Ast::build(const Control& control){
 	return res;
 }
 
-Genome Ast::genome(){
-	return Genome{.dag = *dag, .dag_score = dag->score()};
-}
+// Genome Ast::genome(){
+// 	return Genome{.dag = *dag, .dag_score = dag->score()};
+// }

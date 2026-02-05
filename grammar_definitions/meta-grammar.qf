@@ -11,6 +11,9 @@
     - all rules have scope GLOBAL by default
 *)
 
+# TODO: extend term constraints to allow passing subroutine op args properly in qiskit
+# for now i limit all external qubit and bit defs to singular definitions
+
 # default config
 EXTENSION = ".py";
 MIN_NUM_QUBITS = 3;
@@ -31,12 +34,18 @@ INTERNAL {
 }
 
 EXTERNAL {
-    qubit_def = singular_qubit_def | register_qubit_def;
+    # qubit_def = singular_qubit_def | register_qubit_def;
 
-    bit_def = singular_bit_def | register_bit_def;
+    qubit_def = singular_qubit_def;
+
+    # bit_def = singular_bit_def | register_bit_def;
+
+    bit_def = singular_bit_def;
 }
 
-program       = imports NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;
+# program       = imports NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;
+
+program       = imports NEWLINE circuit NEWLINE program_footer;
 
 program_footer = compiler_call;
 
@@ -65,39 +74,46 @@ gate_name = h
     | cz
     | ccx;
 
+# # TODO: figure this out
+# gate_op_args = qubit_list
+#     | qubit_list ", " bit_list
+#     | float_list ", " qubit_list
+#     ;
 
 gate_op_args = qubit_list
-    | qubit_list ", " bit_list
-    | float_list ", " qubit_list
-    ;
+    (float_literal ", ") [NUM_FLOATS] qubit_list (bit ",") [NUM_BITS];
 
-subroutine_op_args = subroutine_op_arg ("," subroutine_op_arg)*;
+# TODO: think about this for qiskit, for now i've made all qubit definitions singular
+# subroutine_op_arg =
+#     qubit
+#     | "[" qubit_list "]"
+#     ;
 
-subroutine_op_arg =
-    qubit
-    | "[" qubit_list "]"
-    ;
+
+subroutine_op_args = qubit_list;
 
 # qubit_list  = qubit (", " qubit)*;
 
 # qubit_list  = qubit (", " qubit)[1];
 
-# TODO: extend term constraints feature to make this easier
 # qubit_list = qubit | qubit ", " qubit | qubit ", " qubit ", " qubit;
 
 qubit_list = qubit (", " qubit)[NUM_QUBITS - 1];
 
 float_literal = FLOAT;
 
-# TODO: extend term constraints feature to make this easier
-float_list = float_literal | float_literal ", " float_literal | float_literal ", " float_literal ", " float_literal;
+# float_list = float_literal | float_literal ", " float_literal | float_literal ", " float_literal ", " float_literal;
+
+float_list = float_literal  (", " float_literal)[NUM_FLOATS - 1];
 
 qubit =
     singular_qubit
     | register_qubit
     ;
 
-bit_list = bit (", " bit)*;
+# bit_list = bit (", " bit)*;
+
+bit_list = bit (", " bit)[NUM_BITS - 1];
 
 bit = singular_bit
     | register_bit

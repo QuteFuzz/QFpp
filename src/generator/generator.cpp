@@ -65,7 +65,7 @@ void Generator::ast_to_program(fs::path output_dir, const Control& control, unsi
         }
 
         if (control.render) {
-            builder->render_dag(output_dir);
+            // builder->render_dag(output_dir);
             builder->render_ast(output_dir);
         }
 

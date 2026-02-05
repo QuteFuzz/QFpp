@@ -10,7 +10,7 @@
 #include <dag.h>
 #include <supported_gates.h>
 
-struct Genome;
+// struct Genome;
 
 class Ast{
     public:
@@ -30,16 +30,16 @@ class Ast{
 
         Result<Node> build(const Control& control);
 
-        Genome genome();
+        // Genome genome();
 
         inline void print_ast(){
             root->print_ast("");
         }
 
-        inline void render_dag(const fs::path& current_circuit_dir){
-            render([dag = dag](std::ostringstream& dot_string){dag->extend_dot_string(dot_string);},
-                current_circuit_dir / "dag.png");
-        }
+        // inline void render_dag(const fs::path& current_circuit_dir){
+        //     render([dag = dag](std::ostringstream& dot_string){dag->extend_dot_string(dot_string);},
+        //         current_circuit_dir / "dag.png");
+        // }
 
         inline void render_ast(const fs::path& current_circuit_dir){
             render([root = root](std::ostringstream& dot_string){root->extend_dot_string(dot_string);},
@@ -50,7 +50,7 @@ class Ast{
         std::shared_ptr<Rule> entry = nullptr;
         std::shared_ptr<Node> dummy = std::make_shared<Node>("");
         std::shared_ptr<Node> root;
-        std::shared_ptr<Dag> dag;
+        // std::shared_ptr<Dag> dag;
         std::vector<Gate_info> gateset;
         Context context;
 };

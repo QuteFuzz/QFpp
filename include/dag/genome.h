@@ -1,11 +1,11 @@
-#ifndef GENOME_H
-#define GENOME_H
+// #ifndef GENOME_H
+// #define GENOME_H
 
-#include <dag.h>
+// #include <dag.h>
 
-struct Genome {
-    Dag dag;
-    int dag_score;
-};
+// struct Genome {
+//     Dag dag;
+//     int dag_score;
+// };
 
-#endif
+// #endif

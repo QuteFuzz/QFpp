@@ -2,6 +2,7 @@
 #include <resource.h>
 #include <float_literal.h>
 #include <ast_utils.h>
+#include <qubit_op.h>
 
 bool stmt_is_qubit_op(const std::shared_ptr<Node>& compound_stmt){
     return *compound_stmt->child_at(0) == QUBIT_OP;
