@@ -51,6 +51,7 @@ class Node : public std::enable_shared_from_this<Node> {
             str(other.str),
             kind(other.kind),
             indentation_str(other.indentation_str),
+            children(other.children),
             constraints(other.constraints)
         {
             id = node_counter++;
@@ -130,6 +131,10 @@ class Node : public std::enable_shared_from_this<Node> {
 
         std::vector<std::shared_ptr<Node>> get_children() const {
             return children;
+        }
+
+        inline void clear_children(){
+            children.clear();
         }
 
         inline std::shared_ptr<Node> child_at(size_t index) const {

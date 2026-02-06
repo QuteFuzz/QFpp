@@ -87,7 +87,11 @@ class Resource_def : public Node {
             }, value);
         }
 
-
+        std::shared_ptr<Resource_def> clone() const {
+            auto new_node = std::make_shared<Resource_def>(*this);
+            new_node->clear_children();
+            return std::make_shared<Resource_def>(*new_node);
+        }
 
     private:
         std::variant<Register_resource_def, Singular_resource_def> value;

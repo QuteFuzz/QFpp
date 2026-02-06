@@ -110,6 +110,12 @@ class Resource : public Node {
             }
         }
 
+        std::shared_ptr<Resource> clone() const {
+            auto new_node = std::make_shared<Resource>(*this);
+            new_node->clear_children();
+            return std::make_shared<Resource>(*new_node);
+        }
+
         // void extend_flow_path(const std::shared_ptr<Qubit_op> qubit_op, unsigned int current_port);
 
         // void extend_dot_string(std::ostringstream& ss) const;

@@ -139,43 +139,29 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 			return context.nn_qubit_op();
 
 		/*
-			create new node pointer to prevent modification of resources in circuit collection
+			create new node pointer to prevent modification of resources / resource defs in circuit collection
 		*/
-		case QUBIT: {
-			auto original = context.get_random_resource(Resource_kind::QUBIT);
-			return std::make_shared<Resource>(*original);
-		}
+		case QUBIT:
+			return context.get_random_resource(Resource_kind::QUBIT)->clone();
+		
+		case BIT:
+			return context.get_random_resource(Resource_kind::BIT)->clone();
 
-		case BIT: {
-			auto original = context.get_random_resource(Resource_kind::BIT);
-			return std::make_shared<Resource>(*original);
-		}
-
-		case REGISTER_QUBIT: case REGISTER_BIT: case SINGULAR_QUBIT: case SINGULAR_BIT: {
+		case REGISTER_QUBIT: case REGISTER_BIT: case SINGULAR_QUBIT: case SINGULAR_BIT:
 			parent->remove_constraints(); // parent is one of the nodes above, remove constraints as just used to reach here
-			auto resource_node = std::dynamic_pointer_cast<Resource>(parent);
-			return std::make_shared<Resource>(*resource_node);
-		}
+			return std::dynamic_pointer_cast<Resource>(parent)->clone();
 
-		case REGISTER_QUBIT_DEF: {
-			auto original = context.nn_register_resource_def(scope, Resource_kind::QUBIT); 
-			return std::make_shared<Resource_def>(*original);
-		}
+		case REGISTER_QUBIT_DEF:
+			return context.nn_register_resource_def(scope, Resource_kind::QUBIT)->clone();
 
-		case REGISTER_BIT_DEF:{
-			auto original = context.nn_register_resource_def(scope, Resource_kind::BIT); 
-			return std::make_shared<Resource_def>(*original);
-		}
+		case REGISTER_BIT_DEF:
+			return context.nn_register_resource_def(scope, Resource_kind::BIT)->clone(); 
 
-		case SINGULAR_QUBIT_DEF:{
-			auto original = context.nn_singular_resource_def(scope, Resource_kind::QUBIT); 
-			return std::make_shared<Resource_def>(*original);
-		}
+		case SINGULAR_QUBIT_DEF:
+			return context.nn_singular_resource_def(scope, Resource_kind::QUBIT)->clone(); 
 
-		case SINGULAR_BIT_DEF:{
-			auto original = context.nn_singular_resource_def(scope, Resource_kind::BIT); 
-			return std::make_shared<Resource_def>(*original);
-		}
+		case SINGULAR_BIT_DEF:
+			return context.nn_singular_resource_def(scope, Resource_kind::BIT)->clone(); 
 
 		case SUBROUTINE:
 			return context.nn_gate_from_subroutine();
@@ -254,11 +240,6 @@ Result<Node> Ast::build(){
 
 		root = get_child_node(std::make_shared<Node>("", RULE), entry_term); // need this call such that the entry node also calls the factory function
 		term_branch_to_child_nodes(root, entry_term);
-
-		// root->print_ast("");
-
-		std::shared_ptr<Circuit> main_circuit_circuit = context.get_current_circuit();
-		// dag = std::make_shared<Dag>(main_circuit_circuit);
 
 		context.print_circuit_info();
 
