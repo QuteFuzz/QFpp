@@ -12,13 +12,13 @@ class Register_resource_def {
 
         Register_resource_def(){}
 
-        Register_resource_def(const Name& _name, const UInt& _size):
+        Register_resource_def(const Variable& _name, const UInt& _size):
             name(_name),
             size(_size)
         {}
 
-        std::shared_ptr<Name> get_name() const {
-            return std::make_shared<Name>(name);
+        std::shared_ptr<Variable> get_name() const {
+            return std::make_shared<Variable>(name);
         }
 
         std::shared_ptr<UInt> get_size() const {
@@ -44,7 +44,7 @@ class Register_resource_def {
         // }
 
     protected:
-        Name name;
+        Variable name;
         UInt size;
         bool used = false;
 };

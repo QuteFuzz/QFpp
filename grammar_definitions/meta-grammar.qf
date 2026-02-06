@@ -76,8 +76,7 @@ gate_name = h
 #     | float_list ", " qubit_list
 #     ;
 
-gate_op_args = qubit_list
-    (float_literal ", ") [NUM_FLOATS] qubit_list (bit ",") [NUM_BITS];
+gate_op_args = (float_literal ", ") [NUM_FLOATS] qubit_list (bit ",") [NUM_BITS];
 
 # TODO: think about this for qiskit, for now i've made all qubit definitions singular
 # subroutine_op_arg =

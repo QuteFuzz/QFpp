@@ -33,8 +33,8 @@ class Resource_def : public Node {
 
         Resource_kind get_kind() const { return kind; }
 
-        inline std::shared_ptr<Name> get_name() const override {
-            return std::visit([](auto&& val) -> std::shared_ptr<Name> {
+        inline std::shared_ptr<Variable> get_name() const override {
+            return std::visit([](auto&& val) -> std::shared_ptr<Variable> {
                 return val.get_name();
             }, value);
         }
@@ -73,7 +73,7 @@ class Resource_def : public Node {
         }
 
         friend std::ostream& operator<<(std::ostream& stream, const Resource_def& rd){
-            stream << rd.resolved_name() << STR_SCOPE(rd.scope) << (rd.kind == Resource_kind::QUBIT ? " QUBIT " : " BIT ");
+            stream << rd.resolved_name() << " " << STR_SCOPE(rd.scope) << (rd.kind == Resource_kind::QUBIT ? " QUBIT " : " BIT ");
             return stream;
         }
 

@@ -10,12 +10,12 @@ class Singular_resource_def {
 
         Singular_resource_def(){}
 
-        Singular_resource_def(const Name& _name) :
+        Singular_resource_def(const Variable& _name) :
             name(_name)
         {}
 
-        std::shared_ptr<Name> get_name() const {
-            return std::make_shared<Name>(name);
+        std::shared_ptr<Variable> get_name() const {
+            return std::make_shared<Variable>(name);
         }
 
         void reset(){used = false;}
@@ -30,7 +30,7 @@ class Singular_resource_def {
         // }
 
     protected:
-        Name name;
+        Variable name;
         bool used = false;
 
 };

@@ -21,7 +21,7 @@
 #include <expression.h>
 #include <gate_name.h>
 #include <parameter_def.h>
-#include <name.h>
+#include <variable.h>
 
 std::string Node::indentation_tracker = "";
 
@@ -240,7 +240,7 @@ Result<Node> Ast::build(const Control& control){
 		std::shared_ptr<Circuit> main_circuit_circuit = context.get_current_circuit();
 		// dag = std::make_shared<Dag>(main_circuit_circuit);
 
-		// context.print_circuit_info();
+		context.print_circuit_info();
 
 		res.set_ok(*root);
 	}

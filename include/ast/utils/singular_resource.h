@@ -1,13 +1,13 @@
 #ifndef SINGULAR_RESOURCE_H
 #define SINGULAR_RESOURCE_H
 
-#include <name.h>
+#include <variable.h>
 
 class Singular_resource : public Node {
     public:
         Singular_resource(){}
 
-        Singular_resource(const Name& _name) :
+        Singular_resource(const Variable& _name) :
             name(_name)
         {}
 
@@ -17,12 +17,12 @@ class Singular_resource : public Node {
 
         bool is_used(){return used;}
 
-        inline std::shared_ptr<Name> get_name() const {
-            return std::make_shared<Name>(name);
+        inline std::shared_ptr<Variable> get_name() const {
+            return std::make_shared<Variable>(name);
         }
 
     private:
-        Name name;
+        Variable name;
         bool used = false;
 };
 

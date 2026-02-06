@@ -1,7 +1,7 @@
 #ifndef REGISTER_RESOURCE_H
 #define REGISTER_RESOURCE_H
 
-#include <name.h>
+#include <variable.h>
 #include <uint.h>
 
 class Register_resource {
@@ -10,7 +10,7 @@ class Register_resource {
 
         Register_resource(){}
 
-        Register_resource(const Name& _name, const UInt& _index) :
+        Register_resource(const Variable& _name, const UInt& _index) :
             name(_name),
             index(_index)
         {}
@@ -21,8 +21,8 @@ class Register_resource {
 
         bool is_used(){return used;}
 
-        inline std::shared_ptr<Name> get_name() const {
-            return std::make_shared<Name>(name);
+        inline std::shared_ptr<Variable> get_name() const {
+            return std::make_shared<Variable>(name);
         }
 
         inline std::shared_ptr<UInt> get_index() const {
@@ -30,7 +30,7 @@ class Register_resource {
         }
 
     private:
-        Name name;
+        Variable name;
         UInt index;
         bool used = false;
 };

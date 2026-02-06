@@ -17,7 +17,7 @@ enum Node_kind {
 };
 
 class UInt;
-class Name;
+class Variable;
 class Branch;
 
 /// @brief A node is a term with pointers to other nodes
@@ -186,7 +186,7 @@ class Node : public std::enable_shared_from_this<Node> {
 
         virtual unsigned int get_n_ports() const {return 1;}
 
-        virtual std::shared_ptr<Name> get_name() const;
+        virtual std::shared_ptr<Variable> get_name() const;
 
         virtual std::shared_ptr<UInt> get_size(unsigned int default_size = 1) const;
 

@@ -1,7 +1,7 @@
 #include <context.h>
 #include <generator.h>
 #include <params.h>
-#include <name.h>
+#include <variable.h>
 
 int Context::ast_counter = -1;
 
@@ -52,14 +52,14 @@ bool Context::can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit){
     auto current_circuit_bits = current_circuit->get_coll<Resource>(Resource_kind::BIT);
     auto dest_circuit_bits = circuit->get_coll<Resource>(Resource_kind::BIT);
 
-    unsigned int num_dest_qubits = filter<Resource>(dest_circuit_qubits, ext_scope_pred).size();
-    unsigned int num_dest_bits = filter<Resource>(dest_circuit_bits, ext_scope_pred).size();
+    unsigned int num_required_qubits = filter<Resource>(dest_circuit_qubits, ext_scope_pred).size();
+    unsigned int num_required_bits = filter<Resource>(dest_circuit_bits, ext_scope_pred).size();
 
-    unsigned int num_circuit_qubits = current_circuit_qubits.size();
-    unsigned int num_circuit_bits = current_circuit_bits.size();
+    unsigned int num_qubits_in_circuit = current_circuit_qubits.size();
+    unsigned int num_bits_in_circuit = current_circuit_bits.size();
 
-    bool has_enough_qubits = (num_circuit_qubits >= 1 && num_circuit_qubits <= num_dest_qubits);
-    bool has_enough_bits = num_circuit_bits <= num_dest_bits;
+    bool has_enough_qubits = num_qubits_in_circuit >= 1 && num_qubits_in_circuit >= num_required_qubits;
+    bool has_enough_bits = num_bits_in_circuit >= 1 && num_bits_in_circuit >= num_required_bits;
 
     return has_enough_qubits && has_enough_bits;
 }
@@ -136,7 +136,7 @@ std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk){
 std::shared_ptr<Resource_def> Context::nn_register_resource_def(Scope& scope, Resource_kind rk){
     std::shared_ptr<Resource_def> def;
 
-    auto reg_def = Register_resource_def(Name(), UInt(random_uint(control.get_value("MAX_REG_SIZE"), 1)));
+    auto reg_def = Register_resource_def(Variable(), UInt(random_uint(control.get_value("MAX_REG_SIZE"), 1)));
     def = std::make_shared<Resource_def>(reg_def, scope, rk);
 
     current.set<Resource_def>(def);
@@ -148,7 +148,7 @@ std::shared_ptr<Resource_def> Context::nn_register_resource_def(Scope& scope, Re
 std::shared_ptr<Resource_def> Context::nn_singular_resource_def(Scope& scope, Resource_kind rk){
     std::shared_ptr<Resource_def> def;
 
-    auto sing_def = Singular_resource_def(Name());
+    auto sing_def = Singular_resource_def(Variable());
     def = std::make_shared<Resource_def>(sing_def, scope, rk);
 
     current.set<Resource_def>(def);
@@ -171,8 +171,6 @@ std::shared_ptr<Circuit> Context::nn_circuit(){
     }
 
     circuits.push_back(current_circuit);
-
-    current_circuit->print_info();
 
     return current_circuit;
 }

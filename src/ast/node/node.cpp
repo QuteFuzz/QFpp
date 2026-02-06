@@ -1,6 +1,6 @@
 #include <node.h>
 #include <uint.h>
-#include <name.h>
+#include <variable.h>
 
 int Node::node_counter = 0;
 
@@ -162,8 +162,8 @@ void Node::make_control_flow_partition(int target, int n_children){
     }
 }
 
-std::shared_ptr<Name> Node::get_name() const {
-    return std::make_shared<Name>();
+std::shared_ptr<Variable> Node::get_name() const {
+    return std::make_shared<Variable>();
 }
 
 std::shared_ptr<UInt> Node::get_size(unsigned int default_size) const {
