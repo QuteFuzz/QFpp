@@ -36,7 +36,7 @@ class Branch {
             unsigned int out = 0;
 
             for(const Term& term : terms){
-                out += (term.is_rule()) && (term.get_kind() == kind);
+                out += (term.is_rule()) && (term.get_node_kind() == kind);
             }
 
             return out;

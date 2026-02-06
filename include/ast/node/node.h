@@ -66,7 +66,7 @@ class Node : public std::enable_shared_from_this<Node> {
 
         std::string get_str() const;
 
-        Token_kind get_kind() const {
+        Token_kind get_node_kind() const {
             return kind;
         }
 
@@ -100,20 +100,17 @@ class Node : public std::enable_shared_from_this<Node> {
             return res;
         }
 
-        virtual void print(std::ostream& stream) const {
+        /// Used to print the program
+        virtual void print_program(std::ostream& stream) const {
             if(kind == SYNTAX){
                 stream << str;
             } else {
 
                 for(const std::shared_ptr<Node>& child : children){
-                    stream << indentation_str << *child;
+                    stream << indentation_str; 
+                    child->print_program(stream);
                 }
             }
-        }
-
-        friend std::ostream& operator<<(std::ostream& stream, const Node& n) {
-            n.print(stream);
-            return stream;
         }
 
         void print_ast(std::string indent) const;

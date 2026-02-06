@@ -33,7 +33,7 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 	Meta_func meta_func = term.get_meta_func();
 
 	std::string str = term.get_string();
-	Token_kind kind = term.get_kind();
+	Token_kind kind = term.get_node_kind();
 
 	if(parent == nullptr){
 		throw std::runtime_error(ANNOT("Node must have a parent!"));

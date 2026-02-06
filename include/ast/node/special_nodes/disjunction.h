@@ -16,9 +16,10 @@ class Disjunction : public Node {
             add_constraint(CONJUNCTION, 2);
         }
 
-        void print(std::ostream& stream) const override {
+        void print_program(std::ostream& stream) const override {
             for(const std::shared_ptr<Node>& child : children){
-                stream << *child << " ";
+                child->print_program(stream); 
+                stream << " ";
             }
         }
 

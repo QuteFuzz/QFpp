@@ -87,14 +87,14 @@ class Circuit : public Node {
 
         template <typename T>
         inline Ptr_coll<T> get_coll(Resource_kind rk) const {
-            auto pred = [&rk](const auto& elem){ return elem->get_kind() == rk; };
+            auto pred = [&rk](const auto& elem){ return elem->get_resource_kind() == rk; };
             return filter<T>(get_coll<T>(), pred);
         }
 
         void store_resource_def(std::shared_ptr<Resource_def> def){
             auto name = def->get_name();
             auto scope = def->get_scope();
-            auto rk = def->get_kind();
+            auto rk = def->get_resource_kind();
 
             std::shared_ptr<Resource> resource;
 

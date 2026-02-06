@@ -73,7 +73,7 @@ std::string Grammar::dig_to_syntax(const std::string& rule_name) const {
         auto terms = branches[0].get_terms();
 
         if(terms.size() == 1){
-            if(is_kind_of_rule(terms[0].get_kind())){
+            if(is_kind_of_rule(terms[0].get_node_kind())){
                 return dig_to_syntax(terms[0].get_string());
             } else {
                 return terms[0].get_syntax();

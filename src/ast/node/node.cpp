@@ -21,7 +21,7 @@ std::shared_ptr<Node>* Node::find_slot(Token_kind node_kind, std::vector<std::sh
     std::shared_ptr<Node>* maybe_find;
 
     for(std::shared_ptr<Node>& child : children){
-        if((child->get_kind() == node_kind) && !visited(visited_slots, &child, track_visited)){
+        if((child->get_node_kind() == node_kind) && !visited(visited_slots, &child, track_visited)){
             return &child;
         }
 
@@ -56,7 +56,7 @@ void Node::print_ast(std::string indent) const {
 void Node::extend_dot_string(std::ostringstream& ss) const {
 
     for(const std::shared_ptr<Node>& child : children){
-        if(child->get_kind() != SYNTAX){
+        if(child->get_node_kind() != SYNTAX){
             int child_id = child->get_id();
 
             ss << "  " << id << " [label=\"" << get_str() << "\"];" << std::endl;

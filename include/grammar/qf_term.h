@@ -44,7 +44,7 @@ class Term {
 
         bool operator==(const Term& other) const;
 
-        Token_kind get_kind() const {return kind;}
+        Token_kind get_node_kind() const {return kind;}
 
     private:
         std::variant<std::shared_ptr<Rule>, std::string> value;

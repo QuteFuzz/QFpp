@@ -12,13 +12,14 @@ void Circuit::print_info() const {
     std::cout << "Resources " << std::endl;
 
     for(const auto& r : resources){
-        std::cout << *r << std::endl;
+        std::cout << r->resolved_name() << " " << STR_SCOPE(r->get_scope()) << STR_RESOURCE_KIND(r->get_resource_kind()) << std::endl;
     }
 
     std::cout << "Resource defs" << std::endl;
 
     for(const auto& rd : resource_defs){
-        std::cout << *rd << std::endl;
+        std::cout << rd->resolved_name() << " " << STR_SCOPE(rd->get_scope()) << STR_RESOURCE_KIND(rd->get_resource_kind()) << std::endl;
     }
+    
     std::cout << "=======================================" << std::endl;
 }

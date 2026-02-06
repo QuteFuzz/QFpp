@@ -15,11 +15,11 @@ class Expression : public Node {
             Node("expression", EXPRESSION)
         {}
 
-        void print(std::ostream& stream) const override {
+        void print_program(std::ostream& stream) const override {
             stream << " ";
 
             for(const std::shared_ptr<Node>& child : children){
-                stream << *child;
+                child->print_program(stream);
             }
         }
 

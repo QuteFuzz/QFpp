@@ -33,13 +33,13 @@ class Nested_stmt: public Node {
             Node(str, kind, indentation_tracker)
         {}
 
-        void print(std::ostream& stream) const override {
+        void print_program(std::ostream& stream) const override {
             // stream << indentation_str;
 
             if (kind != IF_STMT) stream << indentation_str;
 
             for(const std::shared_ptr<Node>& child : children){
-                stream << *child;
+                child->print_program(stream);
             }
         }
 

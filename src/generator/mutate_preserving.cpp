@@ -30,7 +30,7 @@ bool diagonal_in_same_basis(const std::shared_ptr<Node>& compound_stmt_a, const 
         // qubit_b->print_ast("");
 
         if (gates_found && qubits_match){
-            return (basis.count(gate_a->get_kind()) && basis.count(gate_b->get_kind()));
+            return (basis.count(gate_a->get_node_kind()) && basis.count(gate_b->get_node_kind()));
         } else {
             return false;
         }

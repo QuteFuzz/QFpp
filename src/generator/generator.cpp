@@ -43,7 +43,7 @@ void Generator::ast_to_program(fs::path output_dir, const Control& control, unsi
     if(maybe_ast_root.is_ok()){
         Node ast_root = maybe_ast_root.get_ok();
 
-        stream << ast_root << std::endl;
+        ast_root.print_program(stream);
         stream.close();
 
         if(control.run_mutate){
@@ -51,8 +51,8 @@ void Generator::ast_to_program(fs::path output_dir, const Control& control, unsi
 
             stream = get_stream(equi_dir, "equi_prog0" + control.ext);
 
-            Node ast_root_p = build_equivalent(ast_root);
-            stream << ast_root_p << std::endl;
+            Node ast_root = build_equivalent(ast_root);
+            ast_root.print_program(stream);
             stream.close();
         }
 

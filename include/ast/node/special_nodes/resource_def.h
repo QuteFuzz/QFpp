@@ -31,7 +31,7 @@ class Resource_def : public Node {
 
         Scope get_scope() const { return scope; }
 
-        Resource_kind get_kind() const { return kind; }
+        Resource_kind get_resource_kind() const { return kind; }
 
         inline std::shared_ptr<Variable> get_name() const override {
             return std::visit([](auto&& val) -> std::shared_ptr<Variable> {
@@ -43,13 +43,7 @@ class Resource_def : public Node {
         /// @param default_size
         /// @return
         inline std::shared_ptr<UInt> get_size(unsigned int default_size = 1) const override {
-            if(is_register_def()){
-                return std::get<Register_resource_def>(value).get_size();
-            }
-
-            WARNING("Singular resource definitions do not have sizes! Using default size = " + default_size);
-
-            return std::make_shared<UInt>(default_size);
+            return std::get<Register_resource_def>(value).get_size();
         }
 
         inline bool is_register_def() const {
@@ -70,11 +64,6 @@ class Resource_def : public Node {
             } else {
                 return get_name()->get_str();
             }
-        }
-
-        friend std::ostream& operator<<(std::ostream& stream, const Resource_def& rd){
-            stream << rd.resolved_name() << " " << STR_SCOPE(rd.scope) << (rd.kind == Resource_kind::QUBIT ? " QUBIT " : " BIT ");
-            return stream;
         }
 
         void reset(){

@@ -11,6 +11,8 @@ enum class Resource_kind {
     BIT
 };
 
+#define STR_RESOURCE_KIND(rk) (rk == Resource_kind::QUBIT ? " QUBIT " : " BIT ")
+
 class Resource : public Node {
     public:
 
@@ -50,7 +52,7 @@ class Resource : public Node {
             return scope;
         }
 
-        Resource_kind get_kind() const {
+        Resource_kind get_resource_kind() const {
             return resource_kind;
         }
 
@@ -79,11 +81,7 @@ class Resource : public Node {
         }
 
         inline std::shared_ptr<UInt> get_index() const override {
-            if(is_register_def()){
-                return std::get<Register_resource>(value).get_index();
-            } else {
-                return std::make_shared<UInt>();
-            }
+            return std::get<Register_resource>(value).get_index();
         }
 
         inline bool is_register_def() const {
@@ -107,11 +105,6 @@ class Resource : public Node {
             } else {
                 return name_matches;
             }
-        }
-
-        friend std::ostream& operator<<(std::ostream& stream, const Resource& r){
-            stream << r.resolved_name() << " " << STR_SCOPE(r.scope) << (r.resource_kind == Resource_kind::QUBIT ? " QUBIT " : " BIT ");
-            return stream;
         }
 
         // void extend_flow_path(const std::shared_ptr<Qubit_op> qubit_op, unsigned int current_port);
