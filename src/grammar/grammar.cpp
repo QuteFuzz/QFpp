@@ -32,6 +32,16 @@ void Grammar::consume(const Token_kind kind){
     }
 }
 
+void Grammar::consume(const std::string& val){
+
+    if(curr_token.get_ok().value == val){
+        consume(1);
+    } else {
+        curr_token.set_error("Expected syntax not matched");
+    }
+}
+
+
 void Grammar::peek(){
     if((token_pointer + 1) == num_tokens){
         next_token.set_error("Cannot peek!");
@@ -176,14 +186,18 @@ void Grammar::build_grammar(){
             setting_term_constraint = false;
             
         } else if (setting_term_constraint) {
+            Term_constraint constraint;
 
             if (is_meta(token.kind)) {
-                Token_kind meta_dependency = token.kind;
-                int offset = 0;
-            
+                Token_kind meta_func = token.kind;
                 Token lookahead = next_token.get_ok();
-                
-                if (lookahead.value == "-" || lookahead.value == "+") {
+
+                if (lookahead.value == "]") {
+                    constraint = Term_constraint(meta_func, 0);
+
+                } else if (lookahead.value == "-" || lookahead.value == "+") {
+                    int offset = 0;
+
                     consume(1); // consume META
                     Token op = curr_token.get_ok(); // get +/-
                     
@@ -192,19 +206,42 @@ void Grammar::build_grammar(){
                     
                     int val = safe_stoi(num.value, 0);
                     offset = (op.value == "-") ? -val : val;
-                }
 
-                Term_constraint constraint(meta_dependency, offset);
-                add_constraint_to_last_term(constraint);
+                    constraint = Term_constraint(meta_func, offset);
+                
+                } else if (lookahead.value == "(") {
+                    consume(2); // consume META and "("
+                    
+                    Token rand_min = curr_token.get_ok(); // get rand min
+
+                    consume(1);
+
+                    consume(",");
+
+                    Token rand_max = curr_token.get_ok(); // get rand max
+                    consume(1);
+
+                    if (meta_func == UNIFORM){
+                        constraint = Term_constraint(Term_constraint_kind::RANDOM_MAX, safe_stoul(rand_min.value, 0), safe_stoul(rand_max.value, 1));
+                    } else {
+                        error("Unknown meta function while setting term constraint", token);
+                    }
+                
+                } else {
+                    error("Unexpected token after meta function while setting term constraint", lookahead);
+                }
             
             } else if (token.kind == SYNTAX){
                 // numbers are also treated as SYNTAX
-                Term_constraint constraint(Term_constraint_kind::FIXED_MAX, 0, safe_stoul(token.value, 1));
-                add_constraint_to_last_term(constraint);
+                auto val = safe_stoul(token.value, 1);
+                constraint = Term_constraint(Term_constraint_kind::RANDOM_MAX, val, val);
 
             } else {
+                print_tokens();
                 error("Token kind cannot be used to set constraint", token);
             }
+
+            add_constraint_to_last_term(constraint);
 
         } else if (is_meta(token.kind) && (next.kind != LANGLE_BRACKET)){
             // if next token is `<`, this is a meta func application, handled at `<` using previous token
@@ -229,7 +266,7 @@ void Grammar::build_grammar(){
                 std::cout << "Grammar: " << name << std::endl;
                 std::cout << "STACK_SIZE: " << stack.size() << std::endl;
                 std::cout << "STACK TOP: " << *stack.top().rule << std::endl;
-                throw std::runtime_error("At RULE_START current stack is expected to be empty");
+                ERROR("At RULE_START current stack is expected to be empty");
             }
 
         } else if (token.kind == RULE_APPEND){
@@ -239,7 +276,7 @@ void Grammar::build_grammar(){
                 std::cout << "Grammar: " << name << std::endl;
                 std::cout << "STACK_SIZE: " << stack.size() << std::endl;
                 std::cout << *stack.top().rule << std::endl;
-                throw std::runtime_error("At RULE_APPEND current stack is expected to be empty");
+                ERROR("At RULE_APPEND current stack is expected to be empty");
             }
 
         } else if (token.kind == RULE_END){
@@ -264,7 +301,7 @@ void Grammar::build_grammar(){
             // reset_current_branches();
 
         } else if (token.kind == OPTIONAL){
-            Term_constraint constraint(Term_constraint_kind::FIXED_MAX, 0, 1);
+            Term_constraint constraint(Term_constraint_kind::RANDOM_MAX, 0, 1);
             add_constraint_to_last_term(constraint);
 
 

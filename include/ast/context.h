@@ -79,7 +79,7 @@ struct Current_nodes {
 
 struct Dummy_nodes {
 	std::shared_ptr<Circuit> circuit;
-	std::shared_ptr<Integer> integer;
+	std::shared_ptr<UInt> integer;
 	std::shared_ptr<Variable> var;
 
 	Dummy_nodes() {
@@ -88,7 +88,7 @@ struct Dummy_nodes {
 
 	void reset_all() {
 		circuit = std::make_shared<Circuit>();
-		integer = std::make_shared<Integer>();
+		integer = std::make_shared<UInt>();
 		var = std::make_shared<Variable>();
 	}
 };
@@ -130,7 +130,7 @@ struct Context {
 
 		std::shared_ptr<Qubit_op> nn_qubit_op();
 
-		std::shared_ptr<Integer> nn_circuit_id();
+		std::shared_ptr<UInt> nn_circuit_id();
 
 		std::shared_ptr<Gate> nn_gate_from_subroutine();
 

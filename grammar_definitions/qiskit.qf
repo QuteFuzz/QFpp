@@ -39,37 +39,7 @@ program = imports NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuit
 
 parameter_defs = (parameter_def NEWLINE)*;
 
-# parameter_def = parameter_def_name " = Parameter('" parameter_def_name "')";
-
 parameter_def = NAME " = Parameter('" NAME "')";
-
-(*
-    One easy way to implement getting the name of a parameter would be
-    1. define a special node for `parameter_name`
-    2. when this term is reached, get a random parameter def and get it's name
-
-    I do not want to have to define a special rule for this. A more general way would be to define 2 functions
-    i. gets some random node corresponding to given rule
-    ii. gets specific child node of that rule
-
-    combine these 2 implement parameter_name.
-
-    I think this can also be used to remove other special rules
-*)
-
-# Modify float_literal to optionally use parameters
-# float_literal += parameter_name
-#               | parameter_expr;
-
-# TODO: radomly pick some parameter_def_name node from the AST
-# parameter_name = some(parameter_def_name);
-
-# parameter_expr = parameter_name " * " FLOAT
-#                | parameter_name " + " FLOAT
-#                | parameter_name " / " FLOAT
-#                | parameter_name " - " FLOAT
-#                | FLOAT " * " parameter_name
-#                ;
 
 circuit = circuit_def_header NEWLINE body NEWLINE;
 
@@ -88,9 +58,13 @@ circuit_def_header = NEWLINE CIRCUIT_NAME " = QuantumCircuit(0)";
 # Redefine EXTERNAL scope for Qiskit register and circuit definitions
 EXTERNAL {
 
-    qubit_defs = (qubit_def NEWLINE)+;
+    # qubit_defs = (qubit_def NEWLINE)+;
 
-    bit_defs = (bit_def NEWLINE)+;
+    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3,10)];
+
+    # bit_defs = (bit_def NEWLINE)+;
+
+    bit_defs = (bit_def NEWLINE)[UNIFORM(3,10)];
 
     # Qiskit registers are defined by size and name, not individually
     singular_qubit_def =
@@ -149,19 +123,3 @@ register_bit = NAME "[" INDEX "]";
 compiler_call = "qt = qiskitTesting()" NEWLINE testing_method;
 
 testing_method = "qt.ks_diff_test(main_circuit" COMMA circuit_id RPAREN NEWLINE;
-
-(*
-    TODO: 
-    - find a way of controlling the number of nodes of parameter_bind_list depending on the number of nodes in parameter_def_list
-    - using the meta-function here just returns the first node of that kind
-*)
-
-# program_footer = parameter_binding NEWLINE compiler_call;
-
-# parameter_binding = CIRCUIT_NAME " = " CIRCUIT_NAME ".bind_parameters({" parameter_bind_list "})";
-
-# parameter_bind_list = parameter_bind ("," parameter_bind)*;
-
-# parameter_bind_list = parameter_bind[COUNT<parameter_def>];
-
-# parameter_bind = NAME<parameter_def> ": " FLOAT;

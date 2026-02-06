@@ -20,8 +20,8 @@ struct Gate_info {
     {}
 };
 
-const Value_coll<Gate_info> SUPPORTED_GATES = []{
-    Value_coll<Gate_info> gates;
+const std::vector<Gate_info> SUPPORTED_GATES = []{
+    std::vector<Gate_info> gates;
 
     // lambda helper to add group of gates to the supported gateset list
     auto add_group = [&](const std::vector<Token_kind>& kinds, unsigned int q, unsigned int b, unsigned int f) {

@@ -16,11 +16,7 @@
 
 # default config
 EXTENSION = ".py";
-MIN_NUM_QUBITS = 3;
-MIN_NUM_BITS = 1;
-MAX_NUM_QUBITS = 4;
-MAX_NUM_BITS = 2;
-MAX_NUM_SUBROUTINES = 5;
+MAX_REG_SIZE = 5;
 NESTED_MAX_DEPTH = 4;
 
 qubit_def = ;

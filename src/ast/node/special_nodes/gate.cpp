@@ -6,10 +6,18 @@
 Gate::Gate(const std::string& str, const Token_kind& kind) :
     Node(str, kind)
 {
+    bool gate_found = false;
+
     for (auto _info : SUPPORTED_GATES){
         if(_info.gate == kind){
             info = _info;
+            gate_found = true;
+            break;
         }
+    }
+
+    if (!gate_found){
+        ERROR("Gate " + str + " not supported in QuteFuzz");
     }
 }
 
@@ -39,10 +47,6 @@ std::shared_ptr<Resource_def> Gate::get_next_qubit_def(){
 
 std::shared_ptr<Resource_def> Gate::get_last_qubit_def() const {
     return last_qubit_def;
-}
-
-unsigned int Gate::get_num_external_qubits() const {
-    return info.n_qubits;
 }
 
 unsigned int Gate::get_num_external_qubit_defs() const {

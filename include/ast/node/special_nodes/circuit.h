@@ -102,7 +102,7 @@ class Circuit : public Node {
                 auto size = def->get_size();
 
                 for(size_t i = 0; i < (size_t)size->get_num(); i++){
-                    Register_resource reg_resource(*name, Integer(std::to_string(i)));
+                    Register_resource reg_resource(*name, UInt(std::to_string(i)));
                     resource = std::make_shared<Resource>(reg_resource, scope, rk);
                     resources.push_back(resource);
                 }

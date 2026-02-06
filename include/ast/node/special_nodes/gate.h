@@ -20,7 +20,7 @@ class Gate : public Node {
         /// @param kind
         Gate(const std::string& str, const Token_kind& kind);
 
-        Gate(const std::string& str, const Token_kind& kind, unsigned int n_qubits);
+        // Gate(const std::string& str, const Token_kind& kind, unsigned int n_qubits);
 
         /// @brief Use for subroutines
         /// @param str
@@ -34,7 +34,7 @@ class Gate : public Node {
 
         unsigned int get_n_ports() const override {return get_num_external_qubits();}
 
-        unsigned int get_num_external_qubits() const;
+        unsigned int get_num_external_qubits() const {return info.n_qubits;}
 
         unsigned int get_num_external_qubit_defs() const;
 

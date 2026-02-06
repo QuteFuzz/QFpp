@@ -66,13 +66,7 @@ void Run::set_grammar(Control& control){
 
     entry_name = tokens[0];
 
-    Scope entry_scope = ALL_SCOPES;
-
-    // for(const auto& t : tokens){
-    //     scope |= ((t == "E") & EXTERNAL_SCOPE);
-    //     scope |= ((t == "I") & INTERNAL_SCOPE);
-    //     scope |= ((t == "O") & OWNED_SCOPE);
-    // }
+    Scope entry_scope = Scope::GLOB;
 
     current_generator = generators[grammar_name];
     current_generator->set_grammar_entry(entry_name, entry_scope);
@@ -146,11 +140,7 @@ void Run::loop(){
         .run_mutate = false,
         .ext = ".text",
         .expected_values = {
-            Expected<unsigned int>("MIN_NUM_QUBITS", QuteFuzz::MIN_QUBITS, CLAMP_UP),
-            Expected<unsigned int>("MIN_NUM_BITS", QuteFuzz::MIN_BITS, CLAMP_UP),
-            Expected<unsigned int>("MAX_NUM_QUBITS", QuteFuzz::MAX_QUBITS, CLAMP_DOWN),
-            Expected<unsigned int>("MAX_NUM_BITS", QuteFuzz::MAX_BITS, CLAMP_DOWN),
-            Expected<unsigned int>("MAX_NUM_SUBROUTINES", QuteFuzz::MAX_NUM_SUBROUTINES, CLAMP_DOWN),
+            Expected<unsigned int>("MAX_REG_SIZE", QuteFuzz::MAX_REG_SIZE, CLAMP_DOWN),
             Expected<unsigned int>("NESTED_MAX_DEPTH", QuteFuzz::NESTED_MAX_DEPTH, CLAMP_DOWN)
         },
         .expected_rules = {
@@ -159,7 +149,7 @@ void Run::loop(){
             Expected<std::shared_ptr<Rule>>("qubit_def", Scope::GLOB, nullptr),
             Expected<std::shared_ptr<Rule>>("bit_def", Scope::INT, nullptr),
             Expected<std::shared_ptr<Rule>>("bit_def", Scope::EXT, nullptr),
-            Expected<std::shared_ptr<Rule>>("bit_def", Scope::GLOB, nullptr)
+            Expected<std::shared_ptr<Rule>>("bit_def", Scope::GLOB, nullptr),
         },
     };
 

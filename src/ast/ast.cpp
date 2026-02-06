@@ -79,6 +79,15 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 		case INDEX:
 			return parent->get_index();
 
+		case FLOAT:
+			return std::make_shared<Float>();
+
+		case INTEGER:
+			return std::make_shared<UInt>();
+
+		case CIRCUIT_NAME:
+			return std::make_shared<Variable>(context.get_current_circuit()->get_owner());
+
 		case INDENT:
 			Node::indentation_tracker += "\t"; 
 			return dummy;
@@ -91,7 +100,7 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 			return dummy;
 
 		case INDENTATION_DEPTH:
-			return std::make_shared<Integer>(Node::indentation_tracker.size());
+			return std::make_shared<UInt>(Node::indentation_tracker.size());
 
 		case CIRCUIT:
 			return context.nn_circuit();
@@ -127,11 +136,7 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 			return context.nn_subroutines();
 
 		case QUBIT_OP:
-			context.reset(RL_QUBIT_OP);
 			return context.nn_qubit_op();
-
-		case CIRCUIT_NAME:
-			return std::make_shared<Variable>(context.get_current_circuit()->get_owner());
 
 		case QUBIT:
 			return context.get_random_resource(Resource_kind::QUBIT);
@@ -156,12 +161,6 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 
 		case SINGULAR_BIT_DEF:
 			return context.nn_singular_resource_def(scope, Resource_kind::BIT);
-
-		case FLOAT:
-			return std::make_shared<Float>();
-
-		case INTEGER:
-			return std::make_shared<Integer>();
 
 		case SUBROUTINE:
 			return context.nn_gate_from_subroutine();
@@ -190,8 +189,8 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 		throw std::runtime_error(ANNOT("Recursion limit reached when writing branch for term: " + parent->get_content()));
 	}
 
-	// std::cout << "parent node: " << parent->get_name() << std::endl;
-	// std::cout << "term: " << term << std::endl;
+	// std::cout << "parent node: " << parent->get_name() << " term: " << term << std::endl;
+	
 	// root->print_ast("");
 	// getchar();
 
@@ -201,11 +200,13 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 
 		for(const Term& child_term : branch){
 			Term_constraint constraint = child_term.get_constaint();
-			Range r = constraint.resolve(std::ref(context));
+			unsigned int max = constraint.resolve(std::ref(context));
+
+			// if(child_node->size()) continue;
 
 			// add as many children to the parent node as specified by the term constraint
 			// then use the term to get the next branch to write, where this new child node is the parent
-			for (unsigned int i = r.min; i <= r.max; i++){
+			for (unsigned int i = 0; i < max; i++){
 				auto child_node = get_child_node(parent, child_term);
 
 				parent->add_child(child_node);
@@ -233,6 +234,8 @@ Result<Node> Ast::build(const Control& control){
 
 		root = get_child_node(std::make_shared<Node>("", RULE), entry_term); // need this call such that the entry node also calls the factory function
 		term_branch_to_child_nodes(root, entry_term);
+
+		// root->print_ast("");
 
 		std::shared_ptr<Circuit> main_circuit_circuit = context.get_current_circuit();
 		// dag = std::make_shared<Dag>(main_circuit_circuit);

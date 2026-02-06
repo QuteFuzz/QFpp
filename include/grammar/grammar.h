@@ -40,6 +40,8 @@ class Grammar{
 
         void consume(const Token_kind kind);
 
+        void consume(const std::string& val);
+
         void peek();
 
         std::string dig_to_syntax(const std::string& rule_name) const;

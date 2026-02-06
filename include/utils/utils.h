@@ -60,7 +60,7 @@ inline x operator~(x a) {    \
 #define ANNOT(x) (std::string("at ") + __FILE__ + "," + std::to_string(__LINE__) + ": " + (x))
 
 // logging
-#define ERROR(x) std::cerr << (std::string("[ERROR] ") + RED(ANNOT(x))) << std::endl
+#define ERROR(x) throw std::runtime_error("[ERROR] " + RED(ANNOT(x)))
 #define WARNING(x) std::cout << (std::string("[WARNING] ") + YELLOW(ANNOT(x))) << std::endl
 #define INFO(x) std::cout << (std::string("[INFO] ") + GREEN(x)) << std::endl
 

@@ -136,7 +136,7 @@ std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk){
 std::shared_ptr<Resource_def> Context::nn_register_resource_def(Scope& scope, Resource_kind rk){
     std::shared_ptr<Resource_def> def;
 
-    auto reg_def = Register_resource_def(Name(), Integer(random_uint(QuteFuzz::MAX_REG_SIZE)));
+    auto reg_def = Register_resource_def(Name(), UInt(random_uint(control.get_value("MAX_REG_SIZE"), 1)));
     def = std::make_shared<Resource_def>(reg_def, scope, rk);
 
     current.set<Resource_def>(def);
@@ -172,6 +172,8 @@ std::shared_ptr<Circuit> Context::nn_circuit(){
 
     circuits.push_back(current_circuit);
 
+    current_circuit->print_info();
+
     return current_circuit;
 }
 
@@ -205,8 +207,8 @@ std::shared_ptr<Gate> Context::nn_gate_from_subroutine(){
     return gate;
 }
 
-std::shared_ptr<Integer> Context::nn_circuit_id() {
-    return std::make_shared<Integer>(ast_counter);
+std::shared_ptr<UInt> Context::nn_circuit_id() {
+    return std::make_shared<UInt>(ast_counter);
 }
 
 /// @brief Any stmt that is nested (if, elif, else) is a nested stmt. Any time such a node is used, reduce nested depth

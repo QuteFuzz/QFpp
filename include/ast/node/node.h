@@ -16,7 +16,7 @@ enum Node_kind {
     NON_TERMINAL,
 };
 
-class Integer;
+class UInt;
 class Name;
 class Branch;
 
@@ -188,9 +188,9 @@ class Node : public std::enable_shared_from_this<Node> {
 
         virtual std::shared_ptr<Name> get_name() const;
 
-        virtual std::shared_ptr<Integer> get_size(unsigned int default_size = 1) const;
+        virtual std::shared_ptr<UInt> get_size(unsigned int default_size = 1) const;
 
-        virtual std::shared_ptr<Integer> get_index() const;
+        virtual std::shared_ptr<UInt> get_index() const;
 
     protected:
         int id = 0;

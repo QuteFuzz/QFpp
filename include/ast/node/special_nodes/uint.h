@@ -1,19 +1,19 @@
-#ifndef INTEGER_H
-#define INTEGER_H
+#ifndef UINT_H
+#define UINT_H
 
 #include <node.h>
 
-class Integer : public Node {
+class UInt : public Node {
 
     public:
         using Node::Node;
 
-        Integer() :
+        UInt() :
             Node(std::to_string(random_uint(10))),
             num(safe_stoul(content, 0))
         {}
 
-        Integer(int i) :
+        UInt(unsigned int i) :
             Node(std::to_string(i)),
             num(i)
         {}
@@ -28,7 +28,7 @@ class Integer : public Node {
         }
 
     private:
-        int num = 0;
+        unsigned int num = 0;
 
 };
 

@@ -27,9 +27,13 @@ circuit = circuit_def_header NEWLINE body NEWLINE;
 
 EXTERNAL {
 
-qubit_defs = (qubit_def NEWLINE)+;
+# qubit_defs = (qubit_def NEWLINE)+;
 
-bit_defs = (bit_def NEWLINE)+;
+qubit_defs = (qubit_def NEWLINE)[UNIFORM(3,10)];
+
+# bit_defs = (bit_def NEWLINE)+;
+
+bit_defs = (bit_def NEWLINE)[UNIFORM(3,10)];
 
 singular_qubit_def =
     NAME ' = Qubit("'  NAME '",0)' NEWLINE CIRCUIT_NAME ".add_qubit(" NAME ")";

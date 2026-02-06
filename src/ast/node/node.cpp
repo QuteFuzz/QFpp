@@ -1,5 +1,5 @@
 #include <node.h>
-#include <integer.h>
+#include <uint.h>
 #include <name.h>
 
 int Node::node_counter = 0;
@@ -52,10 +52,10 @@ std::shared_ptr<Node> Node::find(Token_kind node_kind) {
 }
 
 void Node::print_ast(std::string indent) const {
-    std::cout << kind << "(" << this << ")" << std::endl;
+    std::cout << indent << content << " " <<  kind << " (" << this << ")" << std::endl;
+    std::cout << indent << "n_children: " << children.size() << std::endl;
 
     for(const std::shared_ptr<Node>& child : children){
-        std::cout << indent;
         child->print_ast(indent + "   ");
     }
 }
@@ -166,10 +166,10 @@ std::shared_ptr<Name> Node::get_name() const {
     return std::make_shared<Name>();
 }
 
-std::shared_ptr<Integer> Node::get_size(unsigned int default_size) const {
-    return std::make_shared<Integer>(default_size);
+std::shared_ptr<UInt> Node::get_size(unsigned int default_size) const {
+    return std::make_shared<UInt>(default_size);
 }
 
-std::shared_ptr<Integer> Node::get_index() const {
-    return std::make_shared<Integer>();
+std::shared_ptr<UInt> Node::get_index() const {
+    return std::make_shared<UInt>();
 }

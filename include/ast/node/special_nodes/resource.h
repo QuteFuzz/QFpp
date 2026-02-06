@@ -78,11 +78,11 @@ class Resource : public Node {
             }, value);
         }
 
-        inline std::shared_ptr<Integer> get_index() const override {
+        inline std::shared_ptr<UInt> get_index() const override {
             if(is_register_def()){
                 return std::get<Register_resource>(value).get_index();
             } else {
-                return std::make_shared<Integer>();
+                return std::make_shared<UInt>();
             }
         }
 
@@ -90,7 +90,13 @@ class Resource : public Node {
             return std::holds_alternative<Register_resource>(value);
         }
 
-        std::string resolved_name() const override;
+        inline std::string resolved_name() const override {
+            if(is_register_def()){
+                return get_name()->get_content() + "[" + get_index()->get_content() + "]";
+            } else {
+                return get_name()->get_content();
+            }
+        }
 
         bool operator==(const Resource& other) const {
             bool name_matches = (*get_name() == *other.get_name());
@@ -101,6 +107,11 @@ class Resource : public Node {
             } else {
                 return name_matches;
             }
+        }
+
+        friend std::ostream& operator<<(std::ostream& stream, const Resource& r){
+            stream << r.resolved_name() << STR_SCOPE(r.scope) << (r.resource_kind == Resource_kind::QUBIT ? " QUBIT " : " BIT ");
+            return stream;
         }
 
         // void extend_flow_path(const std::shared_ptr<Qubit_op> qubit_op, unsigned int current_port);

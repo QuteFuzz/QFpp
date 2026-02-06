@@ -2,7 +2,7 @@
 #define REGISTER_RESOURCE_H
 
 #include <name.h>
-#include <integer.h>
+#include <uint.h>
 
 class Register_resource {
 
@@ -10,7 +10,7 @@ class Register_resource {
 
         Register_resource(){}
 
-        Register_resource(const Name& _name, const Integer& _index) :
+        Register_resource(const Name& _name, const UInt& _index) :
             name(_name),
             index(_index)
         {}
@@ -25,13 +25,13 @@ class Register_resource {
             return std::make_shared<Name>(name);
         }
 
-        inline std::shared_ptr<Integer> get_index() const {
-            return std::make_shared<Integer>(index);
+        inline std::shared_ptr<UInt> get_index() const {
+            return std::make_shared<UInt>(index);
         }
 
     private:
         Name name;
-        Integer index;
+        UInt index;
         bool used = false;
 };
 

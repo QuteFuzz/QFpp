@@ -3,7 +3,7 @@
 
 #include <register_resource.h>
 #include <variable.h>
-#include <integer.h>
+#include <uint.h>
 #include <resource.h>
 
 class Register_resource_def {
@@ -12,7 +12,7 @@ class Register_resource_def {
 
         Register_resource_def(){}
 
-        Register_resource_def(const Name& _name, const Integer& _size):
+        Register_resource_def(const Name& _name, const UInt& _size):
             name(_name),
             size(_size)
         {}
@@ -21,8 +21,8 @@ class Register_resource_def {
             return std::make_shared<Name>(name);
         }
 
-        std::shared_ptr<Integer> get_size() const {
-            return std::make_shared<Integer>(size);
+        std::shared_ptr<UInt> get_size() const {
+            return std::make_shared<UInt>(size);
         }
 
         inline void increase_size(){
@@ -38,14 +38,14 @@ class Register_resource_def {
         // void make_resources(Ptr_coll<Resource>& output, const Scope& scope) const {
 
         //     for(size_t i = 0; i < (size_t)size.get_num(); i++){
-        //         Register_resource reg_resource(name, Integer(std::to_string(i)));
+        //         Register_resource reg_resource(name, UInt(std::to_string(i)));
         //         output.push_back(std::make_shared<Resource>(reg_resource, scope));
         //     }
         // }
 
     protected:
         Name name;
-        Integer size;
+        UInt size;
         bool used = false;
 };
 

@@ -49,10 +49,6 @@ struct Generator {
 
         inline std::shared_ptr<Grammar> get_grammar() const { return grammar; }
 
-        std::vector<Token_kind> get_available_gates();
-
-        Node_constraints get_swarm_testing_gateset();
-
         Node build_equivalent(Node ast_root);
 
         void ast_to_program(fs::path output_dir, const Control& control, unsigned int seed);

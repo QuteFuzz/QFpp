@@ -39,17 +39,17 @@ class Resource_def : public Node {
             }, value);
         }
 
-        /// @brief Get size of resource definition if it is a register definition. If not, return 1, or whatever `default_size` is as an `Integer` node
+        /// @brief Get size of resource definition if it is a register definition. If not, return 1, or whatever `default_size` is as an `UInt` node
         /// @param default_size
         /// @return
-        inline std::shared_ptr<Integer> get_size(unsigned int default_size = 1) const override {
+        inline std::shared_ptr<UInt> get_size(unsigned int default_size = 1) const override {
             if(is_register_def()){
                 return std::get<Register_resource_def>(value).get_size();
             }
 
             WARNING("Singular resource definitions do not have sizes! Using default size = " + default_size);
 
-            return std::make_shared<Integer>(default_size);
+            return std::make_shared<UInt>(default_size);
         }
 
         inline bool is_register_def() const {
@@ -62,6 +62,19 @@ class Resource_def : public Node {
 
         inline void increase_size(){
             if(is_register_def()) std::get<Register_resource_def>(value).increase_size();
+        }
+
+        inline std::string resolved_name() const override {
+            if(is_register_def()){
+                return get_name()->get_content() + "SIZE(" + get_size()->get_content() + ")";
+            } else {
+                return get_name()->get_content();
+            }
+        }
+
+        friend std::ostream& operator<<(std::ostream& stream, const Resource_def& rd){
+            stream << rd.resolved_name() << STR_SCOPE(rd.scope) << (rd.kind == Resource_kind::QUBIT ? " QUBIT " : " BIT ");
+            return stream;
         }
 
         void reset(){
@@ -82,73 +95,13 @@ class Resource_def : public Node {
             }, value);
         }
 
+
+
     private:
         std::variant<Register_resource_def, Singular_resource_def> value;
         Scope scope;
         Resource_kind kind;
 
 };
-
-// class Qubit_definition : public Resource_def {
-
-//     public:
-//         Qubit_definition() : Resource_def() {}
-
-//         Qubit_definition(const Register_resource_definition& def, const Scope& scope, bool def_discard = false):
-//             Resource_def(
-//                 def,
-//                 scope
-//             )
-//         {
-//             if (def_discard) {
-//                 add_constraint(REGISTER_QUBIT_DEF_DISCARD, 1);
-//             } else {
-//                 add_constraint(REGISTER_QUBIT_DEF, 1);
-//             }
-//         }
-
-//         Qubit_definition(const Singular_resource_definition& def, const Scope& scope, bool def_discard = false):
-//             Resource_def(
-//                 def,
-//                 scope
-//             )
-//         {
-//             if (def_discard) {
-//                 add_constraint(SINGULAR_QUBIT_DEF_DISCARD, 1);
-//             } else {
-//                 add_constraint(SINGULAR_QUBIT_DEF, 1);
-//             }
-//         }
-
-//     private:
-
-// };
-
-// class Bit_definition : public Resource_def {
-
-//     public:
-//         Bit_definition() : Resource_def() {}
-
-//         Bit_definition(const Register_resource_definition& def, const Scope& scope):
-//             Resource_def(
-//                 def,
-//                 scope
-//             )
-//         {
-//             add_constraint(REGISTER_BIT_DEF, 1);
-//         }
-
-//         Bit_definition(const Singular_resource_definition& def, const Scope& scope):
-//             Resource_def(
-//                 def,
-//                 scope
-//             )
-//         {
-//             add_constraint(SINGULAR_BIT_DEF, 1);
-//         }
-
-//     private:
-
-// };
 
 #endif
