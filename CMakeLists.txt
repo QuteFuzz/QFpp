@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(fuzzer)
+project(QuteFuzz)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -9,9 +9,9 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 file(GLOB_RECURSE SRCS "src/*.cpp")
 
-add_executable(fuzzer ${SRCS})
+add_executable(qf ${SRCS})
 
-target_include_directories(fuzzer PRIVATE
+target_include_directories(qf PRIVATE
     ${CMAKE_SOURCE_DIR}/include/generator
     ${CMAKE_SOURCE_DIR}/include/ast
     ${CMAKE_SOURCE_DIR}/include/ast/node

@@ -91,7 +91,7 @@ class Circuit : public Node {
             return filter<T>(get_coll<T>(), pred);
         }
 
-        void make_resources_from_def(std::shared_ptr<Resource_def> def){
+        void store_resource_def(std::shared_ptr<Resource_def> def){
             auto name = def->get_name();
             auto scope = def->get_scope();
             auto rk = def->get_kind();

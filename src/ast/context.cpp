@@ -140,7 +140,7 @@ std::shared_ptr<Resource_def> Context::nn_register_resource_def(Scope& scope, Re
     def = std::make_shared<Resource_def>(reg_def, scope, rk);
 
     current.set<Resource_def>(def);
-    get_current_circuit()->make_resources_from_def(def);
+    get_current_circuit()->store_resource_def(def);
 
     return def;
 }
@@ -152,7 +152,7 @@ std::shared_ptr<Resource_def> Context::nn_singular_resource_def(Scope& scope, Re
     def = std::make_shared<Resource_def>(sing_def, scope, rk);
 
     current.set<Resource_def>(def);
-    get_current_circuit()->make_resources_from_def(def);
+    get_current_circuit()->store_resource_def(def);
 
     return def;
 }

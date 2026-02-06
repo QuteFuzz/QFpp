@@ -35,7 +35,8 @@ inline std::shared_ptr<T> get_random_from_coll(const Ptr_coll<T>& collection, Pt
     unsigned int available_size = available.size();
 
     if (available_size == 0) {
-        throw std::runtime_error("[GET_RANDOM_FROM_COLL]: No elements satisfying predicate!");    
+        WARNING("[GET_RANDOM_FROM_COLL]: No elements satisfying predicate! Returning dummy");
+        return std::make_shared<T>();
     }
 
     return elem_at(collection, random_uint(available_size-1));
@@ -47,7 +48,8 @@ inline std::shared_ptr<T> get_next_from_coll(const Ptr_coll<T>& collection, Ptr_
     unsigned int available_size = available.size();
 
     if (available_size == 0){
-        throw std::runtime_error("[GET_NEXT_FROM_COLL]: No elements satisfying predicate!");
+        WARNING("[GET_NEXT_FROM_COLL]: No elements satisfying predicate! Returning dummy");
+        return std::make_shared<T>();
     }
 
     return available[0];

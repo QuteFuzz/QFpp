@@ -12,7 +12,7 @@ std::shared_ptr<Ast> Generator::setup_builder(){
         WARNING("Rule " + entry_name + STR_SCOPE(entry_scope) + " is not defined for grammar " + grammar->get_name() + ". Will use previous entry instead");
 
     } else {
-        ERROR("Rule " + entry_name + " is not defined for grammar " + grammar->get_name());
+        WARNING("Rule " + entry_name + " is not defined for grammar " + grammar->get_name());
     }
 
     return builder;

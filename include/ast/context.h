@@ -159,6 +159,8 @@ struct Context {
 			for(const std::shared_ptr<Circuit>& circuit : circuits){
 				circuit->print_info();
 			}
+
+			dummies.circuit->print_info();
 		}
 
 		unsigned int operator()(Token_kind kind) const;

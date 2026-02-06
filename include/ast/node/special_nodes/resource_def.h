@@ -66,7 +66,7 @@ class Resource_def : public Node {
 
         inline std::string resolved_name() const override {
             if(is_register_def()){
-                return get_name()->get_content() + "SIZE(" + get_size()->get_content() + ")";
+                return get_name()->get_content() + " SIZE(" + get_size()->get_content() + ")";
             } else {
                 return get_name()->get_content();
             }
