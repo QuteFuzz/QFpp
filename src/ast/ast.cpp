@@ -186,7 +186,7 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 
 void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& term, unsigned int depth){
 	if (depth >= QuteFuzz::RECURSION_LIMIT){
-		throw std::runtime_error(ANNOT("Recursion limit reached when writing branch for term: " + parent->get_content()));
+		throw std::runtime_error(ANNOT("Recursion limit reached when writing branch for term: " + parent->get_str()));
 	}
 
 	// std::cout << "parent node: " << parent->get_name() << " term: " << term << std::endl;

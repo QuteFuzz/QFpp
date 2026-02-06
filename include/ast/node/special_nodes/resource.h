@@ -92,9 +92,9 @@ class Resource : public Node {
 
         inline std::string resolved_name() const override {
             if(is_register_def()){
-                return get_name()->get_content() + "[" + get_index()->get_content() + "]";
+                return get_name()->get_str() + "[" + get_index()->get_str() + "]";
             } else {
-                return get_name()->get_content();
+                return get_name()->get_str();
             }
         }
 

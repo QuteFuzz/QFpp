@@ -4,15 +4,8 @@
 
 int Node::node_counter = 0;
 
-std::string Node::get_content() const {
-    std::string esc_content = (kind == SYNTAX) ? escape_string(content) : content;
-    std::string str_id = " " + std::to_string(id);
-
-    if(content.size() > 50){
-        return esc_content.substr(0, 50) + " ... " + str_id;
-    } else {
-        return esc_content + str_id;
-    }
+std::string Node::get_str() const {
+    return (kind == SYNTAX) ? escape_string(str) : str;
 }
 
 bool Node::visited(std::vector<std::shared_ptr<Node>*>& visited_slots, std::shared_ptr<Node>* slot, bool track_visited) {
@@ -52,7 +45,7 @@ std::shared_ptr<Node> Node::find(Token_kind node_kind) {
 }
 
 void Node::print_ast(std::string indent) const {
-    std::cout << indent << content << " " <<  kind << " (" << this << ")" << std::endl;
+    std::cout << indent << str << " " <<  kind << " (" << this << ")" << std::endl;
     std::cout << indent << "n_children: " << children.size() << std::endl;
 
     for(const std::shared_ptr<Node>& child : children){
@@ -66,8 +59,8 @@ void Node::extend_dot_string(std::ostringstream& ss) const {
         if(child->get_kind() != SYNTAX){
             int child_id = child->get_id();
 
-            ss << "  " << id << " [label=\"" << get_content() << "\"];" << std::endl;
-            ss << "  " << child_id << " [label=\"" << child->get_content() << "\"];" << std::endl;
+            ss << "  " << id << " [label=\"" << get_str() << "\"];" << std::endl;
+            ss << "  " << child_id << " [label=\"" << child->get_str() << "\"];" << std::endl;
 
             ss << "  " << id << " -> " << child_id << ";" << std::endl;
         }
@@ -82,7 +75,7 @@ int Node::get_next_child_target(){
     if(partition_counter < partition_size){
         return child_partition[partition_counter++];
     } else {
-        WARNING("Node " + content + " qubit node target partition info: Counter: " + std::to_string(partition_counter) + ", Size: " + std::to_string(partition_size));
+        WARNING("Node " + str + " qubit node target partition info: Counter: " + std::to_string(partition_counter) + ", Size: " + std::to_string(partition_size));
         return 1;
     }
 }

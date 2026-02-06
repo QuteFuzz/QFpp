@@ -9,26 +9,22 @@ class UInt : public Node {
         using Node::Node;
 
         UInt() :
-            Node(std::to_string(random_uint(10))),
-            num(safe_stoul(content, 0))
+            Node(std::to_string(random_uint(10)))
         {}
 
         UInt(unsigned int i) :
-            Node(std::to_string(i)),
-            num(i)
+            Node(std::to_string(i))
         {}
 
         void operator++(int){
-            num += 1;
-            content = std::to_string(num);
+            str = std::to_string(get_num() + 1);
         }
 
-        inline int get_num() const {
-            return num;
+        inline unsigned int get_num() const {
+            return safe_stoul(str, 0);
         }
 
     private:
-        unsigned int num = 0;
 
 };
 

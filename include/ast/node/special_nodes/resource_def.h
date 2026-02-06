@@ -57,7 +57,7 @@ class Resource_def : public Node {
         }
 
         inline bool defines(const Resource& resource) const {
-            return get_name()->get_content() == resource.get_name()->get_content();
+            return get_name()->get_str() == resource.get_name()->get_str();
         }
 
         inline void increase_size(){
@@ -66,9 +66,9 @@ class Resource_def : public Node {
 
         inline std::string resolved_name() const override {
             if(is_register_def()){
-                return get_name()->get_content() + " SIZE(" + get_size()->get_content() + ")";
+                return get_name()->get_str() + " SIZE(" + get_size()->get_str() + ")";
             } else {
-                return get_name()->get_content();
+                return get_name()->get_str();
             }
         }
 

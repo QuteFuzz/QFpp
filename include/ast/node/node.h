@@ -29,16 +29,16 @@ class Node : public std::enable_shared_from_this<Node> {
 
         Node(){}
 
-        Node(std::string _content, Token_kind _kind = SYNTAX, const std::string _indentation_str = ""):
-            content(_content),
+        Node(std::string _str, Token_kind _kind = SYNTAX, const std::string _indentation_str = ""):
+            str(_str),
             kind(_kind),
             indentation_str(_indentation_str)
         {
             id = node_counter++;
         }
 
-        Node(std::string _content, Token_kind _kind, const std::optional<Node_constraints>& _constraints, const std::string _indentation_str = ""):
-            content(_content),
+        Node(std::string _str, Token_kind _kind, const std::optional<Node_constraints>& _constraints, const std::string _indentation_str = ""):
+            str(_str),
             kind(_kind),
             indentation_str(_indentation_str),
             constraints(_constraints)
@@ -64,14 +64,14 @@ class Node : public std::enable_shared_from_this<Node> {
             return id;
         }
 
-        std::string get_content() const;
+        std::string get_str() const;
 
         Token_kind get_kind() const {
             return kind;
         }
 
         virtual std::string resolved_name() const {
-            return get_content();
+            return get_str();
         }
 
         bool visited(std::vector<std::shared_ptr<Node>*>& visited_slots, std::shared_ptr<Node>* slot, bool track_visited);
@@ -102,7 +102,7 @@ class Node : public std::enable_shared_from_this<Node> {
 
         virtual void print(std::ostream& stream) const {
             if(kind == SYNTAX){
-                stream << content;
+                stream << str;
             } else {
 
                 for(const std::shared_ptr<Node>& child : children){
@@ -147,7 +147,7 @@ class Node : public std::enable_shared_from_this<Node> {
         }
 
         bool operator==(const Node& other) const {
-            return get_content() == other.get_content();
+            return get_str() == other.get_str();
         }
 
         bool branch_satisfies_constraints(const Branch& branch){
@@ -194,7 +194,7 @@ class Node : public std::enable_shared_from_this<Node> {
 
     protected:
         int id = 0;
-        std::string content;
+        std::string str;
         Token_kind kind;
 
         std::string indentation_str;
