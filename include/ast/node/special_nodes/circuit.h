@@ -96,20 +96,16 @@ class Circuit : public Node {
             auto scope = def->get_scope();
             auto rk = def->get_resource_kind();
 
-            std::shared_ptr<Resource> resource;
-
             if(def->is_register_def()) {
                 auto size = def->get_size();
 
                 for(size_t i = 0; i < (size_t)size->get_num(); i++){
                     Register_resource reg_resource(*name, UInt(std::to_string(i)));
-                    resource = std::make_shared<Resource>(reg_resource, scope, rk);
-                    resources.push_back(resource);
+                    resources.push_back(std::make_shared<Resource>(reg_resource, scope, rk));
                 }
             } else {                
-                Singular_resource reg_resource(*name);
-                resource = std::make_shared<Resource>(reg_resource, scope, rk);
-                resources.push_back(resource);
+                Singular_resource sing_resource(*name);
+                resources.push_back(std::make_shared<Resource>(sing_resource, scope, rk));
             }
 
             resource_defs.push_back(def);

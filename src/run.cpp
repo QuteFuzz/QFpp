@@ -3,6 +3,11 @@
 #include <lex.h>
 #include <params.h>
 
+#define TOGGLE_FLAG(name, f) { \
+    f = !f;    \
+    INFO(name + " " + FLAG_STATUS(f)); \
+}
+
 const fs::path Run::OUTPUT_DIR = fs::path(__FILE__).parent_path().parent_path() / fs::path(QuteFuzz::OUTPUTS_FOLDER_NAME);
 
 void init_global_seed(Control& control, std::optional<unsigned int> user_seed) {
@@ -138,6 +143,7 @@ void Run::loop(){
         .render = false,
         .swarm_testing = false,
         .run_mutate = false,
+        .step = false,
         .ext = ".text",
         .expected_values = {
             Expected<unsigned int>("MAX_REG_SIZE", QuteFuzz::MAX_REG_SIZE, CLAMP_DOWN),
@@ -173,16 +179,16 @@ void Run::loop(){
             help();
 
         } else if (current_command == "render"){
-            qf_control.render = !qf_control.render;
-            INFO("Rendering " + FLAG_STATUS(qf_control.render));
+            TOGGLE_FLAG(current_command, qf_control.render);
 
         } else if (current_command == "swarm_testing") {
-                qf_control.swarm_testing = !qf_control.swarm_testing;
-                INFO("Swarm testing mode " + FLAG_STATUS(qf_control.swarm_testing));
+            TOGGLE_FLAG(current_command, qf_control.swarm_testing);
 
         } else if (current_command == "mutate"){
-            qf_control.run_mutate = !qf_control.run_mutate;
-            INFO("Mutation mode " + FLAG_STATUS(qf_control.run_mutate));
+            TOGGLE_FLAG(current_command, qf_control.run_mutate);
+
+        } else if (current_command == "step"){
+            TOGGLE_FLAG(current_command, qf_control.step);
 
         } else if (current_command == "quit"){
             current_generator.reset();

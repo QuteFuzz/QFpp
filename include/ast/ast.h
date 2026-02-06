@@ -14,7 +14,10 @@
 
 class Ast{
     public:
-        Ast(){}
+        Ast(const Control& _control) :
+            context(_control),
+            control(_control)
+        {}
 
         ~Ast() = default;
 
@@ -28,7 +31,7 @@ class Ast{
 
         std::shared_ptr<Node> get_child_node(const std::shared_ptr<Node> parent, const Term& term);
 
-        Result<Node> build(const Control& control);
+        Result<Node> build();
 
         // Genome genome();
 
@@ -53,6 +56,7 @@ class Ast{
         // std::shared_ptr<Dag> dag;
         std::vector<Gate_info> gateset;
         Context context;
+        const Control& control;
 };
 
 #endif

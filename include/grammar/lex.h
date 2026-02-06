@@ -315,7 +315,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
 };
 
 const std::string FULL_REGEX =
-    R"([a-zA-Z_][a-zA-Z0-9_]*|[0-9]+(\.[0-9]+)?|#[^\n]*|\(\*|\*\)|\".*?\"|\'.*?\'|->|::|\+=|.)";
+    R"([a-zA-Z_][a-zA-Z0-9_]*|[0-9]+(\.[0-9]+)?|#[^\n]*|\(\*|\*\)|\".*?\"|\'.*?\'|->|::|\+=|>=|<=|.)";
 
 
 class Lexer{

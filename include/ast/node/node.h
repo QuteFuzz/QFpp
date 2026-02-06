@@ -45,6 +45,17 @@ class Node : public std::enable_shared_from_this<Node> {
         {
             id = node_counter++;
         }
+		
+        Node(const Node& other) :
+            std::enable_shared_from_this<Node>(),
+            str(other.str),
+            kind(other.kind),
+            indentation_str(other.indentation_str),
+            constraints(other.constraints)
+        {
+            id = node_counter++;
+            state = NB_BUILD; 
+        }
 
         virtual ~Node() = default;
 
@@ -185,7 +196,7 @@ class Node : public std::enable_shared_from_this<Node> {
 
         virtual std::shared_ptr<Variable> get_name() const;
 
-        virtual std::shared_ptr<UInt> get_size(unsigned int default_size = 1) const;
+        virtual std::shared_ptr<UInt> get_size() const;
 
         virtual std::shared_ptr<UInt> get_index() const;
 

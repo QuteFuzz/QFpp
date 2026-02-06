@@ -138,29 +138,44 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 		case QUBIT_OP:
 			return context.nn_qubit_op();
 
-		case QUBIT:
-			return context.get_random_resource(Resource_kind::QUBIT);
-			
-		case BIT:
-			return context.get_random_resource(Resource_kind::BIT);
+		/*
+			create new node pointer to prevent modification of resources in circuit collection
+		*/
+		case QUBIT: {
+			auto original = context.get_random_resource(Resource_kind::QUBIT);
+			return std::make_shared<Resource>(*original);
+		}
+
+		case BIT: {
+			auto original = context.get_random_resource(Resource_kind::BIT);
+			return std::make_shared<Resource>(*original);
+		}
 
 		case REGISTER_QUBIT: case REGISTER_BIT: case SINGULAR_QUBIT: case SINGULAR_BIT: {
-			parent->remove_constraints();
+			parent->remove_constraints(); // parent is one of the nodes above, remove constraints as just used to reach here
 			auto resource_node = std::dynamic_pointer_cast<Resource>(parent);
 			return std::make_shared<Resource>(*resource_node);
 		}
 
-		case REGISTER_QUBIT_DEF:
-			return context.nn_register_resource_def(scope, Resource_kind::QUBIT);
+		case REGISTER_QUBIT_DEF: {
+			auto original = context.nn_register_resource_def(scope, Resource_kind::QUBIT); 
+			return std::make_shared<Resource_def>(*original);
+		}
 
-		case REGISTER_BIT_DEF:
-			return context.nn_register_resource_def(scope, Resource_kind::BIT);
+		case REGISTER_BIT_DEF:{
+			auto original = context.nn_register_resource_def(scope, Resource_kind::BIT); 
+			return std::make_shared<Resource_def>(*original);
+		}
 
-		case SINGULAR_QUBIT_DEF:
-			return context.nn_singular_resource_def(scope, Resource_kind::QUBIT);
+		case SINGULAR_QUBIT_DEF:{
+			auto original = context.nn_singular_resource_def(scope, Resource_kind::QUBIT); 
+			return std::make_shared<Resource_def>(*original);
+		}
 
-		case SINGULAR_BIT_DEF:
-			return context.nn_singular_resource_def(scope, Resource_kind::BIT);
+		case SINGULAR_BIT_DEF:{
+			auto original = context.nn_singular_resource_def(scope, Resource_kind::BIT); 
+			return std::make_shared<Resource_def>(*original);
+		}
 
 		case SUBROUTINE:
 			return context.nn_gate_from_subroutine();
@@ -186,13 +201,14 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 
 void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& term, unsigned int depth){
 	if (depth >= QuteFuzz::RECURSION_LIMIT){
-		throw std::runtime_error(ANNOT("Recursion limit reached when writing branch for term: " + parent->get_str()));
+		ERROR(ANNOT("Recursion limit reached when writing branch for term: " + parent->get_str()));
 	}
 
-	// std::cout << "parent node: " << parent->get_name() << " term: " << term << std::endl;
-	
-	// root->print_ast("");
-	// getchar();
+	if (control.step){
+		std::cout << "parent node: " << parent->get_name() << " term: " << term << std::endl;
+		root->print_ast("");
+		getchar();
+	}
 
 	if(term.is_rule()){
 
@@ -201,6 +217,11 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 		for(const Term& child_term : branch){
 			Term_constraint constraint = child_term.get_constaint();
 			unsigned int max = constraint.resolve(std::ref(context));
+
+			if (constraint.get_term_constraint_kind() == Term_constraint_kind::DYNAMIC_MAX){
+				std::cout << child_term << std::endl;
+				std::cout << "Resolves: " << max << std::endl;
+			}
 
 			// if(child_node->size()) continue;
 
@@ -219,14 +240,13 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 	parent->transition_to_done();
 }
 
-Result<Node> Ast::build(const Control& control){
+Result<Node> Ast::build(){
 	Result<Node> res;
 
 	if(entry == nullptr){
 		res.set_error("Entry point not set");
 
 	} else {
-		context.set_control(control);
 		context.reset(RL_PROGRAM);
 
 		Token_kind entry_token_kind = entry->get_token().kind;

@@ -159,8 +159,8 @@ std::shared_ptr<Variable> Node::get_name() const {
     return std::make_shared<Variable>();
 }
 
-std::shared_ptr<UInt> Node::get_size(unsigned int default_size) const {
-    return std::make_shared<UInt>(default_size);
+std::shared_ptr<UInt> Node::get_size() const {
+    return std::make_shared<UInt>();
 }
 
 std::shared_ptr<UInt> Node::get_index() const {

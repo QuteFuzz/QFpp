@@ -2,8 +2,8 @@
 #include <ast_utils.h>
 
 
-std::shared_ptr<Ast> Generator::setup_builder(){
-    std::shared_ptr<Ast> builder = std::make_shared<Ast>();
+std::shared_ptr<Ast> Generator::setup_builder(const Control& control){
+    std::shared_ptr<Ast> builder = std::make_shared<Ast>(control);
 
     if(grammar->is_rule(entry_name, entry_scope)){
         builder->set_entry(grammar->get_rule_pointer_if_exists(entry_name, entry_scope));
@@ -37,8 +37,8 @@ void Generator::ast_to_program(fs::path output_dir, const Control& control, unsi
 
     stream = get_stream(output_dir, "prog" + control.ext);
 
-    std::shared_ptr<Ast> builder = setup_builder();
-    Result<Node> maybe_ast_root = builder->build(control);
+    std::shared_ptr<Ast> builder = setup_builder(control);
+    Result<Node> maybe_ast_root = builder->build();
 
     if(maybe_ast_root.is_ok()){
         Node ast_root = maybe_ast_root.get_ok();
@@ -62,7 +62,7 @@ void Generator::ast_to_program(fs::path output_dir, const Control& control, unsi
         }
 
     } else {
-        ERROR(maybe_ast_root.get_error());
+        WARNING(maybe_ast_root.get_error());
     }
 }
 

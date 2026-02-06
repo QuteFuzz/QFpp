@@ -98,8 +98,12 @@ struct Context {
 	static int ast_counter;
 
 	public:
-		Context(){
+		Context(const Control& _control) :
+			control(_control)
+		
+		{
 			ast_counter += 1;
+			nested_depth = control.get_value("NESTED_MAX_DEPTH");
 		}
 
 		void reset(Reset_level l);
@@ -149,12 +153,6 @@ struct Context {
 			return subroutines_node.has_value() && (subroutines_node.value()->build_state() == NB_BUILD);
 		}
 
-		inline void set_control(const Control& _control){
-			control = _control;
-			nested_depth = control.get_value("NESTED_MAX_DEPTH");
-			// dummies.circuit->set_global_targets(control);
-		}
-
 		inline void print_circuit_info() const {
 			for(const std::shared_ptr<Circuit>& circuit : circuits){
 				circuit->print_info();
@@ -166,7 +164,7 @@ struct Context {
 		unsigned int operator()(Token_kind kind) const;
 
 	private:
-		Control control;
+		const Control& control;
 		Current_nodes current;
 		Dummy_nodes dummies;
 

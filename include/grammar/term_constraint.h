@@ -16,12 +16,13 @@ struct Term_constraint {
     public:
         Term_constraint(){}
 
-        Term_constraint(Token_kind _dependency, int _offset) :
+        Term_constraint(Token_kind _dependency, std::string _op, unsigned int _num) :
             kind(Term_constraint_kind::DYNAMIC_MAX),
             rand_min(0),
             rand_max(0),     
             dependency(_dependency),
-            offset(_offset)
+            op(_op),
+            num(_num)
         {}
 
         Term_constraint(Term_constraint_kind _kind, unsigned int _rand_min, unsigned int _rand_max) :
@@ -29,6 +30,10 @@ struct Term_constraint {
             rand_min(_rand_min),
             rand_max(_rand_max)
         {}
+
+        Term_constraint_kind get_term_constraint_kind(){
+            return kind;
+        }
 
         unsigned int resolve(std::function<unsigned int(Token_kind)> lookup){
             if(kind == Term_constraint_kind::NONE){
@@ -38,12 +43,22 @@ struct Term_constraint {
                 return random_uint(rand_max, rand_min);
 
             } else if(kind == Term_constraint_kind::DYNAMIC_MAX){
-                int val = lookup(dependency) + offset;
+                unsigned int lookup_res = lookup(dependency);
+                int res;
 
-                if(val < 0){
-                    val = 0;
+                if(op == "+"){
+                    res = lookup_res + num;
+                } else if (op == "-"){
+                    res = lookup_res - num;
+                } else if (op == ">="){
+                    res = lookup_res >= num;
+                } else if (op == "<="){
+                    res = lookup_res <= num;
+                } else {
+                    res = lookup_res;
                 }
-                return (unsigned int)val;
+
+                return (unsigned int)((res > 0) ? res : 0);
             
             } else {
                 throw std::runtime_error("Given term constraint kind not supported");
@@ -55,10 +70,10 @@ struct Term_constraint {
             if (constraint.kind == Term_constraint_kind::NONE){
             
             } else if(constraint.kind == Term_constraint_kind::RANDOM_MAX){
-                stream << " [0 " << "- RANDOM(" << constraint.rand_min << "," << constraint.rand_max << ")]";
+                stream << " max = " << "RANDOM(" << constraint.rand_min << "," << constraint.rand_max << ")";
 
             } else if(constraint.kind == Term_constraint_kind::DYNAMIC_MAX){
-                stream << " [0 - DYNAMIC]";
+                stream << " max = [" << constraint.dependency << " " << constraint.op << " " << constraint.num << "]";
             
             } else {
                 throw std::runtime_error("Given term constraint kind not supported");
@@ -73,7 +88,8 @@ struct Term_constraint {
         unsigned int rand_max;
 
         Token_kind dependency;
-        int offset;
+        std::string op;
+        unsigned int num;
 };
 
 

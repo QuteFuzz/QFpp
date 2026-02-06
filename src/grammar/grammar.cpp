@@ -192,33 +192,32 @@ void Grammar::build_grammar(){
                 Token_kind meta_func = token.kind;
                 Token lookahead = next_token.get_ok();
 
+                /*
+                    here, make sure after parsing the expression, the current token is BEFORE "]" as the extra consume happens at the bottom
+                */
+
                 if (lookahead.value == "]") {
-                    constraint = Term_constraint(meta_func, 0);
+                    constraint = Term_constraint(meta_func, "", 0);
 
-                } else if (lookahead.value == "-" || lookahead.value == "+") {
-                    int offset = 0;
-
+                } else if (lookahead.value == "-" || lookahead.value == "+" || lookahead.value == ">=" || lookahead.value == "<="){
                     consume(1); // consume META
-                    Token op = curr_token.get_ok(); // get +/-
+                    Token op = curr_token.get_ok();
                     
                     consume(1); // consume op
-                    Token num = curr_token.get_ok(); // get number
+                    Token num = curr_token.get_ok();
                     
-                    int val = safe_stoi(num.value, 0);
-                    offset = (op.value == "-") ? -val : val;
-
-                    constraint = Term_constraint(meta_func, offset);
+                    constraint = Term_constraint(meta_func, op.value, safe_stoul(num.value, 0));
                 
                 } else if (lookahead.value == "(") {
                     consume(2); // consume META and "("
                     
-                    Token rand_min = curr_token.get_ok(); // get rand min
+                    Token rand_min = curr_token.get_ok();
 
                     consume(1);
 
                     consume(",");
 
-                    Token rand_max = curr_token.get_ok(); // get rand max
+                    Token rand_max = curr_token.get_ok();
                     consume(1);
 
                     if (meta_func == UNIFORM){
@@ -226,7 +225,7 @@ void Grammar::build_grammar(){
                     } else {
                         error("Unknown meta function while setting term constraint", token);
                     }
-                
+
                 } else {
                     error("Unexpected token after meta function while setting term constraint", lookahead);
                 }

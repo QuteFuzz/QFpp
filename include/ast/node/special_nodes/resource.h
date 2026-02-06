@@ -20,7 +20,9 @@ class Resource : public Node {
         Resource() :
             Node("dummy", QUBIT),
             value(Singular_resource())
-        {}
+        {
+            add_constraint(SINGULAR_QUBIT, 1);
+        }
 
         Resource(const Register_resource& resource, const Scope& _scope, Resource_kind rk) :
             Node("register_resource", (rk == (Resource_kind::QUBIT) ? QUBIT : BIT)),
@@ -81,6 +83,7 @@ class Resource : public Node {
         }
 
         inline std::shared_ptr<UInt> get_index() const override {
+            assert(is_register_def());
             return std::get<Register_resource>(value).get_index();
         }
 

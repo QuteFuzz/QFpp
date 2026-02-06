@@ -12,7 +12,9 @@ class Resource_def : public Node {
         /// @brief Dummy definition
         Resource_def() :
             Node("resource_def", RESOURCE_DEF),
-            value(Register_resource_def())
+            value(Register_resource_def()),
+            scope(Scope::GLOB),
+            kind(Resource_kind::QUBIT)
         {}
 
         Resource_def(const Register_resource_def& def, const Scope& _scope, Resource_kind rk) :
@@ -42,7 +44,8 @@ class Resource_def : public Node {
         /// @brief Get size of resource definition if it is a register definition. If not, return 1, or whatever `default_size` is as an `UInt` node
         /// @param default_size
         /// @return
-        inline std::shared_ptr<UInt> get_size(unsigned int default_size = 1) const override {
+        inline std::shared_ptr<UInt> get_size() const override {
+            assert(is_register_def());
             return std::get<Register_resource_def>(value).get_size();
         }
 
