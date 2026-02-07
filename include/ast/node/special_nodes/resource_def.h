@@ -12,13 +12,12 @@ class Resource_def : public Node {
         /// @brief Dummy definition
         Resource_def() :
             Node("resource_def", RESOURCE_DEF),
-            value(Register_resource_def()),
             scope(Scope::GLOB),
             kind(Resource_kind::QUBIT)
         {}
 
         Resource_def(const Register_resource_def& def, const Scope& _scope, Resource_kind rk) :
-            Node("register_resource_def", (rk == (Resource_kind::QUBIT) ? QUBIT_DEF : BIT_DEF)),
+            Node("resource_def", (rk == (Resource_kind::QUBIT) ? QUBIT_DEF : BIT_DEF)),
             value(def),
             scope(_scope),
             kind(rk)
@@ -45,8 +44,12 @@ class Resource_def : public Node {
         /// @param default_size
         /// @return
         inline std::shared_ptr<UInt> get_size() const override {
-            assert(is_register_def());
-            return std::get<Register_resource_def>(value).get_size();
+            if (is_register_def()) {
+                return std::get<Register_resource_def>(value).get_size();
+            } else {
+                WARNING("Singular resource def has no size! retuning size 1");
+                return std::make_shared<UInt>(1);
+            }
         }
 
         inline bool is_register_def() const {
@@ -55,10 +58,6 @@ class Resource_def : public Node {
 
         inline bool defines(const Resource& resource) const {
             return get_name()->get_str() == resource.get_name()->get_str();
-        }
-
-        inline void increase_size(){
-            if(is_register_def()) std::get<Register_resource_def>(value).increase_size();
         }
 
         inline std::string resolved_name() const override {

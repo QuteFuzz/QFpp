@@ -186,7 +186,7 @@ std::string escape_string(const std::string& input) {
             case '\\': output += "\\\\"; break;
         }
     }
-    return output;
+    return output.size() ? output : input;
 }
 
 void render(std::function<void(std::ostringstream&)> extend_dot_string, const fs::path& render_path){

@@ -37,19 +37,7 @@ Gate::Gate(const std::string& str, const Token_kind& kind, const Ptr_coll<Resour
     }
 }
 
-std::shared_ptr<Resource_def> Gate::get_next_qubit_def(){
-    Ptr_pred_type<Resource_def> pred = [](const auto& elem){return scope_matches(elem->get_scope(), Scope::EXT) && !elem->is_used();};
-    last_qubit_def = get_next_from_coll(qubit_defs, pred);
-    last_qubit_def->set_used();
-
-    return last_qubit_def;
-}
-
-std::shared_ptr<Resource_def> Gate::get_last_qubit_def() const {
-    return last_qubit_def;
-}
-
 unsigned int Gate::get_num_external_qubit_defs() const {
     auto pred = [](const auto& elem){return scope_matches(elem->get_scope(), Scope::EXT);};
-    return filter<Resource_def>(qubit_defs, pred).size();
+    return size_pred<Resource_def>(qubit_defs, pred);
 }

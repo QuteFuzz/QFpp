@@ -35,14 +35,6 @@ class Register_resource_def {
 
         bool is_used(){return used;}
 
-        // void make_resources(Ptr_coll<Resource>& output, const Scope& scope) const {
-
-        //     for(size_t i = 0; i < (size_t)size.get_num(); i++){
-        //         Register_resource reg_resource(name, UInt(std::to_string(i)));
-        //         output.push_back(std::make_shared<Resource>(reg_resource, scope));
-        //     }
-        // }
-
     protected:
         Variable name;
         UInt size;

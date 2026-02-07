@@ -47,7 +47,7 @@ class Term {
         Token_kind get_node_kind() const {return kind;}
 
     private:
-        std::variant<std::shared_ptr<Rule>, std::string> value;
+        std::variant<std::weak_ptr<Rule>, std::string> value;
         Token_kind kind;
         Meta_func meta_func = Meta_func::NONE;
         Term_constraint constraint;

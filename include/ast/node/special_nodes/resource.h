@@ -83,15 +83,19 @@ class Resource : public Node {
         }
 
         inline std::shared_ptr<UInt> get_index() const override {
-            assert(is_register_def());
-            return std::get<Register_resource>(value).get_index();
+            if (is_register_def()) {
+                return std::get<Register_resource>(value).get_index();
+            } else {
+                WARNING("Singular resource has no index! retuning index 0");
+                return std::make_shared<UInt>(0);
+            }
         }
 
         inline bool is_register_def() const {
             return std::holds_alternative<Register_resource>(value);
         }
 
-        inline std::string resolved_name() const override {
+        inline std::string resolved_name() const override {            
             if(is_register_def()){
                 return get_name()->get_str() + "[" + get_index()->get_str() + "]";
             } else {

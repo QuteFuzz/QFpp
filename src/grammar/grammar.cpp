@@ -283,10 +283,11 @@ void Grammar::build_grammar(){
 
         } else if (token.kind == LPAREN){
             Token new_rule_token{.value = "NR_" + std::to_string(new_rule_counter++), .kind = RULE};
-            stack.push(Current(get_rule_pointer(new_rule_token, Scope::GLOB)));
+            Scope parent_scope = stack.top().rule->get_scope();
+            stack.push(Current(get_rule_pointer(new_rule_token, parent_scope)));
 
         } else if (token.kind == RPAREN){
-            std::shared_ptr<Rule>& new_rule_ptr = stack.top().rule;
+            std::shared_ptr<Rule> new_rule_ptr = stack.top().rule;
 
             complete_rule();
 

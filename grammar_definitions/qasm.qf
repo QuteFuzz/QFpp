@@ -57,7 +57,7 @@ compound_stmts = (compound_stmt NEWLINE)+;
 
 compound_stmt = qubit_op;
 
-subroutine_circuit = "gate " CIRCUIT_NAME " " EXTERNAL::qubit_defs " { " NEWLINE subroutine_body "}";
+subroutine_circuit = "gate " CIRCUIT_NAME " " EXTERNAL::qubit_defs " { " NEWLINE INDENT subroutine_body DEDENT "}";
 
 subroutine_op = subroutine " " qubit_list;
 
@@ -75,8 +75,6 @@ register_bit = NAME "[" INDEX "]";
 
 
 gate_op_args = ("(" float_list ") ")[NUM_FLOATS >= 1] qubit_list;
-
-# gate_op_args = (float_literal ", ")[NUM_FLOATS] qubit_list ("," bit)[NUM_BITS];
 
 gate_op = gate_name " " gate_op_args ";";
 

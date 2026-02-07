@@ -7,7 +7,7 @@ void Circuit::print_info() const {
     std::cout << "              CIRCUIT INFO               " << std::endl;
     std::cout << "=======================================" << std::endl;
     std::cout << "Owner: " << owner << " [can apply subroutines: " << (can_apply_subroutines ? "true" : "false") << "]" << std::endl;
-    std::cout << "--->" << this << std::endl;
+    std::cout << "---> " << this << std::endl;
 
     std::cout << "Resources " << std::endl;
 

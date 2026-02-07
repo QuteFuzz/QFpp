@@ -52,8 +52,8 @@ bool Context::can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit){
     auto current_circuit_bits = current_circuit->get_coll<Resource>(Resource_kind::BIT);
     auto dest_circuit_bits = circuit->get_coll<Resource>(Resource_kind::BIT);
 
-    unsigned int num_required_qubits = filter<Resource>(dest_circuit_qubits, ext_scope_pred).size();
-    unsigned int num_required_bits = filter<Resource>(dest_circuit_bits, ext_scope_pred).size();
+    unsigned int num_required_qubits = size_pred<Resource>(dest_circuit_qubits, ext_scope_pred);
+    unsigned int num_required_bits = size_pred<Resource>(dest_circuit_bits, ext_scope_pred);
 
     unsigned int num_qubits_in_circuit = current_circuit_qubits.size();
     unsigned int num_bits_in_circuit = current_circuit_bits.size();

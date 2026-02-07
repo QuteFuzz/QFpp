@@ -70,10 +70,10 @@ struct Term_constraint {
             if (constraint.kind == Term_constraint_kind::NONE){
             
             } else if(constraint.kind == Term_constraint_kind::RANDOM_MAX){
-                stream << " max = " << "RANDOM(" << constraint.rand_min << "," << constraint.rand_max << ")";
+                stream << " [max = " << "RANDOM(" << constraint.rand_min << "," << constraint.rand_max << ")]";
 
             } else if(constraint.kind == Term_constraint_kind::DYNAMIC_MAX){
-                stream << " max = [" << constraint.dependency << " " << constraint.op << " " << constraint.num << "]";
+                stream << " [max = " << kind_as_str(constraint.dependency) << " " << constraint.op << " " << constraint.num << "]";
             
             } else {
                 throw std::runtime_error("Given term constraint kind not supported");

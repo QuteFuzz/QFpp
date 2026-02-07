@@ -122,7 +122,7 @@ class Circuit : public Node {
     private:
         std::string owner;
         bool is_subroutine = false;
-        bool can_apply_subroutines = false;
+        bool can_apply_subroutines = true;
         Ptr_coll<Resource> resources;
         Ptr_coll<Resource_def> resource_defs;
 };

@@ -123,8 +123,6 @@ class Grammar{
         Lexer lexer;
         std::string name;
         fs::path path;
-
-        // Control control;
 };
 
 #endif

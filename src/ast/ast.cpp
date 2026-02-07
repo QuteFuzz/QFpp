@@ -147,9 +147,18 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 		case BIT:
 			return context.get_random_resource(Resource_kind::BIT)->clone();
 
-		case REGISTER_QUBIT: case REGISTER_BIT: case SINGULAR_QUBIT: case SINGULAR_BIT:
+		case REGISTER_QUBIT: case REGISTER_BIT: case SINGULAR_QUBIT: case SINGULAR_BIT: {
 			parent->remove_constraints(); // parent is one of the nodes above, remove constraints as just used to reach here
-			return std::dynamic_pointer_cast<Resource>(parent)->clone();
+
+			auto def = std::dynamic_pointer_cast<Resource>(parent);
+
+			if(def == nullptr){
+				WARNING("Parent of resource expected to be of `Resource` type! Returning dummy");
+				return dummy;
+			} else {
+				return def->clone();
+			}
+		}
 
 		case REGISTER_QUBIT_DEF:
 			return context.nn_register_resource_def(scope, Resource_kind::QUBIT)->clone();
@@ -204,12 +213,10 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 			Term_constraint constraint = child_term.get_constaint();
 			unsigned int max = constraint.resolve(std::ref(context));
 
-			if (constraint.get_term_constraint_kind() == Term_constraint_kind::DYNAMIC_MAX){
-				std::cout << child_term << std::endl;
-				std::cout << "Resolves: " << max << std::endl;
-			}
-
-			// if(child_node->size()) continue;
+			// if (constraint.get_term_constraint_kind() == Term_constraint_kind::DYNAMIC_MAX){
+			// 	std::cout << child_term << std::endl;
+			// 	std::cout << "Resolves: " << max << std::endl;
+			// }
 
 			// add as many children to the parent node as specified by the term constraint
 			// then use the term to get the next branch to write, where this new child node is the parent

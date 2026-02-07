@@ -42,10 +42,6 @@ class Gate : public Node {
 
         unsigned int get_num_floats() const {return info.n_floats;}
 
-        std::shared_ptr<Resource_def> get_next_qubit_def();
-
-        std::shared_ptr<Resource_def> get_last_qubit_def() const;
-
     private:
         Ptr_coll<Resource_def> qubit_defs;
         std::shared_ptr<Resource_def> last_qubit_def;
