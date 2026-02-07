@@ -20,7 +20,7 @@ class Compare_op_bitwise_or_pair_child : public Node {
             stream << " ";
 
             for(const std::shared_ptr<Node>& child : children){
-                child->print_program(stream); 
+                child->print_program(stream);
                 stream << " ";
             }
         }

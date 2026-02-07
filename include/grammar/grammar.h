@@ -33,7 +33,7 @@ class Grammar{
         inline void error(const std::string& msg, Token token){
             std::cout << *stack.top().rule << std::endl;
             std::cout << "Token: " << token << std::endl;
-            throw std::runtime_error(msg); 
+            throw std::runtime_error(msg);
         }
 
         void consume(int n);
@@ -105,7 +105,7 @@ class Grammar{
         Result<Token> next_token;
         Token prev_token;
 
-        /* 
+        /*
             current rule and branch being built
         */
         std::stack<Current> stack;

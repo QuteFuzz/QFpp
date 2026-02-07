@@ -29,7 +29,7 @@ class Circuit : public Node {
 
         inline bool check_if_subroutine(){return is_subroutine;}
 
-        template <typename T> 
+        template <typename T>
         inline Ptr_coll<T> get_coll() const {
             if constexpr (std::is_same_v<T, Resource>) {
                 return resources;
@@ -61,7 +61,7 @@ class Circuit : public Node {
 
             resource_defs.push_back(def);
         }
-    
+
         inline void reset(){
             for (const auto& elem : resources){
                 elem->reset();

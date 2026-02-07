@@ -116,7 +116,7 @@ std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk){
     Ptr_pred_type<Resource> pred = [](const std::shared_ptr<Resource>& elem){ return !elem->is_used(); };
     auto filtered_coll = get_current_circuit()->get_coll<Resource>(rk);
     auto random_resource = get_random_from_coll<Resource>(filtered_coll, pred);
-    
+
     random_resource->set_used();
     // random_resource->extend_flow_path(current.get<Qubit_op>(), current_port++);
 
@@ -253,7 +253,7 @@ std::shared_ptr<Node> Context::nn_next(Node& ast_root, const Token_kind& kind){
 
 unsigned int Context::operator()(Token_kind kind) const {
     auto gate = get_current_node<Gate>();
-    
+
     if (kind == NUM_QUBITS) {
         return gate->get_num_external_qubits();
     } else if (kind == NUM_BITS) {

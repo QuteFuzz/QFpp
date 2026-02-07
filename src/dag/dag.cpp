@@ -2,7 +2,7 @@
 // #include <dag.h>
 // #include <circuit.h>
 
-// /// TODO: fix dag stuff, line 45 
+// /// TODO: fix dag stuff, line 45
 
 // Dag::Dag(const std::shared_ptr<Circuit> circuit){
 //     reset();

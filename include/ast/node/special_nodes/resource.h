@@ -66,7 +66,7 @@ class Resource : public Node {
             return std::make_shared<UInt>(index);
         }
 
-        inline std::string resolved_name() const override {            
+        inline std::string resolved_name() const override {
             return get_name()->get_str() + "[" + get_index()->get_str() + "]";
         }
 

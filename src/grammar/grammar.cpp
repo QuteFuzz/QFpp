@@ -138,7 +138,7 @@ void Grammar::add_term_to_current_branch(const Token& token){
         assert(rule_decl_meta_func == Meta_func::NONE); // this is a meta-func used for node creation, should not have a meta func applied to itself
         assert(rule_decl_scope == Scope::GLOB); // also should not have scope set explictly
         current_branch.add(Term(get_rule_pointer(token, current_rule->get_scope()), token.kind, Meta_func::NONE));
-        
+
     } else {
         throw std::runtime_error(ANNOT("add_term_to_branch should only be called on syntax or rule tokens!"));
     }
@@ -179,12 +179,12 @@ void Grammar::build_grammar(){
             // must not peek if at EOF
             return;
 
-        } else if (token.kind == LBRACK){ 
+        } else if (token.kind == LBRACK){
             setting_term_constraint = true;
 
         } else if (token.kind == RBRACK){
             setting_term_constraint = false;
-            
+
         } else if (setting_term_constraint) {
             Term_constraint constraint;
 
@@ -202,15 +202,15 @@ void Grammar::build_grammar(){
                 } else if (lookahead.value == "-" || lookahead.value == "+" || lookahead.value == ">=" || lookahead.value == "<="){
                     consume(1); // consume META
                     Token op = curr_token.get_ok();
-                    
+
                     consume(1); // consume op
                     Token num = curr_token.get_ok();
-                    
+
                     constraint = Term_constraint(meta_func, op.value, safe_stoul(num.value, 0));
-                
+
                 } else if (lookahead.value == "(") {
                     consume(2); // consume META and "("
-                    
+
                     Token rand_min = curr_token.get_ok();
 
                     consume(1);
@@ -229,7 +229,7 @@ void Grammar::build_grammar(){
                 } else {
                     error("Unexpected token after meta function while setting term constraint", lookahead);
                 }
-            
+
             } else if (token.kind == SYNTAX){
                 // numbers are also treated as SYNTAX
                 auto val = safe_stoul(token.value, 1);
@@ -246,12 +246,12 @@ void Grammar::build_grammar(){
             // if next token is `<`, this is a meta func application, handled at `<` using previous token
             // add_term_to_current_branches(token);
             add_term_to_current_branch(token);
-        
+
         } else if(is_kind_of_rule(token.kind) || token.kind == SYNTAX){
             next = next_token.get_ok();
 
             // rules that are within branches, rules before `RULE_START` and `RULE_APPEND` are handled at `RULE_START` and `RULE_APPEND`
-            if(!stack.empty()){        
+            if(!stack.empty()){
                 add_term_to_current_branch(token);
                 // add_term_to_current_branches(token);
                 rule_decl_scope = Scope::GLOB; // reset to GLOB scope as default

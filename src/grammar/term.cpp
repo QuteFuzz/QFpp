@@ -74,11 +74,11 @@ bool Term::operator==(const Term& other) const {
 
         return a != nullptr && b != nullptr && *a == *b;
 
-    } else if (is_syntax() && other.is_syntax()){    
+    } else if (is_syntax() && other.is_syntax()){
         return get_syntax() == other.get_syntax();
 
     } else {
         return false;
-    
+
     }
 }

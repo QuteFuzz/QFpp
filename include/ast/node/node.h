@@ -113,7 +113,7 @@ class Node : public std::enable_shared_from_this<Node> {
             } else {
 
                 for(const std::shared_ptr<Node>& child : children){
-                    stream << indentation_str; 
+                    stream << indentation_str;
                     child->print_program(stream);
                 }
             }

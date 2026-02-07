@@ -71,7 +71,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			return std::make_shared<Node>(str);
 
 		case NAME:
-			
+
 			return parent->get_name();
 
 		case SIZE:
@@ -90,7 +90,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			return std::make_shared<Variable>(context.get_current_circuit()->get_owner());
 
 		case INDENT:
-			Node::indentation_tracker += "\t"; 
+			Node::indentation_tracker += "\t";
 			return dummy;
 
 		case DEDENT:
@@ -188,7 +188,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			return std::make_shared<Gate_name>(context.get_current_circuit());
 
 		case H: case X: case Y: case Z: case T: case TDG: case S: case SDG: case PROJECT_Z:
-		case MEASURE_AND_RESET: case V: case VDG: case CX : case CY: case CZ: case CNOT: 
+		case MEASURE_AND_RESET: case V: case VDG: case CX : case CY: case CZ: case CNOT:
 		case CH: case SWAP: case CRZ: case CRX: case CRY: case CCX: case CSWAP: case TOFFOLI:
 		case U1: case RX: case RY: case RZ: case U2: case PHASED_X: case U3: case U: case MEASURE:
 			return context.nn_gate(str, kind);
@@ -241,7 +241,7 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 					term_branch_to_child_nodes(parent, std::get<Term>(maybe_child), depth);
 				} else {
 					auto child_node = std::get<std::shared_ptr<Node>>(maybe_child);
-					
+
 					parent->add_child(child_node);
 					term_branch_to_child_nodes(child_node, child_term, depth + 1);
 				}
@@ -258,7 +258,7 @@ Result<Node> Ast::build(){
 	Result<Node> res;
 
 	if(entry == nullptr){
-		res.set_error("Entry point not set"); 
+		res.set_error("Entry point not set");
 
 	} else {
 		context.reset(RL_PROGRAM);
@@ -275,7 +275,7 @@ Result<Node> Ast::build(){
 			context.print_circuit_info();
 
 			res.set_ok(*root);
-		
+
 		} else {
 			res.set_error("Root was redirected, AST cannot be built");
 		}

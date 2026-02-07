@@ -18,7 +18,7 @@ class Disjunction : public Node {
 
         void print_program(std::ostream& stream) const override {
             for(const std::shared_ptr<Node>& child : children){
-                child->print_program(stream); 
+                child->print_program(stream);
                 stream << " ";
             }
         }

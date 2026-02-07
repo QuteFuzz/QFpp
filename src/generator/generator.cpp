@@ -65,5 +65,3 @@ void Generator::ast_to_program(fs::path output_dir, const Control& control, unsi
         WARNING(maybe_ast_root.get_error());
     }
 }
-
-

@@ -100,7 +100,7 @@ struct Context {
 	public:
 		Context(const Control& _control) :
 			control(_control)
-		
+
 		{
 			ast_counter += 1;
 			nested_depth = control.get_value("NESTED_MAX_DEPTH");

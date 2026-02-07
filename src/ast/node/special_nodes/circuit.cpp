@@ -14,7 +14,7 @@ void Circuit::print_info() const {
     for(const auto& rd : resource_defs){
         rd->print_info();
     }
-    
+
     std::cout << "Resources " << std::endl;
 
     for(const auto& r : resources){

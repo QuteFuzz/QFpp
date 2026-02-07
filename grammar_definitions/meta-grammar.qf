@@ -8,8 +8,8 @@
     Notes:
     - all rules have scope GLOBAL by default
     - must define a gate_op
-    - must use `subroutine_compound_stmts` or `compound_stmts` accordingly. This is a requirement because the 
-        `compound_stmts` node is needed as a way for the mutation passes to tell statement boundaries, so it doesn't 
+    - must use `subroutine_compound_stmts` or `compound_stmts` accordingly. This is a requirement because the
+        `compound_stmts` node is needed as a way for the mutation passes to tell statement boundaries, so it doesn't
         mutate across them
 *)
 
@@ -81,7 +81,7 @@ gate_op_args = (float_literal ", ")[NUM_FLOATS] qubit_list ("," bit)[NUM_BITS];
 # subroutine_op_arg =
 #     qubit
 #     | "[" qubit_list "]"
-#     ; 
+#     ;
 
 subroutine_op_args = qubit_list;
 
