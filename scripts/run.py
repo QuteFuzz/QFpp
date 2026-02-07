@@ -17,7 +17,7 @@ NIGHTLY_DIR = Path("nightly_results")
 GRAMMARS = ["pytket", "qiskit"]
 ENTRY_POINT = "program"
 MIN_KS_VALUE = 0.001
-TIMEOUT = 300
+TIMEOUT = 1000
 DEFAULT_NUM_TESTS = 1
 CPU_COUNT = os.cpu_count()
 
