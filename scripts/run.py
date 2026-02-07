@@ -155,7 +155,7 @@ class Check_grammar:
 
         log(f"Generating {self.num_tests} tests for grammar: {self.name}", Color.YELLOW)
 
-        fuzzer_executable = BUILD_DIR / "fuzzer"
+        fuzzer_executable = BUILD_DIR / "qf"
 
         if self.seed is None:
             input_str = f"{self.name} {ENTRY_POINT}\n{self.num_tests}\n"
