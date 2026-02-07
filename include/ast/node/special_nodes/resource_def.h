@@ -25,7 +25,13 @@ class Resource_def : public Node {
             reg(is_reg),
             scope(_scope),
             kind(rk)
-        {}
+        {
+            if (rk == Resource_kind::QUBIT){
+                add_constraint(REGISTER_QUBIT_DEF, is_reg);
+            } else {
+                add_constraint(REGISTER_BIT_DEF, is_reg);
+            }
+        }
 
         Scope get_scope() const { return scope; }
 

@@ -171,6 +171,8 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			return context.nn_resource_def(scope, Resource_kind::BIT);
 
 		case REGISTER_QUBIT_DEF: case REGISTER_BIT_DEF: case SINGULAR_QUBIT_DEF: case SINGULAR_BIT_DEF: {
+			parent->remove_constraints(); // parent is one of the nodes above, remove constraints as just used to reach here
+
 			auto def = std::dynamic_pointer_cast<Resource_def>(parent);
 
 			if(def == nullptr){
