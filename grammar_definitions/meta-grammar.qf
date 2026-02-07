@@ -19,7 +19,7 @@
 # default config
 EXTENSION = ".py";
 MAX_REG_SIZE = 5;
-NESTED_MAX_DEPTH = 4;
+NESTED_MAX_DEPTH = 10;
 
 qubit_def = singular_qubit_def | register_qubit_def;
 
@@ -38,13 +38,11 @@ EXTERNAL {
     bit_def = singular_bit_def | register_bit_def;
 }
 
-# program       = imports NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;
-
 program       = imports NEWLINE circuit NEWLINE program_footer;
 
 program_footer = compiler_call;
 
-subroutine_defs = (subroutine_circuit NEWLINE subroutine_def_footer)[UNIFORM(1, 3)];
+subroutine_defs = (subroutine_circuit NEWLINE subroutine_def_footer)[UNIFORM(2, 5)];
 
 # all subroutines have just qubit ops and no if-else statements
 subroutine_body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE (qubit_op NEWLINE)+;
@@ -83,7 +81,7 @@ gate_op_args = (float_literal ", ")[NUM_FLOATS] qubit_list ("," bit)[NUM_BITS];
 #     | "[" qubit_list "]"
 #     ;
 
-subroutine_op_args = qubit_list;
+subroutine_op_args = qubit_list ("," bit)[NUM_BITS];
 
 qubit_list = qubit (", " qubit)[NUM_QUBITS - 1];
 

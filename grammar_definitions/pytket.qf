@@ -1,4 +1,4 @@
-
+# Pytket grammar with control flow support
 # import "qasm.qf"
 
 x = "X";
@@ -21,12 +21,64 @@ h = "H";
 t = "T";
 s = "S";
 measure = "Measure";
+swap = "SWAP";
+# toffoli = "Toffoli";   # TODO: change application syntax depending on gate name?
+cswap = "CSWAP";
+crx = "CRx";
+cry = "CRy";
+crz = "CRz";
+u1 = "U1";
+u2 = "U2";
+u3 = "U3";
+phased_x = "PhasedX";
+
+gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz | 
+    u1 | u2 | u3 | phased_x;
+
+# ============================================================================
+# CONTROL FLOW - Override meta-grammar to add pytket-specific control flow
+# ============================================================================
+
+# Pytket uses Python-style if/elif/else with bit comparisons
+if_stmt =
+    'if ' bit ' == ' branch_condition ':' NEWLINE INDENT compound_stmts DEDENT elif_stmt
+    | 'if ' bit ' == ' branch_condition ':' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
+
+elif_stmt = 
+    'elif ' bit ' == ' branch_condition ':' NEWLINE INDENT compound_stmts DEDENT elif_stmt
+    | 'elif ' bit ' == ' branch_condition ':' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
+
+else_stmt =
+    'else:' NEWLINE INDENT compound_stmts DEDENT;
+
+# Branch conditions for classical bit values
+branch_condition = 1 | 0;
+
+# ============================================================================
+# CIRCUIT STRUCTURE
+# ============================================================================
+
+# TODO: need to figure out better way of resolving circuit name
+# circuits = (circuit NEWLINE)[UNIFORM(1, 3)];
+
+circuits = circuit;
+
+program = imports NEWLINE NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuits NEWLINE program_footer;
 
 circuit = circuit_def_header NEWLINE body NEWLINE;
 
+# Body includes both qubits and classical bits (needed for control flow)
+body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
+
+parameter_defs = (parameter_def NEWLINE)*;
+
+parameter_def = NAME " = fresh_symbol('" NAME "')";
+
+# ============================================================================
+# EXTERNAL SCOPE DEFINITIONS
+# ============================================================================
 
 EXTERNAL {
-
     qubit_defs = (qubit_def NEWLINE)[UNIFORM(3,4)];
 
     bit_defs = (bit_def NEWLINE)[UNIFORM(3,4)];
@@ -44,40 +96,83 @@ EXTERNAL {
         NAME " = " CIRCUIT_NAME '.add_c_register("' NAME '", ' SIZE ")";
 }
 
+# ============================================================================
+# IMPORTS AND HEADERS
+# ============================================================================
 
 imports =
     "from pytket import Circuit, Qubit, Bit" NEWLINE
     "from pytket.circuit import Op, OpType, MultiplexorBox, CircBox" NEWLINE
+    "from pytket._tket.circuit import fresh_symbol" NEWLINE
     swarm_testing_imports NEWLINE
     "from diff_testing.pytket import pytketTesting"
     ;
 
+circuit_def_header = CIRCUIT_NAME " = Circuit()";
 
 subroutine_def_footer = CIRCUIT_NAME " = CircBox(" CIRCUIT_NAME ")" NEWLINE;
 
-circuit_def_header = CIRCUIT_NAME " = Circuit()";
+# ============================================================================
+# STATEMENTS - Enable both quantum operations and control flow
+# ============================================================================
 
-compound_stmt = qubit_op;
+compound_stmt = 
+    qubit_op
+    | if_stmt
+    | barrier_op
+    | reset_op;
 
+# ============================================================================
+# GATE OPERATIONS
+# ============================================================================
 
 gate_op = CIRCUIT_NAME "." gate_name "(" gate_op_args ")";
 
-subroutine_op = CIRCUIT_NAME ".add_gate(" subroutine ",[" qubit_list "])";
+subroutine_op = CIRCUIT_NAME ".add_gate(" subroutine ",[" subroutine_op_args "])";
 
-condition_value = "condition_value=1"
-                | "condition_value=0";
 
+# ============================================================================
+# SPECIAL OPERATIONS
+# ============================================================================
+
+# Barrier operation (prevents optimization across this boundary
+
+barrier_op_qubits = qubit ("," qubit)[UNIFORM(0, 2)]; # TODO: if we had in-grammar term constraint resolution, we could replace 2 with MAX_REG_SIZE
+
+# between 1-3 qubits, we could have at least 3 qubit defs, each of which could be singular, so 3 qubits upper bound to prevent errors
+
+barrier_op = CIRCUIT_NAME ".add_barrier([" barrier_op_qubits "])";
+
+# Reset operation (reset qubit to |0⟩)
+reset_op = CIRCUIT_NAME ".Reset(" qubit ")";
+
+# ============================================================================
+# QUBIT AND BIT REFERENCES
+# ============================================================================
 
 singular_qubit = NAME;
 
 register_qubit = NAME "[" INDEX "]";
 
-
 singular_bit = NAME;
 
 register_bit = NAME "[" INDEX "]";
 
+# ============================================================================
+# COMPILER CALL
+# ============================================================================
 
 compiler_call = "pt = pytketTesting() " NEWLINE testing_method;
 
 testing_method = CIRCUIT_NAME ".measure_all() " NEWLINE "pt.ks_diff_test(" CIRCUIT_NAME COMMA circuit_id RPAREN;
+
+# testing_method = "for circuit in [" CIRCUIT_NAME ("," CIRCUIT_NAME)* "]: circuit.measure_all()" NEWLINE 
+#     "pt.ks_diff_test(" CIRCUIT_NAME COMMA circuit_id RPAREN;
+
+# ============================================================================
+# NUMBERS
+# ============================================================================
+
+# float_literal = FLOAT | NAME;
+
+# need to figure out how to get some resource and pull its name

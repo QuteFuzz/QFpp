@@ -24,7 +24,7 @@ void Context::reset(Reset_level l){
             nested_depth = control.get_value("NESTED_MAX_DEPTH");
             [[fallthrough]];
 
-        case RL_QUBIT_OP: {
+        case RL_RESOURCES: {
             get_current_circuit()->reset();
 
             current_port = 0;
@@ -191,10 +191,9 @@ std::shared_ptr<Gate> Context::nn_gate_from_subroutine(){
         5. give this gate to the current qubit op
     */
     std::shared_ptr<Circuit> subroutine_circuit = get_random_circuit();
-    auto qubit_defs = subroutine_circuit->get_coll<Resource_def>(Resource_kind::QUBIT);
     auto gate_name = subroutine_circuit->get_owner();
 
-    auto gate = std::make_shared<Gate>(gate_name, SUBROUTINE, qubit_defs);
+    auto gate = std::make_shared<Gate>(gate_name, SUBROUTINE, subroutine_circuit->get_coll<Resource_def>());
     gate->add_child(std::make_shared<Variable>(gate_name));
 
     current.set<Gate>(gate);
@@ -213,7 +212,7 @@ std::shared_ptr<UInt> Context::nn_circuit_id() {
 /// @param parent
 /// @return
 std::shared_ptr<Nested_stmt> Context::nn_nested_stmt(const std::string& str, const Token_kind& kind){
-    reset(RL_QUBIT_OP);
+    reset(RL_RESOURCES);
     nested_depth = (nested_depth == 0) ? 0 : nested_depth - 1;
     return std::make_shared<Nested_stmt>(str, kind);
 }
@@ -229,7 +228,7 @@ std::shared_ptr<Node> Context::nn_subroutines(){
 }
 
 std::shared_ptr<Qubit_op> Context::nn_qubit_op(){
-    reset(RL_QUBIT_OP);
+    reset(RL_RESOURCES);
 
     auto qubit_op = std::make_shared<Qubit_op>();
     current.set<Qubit_op>(qubit_op);

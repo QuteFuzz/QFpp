@@ -16,7 +16,7 @@
 enum Reset_level {
 	RL_PROGRAM,
 	RL_CIRCUIT,
-	RL_QUBIT_OP,
+	RL_RESOURCES,
 };
 
 struct Current_nodes {
