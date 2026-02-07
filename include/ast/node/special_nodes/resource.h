@@ -18,7 +18,8 @@ class Resource : public Node {
 
         /// @brief Dummy resource
         Resource() :
-            Node("dummy", QUBIT)
+            Node("dummy", QUBIT),
+            resource_kind(Resource_kind::QUBIT)
         {
             add_constraint(SINGULAR_QUBIT, 1);
         }
@@ -79,7 +80,12 @@ class Resource : public Node {
         std::shared_ptr<Resource> clone() const {
             auto new_node = std::make_shared<Resource>(*this);
             new_node->clear_children();
+            new_node->incr_id();
             return std::make_shared<Resource>(*new_node);
+        }
+
+        inline void print_info() const {
+            std::cout << resolved_name() << " " << STR_SCOPE(get_scope()) << STR_RESOURCE_KIND(get_resource_kind()) << " is used: " << used << std::endl;
         }
 
         // void extend_flow_path(const std::shared_ptr<Qubit_op> qubit_op, unsigned int current_port);
@@ -88,15 +94,13 @@ class Resource : public Node {
 
         // void add_path_to_dag(Dag& dag) const;
 
-        // std::vector<Edge> get_flow_path(){
-        //     return flow_path;
-        // }
+        // std::vector<Edge> get_flow_path(){ return flow_path; }
 
     private:
         Variable name;
         UInt index;
         bool used = false;
-        Scope scope;
+        Scope scope = Scope::GLOB;
         Resource_kind resource_kind;
 
         // std::vector<Edge> flow_path;

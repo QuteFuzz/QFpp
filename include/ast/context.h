@@ -110,17 +110,13 @@ struct Context {
 
 		bool can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit);
 
-		void set_can_apply_subroutines();
+		bool current_circuit_uses_subroutines();
 
 		std::shared_ptr<Circuit> get_current_circuit() const;
 
 		std::shared_ptr<Circuit> get_random_circuit();
 
 		std::shared_ptr<Resource> get_random_resource(Resource_kind rk);
-
-		// std::shared_ptr<Resource_def> nn_singular_resource_def(Scope& scope, Resource_kind rk);
-// 
-		// std::shared_ptr<Resource_def> nn_register_resource_def(Scope& scope, Resource_kind rk);
 
 		std::shared_ptr<Resource_def> nn_resource_def(Scope& scope, Resource_kind rk);
 

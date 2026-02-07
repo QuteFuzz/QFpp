@@ -35,7 +35,7 @@ s = "s";
 measure = "measure";
 
 # Redefine base program structure to fit Qiskit
-program = imports NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;
+program = imports NEWLINE NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;
 
 parameter_defs = (parameter_def NEWLINE)*;
 
@@ -46,8 +46,15 @@ circuit = circuit_def_header NEWLINE body NEWLINE;
 (*
     subroutines cannot contain classical bits as then it cannot be converted into a gate
     by extension, any gates like measure that need classical bits will never be generated inside a subroutine
+
+    therefore also no control flow is allowed in a subroutine
+
+    just qubit ops are allowed
 *)
-subroutine_body = EXTERNAL::qubit_defs NEWLINE (qubit_op NEWLINE)+;
+
+subroutine_compound_stmts = (qubit_op NEWLINE)[UNIFORM(3,10)];
+
+subroutine_body = EXTERNAL::qubit_defs NEWLINE subroutine_compound_stmts;
 
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
 
@@ -58,13 +65,9 @@ circuit_def_header = NEWLINE CIRCUIT_NAME " = QuantumCircuit(0)";
 # Redefine EXTERNAL scope for Qiskit register and circuit definitions
 EXTERNAL {
 
-    # qubit_defs = (qubit_def NEWLINE)+;
+    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3,4)];
 
-    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3,10)];
-
-    # bit_defs = (bit_def NEWLINE)+;
-
-    bit_defs = (bit_def NEWLINE)[UNIFORM(3,10)];
+    bit_defs = (bit_def NEWLINE)[UNIFORM(3,4)];
 
     # Qiskit registers are defined by size and name, not individually
     singular_qubit_def =
@@ -98,7 +101,7 @@ compound_stmt =
     ;
 
 # Redefine compound_stmt and related rules
-compound_stmts = (compound_stmt NEWLINE)+;
+compound_stmts = (compound_stmt NEWLINE)[UNIFORM(3, 10)];
 
 # Redefine gate_op for Qiskit syntax: circuit.gate(args)
 gate_op = CIRCUIT_NAME "." gate_name "(" gate_op_args ")";
@@ -110,8 +113,6 @@ subroutine_op_arg =
     | qubit_list
     ;
 
-
-# Qiskit requires qubit and bit indexing from registers
 singular_qubit = NAME "[0]";
 
 register_qubit = NAME "[" INDEX "]";

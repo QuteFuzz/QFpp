@@ -28,6 +28,7 @@ Gate::Gate(const std::string& str, const Token_kind& kind, const Ptr_coll<Resour
     assert(kind == SUBROUTINE);
 
     info.gate = SUBROUTINE;
+    info.n_qubits = 0;  // reset to 0 before counting
 
     // count number of external qubits depending on size of qubit defs
     for(const auto& qubit_def : qubit_defs){
@@ -35,6 +36,8 @@ Gate::Gate(const std::string& str, const Token_kind& kind, const Ptr_coll<Resour
             info.n_qubits += qubit_def->get_size()->get_num();
         }
     }
+
+    // std::cout << "Subroutine " << str << " has " << info.n_qubits << " external qubits" << std::endl;
 }
 
 unsigned int Gate::get_num_external_qubit_defs() const {

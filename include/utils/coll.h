@@ -36,6 +36,7 @@ inline std::shared_ptr<T> elem_at(const Ptr_coll<T>& collection, size_t index) {
     if(index < collection.size()){
         return collection.at(index);
     } else {
+        WARNING("[ELEM AT]: Index out of bounds! Returning dummy");
         return std::make_shared<T>();
     }
 }
@@ -49,10 +50,10 @@ inline std::shared_ptr<T> get_random_from_coll(const Ptr_coll<T>& collection, Pt
         return std::make_shared<T>();
     }
 
-    std::shared_ptr<T> elem = elem_at(collection, random_uint(collection.size(), 0));
+    std::shared_ptr<T> elem = elem_at(collection, random_uint(collection.size() - 1, 0));
 
     while(!pred(elem)){
-        elem = elem_at(collection, random_uint(collection.size(), 0));
+        elem = elem_at(collection, random_uint(collection.size() - 1, 0));
     }
 
     return elem;

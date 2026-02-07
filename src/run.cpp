@@ -162,6 +162,7 @@ void Run::loop(){
             Expected<std::shared_ptr<Rule>>("singular_bit_def", Scope::INT, nullptr),
             Expected<std::shared_ptr<Rule>>("singular_bit_def", Scope::GLOB, nullptr),
             Expected<std::shared_ptr<Rule>>("singular_bit_def", Scope::EXT, nullptr),
+            Expected<std::shared_ptr<Rule>>("gate_op", Scope::GLOB, nullptr),
         },
     };
 

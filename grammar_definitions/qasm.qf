@@ -42,7 +42,7 @@ registers = qubit_defs NEWLINE bit_defs;
 
 # subroutine_defs = (subroutine_circuit NEWLINE)[2];
 
-subroutine_defs = (subroutine_circuit NEWLINE);
+subroutine_defs = (subroutine_circuit NEWLINE)[UNIFORM(1, 3)];
 
 body = compound_stmts;
 

@@ -64,20 +64,15 @@ bool Context::can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit){
     return has_enough_qubits && has_enough_bits;
 }
 
-void Context::set_can_apply_subroutines(){
-
+bool Context::current_circuit_uses_subroutines(){
     for(std::shared_ptr<Circuit> circuit : circuits){
         if (can_apply_as_subroutine(circuit))
         {
-            return;
+            return true;
         }
     }
 
-    #ifdef DEBUG
-    INFO("Circuit " + get_current_circuit()->get_owner() + " can't apply subroutines");
-    #endif
-
-    get_current_circuit()->set_can_apply_subroutines(false);
+    return false;
 }
 
 /// In normal cases, current circuit is the last added circuit into the circuits vector. The exception is if we are no longer under the `subroutines`
@@ -91,11 +86,6 @@ std::shared_ptr<Circuit> Context::get_current_circuit() const {
     }
 }
 
-/// @brief This loop is guaranteed to stop. If this function is called, then `set_can_apply_subroutines` must've passed
-/// So you just need to return a current circuit that's not the main circuit, or the current circuit and needs <= num qubits in current circuit
-/// Qubit comparison needed because `set_can_apply_subroutines` only tells you that there's at least one circuit that can be picked
-/// TODO: maybe collection of circuits?
-/// @return
 std::shared_ptr<Circuit> Context::get_random_circuit(){
 
     bool valid_circuit_exists = false;
@@ -123,8 +113,9 @@ std::shared_ptr<Circuit> Context::get_random_circuit(){
 }
 
 std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk){
-    Ptr_pred_type<Resource> unused_pred = [](const std::shared_ptr<Resource>& elem){ return !elem->is_used(); };
-    auto random_resource = get_random_from_coll<Resource>(get_current_circuit()->get_coll<Resource>(rk), unused_pred);
+    Ptr_pred_type<Resource> pred = [](const std::shared_ptr<Resource>& elem){ return !elem->is_used(); };
+    auto filtered_coll = get_current_circuit()->get_coll<Resource>(rk);
+    auto random_resource = get_random_from_coll<Resource>(filtered_coll, pred);
     
     random_resource->set_used();
     // random_resource->extend_flow_path(current.get<Qubit_op>(), current_port++);
@@ -156,38 +147,13 @@ std::shared_ptr<Resource_def> Context::nn_resource_def(Scope& scope, Resource_ki
         is_reg = false;
     }
 
-    // auto reg_def = Register_resource_def(Variable(), UInt(random_uint(control.get_value("MAX_REG_SIZE"), 1)));
-    def = std::make_shared<Resource_def>(Variable(), UInt(random_uint(control.get_value("MAX_REG_SIZE"), 1)), scope, rk, is_reg);
+    def = std::make_shared<Resource_def>(scope, rk, is_reg, random_uint(control.get_value("MAX_REG_SIZE"), 1));
 
     current.set<Resource_def>(def);
     get_current_circuit()->store_resource_def(def);
 
     return def;
 }
-
-// std::shared_ptr<Resource_def> Context::nn_register_resource_def(Scope& scope, Resource_kind rk){
-//     std::shared_ptr<Resource_def> def;
-
-//     auto reg_def = Register_resource_def(Variable(), UInt(random_uint(control.get_value("MAX_REG_SIZE"), 1)));
-//     def = std::make_shared<Resource_def>(reg_def, scope, rk);
-
-//     current.set<Resource_def>(def);
-//     get_current_circuit()->store_resource_def(def);
-
-//     return def;
-// }
-
-// std::shared_ptr<Resource_def> Context::nn_singular_resource_def(Scope& scope, Resource_kind rk){
-//     std::shared_ptr<Resource_def> def;
-
-//     auto sing_def = Singular_resource_def(Variable());
-//     def = std::make_shared<Resource_def>(sing_def, scope, rk);
-
-//     current.set<Resource_def>(def);
-//     get_current_circuit()->store_resource_def(def);
-
-//     return def;
-// }
 
 std::shared_ptr<Circuit> Context::nn_circuit(){
     std::shared_ptr<Circuit> current_circuit;
@@ -265,7 +231,7 @@ std::shared_ptr<Node> Context::nn_subroutines(){
 std::shared_ptr<Qubit_op> Context::nn_qubit_op(){
     reset(RL_QUBIT_OP);
 
-    auto qubit_op = std::make_shared<Qubit_op>(get_current_circuit());
+    auto qubit_op = std::make_shared<Qubit_op>();
     current.set<Qubit_op>(qubit_op);
     return qubit_op;
 }

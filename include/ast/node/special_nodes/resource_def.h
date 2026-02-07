@@ -18,10 +18,10 @@ class Resource_def : public Node {
             kind(Resource_kind::QUBIT)
         {}
 
-        Resource_def(const Variable _name, UInt _size, const Scope& _scope, Resource_kind rk, bool is_reg) :
+        Resource_def(const Scope& _scope, Resource_kind rk, bool is_reg, unsigned int reg_size) :
             Node("resource_def", (rk == (Resource_kind::QUBIT) ? QUBIT_DEF : BIT_DEF)),
-            name(_name),
-            size(_size),
+            name(is_reg ? "reg" : "sing", true),
+            size(is_reg ? reg_size : 1),
             reg(is_reg),
             scope(_scope),
             kind(rk)
@@ -61,6 +61,10 @@ class Resource_def : public Node {
             return reg;
         }
 
+        inline void print_info() const {
+            std::cout << resolved_name() << " " << STR_SCOPE(get_scope()) << STR_RESOURCE_KIND(get_resource_kind()) << " is used: " << used << " is reg: " << reg << std::endl;
+        }
+
         std::shared_ptr<Resource_def> clone() const {
             auto new_node = std::make_shared<Resource_def>(*this);
             new_node->clear_children();
@@ -72,7 +76,7 @@ class Resource_def : public Node {
         UInt size;
         bool used = false;
         bool reg = false;
-        Scope scope;
+        Scope scope = Scope::GLOB;
         Resource_kind kind;
 
 };

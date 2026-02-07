@@ -13,8 +13,6 @@ class Qubit_op : public Node {
             Node("qubit_op", QUBIT_OP)
         {}
 
-        Qubit_op(std::shared_ptr<Circuit> current_circuit);
-
         inline void set_gate_node(std::shared_ptr<Node> node){
             gate_node = std::make_optional<std::shared_ptr<Node>>(node);
         }

@@ -5,8 +5,8 @@
 #include <coll.h>
 
 struct Gate_info {
-    Token_kind gate = H;
-    unsigned int n_qubits = 1;
+    Token_kind gate;
+    unsigned int n_qubits = 0;
     unsigned int n_bits = 0;
     unsigned int n_floats = 0;
 

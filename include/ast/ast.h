@@ -29,7 +29,7 @@ class Ast{
 
         void term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& term, unsigned int depth = 0);
 
-        std::shared_ptr<Node> get_child_node(const std::shared_ptr<Node> parent, const Term& term);
+        std::variant<std::shared_ptr<Node>, Term> make_child(const std::shared_ptr<Node> parent, const Term& term);
 
         Result<Node> build();
 

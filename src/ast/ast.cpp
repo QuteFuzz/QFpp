@@ -27,7 +27,7 @@ std::string Node::indentation_tracker = "";
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
-std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, const Term& term){
+std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<Node> parent, const Term& term){
 
 	Scope scope = term.get_scope();
 	Meta_func meta_func = term.get_meta_func();
@@ -71,6 +71,7 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 			return std::make_shared<Node>(str);
 
 		case NAME:
+			
 			return parent->get_name();
 
 		case SIZE:
@@ -108,12 +109,6 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 		case BODY:
 			return std::make_shared<Node>(str, kind);
 
-		case COMPOUND_STMTS:
-		    if(*parent == BODY){
-				context.set_can_apply_subroutines();
-			}
-			return std::make_shared<Node>(str, kind);
-
 		case COMPOUND_STMT:
 			return context.nn_compound_stmt();
 
@@ -136,14 +131,23 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 			return context.nn_subroutines();
 
 		case QUBIT_OP:
+			context.reset(Reset_level::RL_QUBIT_OP);
 			return context.nn_qubit_op();
+
+		case SUBROUTINE_OP:
+			// redirect AST to gate op if current circuit cannot apply subroutines
+			if(context.current_circuit_uses_subroutines()){
+				return std::make_shared<Node>(str, kind);
+			} else {
+				return Term(control.get_rule("gate_op"), GATE_OP, Meta_func::NONE);
+			}
 
 		/*
 			create new node pointer to prevent modification of resources / resource defs in circuit collection
 		*/
 		case QUBIT:
 			return context.get_random_resource(Resource_kind::QUBIT)->clone();
-		
+
 		case BIT:
 			return context.get_random_resource(Resource_kind::BIT)->clone();
 
@@ -218,18 +222,30 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 			Term_constraint constraint = child_term.get_constaint();
 			unsigned int max = constraint.resolve(std::ref(context));
 
-			// if (constraint.get_term_constraint_kind() == Term_constraint_kind::DYNAMIC_MAX){
-			// 	std::cout << child_term << std::endl;
-			// 	std::cout << "Resolves: " << max << std::endl;
-			// }
+			#if 0
+			if (constraint.get_term_constraint_kind() == Term_constraint_kind::DYNAMIC_MAX){
+				std::cout << child_term << std::endl;
+				std::cout << "Resolves: " << max << std::endl;
+			}
+			#endif
 
 			// add as many children to the parent node as specified by the term constraint
 			// then use the term to get the next branch to write, where this new child node is the parent
 			for (unsigned int i = 0; i < max; i++){
-				auto child_node = get_child_node(parent, child_term);
+				auto maybe_child = make_child(parent, child_term);
 
-				parent->add_child(child_node);
-				term_branch_to_child_nodes(child_node, child_term, depth + 1);
+				if(std::holds_alternative<Term>(maybe_child)){
+					// redirect
+					INFO("Redirecting ....");
+
+					term_branch_to_child_nodes(parent, std::get<Term>(maybe_child), depth);
+				} else {
+					auto child_node = std::get<std::shared_ptr<Node>>(maybe_child);
+					
+					parent->add_child(child_node);
+					term_branch_to_child_nodes(child_node, child_term, depth + 1);
+				}
+
 			}
 		}
 	}
@@ -242,7 +258,7 @@ Result<Node> Ast::build(){
 	Result<Node> res;
 
 	if(entry == nullptr){
-		res.set_error("Entry point not set");
+		res.set_error("Entry point not set"); 
 
 	} else {
 		context.reset(RL_PROGRAM);
@@ -250,12 +266,19 @@ Result<Node> Ast::build(){
 		Token_kind entry_token_kind = entry->get_token().kind;
 		Term entry_term(entry, entry_token_kind, Meta_func::NONE);
 
-		root = get_child_node(std::make_shared<Node>("", RULE), entry_term); // need this call such that the entry node also calls the factory function
-		term_branch_to_child_nodes(root, entry_term);
+		auto maybe_root = make_child(std::make_shared<Node>("", RULE), entry_term); // need this call such that the entry node also calls the factory function
 
-		context.print_circuit_info();
+		if(std::holds_alternative<std::shared_ptr<Node>>(maybe_root)){
+			root = std::get<std::shared_ptr<Node>>(maybe_root);
+			term_branch_to_child_nodes(root, entry_term);
 
-		res.set_ok(*root);
+			context.print_circuit_info();
+
+			res.set_ok(*root);
+		
+		} else {
+			res.set_error("Root was redirected, AST cannot be built");
+		}
 	}
 
 	return res;

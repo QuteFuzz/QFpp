@@ -218,6 +218,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("compare_op_bitwise_or_pair", COMPARE_OP_BITWISE_OR_PAIR),
     Token_matcher("compound_stmt", COMPOUND_STMT),
     Token_matcher("compound_stmts", COMPOUND_STMTS),
+    Token_matcher("subroutine_compound_stmts", COMPOUND_STMTS),
     Token_matcher("parameter_def", PARAMETER_DEF),
     Token_matcher("h", H),
     Token_matcher("x", X),

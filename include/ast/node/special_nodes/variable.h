@@ -6,10 +6,8 @@
 class Variable : public Node {
 
     public:
-        using Node::Node;
-
-        Variable() :
-            Node("var_" + std::to_string(node_counter))
+        Variable(const std::string& prefix = "var", bool count = false) :
+            Node(count ? prefix + "_" + std::to_string(node_counter) : prefix)
         {}
 
     private:

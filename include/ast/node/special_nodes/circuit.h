@@ -7,41 +7,6 @@
 #include <params.h>
 #include <run_utils.h>
 
-/*
-    Circuits contain external and internal qubits, external and internal bits, which are set targets that must be satisfied
-    It is not a guarantee that any circuit will have both internal and external qubits, so the targets are set such that any circuit
-    will have external qubits = (MIN_QUBITS, MAX_QUBITS) and internal qubits = (MIN_QUBITS, MAX_QUBITS) separately,
-    instead of external qubits + internal qubits = (MIN_QUBITS, MAX_QUBITS)
-
-    See example below, if using  external qubits + internal qubits = (MIN_QUBITS, MAX_QUBITS)
-
-    =======================================
-                CIRCUIT INFO
-    =======================================
-    Owner: main_circuit
-    Target num qubits
-    EXTERNAL: 3
-    INTERNAL: 1
-    Target num bits
-    EXTERNAL: 1
-    INTERNAL: 1
-
-    Qubit definitions
-    Qubit defs may not match target if circuit is built to match DAG
-    name: qreg0 size: 1 Scope: internal
-    =======================================
-    @guppy.comptime
-    def main_circuit() -> None:
-            qreg0 = array(qubit() for _ in range(1))
-            if 0 <= 0  and 0 > 0   or 0 <= 0  and 0 == 0   :
-                    if 0 <= 0  and 0 == 0   or 0 >= 0  and 0 <= 0   :
-                            project_z(qreg0[0])
-                            cy(qreg0[0],
-
-    the circuit set a target for internal qubits of 1, and external of 3. But since this is guppy, only internal definitions are created, and therefore this stalls in
-    an infinite loop while picking a random qubit
-*/
-
 class Circuit : public Node {
 
     public:
@@ -64,14 +29,6 @@ class Circuit : public Node {
 
         inline bool check_if_subroutine(){return is_subroutine;}
 
-        void set_can_apply_subroutines(bool flag){
-            can_apply_subroutines = flag;
-        }
-
-        bool get_can_apply_subroutines() const {
-            return can_apply_subroutines;
-        }
-
         template <typename T> 
         inline Ptr_coll<T> get_coll() const {
             if constexpr (std::is_same_v<T, Resource>) {
@@ -87,7 +44,7 @@ class Circuit : public Node {
 
         template <typename T>
         inline Ptr_coll<T> get_coll(Resource_kind rk) const {
-            auto pred = [&rk](const auto& elem){ return elem->get_resource_kind() == rk; };
+            auto pred = [rk](const auto& elem){ return elem->get_resource_kind() == rk; };
             return filter<T>(get_coll<T>(), pred);
         }
 
@@ -116,7 +73,6 @@ class Circuit : public Node {
     private:
         std::string owner;
         bool is_subroutine = false;
-        bool can_apply_subroutines = true;
         Ptr_coll<Resource> resources;
         Ptr_coll<Resource_def> resource_defs;
 };

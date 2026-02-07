@@ -1,16 +1,6 @@
 #include <qubit_op.h>
 #include <circuit.h>
 
-Qubit_op::Qubit_op(std::shared_ptr<Circuit> current_circuit):
-    Node("qubit_op", QUBIT_OP)
-{
-    bool can_use_subroutine = current_circuit->get_can_apply_subroutines();
-
-    if(!can_use_subroutine){
-        add_constraint(SUBROUTINE_OP, 0);
-    }
-}
-
 bool Qubit_op::is_subroutine_op() const{
     return gate_node.has_value() && *gate_node.value() == SUBROUTINE;
 }
