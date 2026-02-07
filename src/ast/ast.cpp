@@ -110,6 +110,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			return std::make_shared<Node>(str, kind);
 
 		case COMPOUND_STMT:
+			context.reset(Reset_level::RL_RESOURCES);
 			return context.nn_compound_stmt();
 
 		case IF_STMT: case ELIF_STMT: case ELSE_STMT:
@@ -131,7 +132,6 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			return context.nn_subroutines();
 
 		case QUBIT_OP:
-			context.reset(Reset_level::RL_QUBIT_OP);
 			return context.nn_qubit_op();
 
 		case SUBROUTINE_OP:
@@ -190,7 +190,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			return std::make_shared<Gate_name>(context.get_current_circuit());
 
 		case H: case X: case Y: case Z: case T: case TDG: case S: case SDG: case PROJECT_Z:
-		case MEASURE_AND_RESET: case V: case VDG: case CX : case CY: case CZ: case CNOT:
+		case V: case VDG: case CX : case CY: case CZ: case CNOT:
 		case CH: case SWAP: case CRZ: case CRX: case CRY: case CCX: case CSWAP: case TOFFOLI:
 		case U1: case RX: case RY: case RZ: case U2: case PHASED_X: case U3: case U: case MEASURE:
 			return context.nn_gate(str, kind);

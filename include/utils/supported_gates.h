@@ -33,7 +33,7 @@ const std::vector<Gate_info> SUPPORTED_GATES = []{
 
     // 1 Qubit, 0 Bits, 0 Floats
     add_group({
-        H, X, Y, Z, T, TDG, S, SDG, PROJECT_Z, MEASURE_AND_RESET, V, VDG
+        H, X, Y, Z, T, TDG, S, SDG, PROJECT_Z, V, VDG
     }, 1, 0, 0);
 
     // 2 Qubits, 0 Bits, 0 Floats

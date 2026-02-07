@@ -31,7 +31,6 @@ enum Token_kind {
     VDG,
     PHASEDXPOWGATE,
     PROJECT_Z,
-    MEASURE_AND_RESET,
     MEASURE,
     CX,
     CY,
@@ -86,9 +85,6 @@ enum Token_kind {
     COMPOUND_STMTS,
     RESOURCE_DEF,
 
-    // FLOAT_LIST,
-    // BIT_LIST,
-    // QUBIT_LIST,
     RULE_KINDS_BOTTOM,                            /// ADD NEW RULES ABOVE!
 
     META_FUNC_TOP,                                /// ADD META FUNCS BELOW!
@@ -236,7 +232,6 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("vdg", VDG),
     Token_matcher("phased_x", PHASED_X),
     Token_matcher("project_z", PROJECT_Z),
-    Token_matcher("measure_and_reset", MEASURE_AND_RESET),
     Token_matcher("measure", MEASURE),
     Token_matcher("cx", CX),
     Token_matcher("cy", CY),
