@@ -150,27 +150,32 @@ std::shared_ptr<Node> Ast::get_child_node(const std::shared_ptr<Node> parent, co
 		case REGISTER_QUBIT: case REGISTER_BIT: case SINGULAR_QUBIT: case SINGULAR_BIT: {
 			parent->remove_constraints(); // parent is one of the nodes above, remove constraints as just used to reach here
 
-			auto def = std::dynamic_pointer_cast<Resource>(parent);
+			auto res = std::dynamic_pointer_cast<Resource>(parent);
+
+			if(res == nullptr){
+				WARNING("Parent of resource expected to be of `Resource` type! Returning dummy");
+				return dummy;
+			} else {
+				return res->clone();
+			}
+		}
+
+		case QUBIT_DEF:
+			return context.nn_resource_def(scope, Resource_kind::QUBIT);
+
+		case BIT_DEF:
+			return context.nn_resource_def(scope, Resource_kind::BIT);
+
+		case REGISTER_QUBIT_DEF: case REGISTER_BIT_DEF: case SINGULAR_QUBIT_DEF: case SINGULAR_BIT_DEF: {
+			auto def = std::dynamic_pointer_cast<Resource_def>(parent);
 
 			if(def == nullptr){
-				WARNING("Parent of resource expected to be of `Resource` type! Returning dummy");
+				WARNING("Parent of resource def expected to be of `Resource def` type! Returning dummy");
 				return dummy;
 			} else {
 				return def->clone();
 			}
 		}
-
-		case REGISTER_QUBIT_DEF:
-			return context.nn_register_resource_def(scope, Resource_kind::QUBIT)->clone();
-
-		case REGISTER_BIT_DEF:
-			return context.nn_register_resource_def(scope, Resource_kind::BIT)->clone(); 
-
-		case SINGULAR_QUBIT_DEF:
-			return context.nn_singular_resource_def(scope, Resource_kind::QUBIT)->clone(); 
-
-		case SINGULAR_BIT_DEF:
-			return context.nn_singular_resource_def(scope, Resource_kind::BIT)->clone(); 
 
 		case SUBROUTINE:
 			return context.nn_gate_from_subroutine();

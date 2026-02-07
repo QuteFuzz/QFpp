@@ -133,11 +133,31 @@ std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk){
     return random_resource;
 }
 
-std::shared_ptr<Resource_def> Context::nn_register_resource_def(Scope& scope, Resource_kind rk){
+
+std::shared_ptr<Resource_def> Context::nn_resource_def(Scope& scope, Resource_kind rk){
     std::shared_ptr<Resource_def> def;
 
-    auto reg_def = Register_resource_def(Variable(), UInt(random_uint(control.get_value("MAX_REG_SIZE"), 1)));
-    def = std::make_shared<Resource_def>(reg_def, scope, rk);
+    // decide whether to treat def as a register or singular definition
+    bool can_use_reg, can_use_sing, is_reg;
+
+    if(rk == Resource_kind::QUBIT){
+        can_use_reg = !control.get_rule("register_qubit_def", scope)->is_empty();
+        can_use_sing = !control.get_rule("singular_qubit_def", scope)->is_empty();
+    } else {
+        can_use_reg = !control.get_rule("register_bit_def", scope)->is_empty();
+        can_use_sing = !control.get_rule("singular_bit_def", scope)->is_empty();
+    }
+
+    if (can_use_reg && can_use_sing){
+        is_reg = random_uint(1, 0);
+    } else if (can_use_reg){
+        is_reg = true;
+    } else {
+        is_reg = false;
+    }
+
+    // auto reg_def = Register_resource_def(Variable(), UInt(random_uint(control.get_value("MAX_REG_SIZE"), 1)));
+    def = std::make_shared<Resource_def>(Variable(), UInt(random_uint(control.get_value("MAX_REG_SIZE"), 1)), scope, rk, is_reg);
 
     current.set<Resource_def>(def);
     get_current_circuit()->store_resource_def(def);
@@ -145,17 +165,29 @@ std::shared_ptr<Resource_def> Context::nn_register_resource_def(Scope& scope, Re
     return def;
 }
 
-std::shared_ptr<Resource_def> Context::nn_singular_resource_def(Scope& scope, Resource_kind rk){
-    std::shared_ptr<Resource_def> def;
+// std::shared_ptr<Resource_def> Context::nn_register_resource_def(Scope& scope, Resource_kind rk){
+//     std::shared_ptr<Resource_def> def;
 
-    auto sing_def = Singular_resource_def(Variable());
-    def = std::make_shared<Resource_def>(sing_def, scope, rk);
+//     auto reg_def = Register_resource_def(Variable(), UInt(random_uint(control.get_value("MAX_REG_SIZE"), 1)));
+//     def = std::make_shared<Resource_def>(reg_def, scope, rk);
 
-    current.set<Resource_def>(def);
-    get_current_circuit()->store_resource_def(def);
+//     current.set<Resource_def>(def);
+//     get_current_circuit()->store_resource_def(def);
 
-    return def;
-}
+//     return def;
+// }
+
+// std::shared_ptr<Resource_def> Context::nn_singular_resource_def(Scope& scope, Resource_kind rk){
+//     std::shared_ptr<Resource_def> def;
+
+//     auto sing_def = Singular_resource_def(Variable());
+//     def = std::make_shared<Resource_def>(sing_def, scope, rk);
+
+//     current.set<Resource_def>(def);
+//     get_current_circuit()->store_resource_def(def);
+
+//     return def;
+// }
 
 std::shared_ptr<Circuit> Context::nn_circuit(){
     std::shared_ptr<Circuit> current_circuit;

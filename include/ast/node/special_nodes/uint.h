@@ -20,6 +20,10 @@ class UInt : public Node {
             str = std::to_string(get_num() + 1);
         }
 
+        bool operator>(unsigned int i){
+            return get_num() > i;
+        }
+
         inline unsigned int get_num() const {
             return safe_stoul(str, 0);
         }

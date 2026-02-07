@@ -59,7 +59,7 @@ struct Control {
             }
         }
 
-        throw std::runtime_error("Expected rule " + name + STR_SCOPE(scope) + " not found in control");
+        throw std::runtime_error("Expected rule " + name + " " + STR_SCOPE(scope) + " not found in control");
     }
 };
 

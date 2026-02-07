@@ -90,7 +90,7 @@ void Run::set_grammar(Control& control){
         exp.value = current_grammar->get_rule_pointer_if_exists(exp.rule_name, exp.scope);
 
         if(exp.value == nullptr){
-            throw std::runtime_error("Rule " + exp.rule_name + STR_SCOPE(exp.scope) + "MUST be defined either by default in the meta-grammar, or redefined in the input grammar");
+            throw std::runtime_error("Rule " + exp.rule_name + STR_SCOPE(exp.scope) + " MUST be defined either by default in the meta-grammar, or redefined in the input grammar");
         }
     }
 
@@ -150,12 +150,18 @@ void Run::loop(){
             Expected<unsigned int>("NESTED_MAX_DEPTH", QuteFuzz::NESTED_MAX_DEPTH, CLAMP_DOWN)
         },
         .expected_rules = {
-            Expected<std::shared_ptr<Rule>>("qubit_def", Scope::INT, nullptr),
-            Expected<std::shared_ptr<Rule>>("qubit_def", Scope::EXT, nullptr),
-            Expected<std::shared_ptr<Rule>>("qubit_def", Scope::GLOB, nullptr),
-            Expected<std::shared_ptr<Rule>>("bit_def", Scope::INT, nullptr),
-            Expected<std::shared_ptr<Rule>>("bit_def", Scope::EXT, nullptr),
-            Expected<std::shared_ptr<Rule>>("bit_def", Scope::GLOB, nullptr),
+            Expected<std::shared_ptr<Rule>>("register_qubit_def", Scope::INT, nullptr),
+            Expected<std::shared_ptr<Rule>>("register_qubit_def", Scope::GLOB, nullptr),
+            Expected<std::shared_ptr<Rule>>("register_qubit_def", Scope::EXT, nullptr),
+            Expected<std::shared_ptr<Rule>>("singular_qubit_def", Scope::INT, nullptr),
+            Expected<std::shared_ptr<Rule>>("singular_qubit_def", Scope::GLOB, nullptr),
+            Expected<std::shared_ptr<Rule>>("singular_qubit_def", Scope::EXT, nullptr),
+            Expected<std::shared_ptr<Rule>>("register_bit_def", Scope::INT, nullptr),
+            Expected<std::shared_ptr<Rule>>("register_bit_def", Scope::GLOB, nullptr),
+            Expected<std::shared_ptr<Rule>>("register_bit_def", Scope::EXT, nullptr),
+            Expected<std::shared_ptr<Rule>>("singular_bit_def", Scope::INT, nullptr),
+            Expected<std::shared_ptr<Rule>>("singular_bit_def", Scope::GLOB, nullptr),
+            Expected<std::shared_ptr<Rule>>("singular_bit_def", Scope::EXT, nullptr),
         },
     };
 

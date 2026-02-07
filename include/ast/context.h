@@ -118,9 +118,11 @@ struct Context {
 
 		std::shared_ptr<Resource> get_random_resource(Resource_kind rk);
 
-		std::shared_ptr<Resource_def> nn_singular_resource_def(Scope& scope, Resource_kind rk);
+		// std::shared_ptr<Resource_def> nn_singular_resource_def(Scope& scope, Resource_kind rk);
+// 
+		// std::shared_ptr<Resource_def> nn_register_resource_def(Scope& scope, Resource_kind rk);
 
-		std::shared_ptr<Resource_def> nn_register_resource_def(Scope& scope, Resource_kind rk);
+		std::shared_ptr<Resource_def> nn_resource_def(Scope& scope, Resource_kind rk);
 
 		std::shared_ptr<Circuit> nn_circuit();
 

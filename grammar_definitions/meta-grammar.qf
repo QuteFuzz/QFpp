@@ -19,9 +19,10 @@ EXTENSION = ".py";
 MAX_REG_SIZE = 5;
 NESTED_MAX_DEPTH = 4;
 
-qubit_def = ;
+qubit_def = singular_qubit_def | register_qubit_def;
 
-bit_def = ;
+bit_def = singular_bit_def | register_bit_def;
+
 
 INTERNAL {
     qubit_def = singular_qubit_def | register_qubit_def;
@@ -30,13 +31,9 @@ INTERNAL {
 }
 
 EXTERNAL {
-    # qubit_def = singular_qubit_def | register_qubit_def;
+    qubit_def = singular_qubit_def | register_qubit_def;
 
-    qubit_def = singular_qubit_def;
-
-    # bit_def = singular_bit_def | register_bit_def;
-
-    bit_def = singular_bit_def;
+    bit_def = singular_bit_def | register_bit_def;
 }
 
 # program       = imports NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;

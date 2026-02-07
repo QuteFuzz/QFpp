@@ -2,9 +2,9 @@
 #define RESOURCE_H
 
 #include <gate.h>
-#include <register_resource.h>
-#include <singular_resource.h>
 #include <dag.h>
+#include <variable.h>
+#include <uint.h>
 
 enum class Resource_kind {
     QUBIT,
@@ -18,35 +18,22 @@ class Resource : public Node {
 
         /// @brief Dummy resource
         Resource() :
-            Node("dummy", QUBIT),
-            value(Singular_resource())
+            Node("dummy", QUBIT)
         {
             add_constraint(SINGULAR_QUBIT, 1);
         }
 
-        Resource(const Register_resource& resource, const Scope& _scope, Resource_kind rk) :
+        Resource(const Variable& _name, const UInt& _index, const Scope& _scope, Resource_kind rk, bool is_reg) :
             Node("register_resource", (rk == (Resource_kind::QUBIT) ? QUBIT : BIT)),
-            value(resource),
+            name(_name),
+            index(_index),
             scope(_scope),
             resource_kind(rk)
         {
             if (rk == Resource_kind::QUBIT){
-                add_constraint(REGISTER_QUBIT, 1);
+                add_constraint(REGISTER_QUBIT, is_reg);
             } else {
-                add_constraint(REGISTER_BIT, 1);
-            }
-        }
-
-        Resource(const Singular_resource& resource, const Scope& _scope, Resource_kind rk) :
-            Node("singular_resource", (rk == (Resource_kind::QUBIT) ? QUBIT : BIT)),
-            value(resource),
-            scope(_scope),
-            resource_kind(rk)
-        {
-            if (rk == Resource_kind::QUBIT){
-                add_constraint(SINGULAR_QUBIT, 1);
-            } else {
-                add_constraint(SINGULAR_BIT, 1);
+                add_constraint(REGISTER_BIT, is_reg);
             }
         }
 
@@ -59,59 +46,34 @@ class Resource : public Node {
         }
 
         void reset(){
-            std::visit([](auto&& val){
-                val.reset();
-            }, value);
+            used = false;
         }
 
         bool is_used(){
-            return std::visit([](auto&& val) -> bool {
-                return val.is_used();
-            }, value);
+            return used;
         }
 
         void set_used(){
-            std::visit([](auto&& val){
-                val.set_used();
-            }, value);
+            used = true;
         }
 
         inline std::shared_ptr<Variable> get_name() const override {
-            return std::visit([](auto&& val) -> std::shared_ptr<Variable> {
-                return val.get_name();
-            }, value);
+            return std::make_shared<Variable>(name);
         }
 
         inline std::shared_ptr<UInt> get_index() const override {
-            if (is_register_def()) {
-                return std::get<Register_resource>(value).get_index();
-            } else {
-                WARNING("Singular resource has no index! retuning index 0");
-                return std::make_shared<UInt>(0);
-            }
-        }
-
-        inline bool is_register_def() const {
-            return std::holds_alternative<Register_resource>(value);
+            return std::make_shared<UInt>(index);
         }
 
         inline std::string resolved_name() const override {            
-            if(is_register_def()){
-                return get_name()->get_str() + "[" + get_index()->get_str() + "]";
-            } else {
-                return get_name()->get_str();
-            }
+            return get_name()->get_str() + "[" + get_index()->get_str() + "]";
         }
 
         bool operator==(const Resource& other) const {
             bool name_matches = (*get_name() == *other.get_name());
             bool index_matches = (*get_index() == *other.get_index());
 
-            if(is_register_def()){
-                return name_matches && index_matches;
-            } else {
-                return name_matches;
-            }
+            return name_matches && index_matches;
         }
 
         std::shared_ptr<Resource> clone() const {
@@ -131,7 +93,9 @@ class Resource : public Node {
         // }
 
     private:
-        std::variant<Register_resource, Singular_resource> value;
+        Variable name;
+        UInt index;
+        bool used = false;
         Scope scope;
         Resource_kind resource_kind;
 

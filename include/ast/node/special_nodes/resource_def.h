@@ -1,9 +1,11 @@
 #ifndef RESOURCE_DEF_H
 #define RESOURCE_DEF_H
 
-#include <register_resource_def.h>
-#include <singular_resource_def.h>
 #include <lex.h>
+#include <node.h>
+#include <variable.h>
+#include <uint.h>
+#include <resource.h>
 
 class Resource_def : public Node {
 
@@ -11,21 +13,16 @@ class Resource_def : public Node {
 
         /// @brief Dummy definition
         Resource_def() :
-            Node("resource_def", RESOURCE_DEF),
+            Node("resource_def", QUBIT_DEF),
             scope(Scope::GLOB),
             kind(Resource_kind::QUBIT)
         {}
 
-        Resource_def(const Register_resource_def& def, const Scope& _scope, Resource_kind rk) :
+        Resource_def(const Variable _name, UInt _size, const Scope& _scope, Resource_kind rk, bool is_reg) :
             Node("resource_def", (rk == (Resource_kind::QUBIT) ? QUBIT_DEF : BIT_DEF)),
-            value(def),
-            scope(_scope),
-            kind(rk)
-        {}
-
-        Resource_def(const Singular_resource_def& def, const Scope& _scope, Resource_kind rk) :
-            Node("singular_resource_def", (rk == (Resource_kind::QUBIT) ? QUBIT_DEF : BIT_DEF)),
-            value(def),
+            name(_name),
+            size(_size),
+            reg(is_reg),
             scope(_scope),
             kind(rk)
         {}
@@ -34,26 +31,10 @@ class Resource_def : public Node {
 
         Resource_kind get_resource_kind() const { return kind; }
 
-        inline std::shared_ptr<Variable> get_name() const override {
-            return std::visit([](auto&& val) -> std::shared_ptr<Variable> {
-                return val.get_name();
-            }, value);
-        }
+        inline std::shared_ptr<Variable> get_name() const override { return std::make_shared<Variable>(name);}
 
-        /// @brief Get size of resource definition if it is a register definition. If not, return 1, or whatever `default_size` is as an `UInt` node
-        /// @param default_size
-        /// @return
         inline std::shared_ptr<UInt> get_size() const override {
-            if (is_register_def()) {
-                return std::get<Register_resource_def>(value).get_size();
-            } else {
-                WARNING("Singular resource def has no size! retuning size 1");
-                return std::make_shared<UInt>(1);
-            }
-        }
-
-        inline bool is_register_def() const {
-            return std::holds_alternative<Register_resource_def>(value);
+            return std::make_shared<UInt>(size);
         }
 
         inline bool defines(const Resource& resource) const {
@@ -61,29 +42,23 @@ class Resource_def : public Node {
         }
 
         inline std::string resolved_name() const override {
-            if(is_register_def()){
-                return get_name()->get_str() + " SIZE(" + get_size()->get_str() + ")";
-            } else {
-                return get_name()->get_str();
-            }
+            return get_name()->get_str() + " SIZE(" + get_size()->get_str() + ")";
         }
 
         void reset(){
-            std::visit([](auto&& val){
-                val.reset();
-            }, value);
+            used = false;
         }
 
         bool is_used(){
-            return std::visit([](auto&& val) -> bool {
-                return val.is_used();
-            }, value);
+            return used;
         }
 
         void set_used(){
-            std::visit([](auto&& val){
-                val.set_used();
-            }, value);
+            used = true;
+        }
+
+        bool is_reg(){
+            return reg;
         }
 
         std::shared_ptr<Resource_def> clone() const {
@@ -93,7 +68,10 @@ class Resource_def : public Node {
         }
 
     private:
-        std::variant<Register_resource_def, Singular_resource_def> value;
+        Variable name;
+        UInt size;
+        bool used = false;
+        bool reg = false;
         Scope scope;
         Resource_kind kind;
 

@@ -95,17 +95,11 @@ class Circuit : public Node {
             auto name = def->get_name();
             auto scope = def->get_scope();
             auto rk = def->get_resource_kind();
+            auto size = def->get_size();
 
-            if(def->is_register_def()) {
-                auto size = def->get_size();
-
-                for(size_t i = 0; i < (size_t)size->get_num(); i++){
-                    Register_resource reg_resource(*name, UInt(std::to_string(i)));
-                    resources.push_back(std::make_shared<Resource>(reg_resource, scope, rk));
-                }
-            } else {                
-                Singular_resource sing_resource(*name);
-                resources.push_back(std::make_shared<Resource>(sing_resource, scope, rk));
+            for(size_t i = 0; i < (size_t)size->get_num(); i++){
+                // Register_resource reg_resource(*name, UInt(std::to_string(i)));
+                resources.push_back(std::make_shared<Resource>(*name, UInt(std::to_string(i)), scope, rk, def->is_reg()));
             }
 
             resource_defs.push_back(def);
