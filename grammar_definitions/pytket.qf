@@ -119,8 +119,8 @@ subroutine_def_footer = CIRCUIT_NAME " = CircBox(" CIRCUIT_NAME ")" NEWLINE;
 compound_stmt = 
     qubit_op
     | if_stmt
-    | barrier_op
-    | reset_op;
+    | barrier_op; 
+    # | reset_op; # leads to acknowledged bug: https://github.com/Quantinuum/tket/issues/2109
 
 # ============================================================================
 # GATE OPERATIONS

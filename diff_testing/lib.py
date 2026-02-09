@@ -28,6 +28,8 @@ import qnexus as qnx
 from numpy.typing import NDArray
 from scipy.stats import ks_2samp
 
+from scripts.run import OUTPUT_DIR
+
 
 class Base:
     OUTPUT_DIR = (Path(__file__).parent.parent / "outputs").resolve()
@@ -116,7 +118,7 @@ class Base:
     def plot_histogram(
         self, res: Counter[int], title: str, compilation_level: int, circuit_number: int = 0
     ) -> None:
-        plots_dir = Path(__file__).resolve().parent
+        plots_dir = OUTPUT_DIR / self.qss_name / f"circuit{circuit_number}"
         if not plots_dir.exists():
             plots_dir.mkdir(parents=True, exist_ok=True)
 
