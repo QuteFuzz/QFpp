@@ -114,7 +114,7 @@ switch_stmt =
     'with ' CIRCUIT_NAME '.switch(' bit ') as case' INDENT_LEVEL ':' NEWLINE
     INDENT<((case_stmts NEWLINE) (default_case)?)>;
 
-case_stmts = 'with case' INDENT_LEVEL '(' 0 '):' NEWLINE INDENT<compound_stmts> NEWLINE LINE_INDENT<('with case' INDENT_LEVEL '(' 1 '):' NEWLINE INDENT<compound_stmts>)>; 
+case_stmts = 'with case' INDENT_LEVEL '(' 0 '):' NEWLINE INDENT<compound_stmts> NEWLINE LINE_INDENT<('with case' INDENT_LEVEL '(' 1 '):' NEWLINE INDENT<compound_stmts>)>;
 
 # TODO: more complex with switch over registers and case option tracking via some feature
 # case_stmt =

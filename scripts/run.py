@@ -128,7 +128,7 @@ class Check_grammar:
         timestamp: str,
         num_tests: int | None,
         name: str,
-        nproc : int,
+        nproc: int,
         seed: (int | None) = None,
         mode: Run_mode = Run_mode.CI,
         plot: bool = False,
@@ -347,7 +347,9 @@ def main():
         log(f"Testing grammar: {grammar}", Color.BLUE)
         log(f"{'=' * 60}", Color.BLUE)
 
-        Check_grammar(run_timestamp, args.num_tests, grammar, args.nproc, args.seed, mode, args.plot).check()
+        Check_grammar(
+            run_timestamp, args.num_tests, grammar, args.nproc, args.seed, mode, args.plot
+        ).check()
 
 
 if __name__ == "__main__":

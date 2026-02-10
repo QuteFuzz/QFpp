@@ -42,4 +42,3 @@ See `dev` for dev-specific docs
 | QSS | Bug in | Fixed |
 |-----|------|-------|
 | Pytket | [Compiler](https://github.com/Quantinuum/tket/issues/2109) | ✅ |
-

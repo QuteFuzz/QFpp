@@ -35,27 +35,8 @@ u3 = "U3";
 phased_x = "PhasedX";
 
 gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
-    u1 | u2 | u3 | phased_x;
-
-# ============================================================================
-# CONTROL FLOW - Override meta-grammar to add pytket-specific control flow
-# ============================================================================
-
-# Pytket uses Python-style if/elif/else with bit comparisons
-classical_expr = bit " == " branch_condition;
-
-branch_condition = 1 | 0;
-
-if_stmt =
-    'if ' classical_expr ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<elif_stmt>
-    | 'if ' classical_expr ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<(else_stmt)?>;
-
-elif_stmt =
-    'elif ' classical_expr ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<elif_stmt>
-    | 'elif ' classical_expr ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<(else_stmt)?>;
-
-else_stmt =
-    'else:' NEWLINE INDENT<compound_stmts>;
+    u1 | u2 | u3 | phased_x | measure |
+    s | t | v | ch;
 
 
 # ============================================================================
@@ -122,10 +103,32 @@ subroutine_def_footer = CIRCUIT_NAME " = CircBox(" CIRCUIT_NAME ")" NEWLINE;
 
 # TODO: conditional circbox application
 
+classical_op =
+    | CIRCUIT_NAME ".add_c_and(" bit ", " bit ", " bit ")"
+    | CIRCUIT_NAME ".add_c_or(" bit ", " bit ", " bit ")"
+    | CIRCUIT_NAME ".add_c_xor(" bit ", " bit ", " bit ")"
+    | CIRCUIT_NAME ".add_c_not(" bit ", " bit ")";
+
+classical_expr = bit " == " branch_condition;
+
+branch_condition = 1 | 0;
+
+if_stmt =
+    'if ' classical_expr ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<elif_stmt>
+    | 'if ' classical_expr ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<(else_stmt)?>;
+
+elif_stmt =
+    'elif ' classical_expr ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<elif_stmt>
+    | 'elif ' classical_expr ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<(else_stmt)?>;
+
+else_stmt =
+    'else:' NEWLINE INDENT<compound_stmts>;
+
 compound_stmt =
     qubit_op
     | if_stmt
     | barrier_op
+    | classical_op
     | reset_op;
 
 # ============================================================================
