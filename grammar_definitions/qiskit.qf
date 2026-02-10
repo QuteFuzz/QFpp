@@ -2,55 +2,6 @@
 
 NESTED_MAX_DEPTH = 3;
 
-# Control flow operations
-while_stmt =
-    'with ' CIRCUIT_NAME '.while_loop((' bit ', ' branch_condition ')):'
-    NEWLINE INDENT compound_stmts DEDENT;
-
-for_stmt =
-    NAME ' = Parameter(' QUOTED_NAME ')' NEWLINE
-    'with ' CIRCUIT_NAME '.for_loop(range(' INTEGER '), ' NAME '):'
-    NEWLINE INDENT compound_stmts DEDENT;
-
-switch_stmt =
-    'with ' CIRCUIT_NAME '.switch(' bit ') as case:' NEWLINE
-    INDENT<((case_stmt NEWLINE)[UNIFORM(2,4)] (default_case)?)>;
-
-case_stmt =
-    'with case(' case_values '):' NEWLINE INDENT<compound_stmts>;
-
-case_values = INTEGER (', ' INTEGER)[UNIFORM(0,2)];
-
-default_case =
-    'with case(case.DEFAULT):' NEWLINE INDENT<compound_stmts>;
-
-# Classical expressions
-classical_expr =
-    'expr.equal(' bit ', ' INTEGER ')'
-    | 'expr.bit_and(' bit ', ' INTEGER ')'
-    | 'expr.logic_or(' classical_expr ', ' classical_expr ')';
-
-# Update if_stmt to use classical_expr
-if_stmt =
-    'with ' CIRCUIT_NAME '.if_test(' classical_expr ') as else_' NESTED_DEPTH ':' NEWLINE INDENT<compound_stmts>
-    SHALLOW_INDENT<('with else_' NESTED_DEPTH ':' NEWLINE INDENT<compound_stmts>)?>;
-
-# Update compound_stmt
-compound_stmt =
-    qubit_op
-    | if_stmt
-    # | while_stmt      # NEW
-    # | for_stmt        # NEW
-    | switch_stmt     # NEW
-    | barrier_op
-    | reset_op;
-
-# Barriers and delays
-barrier_op = CIRCUIT_NAME '.barrier([' qubit_list '])';
-delay_op = CIRCUIT_NAME '.delay(' INTEGER ', ' qubit ')';
-reset_op = CIRCUIT_NAME '.reset(' qubit ')';
-
-branch_condition = 1 | 0;
 
 gate_name += s | sdg | t | tdg | u3 | measure;
 
@@ -136,11 +87,6 @@ imports =
     "from diff_testing.qiskit import qiskitTesting" NEWLINE
     ;
 
-compound_stmt =
-    qubit_op
-    | if_stmt
-    ;
-
 # Redefine compound_stmt and related rules
 compound_stmts = (compound_stmt NEWLINE)[UNIFORM(3, 10)];
 
@@ -153,6 +99,56 @@ subroutine_op_arg =
     qubit
     | qubit_list
     ;
+
+# Control flow operations
+while_stmt =
+    'with ' CIRCUIT_NAME '.while_loop((' bit ', ' branch_condition ')):'
+    NEWLINE INDENT<compound_stmts>;
+
+for_stmt =
+    NAME ' = Parameter(' QUOTED_NAME ')' NEWLINE
+    'with ' CIRCUIT_NAME '.for_loop(range(' INTEGER '), ' NAME '):'
+    NEWLINE INDENT<compound_stmts>;
+
+switch_stmt =
+    'with ' CIRCUIT_NAME '.switch(' bit ') as case:' NEWLINE
+    INDENT<((case_stmt NEWLINE)[UNIFORM(2,4)] (default_case)?)>;
+
+case_stmt =
+    'with case(' case_values '):' NEWLINE INDENT<compound_stmts>;
+
+case_values = INTEGER (', ' INTEGER)[UNIFORM(0,2)];
+
+default_case =
+    'with case(case.DEFAULT):' NEWLINE INDENT<compound_stmts>;
+
+# Classical expressions
+classical_expr =
+    'expr.equal(' bit ', ' INTEGER ')'
+    | 'expr.bit_and(' bit ', ' INTEGER ')'
+    | 'expr.logic_or(' classical_expr ', ' classical_expr ')';
+
+# Update if_stmt to use classical_expr
+if_stmt =
+    'with ' CIRCUIT_NAME '.if_test(' classical_expr ') as else_' INDENT_LEVEL ':' NEWLINE INDENT<compound_stmts>
+    LINE_INDENT<('with else_' INDENT_LEVEL ':' NEWLINE INDENT<compound_stmts>)?>;
+
+# Update compound_stmt
+compound_stmt =
+    qubit_op
+    | if_stmt
+    # | while_stmt      # TODO: figure out termination conditions
+    # | for_stmt        # TODO: figure out termination conditions
+    | switch_stmt
+    | barrier_op
+    | reset_op;
+
+# Barriers and delays
+barrier_op = CIRCUIT_NAME '.barrier([' qubit_list '])';
+delay_op = CIRCUIT_NAME '.delay(' INTEGER ', ' qubit ')';
+reset_op = CIRCUIT_NAME '.reset(' qubit ')';
+
+branch_condition = 1 | 0;
 
 singular_qubit = NAME "[0]";
 

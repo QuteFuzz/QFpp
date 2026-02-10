@@ -1,25 +1,26 @@
-#ifndef INDENT_H
-#define INDENT_H
+#ifndef LINE_INDENT_H
+#define LINE_INDENT_H
 
 #include <node.h>
 
-class Indent : public Node {
+class Line_indent : public Node {
 
     public:
-        Indent():
-            Node("indent", INDENT)
+        Line_indent():
+            Node("line_indent", LINE_INDENT)
         {}
 
-        Indent(const std::string& str, const Token_kind& kind):
+        Line_indent(const std::string& str, const Token_kind& kind):
             Node(str, kind)
         {}
 
         void print_program(std::ostream& stream, unsigned int indent_level) const override {            
-            unsigned int inner_level = indent_level + 1;
+            unsigned int inner_level = indent_level;
             std::string tabs(inner_level, '\t');
+                
+            stream << tabs;
 
             for(const std::shared_ptr<Node>& child : children){
-                stream << tabs;
                 child->print_program(stream, inner_level);
             }
         }

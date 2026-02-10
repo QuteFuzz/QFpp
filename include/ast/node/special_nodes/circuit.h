@@ -62,9 +62,11 @@ class Circuit : public Node {
             resource_defs.push_back(def);
         }
 
-        inline void reset(){
+        inline void reset(Resource_kind rk){
             for (const auto& elem : resources){
-                elem->reset();
+                if(elem->get_resource_kind() == rk){
+                    elem->reset();
+                }
             }
         }
 

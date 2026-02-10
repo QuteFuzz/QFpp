@@ -25,11 +25,13 @@ void Context::reset(Reset_level l){
             nested_depth = control.get_value("NESTED_MAX_DEPTH");
             [[fallthrough]];
 
-        case RL_RESOURCES: {
-            get_current_circuit()->reset();
-
+        case RL_QUBITS:
+            get_current_circuit()->reset(Resource_kind::QUBIT);
             current_port = 0;
-        }
+            break;
+
+        case RL_BITS:
+            get_current_circuit()->reset(Resource_kind::BIT);
     }
 }
 
@@ -207,12 +209,6 @@ std::shared_ptr<UInt> Context::nn_circuit_id() {
     return std::make_shared<UInt>(ast_counter);
 }
 
-std::shared_ptr<Node> Context::nn_nested_stmt(const std::string& str, const Token_kind& kind){
-    reset(RL_RESOURCES);
-    nested_depth = (nested_depth == 0) ? 0 : nested_depth - 1;
-    return std::make_shared<Node>(str, kind);
-}
-
 std::shared_ptr<Compound_stmt> Context::nn_compound_stmt(){
     return Compound_stmt::from_nested_depth(nested_depth);
 }
@@ -224,7 +220,7 @@ std::shared_ptr<Node> Context::nn_subroutines(){
 }
 
 std::shared_ptr<Qubit_op> Context::nn_qubit_op(){
-    reset(RL_RESOURCES);
+    reset(RL_QUBITS);
 
     auto qubit_op = std::make_shared<Qubit_op>();
     current.set<Qubit_op>(qubit_op);
@@ -236,17 +232,6 @@ std::shared_ptr<Parameter_def> Context::nn_parameter_def(){
     current.set<Parameter_def>(def);
     return def;
 }
-
-std::shared_ptr<UInt> Context::nn_nested_depth(){
-    std::cout << "--> " << nested_depth << std::endl;
-    return std::make_shared<UInt>(nested_depth);
-
-}
-
-std::shared_ptr<Indent> Context::nn_indent(const std::string& str, const Token_kind& kind, bool shallow_indent){
-    return std::make_shared<Indent>(str, kind, shallow_indent);
-}
-
 
 std::shared_ptr<Node> Context::nn_next(Node& ast_root, const Token_kind& kind){
 

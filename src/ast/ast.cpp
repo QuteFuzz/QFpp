@@ -6,6 +6,8 @@
 #include <sstream>
 #include <result.h>
 #include <indent.h>
+#include <indent_level.h>
+#include <line_indent.h>
 
 /*
 	node kinds
@@ -42,10 +44,6 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		return std::make_shared<Compare_op_bitwise_or_pair_child>(str, kind);
 	}
 
-	if (kind == NESTED_DEPTH){
-		std::cout << "-----> " << term << std::endl;
-	}
-
 	/**
 	* 			TODO: META FUNCTIONS
 	*/
@@ -61,11 +59,11 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		return node->find(NAME);
 	
 	} else if (meta_func == Meta_func::INDENT){
-		return context.nn_indent(str, kind, false);
-
-	} else if (meta_func == Meta_func::SHALLOW_INDENT){
-		return context.nn_indent(str, kind, true);
+		context.reduce_nested_depth();
+	    return std::make_shared<Indent>(str, kind);
 	
+	} else if (meta_func == Meta_func::LINE_INDENT){
+		return std::make_shared<Line_indent>(str, kind);
 	}
 
 	/**
@@ -95,8 +93,8 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		case CIRCUIT_NAME:
 			return std::make_shared<Variable>(context.get_current_circuit()->get_owner());
 
-		case NESTED_DEPTH:
-			return context.nn_nested_depth();
+		case INDENT_LEVEL:
+			return std::make_shared<Indent_level>();
 
 		case CIRCUIT:
 			return context.nn_circuit();
@@ -105,11 +103,9 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			return std::make_shared<Node>(str, kind);
 
 		case COMPOUND_STMT:
-			context.reset(Reset_level::RL_RESOURCES);
+			context.reset(Reset_level::RL_QUBITS);
+			context.reset(Reset_level::RL_BITS);
 			return context.nn_compound_stmt();
-
-		case NESTED_STMT:
-			return context.nn_nested_stmt(str, kind);
 
 		case CIRCUIT_ID:
 			return context.nn_circuit_id();
@@ -174,6 +170,10 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 
 		case GATE_NAME:
 			return std::make_shared<Gate_name>(context.get_current_circuit());
+
+		case EXPR:
+			context.reset(RL_BITS);
+			return std::make_shared<Node>(str, kind);
 
 		case H: case X: case Y: case Z: case T: case TDG: case S: case SDG: case PROJECT_Z:
 		case V: case VDG: case CX : case CY: case CZ: case CNOT:

@@ -16,7 +16,8 @@
 enum Reset_level {
 	RL_PROGRAM,
 	RL_CIRCUIT,
-	RL_RESOURCES,
+	RL_QUBITS,
+	RL_BITS,
 };
 
 struct Current_nodes {
@@ -106,6 +107,10 @@ struct Context {
 			nested_depth = control.get_value("NESTED_MAX_DEPTH");
 		}
 
+		void reduce_nested_depth(){
+			nested_depth = (nested_depth == 0) ? 0 : nested_depth - 1;
+		}
+
 		void reset(Reset_level l);
 
 		bool can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit);
@@ -124,8 +129,6 @@ struct Context {
 
 		std::shared_ptr<Gate> nn_gate(const std::string& str, Token_kind& kind);
 
-		std::shared_ptr<Node> nn_nested_stmt(const std::string& str, const Token_kind& kind);
-
 		std::shared_ptr<Compound_stmt> nn_compound_stmt();
 
 		std::shared_ptr<Node> nn_subroutines();
@@ -137,10 +140,6 @@ struct Context {
 		std::shared_ptr<Gate> nn_gate_from_subroutine();
 
 		std::shared_ptr<Parameter_def> nn_parameter_def();
-
-		std::shared_ptr<UInt> nn_nested_depth();
-
-		std::shared_ptr<Indent> nn_indent(const std::string& str, const Token_kind& kind, bool shallow_indent);
 
 		std::shared_ptr<Node> nn_next(Node& ast_root, const Token_kind& kind);
 

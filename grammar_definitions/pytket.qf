@@ -41,15 +41,15 @@ gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
 
 # Pytket uses Python-style if/elif/else with bit comparisons
 if_stmt =
-    'if ' bit ' == ' branch_condition ':' NEWLINE INDENT compound_stmts DEDENT elif_stmt
-    | 'if ' bit ' == ' branch_condition ':' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
+    'if ' bit ' == ' branch_condition ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<elif_stmt>
+    | 'if ' bit ' == ' branch_condition ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<(else_stmt)?>;
 
 elif_stmt = 
-    'elif ' bit ' == ' branch_condition ':' NEWLINE INDENT compound_stmts DEDENT elif_stmt
-    | 'elif ' bit ' == ' branch_condition ':' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
+    'elif ' bit ' == ' branch_condition ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<elif_stmt>
+    | 'elif ' bit ' == ' branch_condition ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<(else_stmt)?>;
 
 else_stmt =
-    'else:' NEWLINE INDENT compound_stmts DEDENT;
+    'else:' NEWLINE INDENT<compound_stmts>;
 
 # Branch conditions for classical bit values
 branch_condition = 1 | 0;
@@ -116,11 +116,13 @@ subroutine_def_footer = CIRCUIT_NAME " = CircBox(" CIRCUIT_NAME ")" NEWLINE;
 # STATEMENTS - Enable both quantum operations and control flow
 # ============================================================================
 
+# TODO: conditional circbox application
+
 compound_stmt = 
     qubit_op
     | if_stmt
-    | barrier_op; 
-    # | reset_op; # leads to acknowledged bug: https://github.com/Quantinuum/tket/issues/2109
+    | barrier_op
+    | reset_op;
 
 # ============================================================================
 # GATE OPERATIONS

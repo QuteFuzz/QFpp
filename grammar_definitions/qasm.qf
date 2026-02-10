@@ -52,7 +52,7 @@ compound_stmts = (compound_stmt NEWLINE)+;
 
 compound_stmt = qubit_op;
 
-subroutine_circuit = "gate " CIRCUIT_NAME " " EXTERNAL::qubit_defs " { " NEWLINE INDENT subroutine_body DEDENT "}";
+subroutine_circuit = "gate " CIRCUIT_NAME " " EXTERNAL::qubit_defs " { " NEWLINE INDENT<subroutine_body> "}";
 
 subroutine_op = subroutine " " qubit_list;
 

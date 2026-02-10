@@ -55,9 +55,9 @@ decorator = comptime_decorator | guppy_decorator;
 
 subroutine_defs = (subroutine_circuit NEWLINE)*;
 
-circuit = circuit_def_header NEWLINE INDENT body DEDENT NEWLINE;
+circuit = circuit_def_header NEWLINE INDENT<body> NEWLINE;
 
-subroutine_circuit = circuit_def_header NEWLINE INDENT subroutine_body DEDENT NEWLINE;
+subroutine_circuit = circuit_def_header NEWLINE INDENT<subroutine_body> NEWLINE;
 
 circuit_def_header = "@guppy.comptime" NEWLINE "def " circuit_name "(" EXTERNAL::qubit_defs ") -> None:";
 
