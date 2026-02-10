@@ -36,7 +36,8 @@ phased_x = "PhasedX";
 
 gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
     u1 | u2 | u3 | phased_x | measure |
-    s | t | v | ch;
+    ch;
+    # | s | t | v | ; # TODO: figure out gateset predicate issue
 
 
 # ============================================================================
@@ -103,6 +104,7 @@ subroutine_def_footer = CIRCUIT_NAME " = CircBox(" CIRCUIT_NAME ")" NEWLINE;
 
 # TODO: conditional circbox application
 
+# not supported by AER
 classical_op =
     | CIRCUIT_NAME ".add_c_and(" bit ", " bit ", " bit ")"
     | CIRCUIT_NAME ".add_c_or(" bit ", " bit ", " bit ")"
@@ -128,7 +130,6 @@ compound_stmt =
     qubit_op
     | if_stmt
     | barrier_op
-    | classical_op
     | reset_op;
 
 # ============================================================================
