@@ -42,19 +42,21 @@ gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
 # ============================================================================
 
 # Pytket uses Python-style if/elif/else with bit comparisons
+classical_expr = bit " == " branch_condition;
+
+branch_condition = 1 | 0;
+
 if_stmt =
-    'if ' bit ' == ' branch_condition ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<elif_stmt>
-    | 'if ' bit ' == ' branch_condition ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<(else_stmt)?>;
+    'if ' classical_expr ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<elif_stmt>
+    | 'if ' classical_expr ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<(else_stmt)?>;
 
 elif_stmt =
-    'elif ' bit ' == ' branch_condition ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<elif_stmt>
-    | 'elif ' bit ' == ' branch_condition ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<(else_stmt)?>;
+    'elif ' classical_expr ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<elif_stmt>
+    | 'elif ' classical_expr ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<(else_stmt)?>;
 
 else_stmt =
     'else:' NEWLINE INDENT<compound_stmts>;
 
-# Branch conditions for classical bit values
-branch_condition = 1 | 0;
 
 # ============================================================================
 # CIRCUIT STRUCTURE

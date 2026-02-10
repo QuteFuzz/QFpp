@@ -111,22 +111,43 @@ for_stmt =
     NEWLINE INDENT<compound_stmts>;
 
 switch_stmt =
-    'with ' CIRCUIT_NAME '.switch(' bit ') as case:' NEWLINE
-    INDENT<((case_stmt NEWLINE)[UNIFORM(2,4)] (default_case)?)>;
+    'with ' CIRCUIT_NAME '.switch(' bit ') as case' INDENT_LEVEL ':' NEWLINE
+    INDENT<((case_stmts NEWLINE) (default_case)?)>;
 
-case_stmt =
-    'with case(' case_values '):' NEWLINE INDENT<compound_stmts>;
+case_stmts = 'with case' INDENT_LEVEL '(' 0 '):' NEWLINE INDENT<compound_stmts> NEWLINE LINE_INDENT<('with case' INDENT_LEVEL '(' 1 '):' NEWLINE INDENT<compound_stmts>)>; 
 
-case_values = INTEGER (', ' INTEGER)[UNIFORM(0,2)];
+# TODO: more complex with switch over registers and case option tracking via some feature
+# case_stmt =
+#     'with case(' case_values '):' NEWLINE INDENT<compound_stmts>;
+
+# case_values = INTEGER (', ' INTEGER)[UNIFORM(0,2)];
 
 default_case =
     'with case(case.DEFAULT):' NEWLINE INDENT<compound_stmts>;
 
+#TODO: implement `qreg` rule and others stuff needed for register comparison
+# 1. Expressions that return a Number (Uint)
+uint_expr =
+    qreg
+    | INTEGER
+    | 'expr.bit_and(' uint_expr ', ' uint_expr ')'
+    | 'expr.bit_or(' uint_expr ', ' uint_expr ')'
+    | 'expr.bit_xor(' uint_expr ', ' uint_expr ')';
+
+# 2. Expressions that return a Condition (Bool)
+bool_expr =
+    'expr.equal(' bit ',' ('True' | 'False') ')'
+    # Comparisons turn Uints into Bools
+    # | 'expr.equal(' uint_expr ', ' uint_expr ')'
+    # | 'expr.not_equal(' uint_expr ', ' uint_expr ')'
+    # | 'expr.less(' uint_expr ', ' uint_expr ')'
+    # Logic combines Bools into Bools
+    | 'expr.logic_or(' bool_expr ', ' bit ')'
+    | 'expr.logic_and(' bool_expr ', ' bit ')'
+    | 'expr.logic_not(' bit ')';
+
 # Classical expressions
-classical_expr =
-    'expr.equal(' bit ', ' INTEGER ')'
-    | 'expr.bit_and(' bit ', ' INTEGER ')'
-    | 'expr.logic_or(' classical_expr ', ' classical_expr ')';
+classical_expr = bool_expr;
 
 # Update if_stmt to use classical_expr
 if_stmt =
@@ -139,7 +160,7 @@ compound_stmt =
     | if_stmt
     # | while_stmt      # TODO: figure out termination conditions
     # | for_stmt        # TODO: figure out termination conditions
-    | switch_stmt
+    # | switch_stmt     # TODO: figure out how to label the nested cases properly
     | barrier_op
     | reset_op;
 
