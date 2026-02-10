@@ -18,6 +18,7 @@ target_include_directories(qf PRIVATE
     ${CMAKE_SOURCE_DIR}/include/ast/utils
     ${CMAKE_SOURCE_DIR}/include/ast/node/special_nodes
     ${CMAKE_SOURCE_DIR}/include/ast/node/special_child_nodes
+    ${CMAKE_SOURCE_DIR}/include/ast/node/helper_nodes
     ${CMAKE_SOURCE_DIR}/include/grammar
     ${CMAKE_SOURCE_DIR}/include/dag
     ${CMAKE_SOURCE_DIR}/include/utils

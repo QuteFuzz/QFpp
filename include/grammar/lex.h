@@ -73,13 +73,10 @@ enum Token_kind {
     GATE_NAME,
     SUBROUTINE,
     CIRCUIT_ID,
-    IF_STMT,
-    ELSE_STMT,
-    ELIF_STMT,
-    DISJUNCTION,
-    CONJUNCTION,
-    INVERSION,
-    EXPRESSION,
+    // IF_STMT,
+    // ELSE_STMT,
+    // ELIF_STMT,
+    NESTED_STMT,
     COMPARE_OP_BITWISE_OR_PAIR,
     COMPOUND_STMT,
     COMPOUND_STMTS,
@@ -89,12 +86,11 @@ enum Token_kind {
 
     META_FUNC_TOP,                                /// ADD META FUNCS BELOW!
     CIRCUIT_NAME,
-    INDENTATION_DEPTH,
+    NESTED_DEPTH,
     NUM_QUBITS,
     NUM_BITS,
     NUM_FLOATS,
     INDENT,
-    DEDENT,
     UNIFORM,
     INTEGER,
     FLOAT,
@@ -204,13 +200,11 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("register_bit", REGISTER_BIT),
     Token_matcher("subroutine", SUBROUTINE),
     Token_matcher("circuit_id", CIRCUIT_ID),
-    Token_matcher("if_stmt", IF_STMT),
-    Token_matcher("else_stmt", ELSE_STMT),
-    Token_matcher("elif_stmt", ELIF_STMT),
-    Token_matcher("disjunction", DISJUNCTION),
-    Token_matcher("conjunction", CONJUNCTION),
-    Token_matcher("inversion", INVERSION),
-    Token_matcher("expression", EXPRESSION),
+    Token_matcher("if_stmt", NESTED_STMT),
+    Token_matcher("else_stmt", NESTED_STMT),
+    Token_matcher("elif_stmt", NESTED_STMT),
+    Token_matcher("for_stmt", NESTED_STMT),
+    Token_matcher("while_stmt", NESTED_STMT),
     Token_matcher("compare_op_bitwise_or_pair", COMPARE_OP_BITWISE_OR_PAIR),
     Token_matcher("compound_stmt", COMPOUND_STMT),
     Token_matcher("compound_stmts", COMPOUND_STMTS),
@@ -260,9 +254,8 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     */
     Token_matcher("FLOAT", FLOAT),
     Token_matcher("INTEGER", INTEGER),
-    Token_matcher("INDENTATION_DEPTH", INDENTATION_DEPTH),
+    Token_matcher("NESTED_DEPTH", NESTED_DEPTH),
     Token_matcher("INDENT", INDENT),
-    Token_matcher("DEDENT", DEDENT),
     Token_matcher("UNIFORM", UNIFORM),
     Token_matcher("NAME", NAME),
     Token_matcher("INDEX", INDEX),
@@ -456,7 +449,8 @@ inline bool is_meta(const Token_kind& kind){
 inline bool is_quiet(const Token_kind& kind){
     return
         (kind == SCOPE_RES) ||
-        (kind == ARROW);
+        (kind == ARROW) || 
+        (kind == INDENT);
 }
 
 inline std::string kind_as_str(const Token_kind& kind) {

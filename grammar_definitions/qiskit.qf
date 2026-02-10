@@ -1,14 +1,63 @@
 # qiskit
 
-NESTED_MAX_DEPTH = 5;
+NESTED_MAX_DEPTH = 3;
 
-# Overwrites from meta-grammar
+# Control flow operations
+while_stmt =
+    'with ' CIRCUIT_NAME '.while_loop((' bit ', ' branch_condition ')):'
+    NEWLINE INDENT compound_stmts DEDENT;
+
+for_stmt =
+    NAME ' = Parameter(' QUOTED_NAME ')' NEWLINE
+    'with ' CIRCUIT_NAME '.for_loop(range(' INTEGER '), ' NAME '):'
+    NEWLINE INDENT compound_stmts DEDENT;
+
+switch_stmt =
+    'with ' CIRCUIT_NAME '.switch(' bit ') as case:' NEWLINE
+    INDENT<((case_stmt NEWLINE)[UNIFORM(2,4)] (default_case)?)>;
+
+case_stmt =
+    'with case(' case_values '):' NEWLINE INDENT<compound_stmts>;
+
+case_values = INTEGER (', ' INTEGER)[UNIFORM(0,2)];
+
+default_case =
+    'with case(case.DEFAULT):' NEWLINE INDENT<compound_stmts>;
+
+# Classical expressions
+classical_expr =
+    'expr.equal(' bit ', ' INTEGER ')'
+    | 'expr.bit_and(' bit ', ' INTEGER ')'
+    | 'expr.logic_or(' classical_expr ', ' classical_expr ')';
+
+# Update if_stmt to use classical_expr
 if_stmt =
-    'with ' CIRCUIT_NAME '.if_test((' bit COMMA branch_condition ')) as else_' INDENTATION_DEPTH ':' NEWLINE INDENT compound_stmts DEDENT elif_stmt
-    | 'with ' CIRCUIT_NAME '.if_test((' bit COMMA branch_condition ')) as else_' INDENTATION_DEPTH ':' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
-elif_stmt = ;
-else_stmt =
-    'with else_' INDENTATION_DEPTH ':' NEWLINE INDENT compound_stmts DEDENT;
+    'with ' CIRCUIT_NAME '.if_test(' classical_expr ') as else_' NESTED_DEPTH ':' NEWLINE INDENT<compound_stmts>
+    ('with else_' NESTED_DEPTH ':' NEWLINE INDENT<compound_stmts>)?;
+
+# Update compound_stmt
+compound_stmt =
+    qubit_op
+    | if_stmt
+    # | while_stmt      # NEW
+    # | for_stmt        # NEW
+    | switch_stmt     # NEW
+    | barrier_op
+    | reset_op;
+
+# Barriers and delays
+barrier_op = CIRCUIT_NAME '.barrier([' qubit_list '])';
+delay_op = CIRCUIT_NAME '.delay(' INTEGER ', ' qubit ')';
+reset_op = CIRCUIT_NAME '.reset(' qubit ')';
+
+
+# # Overwrites from meta-grammar
+# if_stmt =
+#     'with ' CIRCUIT_NAME '.if_test((' bit COMMA branch_condition ')) as else_' NESTED_DEPTH ':' NEWLINE INDENT compound_stmts DEDENT elif_stmt
+#     | 'with ' CIRCUIT_NAME '.if_test((' bit COMMA branch_condition ')) as else_' NESTED_DEPTH ':' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
+# elif_stmt = ;
+# else_stmt =
+#     'with else_' NESTED_DEPTH ':' NEWLINE INDENT compound_stmts DEDENT;
 
 branch_condition = 1 | 0;
 
@@ -90,6 +139,7 @@ EXTERNAL {
 imports =
     "from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister" NEWLINE
     "from qiskit.circuit import Parameter" NEWLINE
+    "from qiskit.circuit.classical import expr" NEWLINE
     "from qiskit.circuit.library import standard_gates" NEWLINE
     swarm_testing_imports NEWLINE
     "from diff_testing.qiskit import qiskitTesting" NEWLINE

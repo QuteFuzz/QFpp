@@ -2,6 +2,7 @@
 #include <generator.h>
 #include <params.h>
 #include <variable.h>
+#include <indent.h>
 
 int Context::ast_counter = -1;
 
@@ -211,10 +212,10 @@ std::shared_ptr<UInt> Context::nn_circuit_id() {
 /// @param kind
 /// @param parent
 /// @return
-std::shared_ptr<Nested_stmt> Context::nn_nested_stmt(const std::string& str, const Token_kind& kind){
+std::shared_ptr<Node> Context::nn_nested_stmt(const std::string& str, const Token_kind& kind){
     reset(RL_RESOURCES);
     nested_depth = (nested_depth == 0) ? 0 : nested_depth - 1;
-    return std::make_shared<Nested_stmt>(str, kind);
+    return std::make_shared<Node>(str, kind);
 }
 
 std::shared_ptr<Compound_stmt> Context::nn_compound_stmt(){
@@ -239,6 +240,12 @@ std::shared_ptr<Parameter_def> Context::nn_parameter_def(){
     auto def = std::make_shared<Parameter_def>();
     current.set<Parameter_def>(def);
     return def;
+}
+
+std::shared_ptr<UInt> Context::nn_nested_depth(){
+    std::cout << "--> " << nested_depth << std::endl;
+    return std::make_shared<UInt>(nested_depth);
+
 }
 
 std::shared_ptr<Node> Context::nn_next(Node& ast_root, const Token_kind& kind){

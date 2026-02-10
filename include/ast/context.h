@@ -8,7 +8,6 @@
 #include <compound_stmt.h>
 #include <gate.h>
 #include <genome.h>
-#include <nested_stmt.h>
 #include <parameter_def.h>
 #include <ast_utils.h>
 
@@ -124,7 +123,7 @@ struct Context {
 
 		std::shared_ptr<Gate> nn_gate(const std::string& str, Token_kind& kind);
 
-		std::shared_ptr<Nested_stmt> nn_nested_stmt(const std::string& str, const Token_kind& kind);
+		std::shared_ptr<Node> nn_nested_stmt(const std::string& str, const Token_kind& kind);
 
 		std::shared_ptr<Compound_stmt> nn_compound_stmt();
 
@@ -137,6 +136,8 @@ struct Context {
 		std::shared_ptr<Gate> nn_gate_from_subroutine();
 
 		std::shared_ptr<Parameter_def> nn_parameter_def();
+
+		std::shared_ptr<UInt> nn_nested_depth();
 
 		std::shared_ptr<Node> nn_next(Node& ast_root, const Token_kind& kind);
 

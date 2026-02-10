@@ -43,8 +43,10 @@ Gate::Gate(const std::string& str, const Token_kind& kind, const Ptr_coll<Resour
         }
     }
 
+    #if 0
     std::cout << "Subroutine " << str << " has " << info.n_qubits << " external qubits" << std::endl;
     std::cout << "Subroutine " << str << " has " << info.n_bits << " external bits" << std::endl;
+    #endif
 }
 
 unsigned int Gate::get_num_external_resource_defs(Resource_kind kind) const {

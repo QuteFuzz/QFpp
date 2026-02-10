@@ -15,6 +15,7 @@
 struct Current {
     std::shared_ptr<Rule> rule;
     Branch branch;
+    Meta_func rule_decl_meta_func = Meta_func::NONE;
 
     Current(){}
 
@@ -75,8 +76,12 @@ class Grammar{
         }
 
         inline void set_meta_func(const Token_kind& kind){
+            assert(!stack.empty());
+            
             if (kind == NAME){
-                rule_decl_meta_func = Meta_func::NAME;
+                stack.top().rule_decl_meta_func = Meta_func::NAME;
+            } else if (kind == INDENT){
+                stack.top().rule_decl_meta_func = Meta_func::INDENT;
             } else {
                 throw std::runtime_error("Unknown meta function");
             }
@@ -113,7 +118,6 @@ class Grammar{
         // default scopes for all rules
         Scope rule_def_scope = Scope::GLOB;
         Scope rule_decl_scope = Scope::GLOB;
-        Meta_func rule_decl_meta_func = Meta_func::NONE;
         bool setting_term_constraint = false;
 
         // unsigned int nesting_depth_base = 0;

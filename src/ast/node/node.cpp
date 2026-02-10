@@ -136,25 +136,6 @@ void Node::make_partition(int target, int n_children){
 
 }
 
-/// @brief Make partitions for control flow circuits and branches, adding correct constraints where required
-/// @param target
-/// @param n_children
-void Node::make_control_flow_partition(int target, int n_children){
-    make_partition(target, n_children);
-
-    if(n_children == 1){
-        add_constraint(ELSE_STMT, 0);
-        add_constraint(ELIF_STMT, 0);
-
-    } else if (random_uint(1)) {
-        add_constraint(ELSE_STMT, 1);
-
-    } else {
-        add_constraint(ELIF_STMT, 1);
-
-    }
-}
-
 std::shared_ptr<Variable> Node::get_name() const {
     return std::make_shared<Variable>();
 }

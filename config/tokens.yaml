@@ -103,7 +103,7 @@ matchers:
   - pattern: compound_stmt
   - pattern: compound_stmts
   - pattern: indentation_depth
-    kind: INDENTATION_DEPTH
+    kind: NESTED_DEPTH
 
   # --- Gates ---
   - pattern: h

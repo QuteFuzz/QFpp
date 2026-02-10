@@ -16,11 +16,11 @@ class Compare_op_bitwise_or_pair_child : public Node {
             Node(str, kind)
         {}
 
-        void print_program(std::ostream& stream) const override {
+        void print_program(std::ostream& stream, unsigned int indent_depth) const override {
             stream << " ";
 
             for(const std::shared_ptr<Node>& child : children){
-                child->print_program(stream);
+                child->print_program(stream, indent_depth);
                 stream << " ";
             }
         }

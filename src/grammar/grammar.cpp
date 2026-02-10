@@ -119,6 +119,7 @@ std::shared_ptr<Rule> Grammar::get_rule_pointer(const Token& token, const Scope&
 void Grammar::add_term_to_current_branch(const Token& token){
     std::shared_ptr<Rule>& current_rule = stack.top().rule;
     Branch& current_branch = stack.top().branch;
+    Meta_func current_rule_decl_meta_func = stack.top().rule_decl_meta_func;
 
     assert(current_rule != nullptr);
 
@@ -132,10 +133,10 @@ void Grammar::add_term_to_current_branch(const Token& token){
             takes on the scope of the current rule (i.e the rule def)
         */
         Scope scope = (rule_decl_scope == Scope::GLOB) ? current_rule->get_scope() : rule_decl_scope;
-        current_branch.add(Term(get_rule_pointer(token, scope), token.kind, rule_decl_meta_func));
+        current_branch.add(Term(get_rule_pointer(token, scope), token.kind, current_rule_decl_meta_func));
 
     } else if (is_meta(token.kind)){
-        assert(rule_decl_meta_func == Meta_func::NONE); // this is a meta-func used for node creation, should not have a meta func applied to itself
+        assert(current_rule_decl_meta_func == Meta_func::NONE); // this is a meta-func used for node creation, should not have a meta func applied to itself
         assert(rule_decl_scope == Scope::GLOB); // also should not have scope set explictly
         current_branch.add(Term(get_rule_pointer(token, current_rule->get_scope()), token.kind, Meta_func::NONE));
 
@@ -170,10 +171,6 @@ void Grammar::build_grammar(){
 
     if(curr_token.is_ok()){
         Token token = curr_token.get_ok();
-
-        // cannot set here because if curr token is EOF, next should be an error.
-        // I set this for only the specific cases where I use it to avoid an extra if statement checking for ok here
-        Token next;
 
         if (token.kind == _EOF) {
             // must not peek if at EOF
@@ -242,13 +239,11 @@ void Grammar::build_grammar(){
 
             add_constraint_to_last_term(constraint);
 
-        } else if (is_meta(token.kind) && (next.kind != LANGLE_BRACKET)){
+        } else if (is_meta(token.kind) && (next_token.get_ok().kind != LANGLE_BRACKET)){
             // if next token is `<`, this is a meta func application, handled at `<` using previous token
-            // add_term_to_current_branches(token);
             add_term_to_current_branch(token);
 
         } else if(is_kind_of_rule(token.kind) || token.kind == SYNTAX){
-            next = next_token.get_ok();
 
             // rules that are within branches, rules before `RULE_START` and `RULE_APPEND` are handled at `RULE_START` and `RULE_APPEND`
             if(!stack.empty()){
@@ -324,25 +319,22 @@ void Grammar::build_grammar(){
 
         } else if (token.kind == LANGLE_BRACKET){
             // use previous token to set meta function
-            // std::cout << prev_token << " " << next_token.get_ok() << std::endl;
             set_meta_func(prev_token.kind);
 
         } else if (token.kind == RANGLE_BRACKET){
-            rule_decl_meta_func = Meta_func::NONE; // reset to NONE as default
+            stack.top().rule_decl_meta_func = Meta_func::NONE; // reset to NONE as default
 
         } else if (token.kind == EXTERNAL){
-            next = next_token.get_ok();
 
-            if(next.kind == SCOPE_RES){
+            if(next_token.get_ok().kind == SCOPE_RES){
                 rule_decl_scope = Scope::EXT;
             } else {
                 rule_def_scope = Scope::EXT;
             }
 
         } else if (token.kind == INTERNAL){
-            next = next_token.get_ok();
 
-            if(next.kind == SCOPE_RES){
+            if(next_token.get_ok().kind == SCOPE_RES){
                 rule_decl_scope = Scope::INT;
             } else {
                 rule_def_scope = Scope::INT;

@@ -8,7 +8,8 @@ class Parameter_def : public Node {
 
     public:
         Parameter_def() :
-            Node("parameter_def", PARAMETER_DEF)
+            Node("parameter_def", PARAMETER_DEF),
+            _name("var", true)
         {}
 
         std::shared_ptr<Variable> get_name() const override {

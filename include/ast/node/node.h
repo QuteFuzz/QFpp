@@ -24,24 +24,13 @@ class Branch;
 class Node : public std::enable_shared_from_this<Node> {
 
     public:
-        static std::string indentation_tracker;
         static int node_counter;
 
         Node(){}
 
-        Node(std::string _str, Token_kind _kind = SYNTAX, const std::string _indentation_str = ""):
+        Node(std::string _str, Token_kind _kind = SYNTAX):
             str(_str),
-            kind(_kind),
-            indentation_str(_indentation_str)
-        {
-            id = node_counter++;
-        }
-
-        Node(std::string _str, Token_kind _kind, const std::optional<Node_constraints>& _constraints, const std::string _indentation_str = ""):
-            str(_str),
-            kind(_kind),
-            indentation_str(_indentation_str),
-            constraints(_constraints)
+            kind(_kind)
         {
             id = node_counter++;
         }
@@ -107,14 +96,12 @@ class Node : public std::enable_shared_from_this<Node> {
         }
 
         /// Used to print the program
-        virtual void print_program(std::ostream& stream) const {
+        virtual void print_program(std::ostream& stream, unsigned int indent_level = 0) const {
             if(kind == SYNTAX){
                 stream << str;
             } else {
-
                 for(const std::shared_ptr<Node>& child : children){
-                    stream << indentation_str;
-                    child->print_program(stream);
+                    child->print_program(stream, indent_level);
                 }
             }
         }
@@ -204,12 +191,13 @@ class Node : public std::enable_shared_from_this<Node> {
         std::string str;
         Token_kind kind;
 
-        std::string indentation_str;
         std::vector<std::shared_ptr<Node>> children;
         Node_build_state state = NB_BUILD;
 
         std::vector<int> child_partition;
         unsigned int partition_counter = 0;
+
+        bool indent;
 
     private:
         std::optional<Node_constraints> constraints;

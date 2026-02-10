@@ -5,6 +5,7 @@
 */
 #include <sstream>
 #include <result.h>
+#include <indent.h>
 
 /*
 	node kinds
@@ -15,15 +16,10 @@
 #include <qubit_op.h>
 #include <compound_stmt.h>
 #include <resource.h>
-#include <disjunction.h>
-#include <conjunction.h>
 #include <compare_op_bitwise_or_pair_child.h>
-#include <expression.h>
 #include <gate_name.h>
 #include <parameter_def.h>
 #include <variable.h>
-
-std::string Node::indentation_tracker = "";
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
@@ -46,6 +42,10 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		return std::make_shared<Compare_op_bitwise_or_pair_child>(str, kind);
 	}
 
+	if (kind == NESTED_DEPTH){
+		std::cout << "-----> " << term << std::endl;
+	}
+
 	/**
 	* 			TODO: META FUNCTIONS
 	*/
@@ -60,6 +60,10 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		assert(node != nullptr);
 
 		return node->find(NAME);
+	
+	} else if (meta_func == Meta_func::INDENT){
+		std::cout << term << std::endl;
+		return std::make_shared<Indent>(str, kind);
 	}
 
 	/**
@@ -89,19 +93,8 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		case CIRCUIT_NAME:
 			return std::make_shared<Variable>(context.get_current_circuit()->get_owner());
 
-		case INDENT:
-			Node::indentation_tracker += "\t";
-			return dummy;
-
-		case DEDENT:
-			if(Node::indentation_tracker.size()){
-				Node::indentation_tracker.pop_back();
-			}
-
-			return dummy;
-
-		case INDENTATION_DEPTH:
-			return std::make_shared<UInt>(Node::indentation_tracker.size());
+		case NESTED_DEPTH:
+			return context.nn_nested_depth();
 
 		case CIRCUIT:
 			return context.nn_circuit();
@@ -113,17 +106,8 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			context.reset(Reset_level::RL_RESOURCES);
 			return context.nn_compound_stmt();
 
-		case IF_STMT: case ELIF_STMT: case ELSE_STMT:
+		case NESTED_STMT:
 			return context.nn_nested_stmt(str, kind);
-
-		case DISJUNCTION:
-			return std::make_shared<Disjunction>();
-
-		case CONJUNCTION:
-			return std::make_shared<Conjunction>();
-
-		case EXPRESSION:
-			return std::make_shared<Expression>();
 
 		case CIRCUIT_ID:
 			return context.nn_circuit_id();

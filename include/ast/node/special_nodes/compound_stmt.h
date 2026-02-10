@@ -19,29 +19,29 @@ class Compound_stmt : public Node {
             return std::make_shared<Compound_stmt>(stmt);
         }
 
-        static std::shared_ptr<Compound_stmt> from_num_qubit_ops(unsigned int target_num_qubit_ops){
-            Compound_stmt stmt;
+        // static std::shared_ptr<Compound_stmt> from_num_qubit_ops(unsigned int target_num_qubit_ops){
+        //     Compound_stmt stmt;
 
-            if(target_num_qubit_ops == 1){
-                /*
-                    make qubit op
-                */
-                stmt.add_constraint(QUBIT_OP, 1);
+        //     if(target_num_qubit_ops == 1){
+        //         /*
+        //             make qubit op
+        //         */
+        //         stmt.add_constraint(QUBIT_OP, 1);
 
-            } else {
-                /*
-                    use nesting circuit, target is > 1
-                */
-                stmt.make_partition(target_num_qubit_ops, 1);
-                stmt.add_constraint(QUBIT_OP, 0);
-            }
+        //     } else {
+        //         /*
+        //             use nesting circuit, target is > 1
+        //         */
+        //         stmt.make_partition(target_num_qubit_ops, 1);
+        //         stmt.add_constraint(QUBIT_OP, 0);
+        //     }
 
-            return std::make_shared<Compound_stmt>(stmt);
-        }
+        //     return std::make_shared<Compound_stmt>(stmt);
+        // }
 
     private:
         Compound_stmt():
-            Node("compound_stmt", COMPOUND_STMT, indentation_tracker)
+            Node("compound_stmt", COMPOUND_STMT)
         {}
 };
 
