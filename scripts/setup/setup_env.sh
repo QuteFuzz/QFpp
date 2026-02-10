@@ -1,4 +1,4 @@
-nan#!/bin/bash
+#!/bin/bash
 set -e
 
 echo ">>> 1. Installing System Dependencies..."
