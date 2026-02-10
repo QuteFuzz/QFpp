@@ -117,6 +117,7 @@ def parse():
     parser.add_argument("--seed", type=int, help="Seed for random number generator", default=None)
     parser.add_argument("--plot", action="store_true", help="Plot results after running circuit")
     parser.add_argument("--coverage", action="store_true", help="Collect coverage info")
+    parser.add_argument("--nproc", type=int, default=CPU_COUNT, help="Num workers")
 
     return parser.parse_args()
 
@@ -127,6 +128,7 @@ class Check_grammar:
         timestamp: str,
         num_tests: int | None,
         name: str,
+        nproc : int,
         seed: (int | None) = None,
         mode: Run_mode = Run_mode.CI,
         plot: bool = False,
@@ -144,9 +146,9 @@ class Check_grammar:
         self.nightly_run_dir = NIGHTLY_DIR / timestamp / self.name
         self.regression_seed_dst = self.nightly_run_dir / "regression_seed.txt"
 
-        self.workers = CPU_COUNT
+        self.nproc = nproc
 
-        log(f"Using {self.workers} parallel workers", Color.BLUE)
+        log(f"Using {self.nproc} parallel workers", Color.BLUE)
 
     def generate_tests(self):
         """
@@ -267,7 +269,7 @@ class Check_grammar:
 
         interesting_results = []
 
-        with ThreadPoolExecutor(max_workers=self.workers) as executor:
+        with ThreadPoolExecutor(max_workers=self.nproc) as executor:
             # Submit all tasks
             future_to_circuit = {
                 executor.submit(self.validate_generated_circuit, i, circuit_dir / "prog.py"): (
@@ -345,7 +347,7 @@ def main():
         log(f"Testing grammar: {grammar}", Color.BLUE)
         log(f"{'=' * 60}", Color.BLUE)
 
-        Check_grammar(run_timestamp, args.num_tests, grammar, args.seed, mode, args.plot).check()
+        Check_grammar(run_timestamp, args.num_tests, grammar, args.nproc, args.seed, mode, args.plot).check()
 
 
 if __name__ == "__main__":
