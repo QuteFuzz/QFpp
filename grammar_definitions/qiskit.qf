@@ -33,7 +33,7 @@ classical_expr =
 # Update if_stmt to use classical_expr
 if_stmt =
     'with ' CIRCUIT_NAME '.if_test(' classical_expr ') as else_' NESTED_DEPTH ':' NEWLINE INDENT<compound_stmts>
-    ('with else_' NESTED_DEPTH ':' NEWLINE INDENT<compound_stmts>)?;
+    SHALLOW_INDENT<('with else_' NESTED_DEPTH ':' NEWLINE INDENT<compound_stmts>)?>;
 
 # Update compound_stmt
 compound_stmt =
@@ -49,15 +49,6 @@ compound_stmt =
 barrier_op = CIRCUIT_NAME '.barrier([' qubit_list '])';
 delay_op = CIRCUIT_NAME '.delay(' INTEGER ', ' qubit ')';
 reset_op = CIRCUIT_NAME '.reset(' qubit ')';
-
-
-# # Overwrites from meta-grammar
-# if_stmt =
-#     'with ' CIRCUIT_NAME '.if_test((' bit COMMA branch_condition ')) as else_' NESTED_DEPTH ':' NEWLINE INDENT compound_stmts DEDENT elif_stmt
-#     | 'with ' CIRCUIT_NAME '.if_test((' bit COMMA branch_condition ')) as else_' NESTED_DEPTH ':' NEWLINE INDENT compound_stmts DEDENT (else_stmt)?;
-# elif_stmt = ;
-# else_stmt =
-#     'with else_' NESTED_DEPTH ':' NEWLINE INDENT compound_stmts DEDENT;
 
 branch_condition = 1 | 0;
 

@@ -82,6 +82,8 @@ class Grammar{
                 stack.top().rule_decl_meta_func = Meta_func::NAME;
             } else if (kind == INDENT){
                 stack.top().rule_decl_meta_func = Meta_func::INDENT;
+            } else if (kind == SHALLOW_INDENT){
+                stack.top().rule_decl_meta_func = Meta_func::SHALLOW_INDENT;
             } else {
                 throw std::runtime_error("Unknown meta function");
             }

@@ -91,6 +91,7 @@ enum Token_kind {
     NUM_BITS,
     NUM_FLOATS,
     INDENT,
+    SHALLOW_INDENT,
     UNIFORM,
     INTEGER,
     FLOAT,
@@ -256,6 +257,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("INTEGER", INTEGER),
     Token_matcher("NESTED_DEPTH", NESTED_DEPTH),
     Token_matcher("INDENT", INDENT),
+    Token_matcher("SHALLOW_INDENT", SHALLOW_INDENT),
     Token_matcher("UNIFORM", UNIFORM),
     Token_matcher("NAME", NAME),
     Token_matcher("INDEX", INDEX),
@@ -450,6 +452,7 @@ inline bool is_quiet(const Token_kind& kind){
     return
         (kind == SCOPE_RES) ||
         (kind == ARROW) || 
+        (kind == SHALLOW_INDENT) ||
         (kind == INDENT);
 }
 

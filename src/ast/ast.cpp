@@ -55,15 +55,17 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 
 	if (meta_func == Meta_func::NAME){
 		auto node = root->find(kind);
-
 		// TODO: throw an error saying that they have tried to get the name of a node that could not have been defined at this point in the AST
 		assert(node != nullptr);
 
 		return node->find(NAME);
 	
 	} else if (meta_func == Meta_func::INDENT){
-		std::cout << term << std::endl;
-		return std::make_shared<Indent>(str, kind);
+		return context.nn_indent(str, kind, false);
+
+	} else if (meta_func == Meta_func::SHALLOW_INDENT){
+		return context.nn_indent(str, kind, true);
+	
 	}
 
 	/**

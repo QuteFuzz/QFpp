@@ -207,11 +207,6 @@ std::shared_ptr<UInt> Context::nn_circuit_id() {
     return std::make_shared<UInt>(ast_counter);
 }
 
-/// @brief Any stmt that is nested (if, elif, else) is a nested stmt. Any time such a node is used, reduce nested depth
-/// @param str
-/// @param kind
-/// @param parent
-/// @return
 std::shared_ptr<Node> Context::nn_nested_stmt(const std::string& str, const Token_kind& kind){
     reset(RL_RESOURCES);
     nested_depth = (nested_depth == 0) ? 0 : nested_depth - 1;
@@ -247,6 +242,11 @@ std::shared_ptr<UInt> Context::nn_nested_depth(){
     return std::make_shared<UInt>(nested_depth);
 
 }
+
+std::shared_ptr<Indent> Context::nn_indent(const std::string& str, const Token_kind& kind, bool shallow_indent){
+    return std::make_shared<Indent>(str, kind, shallow_indent);
+}
+
 
 std::shared_ptr<Node> Context::nn_next(Node& ast_root, const Token_kind& kind){
 

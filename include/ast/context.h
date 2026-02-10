@@ -10,6 +10,7 @@
 #include <genome.h>
 #include <parameter_def.h>
 #include <ast_utils.h>
+#include <indent.h>
 
 
 enum Reset_level {
@@ -139,6 +140,8 @@ struct Context {
 
 		std::shared_ptr<UInt> nn_nested_depth();
 
+		std::shared_ptr<Indent> nn_indent(const std::string& str, const Token_kind& kind, bool shallow_indent);
+
 		std::shared_ptr<Node> nn_next(Node& ast_root, const Token_kind& kind);
 
 		template<typename T>
@@ -172,7 +175,7 @@ struct Context {
 
 		unsigned int subroutine_counter = 0;
 		unsigned int current_port = 0;
-		unsigned int nested_depth; // default set when control is set
+		unsigned int nested_depth;
 
 		std::optional<std::shared_ptr<Node>> subroutines_node = std::nullopt;
 };

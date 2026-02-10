@@ -26,6 +26,7 @@ enum class Meta_func {
     NONE = 0,
     NAME = BIT32(1),
     INDENT = BIT32(2),
+    SHALLOW_INDENT = BIT32(3),
 };
 
 #define STR_META_FUNC(mf) ( \
