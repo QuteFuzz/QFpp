@@ -1,6 +1,8 @@
 # Pytket grammar with control flow support
 # import "qasm.qf"
 
+NESTED_MAX_DEPTH = 3;
+
 x = "X";
 y = "Y";
 z = "Z";

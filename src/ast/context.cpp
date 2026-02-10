@@ -221,6 +221,7 @@ std::shared_ptr<Node> Context::nn_subroutines(){
 
 std::shared_ptr<Qubit_op> Context::nn_qubit_op(){
     reset(RL_QUBITS);
+    reset(RL_BITS);
 
     auto qubit_op = std::make_shared<Qubit_op>();
     current.set<Qubit_op>(qubit_op);
