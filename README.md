@@ -36,3 +36,10 @@ See `dev` for dev-specific docs
 
 - *Only GCC/clang compilers due to some use of GCC pragmas*
 - *>= C++20 required*
+
+## Bugs found
+
+| QSS | Bug in | Fixed |
+|-----|------|-------|
+| Pytket | [Compiler](https://github.com/Quantinuum/tket/issues/2109) | ✅ |
+
