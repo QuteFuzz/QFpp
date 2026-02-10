@@ -57,11 +57,11 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		assert(node != nullptr);
 
 		return node->find(NAME);
-	
+
 	} else if (meta_func == Meta_func::INDENT){
 		context.reduce_nested_depth();
 	    return std::make_shared<Indent>(str, kind);
-	
+
 	} else if (meta_func == Meta_func::LINE_INDENT){
 		return std::make_shared<Line_indent>(str, kind);
 	}

@@ -32,7 +32,7 @@ u2 = "U2";
 u3 = "U3";
 phased_x = "PhasedX";
 
-gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz | 
+gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
     u1 | u2 | u3 | phased_x;
 
 # ============================================================================
@@ -44,7 +44,7 @@ if_stmt =
     'if ' bit ' == ' branch_condition ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<elif_stmt>
     | 'if ' bit ' == ' branch_condition ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<(else_stmt)?>;
 
-elif_stmt = 
+elif_stmt =
     'elif ' bit ' == ' branch_condition ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<elif_stmt>
     | 'elif ' bit ' == ' branch_condition ':' NEWLINE INDENT<compound_stmts> LINE_INDENT<(else_stmt)?>;
 
@@ -118,7 +118,7 @@ subroutine_def_footer = CIRCUIT_NAME " = CircBox(" CIRCUIT_NAME ")" NEWLINE;
 
 # TODO: conditional circbox application
 
-compound_stmt = 
+compound_stmt =
     qubit_op
     | if_stmt
     | barrier_op
@@ -168,7 +168,7 @@ compiler_call = "pt = pytketTesting() " NEWLINE testing_method;
 
 testing_method = CIRCUIT_NAME ".measure_all() " NEWLINE "pt.ks_diff_test(" CIRCUIT_NAME COMMA circuit_id RPAREN;
 
-# testing_method = "for circuit in [" CIRCUIT_NAME ("," CIRCUIT_NAME)* "]: circuit.measure_all()" NEWLINE 
+# testing_method = "for circuit in [" CIRCUIT_NAME ("," CIRCUIT_NAME)* "]: circuit.measure_all()" NEWLINE
 #     "pt.ks_diff_test(" CIRCUIT_NAME COMMA circuit_id RPAREN;
 
 # ============================================================================

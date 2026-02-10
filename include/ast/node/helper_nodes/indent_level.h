@@ -10,7 +10,7 @@ class Indent_level : public Node {
             Node("indent_level", INDENT_LEVEL)
         {}
 
-        void print_program(std::ostream& stream, unsigned int indent_level) const override {            
+        void print_program(std::ostream& stream, unsigned int indent_level) const override {
             stream << indent_level;
         }
 

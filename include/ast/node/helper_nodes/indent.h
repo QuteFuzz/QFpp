@@ -14,7 +14,7 @@ class Indent : public Node {
             Node(str, kind)
         {}
 
-        void print_program(std::ostream& stream, unsigned int indent_level) const override {            
+        void print_program(std::ostream& stream, unsigned int indent_level) const override {
             unsigned int inner_level = indent_level + 1;
             std::string tabs(inner_level, '\t');
 
@@ -29,4 +29,3 @@ class Indent : public Node {
 };
 
 #endif
-

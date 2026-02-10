@@ -444,7 +444,7 @@ inline bool is_meta(const Token_kind& kind){
 inline bool is_quiet(const Token_kind& kind){
     return
         (kind == SCOPE_RES) ||
-        (kind == ARROW) || 
+        (kind == ARROW) ||
         (kind == LINE_INDENT) ||
         (kind == INDENT);
 }
