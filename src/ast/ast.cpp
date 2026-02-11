@@ -131,7 +131,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			return context.get_random_resource(Resource_kind::QUBIT)->clone();
 
 		case BIT:
-			context.reset(RL_BITS); // bits can be reused within the same classical expr
+			if(*parent == EXPR) context.reset(RL_BITS); // bits can be reused within the same classical expr
 			return context.get_random_resource(Resource_kind::BIT)->clone();
 
 		case REGISTER_QUBIT: case REGISTER_BIT: case SINGULAR_QUBIT: case SINGULAR_BIT: {
