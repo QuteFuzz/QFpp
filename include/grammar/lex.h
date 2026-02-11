@@ -204,8 +204,6 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("subroutine_compound_stmts", COMPOUND_STMTS),
     Token_matcher("parameter_def", PARAMETER_DEF),
     Token_matcher("classical_expr", EXPR),
-    Token_matcher("bool_expr", EXPR),
-    Token_matcher("uint_expr", EXPR),
     Token_matcher("h", H),
     Token_matcher("x", X),
     Token_matcher("y", Y),
