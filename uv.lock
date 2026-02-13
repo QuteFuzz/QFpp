@@ -282,23 +282,6 @@ wheels = [
 ]
 
 [[package]]
-name = "conan"
-version = "2.25.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "colorama" },
-    { name = "distro", marker = "platform_system == 'FreeBSD' or sys_platform == 'linux'" },
-    { name = "fasteners" },
-    { name = "jinja2" },
-    { name = "patch-ng" },
-    { name = "python-dateutil" },
-    { name = "pyyaml" },
-    { name = "requests" },
-    { name = "urllib3" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/02/2e/a6539fbf525dafd73e7a43df6a678da7bc456ca1ef0fe646cf5afbe844ed/conan-2.25.2.tar.gz", hash = "sha256:3a5214a095cee5c3d21ed45ea31139705703e49fa9c4bb45c4c73f5ee17a1031", size = 561890, upload-time = "2026-02-04T09:06:43.619Z" }
-
-[[package]]
 name = "contourpy"
 version = "1.3.3"
 source = { registry = "https://pypi.org/simple" }
@@ -543,30 +526,12 @@ wheels = [
 ]
 
 [[package]]
-name = "distro"
-version = "1.9.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/fc/f8/98eea607f65de6527f8a2e8885fc8015d3e6f5775df186e443e0964a11c3/distro-1.9.0.tar.gz", hash = "sha256:2fa77c6fd8940f116ee1d6b94a2f90b13b5ea8d019b98bc8bafdcabcdd9bdbed", size = 60722, upload-time = "2023-12-24T09:54:32.31Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/12/b3/231ffd4ab1fc9d679809f356cebee130ac7daa00d6d6f3206dd4fd137e9e/distro-1.9.0-py3-none-any.whl", hash = "sha256:7bffd925d65168f85027d8da9af6bddab658135b840670a223589bc0c8ef02b2", size = 20277, upload-time = "2023-12-24T09:54:30.421Z" },
-]
-
-[[package]]
 name = "duet"
 version = "0.2.9"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/c7/b8/ef7c1a8a515d5195970ba5fdf420400052346873d3370de75f8b97e413bd/duet-0.2.9.tar.gz", hash = "sha256:d6fa39582e6a3dce1096c47e5fbcbda648a633eed94a38943e68662afa2587f3", size = 24438, upload-time = "2023-07-26T06:39:02.351Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/be/95/03c8215f675349ff719cb44cd837c2468fdc0c05f55f523f3cad86bbdcc6/duet-0.2.9-py3-none-any.whl", hash = "sha256:a16088b68b0faee8aee12cdf4d0a8af060ed958badb44f3e32f123f13f64119a", size = 29560, upload-time = "2023-07-26T06:38:58.931Z" },
-]
-
-[[package]]
-name = "fasteners"
-version = "0.20"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/2d/18/7881a99ba5244bfc82f06017316ffe93217dbbbcfa52b887caa1d4f2a6d3/fasteners-0.20.tar.gz", hash = "sha256:55dce8792a41b56f727ba6e123fcaee77fd87e638a6863cec00007bfea84c8d8", size = 25087, upload-time = "2025-08-11T10:19:37.785Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/51/ac/e5d886f892666d2d1e5cb8c1a41146e1d79ae8896477b1153a21711d3b44/fasteners-0.20-py3-none-any.whl", hash = "sha256:9422c40d1e350e4259f509fb2e608d6bc43c0136f79a00db1b49046029d0b3b7", size = 18702, upload-time = "2025-08-11T10:19:35.716Z" },
 ]
 
 [[package]]
@@ -1384,12 +1349,6 @@ wheels = [
 ]
 
 [[package]]
-name = "patch-ng"
-version = "1.18.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ee/c0/53a2f017ac5b5397a7064c2654b73c3334ac8461315707cbede6c12199eb/patch-ng-1.18.1.tar.gz", hash = "sha256:52fd46ee46f6c8667692682c1fd7134edc65a2d2d084ebec1d295a6087fc0291", size = 17913, upload-time = "2024-10-25T12:20:10.591Z" }
-
-[[package]]
 name = "pillow"
 version = "12.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1755,7 +1714,7 @@ wheels = [
 [[package]]
 name = "pytket"
 version = "2.13.0"
-source = { git = "https://github.com/CQCL/tket.git?subdirectory=pytket&rev=main#6ccb3eb507e730e6fc348d61e9f1d9721d8feb6d" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "graphviz" },
     { name = "jinja2" },
@@ -1766,6 +1725,13 @@ dependencies = [
     { name = "scipy" },
     { name = "sympy" },
     { name = "typing-extensions" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f5/f5/c01dd1ab66186c178a2e5ac81750dc9b0ee53bc9940d6a902e5d1b20d133/pytket-2.13.0-cp312-abi3-macosx_14_0_arm64.whl", hash = "sha256:c62e4b6fbfad4e53ec85c03a6445a3e58bffaa7eeed73463ea19ad86e38d116a", size = 5515578, upload-time = "2026-02-10T15:07:20.129Z" },
+    { url = "https://files.pythonhosted.org/packages/44/17/89d3470a8eca96309c6b1f8df2c975bf6692d60b6dd65870113a63a94a37/pytket-2.13.0-cp312-abi3-macosx_15_0_x86_64.whl", hash = "sha256:534b11410d16243e7051b4cde29554eb6931c70b207b437560b8b3ca7ea3e934", size = 6205782, upload-time = "2026-02-10T15:07:22.319Z" },
+    { url = "https://files.pythonhosted.org/packages/85/94/5c1559474c557cdd5f592e2f84900c0fccbdd080671b4c9d4d39e7c21f41/pytket-2.13.0-cp312-abi3-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:4b9c38ab082071c99d4abe60de6557eee0b6813af973d09ad62913d1e6eb89ae", size = 7517377, upload-time = "2026-02-10T15:07:25.202Z" },
+    { url = "https://files.pythonhosted.org/packages/95/0f/a07de114780c031e5a42fc8a5e32ca65bc68806cd27c9233d5936b3972d1/pytket-2.13.0-cp312-abi3-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:14071e7ef7fda1752fae01b008b6102b05cc6500c7cf91c987b6698690c71831", size = 8247624, upload-time = "2026-02-10T15:07:27.039Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/d1/4b854de5b65453acc3643229b47f230e7ca828c1b24a03500941a51d8289/pytket-2.13.0-cp312-abi3-win_amd64.whl", hash = "sha256:7c0eb4cdb875d8048946e287dde4f084014baef2e9e6303349f8c71117895df1", size = 9746522, upload-time = "2026-02-10T15:07:28.829Z" },
 ]
 
 [[package]]
@@ -2034,7 +2000,6 @@ version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "cirq" },
-    { name = "conan" },
     { name = "coverage" },
     { name = "guppylang" },
     { name = "hugr-qir" },
@@ -2062,14 +2027,12 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "cirq" },
-    { name = "conan" },
     { name = "coverage" },
     { name = "guppylang" },
     { name = "hugr-qir", git = "https://github.com/CQCL/hugr-qir.git" },
     { name = "jinja2" },
     { name = "matplotlib" },
     { name = "pytket" },
-    { name = "pytket", git = "https://github.com/CQCL/tket.git?subdirectory=pytket&rev=main" },
     { name = "pytket-qir" },
     { name = "pytket-qiskit" },
     { name = "pyyaml", specifier = ">=6.0.3" },

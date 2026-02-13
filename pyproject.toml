@@ -8,8 +8,6 @@ dependencies = [
     "pytket",
     "qiskit",
     "pytket-qiskit",
-    "conan",
-    "pytket @ git+https://github.com/CQCL/tket.git@main#subdirectory=pytket",
     "matplotlib",
     "sympy",
     "z3-solver",

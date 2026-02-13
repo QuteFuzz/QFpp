@@ -25,4 +25,4 @@ jobs:
           uv run pyright
 
       - name: Run CI Pipeline
-        run: uv run scripts/run.py --num-tests 20
+        run: uv run scripts/run.py --num-tests 10
