@@ -37,31 +37,31 @@ if [ ! -d "libs/qir-runner" ]; then
     popd
 fi
 
-echo ">>> 5. Setting up conan..."
+# echo ">>> 5. Setting up conan..."
 
-# Install Conan if not present
-if ! command -v conan &> /dev/null; then
-    echo "Installing Conan..."
-    uv tool install conan
-fi
+# # Install Conan if not present
+# if ! command -v conan &> /dev/null; then
+#     echo "Installing Conan..."
+#     uv tool install conan
+# fi
 
-# Check if default profile exists, create if it doesn't
-if ! conan profile show &> /dev/null; then
-    echo "Creating default Conan profile..."
-    conan profile detect
-else
-    echo "Default Conan profile already exists, skipping..."
-fi
+# # Check if default profile exists, create if it doesn't
+# if ! conan profile show &> /dev/null; then
+#     echo "Creating default Conan profile..."
+#     conan profile detect
+# else
+#     echo "Default Conan profile already exists, skipping..."
+# fi
 
-# Check if tket-libs remote exists, add if it doesn't
-if ! conan remote list | grep -q "tket-libs"; then
-    echo "Adding tket-libs remote..."
-    conan remote add tket-libs https://quantinuumsw.jfrog.io/artifactory/api/conan/tket1-libs --index 0
-else
-    echo "tket-libs remote already exists, skipping..."
-fi
+# # Check if tket-libs remote exists, add if it doesn't
+# if ! conan remote list | grep -q "tket-libs"; then
+#     echo "Adding tket-libs remote..."
+#     conan remote add tket-libs https://quantinuumsw.jfrog.io/artifactory/api/conan/tket1-libs --index 0
+# else
+#     echo "tket-libs remote already exists, skipping..."
+# fi
 
-echo ">>> 6. Syncing Python Environment..."
+echo ">>> 5. Syncing Python Environment..."
 uv sync
 
 # If in CI, export the paths

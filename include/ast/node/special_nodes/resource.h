@@ -8,10 +8,11 @@
 
 enum class Resource_kind {
     QUBIT,
-    BIT
+    BIT,
+    PARAM,
 };
 
-#define STR_RESOURCE_KIND(rk) (rk == Resource_kind::QUBIT ? " QUBIT " : " BIT ")
+#define STR_RESOURCE_KIND(rk) (rk == Resource_kind::QUBIT ? " QUBIT " : (rk == Resource_kind::BIT) ? " BIT " : " PARAM ")
 
 class Resource : public Node {
     public:

@@ -30,6 +30,10 @@ void Context::reset(Reset_level l){
             current_port = 0;
             break;
 
+        case RL_PARAMS:
+            get_current_circuit()->reset(Resource_kind::PARAM);
+            break;
+
         case RL_BITS:
             get_current_circuit()->reset(Resource_kind::BIT);
     }
@@ -115,11 +119,14 @@ std::shared_ptr<Circuit> Context::get_random_circuit(){
     }
 }
 
-std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk){
+std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk, Scope scope){
     Ptr_pred_type<Resource> pred = [](const std::shared_ptr<Resource>& elem){ return !elem->is_used(); };
-    auto filtered_coll = get_current_circuit()->get_coll<Resource>(rk);
-    auto random_resource = get_random_from_coll<Resource>(filtered_coll, pred);
 
+    auto filtered_coll = (scope == Scope::GLOB) ?
+            dummies.circuit->get_coll<Resource>(rk) :
+            get_current_circuit()->get_coll<Resource>(rk);
+
+    auto random_resource = get_random_from_coll<Resource>(filtered_coll, pred);
     random_resource->set_used();
     // random_resource->extend_flow_path(current.get<Qubit_op>(), current_port++);
 
@@ -137,9 +144,14 @@ std::shared_ptr<Resource_def> Context::nn_resource_def(Scope& scope, Resource_ki
     if(rk == Resource_kind::QUBIT){
         can_use_reg = !control.get_rule("register_qubit_def", scope)->is_empty();
         can_use_sing = !control.get_rule("singular_qubit_def", scope)->is_empty();
-    } else {
+    } else if(rk == Resource_kind::BIT){
         can_use_reg = !control.get_rule("register_bit_def", scope)->is_empty();
         can_use_sing = !control.get_rule("singular_bit_def", scope)->is_empty();
+    } else if (rk == Resource_kind::PARAM){
+        can_use_reg = !control.get_rule("register_param_def", scope)->is_empty();
+        can_use_sing = !control.get_rule("singular_param_def", scope)->is_empty();
+    } else {
+        ERROR("Unknown resource kind!");
     }
 
     if (can_use_reg && can_use_sing){
@@ -226,12 +238,6 @@ std::shared_ptr<Qubit_op> Context::nn_qubit_op(){
     auto qubit_op = std::make_shared<Qubit_op>();
     current.set<Qubit_op>(qubit_op);
     return qubit_op;
-}
-
-std::shared_ptr<Parameter_def> Context::nn_parameter_def(){
-    auto def = std::make_shared<Parameter_def>();
-    current.set<Parameter_def>(def);
-    return def;
 }
 
 std::shared_ptr<Node> Context::nn_next(Node& ast_root, const Token_kind& kind){

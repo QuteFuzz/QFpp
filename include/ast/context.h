@@ -8,7 +8,6 @@
 #include <compound_stmt.h>
 #include <gate.h>
 #include <genome.h>
-#include <parameter_def.h>
 #include <ast_utils.h>
 #include <indent.h>
 
@@ -18,6 +17,7 @@ enum Reset_level {
 	RL_CIRCUIT,
 	RL_QUBITS,
 	RL_BITS,
+	RL_PARAMS,
 };
 
 struct Current_nodes {
@@ -33,7 +33,6 @@ struct Current_nodes {
 			resource = std::make_shared<Resource>();
 			gate = std::make_shared<Gate>();
 			qubit_op = std::make_shared<Qubit_op>();
-			parameter_def = std::make_shared<Parameter_def>();
 		}
 
 		template<typename T>
@@ -46,8 +45,6 @@ struct Current_nodes {
 				return resource_def;
 			} else if constexpr (std::is_same_v<T, Qubit_op>) {
 				return qubit_op;
-			} else if constexpr (std::is_same_v<T, Parameter_def>) {
-				return parameter_def;
 			} else {
 				static_assert(always_false_v<T>, "Unsupported type");
 			}
@@ -63,8 +60,6 @@ struct Current_nodes {
 				resource_def = value;
 			} else if constexpr (std::is_same_v<T, Qubit_op>) {
 				qubit_op = value;
-			} else if constexpr (std::is_same_v<T, Parameter_def>) {
-				parameter_def = value;
 			} else {
 				static_assert(always_false_v<T>, "Unsupported type");
 			}
@@ -75,7 +70,6 @@ struct Current_nodes {
 		std::shared_ptr<Resource> resource;
 		std::shared_ptr<Gate> gate;
 		std::shared_ptr<Qubit_op> qubit_op;
-		std::shared_ptr<Parameter_def> parameter_def;
 };
 
 struct Dummy_nodes {
@@ -121,7 +115,7 @@ struct Context {
 
 		std::shared_ptr<Circuit> get_random_circuit();
 
-		std::shared_ptr<Resource> get_random_resource(Resource_kind rk);
+		std::shared_ptr<Resource> get_random_resource(Resource_kind rk, Scope scope = ALL_SCOPES);
 
 		std::shared_ptr<Resource_def> nn_resource_def(Scope& scope, Resource_kind rk);
 
@@ -138,8 +132,6 @@ struct Context {
 		std::shared_ptr<UInt> nn_circuit_id();
 
 		std::shared_ptr<Gate> nn_gate_from_subroutine();
-
-		std::shared_ptr<Parameter_def> nn_parameter_def();
 
 		std::shared_ptr<Node> nn_next(Node& ast_root, const Token_kind& kind);
 

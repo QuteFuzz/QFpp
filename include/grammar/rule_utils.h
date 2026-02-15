@@ -15,7 +15,7 @@ ENABLE_BITMASK_OPERATORS(Scope)
 #define str_bitset(val, n) (std::bitset<n>(static_cast<unsigned long>(val)).to_string() )
 
 #define STR_SCOPE(s) ( \
-    "SCOPE[INT EXT GLOB]: " + str_bitset(s, 4) \
+    "SCOPE[INT EXT GLOB]: " + str_bitset(s, 3) \
 )
 
 #define ALL_SCOPES (Scope::GLOB | Scope::EXT | Scope::INT)

@@ -8,8 +8,6 @@ dependencies = [
     "pytket",
     "qiskit",
     "pytket-qiskit",
-    "conan",
-    "pytket @ git+https://github.com/CQCL/tket.git@main#subdirectory=pytket",
     "matplotlib",
     "sympy",
     "z3-solver",
@@ -28,6 +26,7 @@ dependencies = [
 
 [tool.uv]
 sources.qir-runner = { path = "libs/qir-runner/pip", editable = true }
+required-environments = "sys_platform == 'linux' and platform_machine == 'x86_64'"
 
 [dependency-groups]
 dev = [

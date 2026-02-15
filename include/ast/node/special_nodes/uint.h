@@ -9,7 +9,7 @@ class UInt : public Node {
         using Node::Node;
 
         UInt() :
-            Node(std::to_string(random_uint(10)))
+            Node(std::to_string(random_uint(10, 1)))
         {}
 
         UInt(unsigned int i) :

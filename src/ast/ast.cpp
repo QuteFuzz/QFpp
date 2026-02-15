@@ -20,7 +20,6 @@
 #include <resource.h>
 #include <compare_op_bitwise_or_pair_child.h>
 #include <gate_name.h>
-#include <parameter_def.h>
 #include <variable.h>
 
 #pragma GCC diagnostic push
@@ -134,7 +133,13 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			if(*parent == EXPR) context.reset(RL_BITS); // bits can be reused within the same classical expr
 			return context.get_random_resource(Resource_kind::BIT)->clone();
 
-		case REGISTER_QUBIT: case REGISTER_BIT: case SINGULAR_QUBIT: case SINGULAR_BIT: {
+		case PARAM:
+			context.reset(RL_PARAMS);
+			return context.get_random_resource(Resource_kind::PARAM, scope)->clone();
+
+		case REGISTER_QUBIT: case REGISTER_BIT:
+		case SINGULAR_QUBIT: case SINGULAR_BIT:
+		case REGISTER_PARAM: case SINGULAR_PARAM: {
 			parent->remove_constraints(); // parent is one of the nodes above, remove constraints as just used to reach here
 
 			auto res = std::dynamic_pointer_cast<Resource>(parent);
@@ -147,13 +152,18 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			}
 		}
 
+		case PARAM_DEF:
+			return context.nn_resource_def(scope, Resource_kind::PARAM);
+
 		case QUBIT_DEF:
 			return context.nn_resource_def(scope, Resource_kind::QUBIT);
 
 		case BIT_DEF:
 			return context.nn_resource_def(scope, Resource_kind::BIT);
 
-		case REGISTER_QUBIT_DEF: case REGISTER_BIT_DEF: case SINGULAR_QUBIT_DEF: case SINGULAR_BIT_DEF: {
+		case REGISTER_QUBIT_DEF: case REGISTER_BIT_DEF:
+		case SINGULAR_QUBIT_DEF: case SINGULAR_BIT_DEF:
+		case REGISTER_PARAM_DEF: case SINGULAR_PARAM_DEF: {
 			parent->remove_constraints(); // parent is one of the nodes above, remove constraints as just used to reach here
 
 			auto def = std::dynamic_pointer_cast<Resource_def>(parent);
@@ -180,9 +190,6 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		case CH: case SWAP: case CRZ: case CRX: case CRY: case CCX: case CSWAP: case TOFFOLI:
 		case U1: case RX: case RY: case RZ: case U2: case PHASED_X: case U3: case U: case MEASURE:
 			return context.nn_gate(str, kind);
-
-		case PARAMETER_DEF:
-			return context.nn_parameter_def();
 
 		default:
 			return std::make_shared<Node>(str, kind);

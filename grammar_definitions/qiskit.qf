@@ -25,12 +25,26 @@ t = "t";
 s = "s";
 measure = "measure";
 
+singular_qubit = NAME "[0]";
+
+register_qubit = NAME "[" INDEX "]";
+
+singular_bit = NAME "[0]";
+
+register_bit = NAME "[" INDEX "]";
+
+parameter_defs = (param_def NEWLINE)+;
+
+param_def = singular_param_def;
+
+singular_param_def = NAME " = Parameter('" NAME "')";
+
+param = singular_param;
+
+singular_param = NAME;
+
 # Redefine base program structure to fit Qiskit
 program = imports NEWLINE NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;
-
-parameter_defs = (parameter_def NEWLINE)*;
-
-parameter_def = NAME " = Parameter('" NAME "')";
 
 circuit = circuit_def_header NEWLINE body NEWLINE;
 
@@ -105,35 +119,31 @@ while_stmt =
     'with ' CIRCUIT_NAME '.while_loop((' bit ', ' branch_condition ')):'
     NEWLINE INDENT<compound_stmts>;
 
-for_stmt = for_range | for_iterable;
+for_stmt = for_range;
 
-for_range = 
-    NAME " = Parameter('" NAME "')" NEWLINE
-    "with " CIRCUIT_NAME ".for_loop(range(" for_bound "), " NAME "):" 
+for_range =
+    "with " CIRCUIT_NAME ".for_loop(range(" for_bound "), None):"
     NEWLINE INDENT<compound_stmts>;
 
-for_bound = INTEGER [UNIFORM(1, 5)];  # Always terminates!
+for_bound = 2; #INTEGER;  # TODO: ranges for some meta functions, currently 1-10 by default
 
-for_iterable =
-    NAME " = [" float_literal (", " float_literal)[UNIFORM(1, 4)] "]" NEWLINE
-    "with " CIRCUIT_NAME ".for_loop(" NAME "):" 
-    NEWLINE INDENT<compound_stmts>;
+(*
+    TODO: SWITCH STMTS: more complex with switch over registers and case option tracking via some feature
 
-# TODO: SWITCH STMTS: more complex with switch over registers and case option tracking via some feature
+switch_stmt =
+    'with ' CIRCUIT_NAME '.switch(' bit ') as case' INDENT_LEVEL ':' NEWLINE
+    INDENT<((case_stmts NEWLINE) (default_case)?)>;
 
-# switch_stmt =
-#     'with ' CIRCUIT_NAME '.switch(' bit ') as case' INDENT_LEVEL ':' NEWLINE
-#     INDENT<((case_stmts NEWLINE) (default_case)?)>;
+case_stmts = 'with case' INDENT_LEVEL '(' 0 '):' NEWLINE INDENT<compound_stmts> NEWLINE LINE_INDENT<('with case' INDENT_LEVEL '(' 1 '):' NEWLINE INDENT<compound_stmts>)>;
 
-# case_stmts = 'with case' INDENT_LEVEL '(' 0 '):' NEWLINE INDENT<compound_stmts> NEWLINE LINE_INDENT<('with case' INDENT_LEVEL '(' 1 '):' NEWLINE INDENT<compound_stmts>)>;
+case_stmt =
+    'with case(' case_values '):' NEWLINE INDENT<compound_stmts>;
 
-# case_stmt =
-#     'with case(' case_values '):' NEWLINE INDENT<compound_stmts>;
+case_values = INTEGER (', ' INTEGER)[UNIFORM(0,2)];
 
-# case_values = INTEGER (', ' INTEGER)[UNIFORM(0,2)];
-
-# default_case =
-#     'with case(case.DEFAULT):' NEWLINE INDENT<compound_stmts>;
+default_case =
+    'with case(case.DEFAULT):' NEWLINE INDENT<compound_stmts>;
+*)
 
 #TODO: implement `qreg` rule and others stuff needed for register comparison
 # 1. Expressions that return a Number (Uint)
@@ -169,8 +179,8 @@ compound_stmt =
     qubit_op
     | if_stmt
     # | while_stmt
-    # | for_stmt        
-    # | switch_stmt     # TODO: figure out how to label the nested cases properly
+    | for_stmt
+    # | switch_stmt
     | barrier_op
     | reset_op;
 
@@ -180,14 +190,6 @@ delay_op = CIRCUIT_NAME '.delay(' INTEGER ', ' qubit ')';
 reset_op = CIRCUIT_NAME '.reset(' qubit ')';
 
 branch_condition = 1 | 0;
-
-singular_qubit = NAME "[0]";
-
-register_qubit = NAME "[" INDEX "]";
-
-singular_bit = NAME "[0]";
-
-register_bit = NAME "[" INDEX "]";
 
 compiler_call = "qt = qiskitTesting()" NEWLINE testing_method;
 
