@@ -125,7 +125,7 @@ for_range =
     "with " CIRCUIT_NAME ".for_loop(range(" for_bound "), None):"
     NEWLINE INDENT<compound_stmts>;
 
-for_bound = INTEGER;  # TODO: ranges for some meta functions, currently 1-10 by default
+for_bound = 2; #INTEGER;  # TODO: ranges for some meta functions, currently 1-10 by default
 
 (*
     TODO: SWITCH STMTS: more complex with switch over registers and case option tracking via some feature
