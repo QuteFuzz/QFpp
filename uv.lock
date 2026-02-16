@@ -2016,7 +2016,6 @@ dependencies = [
     { name = "selene-sim" },
     { name = "sympy" },
     { name = "tket" },
-    { name = "tket2" },
     { name = "z3-solver" },
 ]
 
@@ -2043,7 +2042,6 @@ requires-dist = [
     { name = "selene-sim" },
     { name = "sympy" },
     { name = "tket" },
-    { name = "tket2" },
     { name = "z3-solver" },
 ]
 
@@ -2423,15 +2421,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c4/c7/62e7b82d86251bcb6fa455e0707aec038a2141983d9e4974693dc6de470f/tket_exts-0.12.1.tar.gz", hash = "sha256:df2720b97fc9aa16142bdc2724aef66dc69db852a18c2d9df89e48c9b9dcbcd2", size = 21222, upload-time = "2026-01-06T14:18:11.52Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0e/c2/d57e12b14e2a466c548f21e9b8a91266008a49cb5faa248cb51d1e89251c/tket_exts-0.12.1-py3-none-any.whl", hash = "sha256:8f58308b1f25423f3cf933fa6087800cc1fa5f7919bf26a20cfbebfb82c0786b", size = 34092, upload-time = "2026-01-06T14:18:10.153Z" },
-]
-
-[[package]]
-name = "tket2"
-version = "0.12.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6e/18/af831faddaaf258e62508e8c20ba7fe42e53a6498fed899551c9d9c01d5a/tket2-0.12.0.tar.gz", hash = "sha256:8a81742cb835f9c0e4551af13e2f3228ad72ee67117b1ea98532eb0cf816c97d", size = 76022, upload-time = "2025-08-08T08:51:47.106Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/89/05/51bc8595cf81a33c7766083a7f8c4ff707d10ff4b8c03f18607b325f459a/tket2-0.12.0-py3-none-any.whl", hash = "sha256:d815c7586ad48c5cb5265a5f7b3f7ef24e046bcf8914eac8c28665933c6a9b8e", size = 10983, upload-time = "2025-08-08T08:51:45.86Z" },
 ]
 
 [[package]]
