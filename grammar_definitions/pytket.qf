@@ -52,6 +52,8 @@ circuits = circuit;
 
 program = imports NEWLINE NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuits NEWLINE program_footer;
 
+subroutine_body = EXTERNAL::qubit_defs NEWLINE (qubit_op NEWLINE)+;  # subroutines have no bits to facilitate pytket to qiskit conversion
+
 circuit = circuit_def_header NEWLINE body NEWLINE;
 
 # Body includes both qubits and classical bits (needed for control flow)
@@ -175,10 +177,11 @@ register_bit = NAME "[" INDEX "]";
 
 compiler_call = "pt = pytketTesting() " NEWLINE testing_method;
 
-testing_method = CIRCUIT_NAME ".measure_all() " NEWLINE "pt.ks_diff_test(" CIRCUIT_NAME COMMA circuit_id RPAREN;
+testing_method = opt_ks_test | pytket_qiskit_conv_test;
 
-# testing_method = "for circuit in [" CIRCUIT_NAME ("," CIRCUIT_NAME)* "]: circuit.measure_all()" NEWLINE
-#     "pt.ks_diff_test(" CIRCUIT_NAME COMMA circuit_id RPAREN;
+opt_ks_test = "pt.opt_ks_test(" CIRCUIT_NAME COMMA circuit_id RPAREN;
+
+pytket_qiskit_conv_test = "pt.pytket_qiskit_conv_test(" CIRCUIT_NAME COMMA circuit_id RPAREN;
 
 # ============================================================================
 # NUMBERS

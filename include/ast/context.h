@@ -121,7 +121,7 @@ struct Context {
 
 		std::shared_ptr<Circuit> nn_circuit();
 
-		std::shared_ptr<Gate> nn_gate(const std::string& str, Token_kind& kind);
+		std::shared_ptr<Gate> nn_gate(const std::string& str, const Token_kind& kind);
 
 		std::shared_ptr<Compound_stmt> nn_compound_stmt();
 
