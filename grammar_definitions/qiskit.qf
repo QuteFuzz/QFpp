@@ -97,7 +97,6 @@ imports =
     "from qiskit.circuit import Parameter" NEWLINE
     "from qiskit.circuit.classical import expr" NEWLINE
     "from qiskit.circuit.library import standard_gates" NEWLINE
-    swarm_testing_imports NEWLINE
     "from diff_testing.qiskit import qiskitTesting" NEWLINE
     ;
 
@@ -108,11 +107,6 @@ compound_stmts = (compound_stmt NEWLINE)[UNIFORM(3, 10)];
 gate_op = CIRCUIT_NAME "." gate_name "(" gate_op_args ")";
 
 subroutine_op = CIRCUIT_NAME ".append(" subroutine ",[" subroutine_op_args "])";
-
-subroutine_op_arg =
-    qubit
-    | qubit_list
-    ;
 
 # Control flow operations
 while_stmt =

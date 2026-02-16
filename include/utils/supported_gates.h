@@ -38,7 +38,7 @@ const std::vector<Gate_info> SUPPORTED_GATES = []{
 
     // 2 Qubits, 0 Bits, 0 Floats
     add_group({
-        CX, CY, CZ, CNOT, CH, SWAP
+        CX, CY, CZ, CNOT, CH, SWAP, XX, YY, ZZ
     }, 2, 0, 0);
 
     // 2 Qubits, 0 Bits, 1 Float

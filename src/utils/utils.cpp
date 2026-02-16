@@ -41,10 +41,10 @@ std::string random_str(size_t length){
     std::string s;
     s.reserve(length);
 
-    s += QuteFuzz::LETTERS[random_uint(QuteFuzz::LETTERS.size(), 0)];
+    s += QuteFuzz::LETTERS[random_uint(QuteFuzz::LETTERS.size()-1, 0)];
 
     for (size_t i = 1; i < length; ++i) {
-        s += QuteFuzz::ALPHA[random_uint(QuteFuzz::ALPHA.size(), 0)];
+        s += QuteFuzz::ALPHA[random_uint(QuteFuzz::ALPHA.size()-1, 0)];
     }
 
     return s;
