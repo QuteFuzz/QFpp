@@ -14,7 +14,7 @@ class pytketTesting(Base):
     def __init__(self) -> None:
         super().__init__("pytket")
 
-    def get_counts(self, circuit : Circuit, opt_level : int, circuit_num : int):
+    def get_counts(self, circuit: Circuit, opt_level: int, circuit_num: int):
         backend = AerBackend()
 
         circuit.measure_all()
@@ -38,8 +38,9 @@ class pytketTesting(Base):
         return backend.get_compiled_circuit(circuit, optimisation_level=opt_level).get_statevector()
 
     def pytket_qiskit_conv_test(self, pytket_circ, circuit_num):
-        from diff_testing.qiskit import qiskitTesting
         from pytket.extensions.qiskit.qiskit_convert import tk_to_qiskit
+
+        from diff_testing.qiskit import qiskitTesting
 
         qiskit_counts = qiskitTesting().get_counts(tk_to_qiskit(pytket_circ), 0, circuit_num)
         pytket_counts = self.get_counts(pytket_circ, 0, circuit_num)
@@ -56,7 +57,7 @@ class pytketTesting(Base):
         counts1 = self.get_counts(circuit=circuit, opt_level=0, circuit_num=circuit_number)
 
         for i in range(3):
-            counts2 = self.get_counts(circuit=circuit, opt_level=i+1, circuit_num=circuit_number)
+            counts2 = self.get_counts(circuit=circuit, opt_level=i + 1, circuit_num=circuit_number)
             ks_value = self.ks_test(counts1, counts2)
             print(f"Optimisation level {i + 1} ks-test p-value: {ks_value}")
 

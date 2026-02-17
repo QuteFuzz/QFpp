@@ -69,7 +69,7 @@ class Base:
         except Exception:
             return False
 
-    def preprocess_counts(self, counts: Dict[Any, int], n_qubits : int) -> Counter[int]:
+    def preprocess_counts(self, counts: Dict[Any, int], n_qubits: int) -> Counter[int]:
         """
         Given a dict mapping binary values to number of times they appear,
         return a sorted dict with each binary tuple/string converted into a base 10 int.
@@ -118,9 +118,7 @@ class Base:
     ) -> float:
         return float(np.round(abs(np.vdot(sv1, sv2)), precision))
 
-    def plot_histogram(
-        self, res: Counter[int], title: str, circuit_number: int = 0
-    ) -> None:
+    def plot_histogram(self, res: Counter[int], title: str, circuit_number: int = 0) -> None:
         plots_dir = self.OUTPUT_DIR / self.qss_name / f"circuit{circuit_number}"
         if not plots_dir.exists():
             plots_dir.mkdir(parents=True, exist_ok=True)

@@ -8,14 +8,15 @@ class qiskitTesting(Base):
     def __init__(self) -> None:
         super().__init__("qiskit")
 
-    def get_counts(self, circuit : QuantumCircuit, opt_level : int, circuit_num : int):
+    def get_counts(self, circuit: QuantumCircuit, opt_level: int, circuit_num: int):
         backend = AerSimulator()
 
         circuit.measure_all()
         uncompiled_circ = transpile(circuit, backend, optimization_level=opt_level)
         counts = self.preprocess_counts(
             backend.run(uncompiled_circ, shots=self.num_shots).result().get_counts(),
-            circuit.num_qubits)
+            circuit.num_qubits,
+        )
 
         if self.plot:
             self.plot_histogram(
@@ -31,18 +32,10 @@ class qiskitTesting(Base):
         Runs circuit on qiskit simulator and returns counts
         """
 
-        counts1 = self.get_counts(
-            circuit=circuit,
-            opt_level=0,
-            circuit_num=circuit_number
-        )
+        counts1 = self.get_counts(circuit=circuit, opt_level=0, circuit_num=circuit_number)
 
         for i in range(3):
-            counts2 = self.get_counts(
-                circuit=circuit,
-                opt_level=i+1,
-                circuit_num=circuit_number
-            )
+            counts2 = self.get_counts(circuit=circuit, opt_level=i + 1, circuit_num=circuit_number)
 
             ks_value = self.ks_test(counts1, counts2)
             print(f"Optimisation level {i + 1} ks-test p-value: {ks_value}")
