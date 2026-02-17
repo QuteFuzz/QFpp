@@ -16,7 +16,6 @@ Results:
 
 import argparse
 import os
-from collections import Counter
 from itertools import zip_longest
 from pathlib import Path
 from typing import Any, Dict, List
@@ -69,13 +68,13 @@ class Base:
         except Exception:
             return False
 
-    def preprocess_counts(self, counts: Dict[Any, int], n_qubits: int) -> Counter[int]:
+    def preprocess_counts(self, counts: Dict[Any, int], n_qubits: int) -> Dict[Any, int]:
         """
         Given a dict mapping binary values to number of times they appear,
         return a sorted dict with each binary tuple/string converted into a base 10 int.
         Dict is sorted by key.
         """
-        out: Counter[int] = Counter()
+        out = {}
         for k, v in counts.items():
             # k can be a tuple of bits or a string of bits
             if isinstance(k, tuple):
@@ -83,7 +82,7 @@ class Base:
             else:
                 key_str = str(k).replace(" ", "")
 
-            assert (int(key_str[n_qubits:], 2) == 0), (
+            assert int(key_str[n_qubits:], 2) == 0, (
                 f"Bits not in [0, {n_qubits}] must have no information"
             )
 
@@ -96,7 +95,7 @@ class Base:
 
         return dict(sorted(out.items()))
 
-    def ks_test(self, counts1: Counter[int], counts2: Counter[int]) -> float:
+    def ks_test(self, counts1: Dict[Any, int], counts2: Dict[Any, int]) -> float:
         """
         Carries out K-S test on two frequency lists
         """
@@ -123,7 +122,7 @@ class Base:
     ) -> float:
         return float(np.round(abs(np.vdot(sv1, sv2)), precision))
 
-    def plot_histogram(self, res: Counter[int], title: str, circuit_number: int = 0) -> None:
+    def plot_histogram(self, res: Dict[Any, int], title: str, circuit_number: int = 0) -> None:
         plots_dir = self.OUTPUT_DIR / self.qss_name / f"circuit{circuit_number}"
         if not plots_dir.exists():
             plots_dir.mkdir(parents=True, exist_ok=True)
