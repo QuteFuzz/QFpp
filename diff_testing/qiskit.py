@@ -10,12 +10,10 @@ class qiskitTesting(Base):
 
     def get_counts(self, circuit: QuantumCircuit, opt_level: int, circuit_num: int):
         backend = AerSimulator()
-
-        circuit.measure_all()
-        uncompiled_circ = transpile(circuit, backend, optimization_level=opt_level)
+        circ_prime = transpile(circuit, backend, optimization_level=opt_level)
         counts = self.preprocess_counts(
-            backend.run(uncompiled_circ, shots=self.num_shots).result().get_counts(),
-            circuit.num_qubits,
+            backend.run(circ_prime, shots=self.num_shots).result().get_counts(),
+            circ_prime.num_qubits,
         )
 
         if self.plot:

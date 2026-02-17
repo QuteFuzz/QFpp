@@ -16,13 +16,11 @@ class pytketTesting(Base):
 
     def get_counts(self, circuit: Circuit, opt_level: int, circuit_num: int):
         backend = AerBackend()
-
-        circuit.measure_all()
-        uncompiled_circ = backend.get_compiled_circuit(circuit, optimisation_level=opt_level)
-        handle = backend.process_circuit(uncompiled_circ, n_shots=self.num_shots)
+        circ_prime = backend.get_compiled_circuit(circuit, optimisation_level=opt_level)
+        handle = backend.process_circuit(circ_prime, n_shots=self.num_shots)
         result = backend.get_result(handle)
 
-        counts = self.preprocess_counts(result.get_counts(), circuit.n_qubits)
+        counts = self.preprocess_counts(result.get_counts(), circ_prime.n_qubits)
 
         if self.plot:
             self.plot_histogram(

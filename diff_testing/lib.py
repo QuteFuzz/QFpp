@@ -83,6 +83,10 @@ class Base:
             else:
                 key_str = str(k).replace(" ", "")
 
+            assert (int(key_str[n_qubits:], 2) == 0), (
+                f"Bits not in [0, {n_qubits}] must have no information"
+            )
+
             key_str = key_str[:n_qubits]  # only consider bits which correspond to actual qubits
 
             if self.qss_name == "qiskit":
@@ -90,7 +94,7 @@ class Base:
 
             out[int(key_str, 2)] = v
 
-        return Counter(dict(sorted(out.items())))
+        return dict(sorted(out.items()))
 
     def ks_test(self, counts1: Counter[int], counts2: Counter[int]) -> float:
         """
@@ -107,7 +111,8 @@ class Base:
                 sample2 += [p2[0]] * p2[1]
 
         assert (len(sample1) == self.num_shots) and (len(sample2) == self.num_shots), (
-            "Sample size does not match number of shots"
+            f"Sample size(sample1: {len(sample1)}, sample2: {len(sample2)})"
+            f"does not match number of shots ({self.num_shots})"
         )
 
         res = ks_2samp(sorted(sample1), sorted(sample2), method="asymp")
