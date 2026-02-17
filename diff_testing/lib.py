@@ -32,7 +32,7 @@ class Base:
     OUTPUT_DIR = (Path(__file__).parent.parent / "outputs").resolve()
     TIMEOUT_SECONDS = 30
 
-    def __init__(self, qss_name) -> None:
+    def __init__(self, qss_name, native) -> None:
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument(
             "--plot", action="store_true", help="Plot results after running circuit"
@@ -40,6 +40,8 @@ class Base:
         self.args = self.parser.parse_args()
         self.plot: bool = self.args.plot
         self.qss_name = qss_name
+        self.native = native
+
         self.num_shots = 100000
 
     def qnexus_login(self) -> None:
@@ -82,14 +84,18 @@ class Base:
             else:
                 key_str = str(k).replace(" ", "")
 
-            assert int(key_str[n_qubits:], 2) == 0, (
-                f"Bits not in [0, {n_qubits}] must have no information"
-            )
-
-            key_str = key_str[:n_qubits]  # only consider bits which correspond to actual qubits
-
             if self.qss_name == "qiskit":
-                key_str = key_str[::-1]  # flip to match <0001| indexed as [0,1,2,3] not [3,2,1,0]
+                key_str = key_str[::-1]  # flip to match <0001| indexed as [0,1,2,3], flip
+
+            if not self.native:
+                assert int(key_str[n_qubits:], 2) == 0, (
+                    f"Bits not in [0, {n_qubits - 1}] must have no information"
+                )
+
+                key_str = key_str[:n_qubits]  # only consider bits which correspond to actual qubits
+
+                # if self.qss_name == "qiskit":
+                # key_str = key_str[::-1]  # flip to match <0001| indexed as [0,1,2,3], flip
 
             out[int(key_str, 2)] = v
 
