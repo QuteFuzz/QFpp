@@ -188,8 +188,15 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		case H: case X: case Y: case Z: case T: case TDG: case S: case SDG: case PROJECT_Z:
 		case V: case VDG: case CX : case CY: case CZ: case CNOT:
 		case CH: case SWAP: case CRZ: case CRX: case CRY: case CCX: case CSWAP: case TOFFOLI:
-		case U1: case RX: case RY: case RZ: case U2: case PHASED_X: case U3: case U: case MEASURE:
+		case U1: case RX: case RY: case RZ: case U2: case PHASED_X: case U3: case U:
 			return context.nn_gate(str, kind);
+
+		case MEASURE:
+			if(context.get_current_circuit()->get_coll<Resource>(Resource_kind::BIT).size() == 0){
+				return context.nn_gate("H", H); // replace measures with H gates if no bits are defined
+			} else {
+				return context.nn_gate(str, kind);
+			}
 
 		default:
 			return std::make_shared<Node>(str, kind);

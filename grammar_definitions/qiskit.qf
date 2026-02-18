@@ -193,4 +193,6 @@ branch_condition = 1 | 0;
 
 compiler_call = "qt = qiskitTesting()" NEWLINE testing_method;
 
-testing_method = "qt.ks_diff_test(main_circuit" COMMA circuit_id RPAREN NEWLINE;
+testing_method = opt_ks_test;
+
+opt_ks_test = "qt.opt_ks_test(main_circuit" COMMA circuit_id RPAREN NEWLINE;

@@ -63,7 +63,7 @@ class guppyTesting(Base):
                 for key, value in counts_guppy.items()
             }
 
-            processed_counts_guppy = self.preprocess_counts(reconstructed_counts)
+            processed_counts_guppy = self.preprocess_counts(reconstructed_counts, total_num_qubits)
 
             qir_LLVM = hugr_to_qir(hugr, emit_text=True)
             project = qnx.projects.get_or_create(name="guppy_qir_diff")
@@ -92,14 +92,12 @@ class guppyTesting(Base):
             counts_qir = self.preprocess_counts(qir_result.get_counts())  # type: ignore
 
             # Run the kstest on the two results
-            ks_value = self.ks_test(processed_counts_guppy, counts_qir, 1000)
+            ks_value = self.ks_test(processed_counts_guppy, counts_qir)
             print(f"Guppy vs QIR ks-test p-value: {ks_value}")
 
             if self.plot:
-                self.plot_histogram(
-                    processed_counts_guppy, "Guppy Circuit Results", 0, circuit_number
-                )
-                self.plot_histogram(counts_qir, "Guppy-QIR Circuit Results", 0, circuit_number)
+                self.plot_histogram(processed_counts_guppy, "Guppy Circuit Results", circuit_number)
+                self.plot_histogram(counts_qir, "Guppy-QIR Circuit Results", circuit_number)
 
         except Exception as e:
             if isinstance(e, GuppyError):

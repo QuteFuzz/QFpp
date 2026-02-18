@@ -188,7 +188,7 @@ std::shared_ptr<Circuit> Context::nn_circuit(){
     return current_circuit;
 }
 
-std::shared_ptr<Gate> Context::nn_gate(const std::string& str, Token_kind& kind){
+std::shared_ptr<Gate> Context::nn_gate(const std::string& str, const Token_kind& kind){
     auto gate = std::make_shared<Gate>(str, kind);
 
     current.set<Gate>(gate);

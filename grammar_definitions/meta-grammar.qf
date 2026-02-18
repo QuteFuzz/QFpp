@@ -46,7 +46,7 @@ EXTERNAL {
 
 program       = imports NEWLINE circuit NEWLINE program_footer;
 
-program_footer = compiler_call;
+program_footer = CIRCUIT_NAME ".measure_all()" NEWLINE compiler_call;
 
 subroutine_defs = (subroutine_circuit NEWLINE subroutine_def_footer)[UNIFORM(1, 3)];
 
