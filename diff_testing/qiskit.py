@@ -5,15 +5,15 @@ from .lib import Base
 
 
 class qiskitTesting(Base):
-    def __init__(self, native=True) -> None:
-        super().__init__("qiskit", native)
+    def __init__(self) -> None:
+        super().__init__("qiskit")
 
     def get_counts(self, circuit: QuantumCircuit, opt_level: int, circuit_num: int):
         backend = AerSimulator()
         circ_prime = transpile(circuit, backend, optimization_level=opt_level)
         counts = self.preprocess_counts(
             backend.run(circ_prime, shots=self.num_shots).result().get_counts(),
-            circ_prime.num_qubits,
+            circ_prime.num_clbits,
         )
 
         if self.plot:

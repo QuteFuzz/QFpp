@@ -32,7 +32,7 @@ class Base:
     OUTPUT_DIR = (Path(__file__).parent.parent / "outputs").resolve()
     TIMEOUT_SECONDS = 30
 
-    def __init__(self, qss_name, native) -> None:
+    def __init__(self, qss_name) -> None:
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument(
             "--plot", action="store_true", help="Plot results after running circuit"
@@ -40,7 +40,6 @@ class Base:
         self.args = self.parser.parse_args()
         self.plot: bool = self.args.plot
         self.qss_name = qss_name
-        self.native = native
 
         self.num_shots = 100000
 
@@ -70,7 +69,7 @@ class Base:
         except Exception:
             return False
 
-    def preprocess_counts(self, counts: Dict[Any, int], n_qubits: int) -> Dict[Any, int]:
+    def preprocess_counts(self, counts: Dict[Any, int], n_bits: int) -> Dict[Any, int]:
         """
         Given a dict mapping binary values to number of times they appear,
         return a sorted dict with each binary tuple/string converted into a base 10 int.
@@ -87,15 +86,10 @@ class Base:
             if self.qss_name == "qiskit":
                 key_str = key_str[::-1]  # flip to match <0001| indexed as [0,1,2,3], flip
 
-            if not self.native:
-                assert int(key_str[n_qubits:], 2) == 0, (
-                    f"Bits not in [0, {n_qubits - 1}] must have no information"
-                )
+            print(key_str)
 
-                key_str = key_str[:n_qubits]  # only consider bits which correspond to actual qubits
-
-                # if self.qss_name == "qiskit":
-                # key_str = key_str[::-1]  # flip to match <0001| indexed as [0,1,2,3], flip
+            if len(key_str) > n_bits:
+                key_str = key_str[:n_bits]
 
             out[int(key_str, 2)] = v
 

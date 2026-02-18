@@ -11,8 +11,8 @@ from .lib import Base
 
 
 class pytketTesting(Base):
-    def __init__(self, native=True) -> None:
-        super().__init__("pytket", native)
+    def __init__(self) -> None:
+        super().__init__("pytket")
 
     def get_counts(self, circuit: Circuit, opt_level: int, circuit_num: int):
         backend = AerBackend()
@@ -20,7 +20,7 @@ class pytketTesting(Base):
         handle = backend.process_circuit(circ_prime, n_shots=self.num_shots)
         result = backend.get_result(handle)
 
-        counts = self.preprocess_counts(result.get_counts(), circ_prime.n_qubits)
+        counts = self.preprocess_counts(result.get_counts(), circuit.n_bits)
 
         if self.plot:
             self.plot_histogram(
@@ -40,9 +40,9 @@ class pytketTesting(Base):
 
         from diff_testing.qiskit import qiskitTesting
 
-        qiskit_counts = qiskitTesting(native=False).get_counts(
-            tk_to_qiskit(pytket_circ), 0, circuit_num
-        )
+        qiskit_circ = tk_to_qiskit(pytket_circ)
+
+        qiskit_counts = qiskitTesting().get_counts(qiskit_circ, 0, circuit_num)
         pytket_counts = self.get_counts(pytket_circ, 0, circuit_num)
 
         p_val = self.ks_test(qiskit_counts, pytket_counts)
