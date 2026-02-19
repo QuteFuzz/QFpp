@@ -56,19 +56,19 @@ bool Context::can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit){
     auto current_circuit_qubits = current_circuit->get_coll<Resource>(Resource_kind::QUBIT);
     auto dest_circuit_qubits = circuit->get_coll<Resource>(Resource_kind::QUBIT);
 
-    auto current_circuit_bits = current_circuit->get_coll<Resource>(Resource_kind::BIT);
-    auto dest_circuit_bits = circuit->get_coll<Resource>(Resource_kind::BIT);
+    // auto current_circuit_bits = current_circuit->get_coll<Resource>(Resource_kind::BIT);
+    // auto dest_circuit_bits = circuit->get_coll<Resource>(Resource_kind::BIT);
 
     unsigned int num_required_qubits = size_pred<Resource>(dest_circuit_qubits, ext_scope_pred);
-    unsigned int num_required_bits = size_pred<Resource>(dest_circuit_bits, ext_scope_pred);
+    // unsigned int num_required_bits = size_pred<Resource>(dest_circuit_bits, ext_scope_pred);
 
     unsigned int num_qubits_in_circuit = current_circuit_qubits.size();
-    unsigned int num_bits_in_circuit = current_circuit_bits.size();
+    // unsigned int num_bits_in_circuit = current_circuit_bits.size();
 
     bool has_enough_qubits = num_qubits_in_circuit >= 1 && num_qubits_in_circuit >= num_required_qubits;
-    bool has_enough_bits = num_bits_in_circuit >= 1 && num_bits_in_circuit >= num_required_bits;
+    // bool has_enough_bits = num_bits_in_circuit >= 1 && num_bits_in_circuit >= num_required_bits;
 
-    return has_enough_qubits && has_enough_bits;
+    return has_enough_qubits;
 }
 
 bool Context::current_circuit_uses_subroutines(){

@@ -19,6 +19,9 @@ enum Token_kind {
     X,
     Y,
     Z,
+    XX,
+    YY,
+    ZZ,
     RZ,
     RX,
     RY,
@@ -95,9 +98,11 @@ enum Token_kind {
     UNIFORM,
     INTEGER,
     FLOAT,
+    VAR,
     NAME,
     SIZE,
     INDEX,
+    RESET,
     META_FUNC_BOTTOM,                             /// ADD META FUNCS ABOVE!
 
     GRAMMAR_SYNTAX_TOP,                           /// ADD GRAMMAR SYNTAX BELOW!
@@ -216,6 +221,9 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("x", X),
     Token_matcher("y", Y),
     Token_matcher("z", Z),
+    Token_matcher("xx", XX),
+    Token_matcher("yy", YY),
+    Token_matcher("zz", ZZ),
     Token_matcher("rz", RZ),
     Token_matcher("rx", RX),
     Token_matcher("ry", RY),
@@ -256,6 +264,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     */
     Token_matcher("FLOAT", FLOAT),
     Token_matcher("INTEGER", INTEGER),
+    Token_matcher("VAR", VAR),
     Token_matcher("INDENT", INDENT),
     Token_matcher("LINE_INDENT", LINE_INDENT),
     Token_matcher("INDENT_LEVEL", INDENT_LEVEL),
@@ -263,6 +272,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("NAME", NAME),
     Token_matcher("INDEX", INDEX),
     Token_matcher("SIZE", SIZE),
+    Token_matcher("RESET", RESET),
     Token_matcher("CIRCUIT_NAME", CIRCUIT_NAME),
     Token_matcher("NUM_QUBITS", NUM_QUBITS),
     Token_matcher("NUM_BITS", NUM_BITS),

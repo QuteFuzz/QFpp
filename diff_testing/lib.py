@@ -86,12 +86,13 @@ class Base:
             if self.qss_name == "qiskit":
                 key_str = key_str[::-1]  # flip to match <0001| indexed as [0,1,2,3], flip
 
-            print(key_str)
-
             if len(key_str) > n_bits:
                 key_str = key_str[:n_bits]
 
-            out[int(key_str, 2)] = v
+            if all([c in "10" for c in key_str]) and bool(key_str):
+                out[int(key_str, 2)] = v
+            else:
+                out[int(key_str)] = v
 
         return dict(sorted(out.items()))
 

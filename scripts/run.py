@@ -14,7 +14,7 @@ from typing import List
 BUILD_DIR = Path("build")
 OUTPUT_DIR = Path("outputs")
 NIGHTLY_DIR = Path("nightly_results")
-GRAMMARS = ["pytket", "qiskit"]
+GRAMMARS = ["pytket", "qiskit", "cirq"]
 ENTRY_POINT = "program"
 MIN_KS_VALUE = 0.001
 TIMEOUT = 2000
@@ -120,6 +120,26 @@ def parse():
     parser.add_argument("--nproc", type=int, default=CPU_COUNT, help="Num workers")
 
     return parser.parse_args()
+
+
+def print_progress(current: int, total: int, prefix: str = "Progress:", length: int = 40):
+    """
+    Call in a loop to create a terminal progress bar.
+    """
+    percent = f"{100 * (current / float(total)):.1f}"
+    filled_length = int(length * (current // total))
+    bar = "█" * filled_length + "-" * (length - filled_length)
+
+    # \r returns to the start of the line to overwrite it
+    print(
+        f"\r{Color.BLUE}{prefix} |{bar}| {current}/{total} [{percent}%]{Color.RESET}",
+        end="",
+        flush=True,
+    )
+
+    # Print a new line when complete so subsequent prints don't overwrite the bar
+    if current == total:
+        print()
 
 
 class Check_grammar:
@@ -268,6 +288,7 @@ class Check_grammar:
         circuit_dirs = self.get_ciruit_dirs()
 
         interesting_results = []
+        completed_threads = 0
 
         with ThreadPoolExecutor(max_workers=self.nproc) as executor:
             # Submit all tasks
@@ -279,6 +300,8 @@ class Check_grammar:
                 for i, circuit_dir in enumerate(circuit_dirs, 1)
             }
 
+            print_progress(0, self.num_tests)
+
             # Process results as they complete
             for future in as_completed(future_to_circuit):
                 i, circuit_dir = future_to_circuit[future]
@@ -289,6 +312,9 @@ class Check_grammar:
 
                     if result.had_fuzzer_error:
                         raise RuntimeError("Fuzzer has a bug")
+
+                    completed_threads += 1
+                    print_progress(completed_threads, self.num_tests)
 
                 except Exception as e:
                     log(f"Error validating circuit at {circuit_dir}/prog.py: {e}", Color.RED)
@@ -342,11 +368,11 @@ def main():
 
     mode = Run_mode.NIGHTLY if args.nightly else Run_mode.CI
 
-    for grammar in args.grammars:
-        log(f"\n{'=' * 60}", Color.BLUE)
-        log(f"Testing grammar: {grammar}", Color.BLUE)
-        log(f"{'=' * 60}", Color.BLUE)
+    log(f"\n {'=' * 60}", Color.BLUE)
+    log("                       QuteFuzz runner", Color.BLUE)
+    log(f"{'=' * 60}", Color.BLUE)
 
+    for grammar in args.grammars:
         Check_grammar(
             run_timestamp, args.num_tests, grammar, args.nproc, args.seed, mode, args.plot
         ).check()

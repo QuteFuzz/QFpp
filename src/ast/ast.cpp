@@ -74,7 +74,6 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			return std::make_shared<Node>(str);
 
 		case NAME:
-
 			return parent->get_name();
 
 		case SIZE:
@@ -86,8 +85,16 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		case FLOAT:
 			return std::make_shared<Float>();
 
+		case VAR:
+			return std::make_shared<Variable>(random_str(5));
+
 		case INTEGER:
 			return std::make_shared<UInt>();
+
+		case RESET:
+			context.reset(RL_QUBITS);
+			context.reset(RL_BITS);
+			return dummy;
 
 		case CIRCUIT_NAME:
 			return std::make_shared<Variable>(context.get_current_circuit()->get_owner());
@@ -186,7 +193,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			return std::make_shared<Node>(str, kind);
 
 		case H: case X: case Y: case Z: case T: case TDG: case S: case SDG: case PROJECT_Z:
-		case V: case VDG: case CX : case CY: case CZ: case CNOT:
+		case V: case VDG: case CX : case CY: case CZ: case CNOT: case XX: case YY: case ZZ:
 		case CH: case SWAP: case CRZ: case CRX: case CRY: case CCX: case CSWAP: case TOFFOLI:
 		case U1: case RX: case RY: case RZ: case U2: case PHASED_X: case U3: case U:
 			return context.nn_gate(str, kind);

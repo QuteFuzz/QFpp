@@ -1,0 +1,110 @@
+# Cirq
+
+# TODO: subroutines
+
+x = "cirq.X";
+y = "cirq.Y";
+z = "cirq.Z";
+h = "cirq.H";
+s = "cirq.S";
+t = "cirq.T";
+cx = "cirq.CNOT";
+cy = "cirq.Y.controlled()";
+cz = "cirq.CZ";
+ch = "cirq.H.controlled()";
+ccx = "cirq.TOFFOLI";
+rx = "cirq.rx";
+ry = "cirq.ry";
+rz = "cirq.rz";
+cswap = "cirq.CSWAP";
+xx = "cirq.XX";
+yy = "cirq.YY";
+zz = "cirq.ZZ";
+
+
+program = imports NEWLINE circuit NEWLINE program_footer;
+
+circuit = circuit_def_header NEWLINE body NEWLINE;
+
+body = EXTERNAL::qubit_defs NEWLINE compound_stmts;
+
+EXTERNAL {
+    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 4)];
+
+    singular_qubit_def =
+        NAME " = cirq.NamedQubit('" NAME "')";
+
+    register_qubit_def =
+        NAME " = cirq.NamedQubit.range(" SIZE ", prefix='" NAME "')";
+}
+
+imports =
+    "import cirq" NEWLINE
+    "from diff_testing.cirq import cirqTesting" NEWLINE
+    ;
+
+
+# subroutine_def_footer = CIRCUIT_NAME " = cirq.CircuitOperation(" CIRCUIT_NAME ".freeze())" NEWLINE;
+
+circuit_def_header = CIRCUIT_NAME " = cirq.Circuit()";
+
+compound_stmts = (compound_stmt NEWLINE)[5];
+
+compound_stmt =
+      qubit_op
+    | if_stmt
+    ;
+
+qubit_op = gate_op;
+
+insert_strategy = "cirq.InsertStrategy.EARLIEST"
+    | "cirq.InsertStrategy.NEW"
+    | "cirq.InsertStrategy.INLINE"
+    | "cirq.InsertStrategy.NEW_THEN_INLINE";
+
+strategy_kwarg = ", "
+    | ", strategy=" insert_strategy;
+
+gate_op = CIRCUIT_NAME ".append(" gate_name gate_op_args strategy_kwarg ")";
+
+gate_op_args = ("(" (float_literal ", ") ")")[NUM_FLOATS] "(" qubit_list ")"; #  ("," bit)[NUM_BITS];
+
+m_key = "m_key = cirq.MeasurementKey('" VAR "')";
+apply_measure = CIRCUIT_NAME ".append(cirq.measure(" qubit ", key=m_key))" RESET;
+condition = "cirq.KeyCondition(m_key)";
+
+if_stmt = m_key NEWLINE apply_measure NEWLINE CIRCUIT_NAME ".append(" gate_name gate_op_args ".with_classical_controls(" condition ")" strategy_kwarg ")";
+
+gate_name = rx
+    | ry
+    | rz
+    | h
+    | x
+    | y
+    | z
+    | s
+    | t
+    | cx
+    | cy
+    | cz
+    | ccx
+    | ch
+    | cswap
+    | xx
+    | yy
+    | zz
+    ;
+
+singular_qubit = NAME;
+
+register_qubit = NAME "[" INDEX "]";
+
+compiler_call = "ct = cirqTesting()" NEWLINE testing_method;
+
+testing_method = opt_ks_test;
+
+opt_ks_test = "ct.opt_ks_test(main_circuit" COMMA circuit_id RPAREN NEWLINE;
+
+measurement = CIRCUIT_NAME ".append(cirq.measure(*" CIRCUIT_NAME ".all_qubits(), key='all_measurements'))" NEWLINE;
+
+program_footer = measurement NEWLINE compiler_call;
