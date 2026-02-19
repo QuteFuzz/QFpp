@@ -15,7 +15,7 @@ from .lib import Base
 class pytketTesting(Base):
     def __init__(self, tket2: bool = False) -> None:
         super().__init__("pytket")
-        self.tket2 = tket2
+        self.tket2 = tket2 # only on statevector
 
     def apply_tket2_opt_level_3(self, circuit: Circuit) -> Circuit:
         circ = circuit.copy()
@@ -58,12 +58,7 @@ class pytketTesting(Base):
 
     def get_counts(self, circuit: Circuit, opt_level: int, circuit_num: int):
         backend = AerBackend()
-
-        if self.tket2 and opt_level == 3:
-            opt_circ = self.apply_tket2_opt_level_3(circuit)
-            circ_prime = backend.get_compiled_circuit(opt_circ, optimisation_level=0)
-        else:
-            circ_prime = backend.get_compiled_circuit(circuit, optimisation_level=opt_level)
+        circ_prime = backend.get_compiled_circuit(circuit, optimisation_level=opt_level)
 
         handle = backend.process_circuit(circ_prime, n_shots=self.num_shots)
         result = backend.get_result(handle)
