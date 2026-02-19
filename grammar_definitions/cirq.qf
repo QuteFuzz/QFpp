@@ -62,7 +62,7 @@ insert_strategy = "cirq.InsertStrategy.EARLIEST"
     | "cirq.InsertStrategy.INLINE"
     | "cirq.InsertStrategy.NEW_THEN_INLINE";
 
-strategy_kwarg = ", " 
+strategy_kwarg = ", "
     | ", strategy=" insert_strategy;
 
 gate_op = CIRCUIT_NAME ".append(" gate_name gate_op_args strategy_kwarg ")";

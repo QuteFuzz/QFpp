@@ -43,8 +43,6 @@ class Base:
 
         self.num_shots = 100000
 
-        self.num_shots = 100000
-
     def qnexus_login(self) -> None:
         """
         Logs into QNexus using environment variables for running QIR jobs
@@ -91,7 +89,7 @@ class Base:
             if len(key_str) > n_bits:
                 key_str = key_str[:n_bits]
 
-            if all([c in '10' for c in key_str]) and bool(key_str):
+            if all([c in "10" for c in key_str]) and bool(key_str):
                 out[int(key_str, 2)] = v
             else:
                 out[int(key_str)] = v

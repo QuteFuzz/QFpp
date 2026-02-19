@@ -1,15 +1,22 @@
 import cirq
+
 from .lib import Base
 
+
 @cirq.transformer
-def opt_level_1(circuit: cirq.AbstractCircuit, *, context: cirq.TransformerContext | None = None) -> cirq.Circuit:
+def opt_level_1(
+    circuit: cirq.AbstractCircuit, *, context: cirq.TransformerContext | None = None
+) -> cirq.Circuit:
     c = cirq.drop_empty_moments(circuit, context=context)
     c = cirq.drop_negligible_operations(c, context=context)
     c = cirq.merge_k_qubit_unitaries(c, k=1, context=context)
     return c
 
+
 @cirq.transformer
-def opt_level_2(circuit: cirq.AbstractCircuit, *, context: cirq.TransformerContext | None = None) -> cirq.Circuit:
+def opt_level_2(
+    circuit: cirq.AbstractCircuit, *, context: cirq.TransformerContext | None = None
+) -> cirq.Circuit:
     # Inherit Level 1 optimizations
     c = opt_level_1(circuit, context=context)
 
@@ -25,15 +32,18 @@ def opt_level_2(circuit: cirq.AbstractCircuit, *, context: cirq.TransformerConte
 
     return c
 
+
 @cirq.transformer
-def opt_level_3(circuit: cirq.AbstractCircuit, *, context: cirq.TransformerContext | None = None) -> cirq.Circuit:
+def opt_level_3(
+    circuit: cirq.AbstractCircuit, *, context: cirq.TransformerContext | None = None
+) -> cirq.Circuit:
     # Inherit Level 2 optimizations
     c = opt_level_2(circuit, context=context)
 
     # Expand composite operations into native equivalents
     c = cirq.expand_composite(c, context=context)
 
-    # Merge any connected components on <= 2 qubits 
+    # Merge any connected components on <= 2 qubits
     # (e.g. collapsing multiple consecutive 2-qubit gates into one)
     c = cirq.merge_k_qubit_unitaries(c, k=2, context=context)
 
@@ -44,13 +54,15 @@ def opt_level_3(circuit: cirq.AbstractCircuit, *, context: cirq.TransformerConte
 
     return c
 
-def transpile(circuit : cirq.Circuit, opt_level : int):
+
+def transpile(circuit: cirq.Circuit, opt_level: int):
     if opt_level == 1:
         return opt_level_1(circuit)
     elif opt_level == 2:
         return opt_level_2(circuit)
     else:
         return opt_level_3(circuit)
+
 
 class cirqTesting(Base):
     def __init__(self) -> None:
