@@ -145,26 +145,6 @@ def print_progress(current: int, total: int, prefix: str = "Progress:", length: 
     if current == total:
         print()
 
-def print_progress(current: int, total: int, prefix: str = "Progress:", length: int = 40):
-    """
-    Call in a loop to create a terminal progress bar.
-    """
-    percent = f"{100 * (current / float(total)):.1f}"
-    filled_length = int(length * (current // total))
-    bar = "█" * filled_length + "-" * (length - filled_length)
-
-    # \r returns to the start of the line to overwrite it
-    print(
-        f"\r{Color.BLUE}{prefix} |{bar}| {current}/{total} [{percent}%]{Color.RESET}",
-        end="",
-        flush=True,
-    )
-
-    # Print a new line when complete so subsequent prints don't overwrite the bar
-    if current == total:
-        print()
-
-
 class Check_grammar:
     def __init__(
         self,
