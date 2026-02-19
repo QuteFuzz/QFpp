@@ -88,7 +88,6 @@ class cirqTesting(Base):
         return counts
 
     def opt_ks_test(self, circuit: cirq.Circuit, circuit_number: int) -> float:
-
         counts1 = self.get_counts(circuit=circuit, opt_level=0, circuit_num=circuit_number)
 
         for i in range(1, 4):
