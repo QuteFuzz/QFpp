@@ -145,6 +145,7 @@ def print_progress(current: int, total: int, prefix: str = "Progress:", length: 
     if current == total:
         print()
 
+
 class Check_grammar:
     def __init__(
         self,

@@ -15,7 +15,7 @@ from .lib import Base
 class pytketTesting(Base):
     def __init__(self, tket2: bool = False) -> None:
         super().__init__("pytket")
-        self.tket2 = tket2 # only on statevector
+        self.tket2 = tket2  # only on statevector
 
     def apply_tket2_opt_level_3(self, circuit: Circuit) -> Circuit:
         circ = circuit.copy()
