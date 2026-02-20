@@ -12,7 +12,6 @@ dependencies = [
     "sympy",
     "z3-solver",
     "cirq",
-    "tket2",
     "pytket-qir",
     "qnexus",
     "tket",

@@ -44,7 +44,7 @@ param = singular_param;
 singular_param = NAME;
 
 # Redefine base program structure to fit Qiskit
-program = imports NEWLINE NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;
+program = imports NEWLINE NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuit NEWLINE compiler_call;
 
 circuit = circuit_def_header NEWLINE body NEWLINE;
 
@@ -185,7 +185,7 @@ reset_op = CIRCUIT_NAME '.reset(' qubit ')';
 
 branch_condition = 1 | 0;
 
-compiler_call = "qt = qiskitTesting()" NEWLINE testing_method;
+compiler_call = CIRCUIT_NAME ".measure_all()" NEWLINE "qt = qiskitTesting()" NEWLINE testing_method;
 
 testing_method = opt_ks_test;
 

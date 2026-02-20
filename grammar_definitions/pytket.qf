@@ -175,11 +175,15 @@ register_bit = NAME "[" INDEX "]";
 # COMPILER CALL
 # ============================================================================
 
-compiler_call = "pt = pytketTesting() " NEWLINE testing_method;
+program_footer = compiler_call;
+
+compiler_call = CIRCUIT_NAME ".measure_all()" NEWLINE "pt = pytketTesting() " NEWLINE testing_method | "pt = pytketTesting(tket2=True) " NEWLINE statevector_test;
 
 testing_method = opt_ks_test | pytket_qiskit_conv_test;
 
 opt_ks_test = "pt.opt_ks_test(" CIRCUIT_NAME COMMA circuit_id RPAREN;
+
+statevector_test = "pt.run_circ_statevector(" CIRCUIT_NAME RPAREN;
 
 pytket_qiskit_conv_test = "pt.pytket_qiskit_conv_test(" CIRCUIT_NAME COMMA circuit_id RPAREN;
 
@@ -189,4 +193,4 @@ pytket_qiskit_conv_test = "pt.pytket_qiskit_conv_test(" CIRCUIT_NAME COMMA circu
 
 # float_literal = FLOAT | NAME;
 
-# need to figure out how to get some resource and pull its name
+# TODO: need to figure out how to get some resource and pull its name

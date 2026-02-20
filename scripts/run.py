@@ -43,7 +43,7 @@ class CircuitResult:
     grammar: str
     had_fuzzer_error: bool = False
     had_compiler_error: bool = False
-    ks_values: List[float] = field(default_factory=list)
+    values: List[float] = field(default_factory=list)
     reason: str = ""
 
 
@@ -71,20 +71,26 @@ def run_command(command, cwd=None, env=None, capture_output=False):
         raise e
 
 
-def parse_ks_values(output: str) -> List[float]:
-    """Extract KS test p-values from circuit output"""
-    ks_values = []
-    # Pattern matches: "Optimisation level X ks-test p-value: 0.12345"
-    pattern = r"ks-test p-value:\s*([\d.]+)"
+def parse_test_output(output: str) -> List[float]:
+    values = []
+    pattern = r"ks-test p-value:\s*([\d.]+)|Dot product\s*([\d.]+)"
+
     matches = re.findall(pattern, output)
 
-    for match in matches:
+    for ks, dot in matches:
         try:
-            ks_values.append(float(match))
+            if ks:
+                values.append(float(ks))
+            elif dot:
+                values.append(float(dot))
+            else:
+                log("Must match at one of ks of dot product output", Color.RED)
+                sys.exit(1)
+
         except ValueError:
             continue
 
-    return ks_values
+    return values
 
 
 def clean_and_build():
@@ -127,12 +133,10 @@ def print_progress(current: int, total: int, prefix: str = "Progress:", length: 
     Call in a loop to create a terminal progress bar.
     """
     percent = f"{100 * (current / float(total)):.1f}"
-    filled_length = int(length * (current // total))
-    bar = "█" * filled_length + "-" * (length - filled_length)
 
     # \r returns to the start of the line to overwrite it
     print(
-        f"\r{Color.BLUE}{prefix} |{bar}| {current}/{total} [{percent}%]{Color.RESET}",
+        f"\r{Color.BLUE}{prefix} {current}/{total} [{percent}%]{Color.RESET}",
         end="",
         flush=True,
     )
@@ -272,12 +276,19 @@ class Check_grammar:
                 result.reason = combined_output
 
         # Parse KS values from output
-        result.ks_values = parse_ks_values(stdout)
-        if result.ks_values:
-            min_ks = min(result.ks_values)
+        result.values = parse_test_output(stdout)
+
+        if len(result.values) > 1:
+            min_ks = min(result.values)
             if min_ks < MIN_KS_VALUE:
                 result.had_compiler_error = True
                 result.reason = f"Low KS value: {min_ks:.4f} < {MIN_KS_VALUE}; "
+
+        elif len(result.values) == 1:
+            dp = result.values[0]
+            if dp != 1:
+                result.had_compiler_error = True
+                result.reason = f"Dot product is not 1, got {dp}"
 
         if result.had_compiler_error:
             log(f"  INTERESTING: {circuit_path}", Color.YELLOW)
@@ -353,7 +364,7 @@ class Check_grammar:
                 f.write(f"Grammar: {result.grammar}\n")
                 f.write(f"Reason: {result.reason}\n")
                 f.write(f"Had compiler error: {result.had_compiler_error}\n")
-                f.write(f"KS values: {result.ks_values}\n")
+                f.write(f"Values: {result.values}\n")
 
     def check(self):
         self.generate_tests()
