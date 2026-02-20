@@ -111,8 +111,10 @@ class Base:
                 sample2 += [p2[0]] * p2[1]
 
         if len(sample1) != self.num_shots or len(sample2) != self.num_shots:
-            print(f"Sample size(sample1: {len(sample1)}, sample2: {len(sample2)})"
-            f" does not match number of shots ({self.num_shots})")
+            print(
+                f"Sample size(sample1: {len(sample1)}, sample2: {len(sample2)})"
+                f" does not match number of shots ({self.num_shots})"
+            )
             return None
 
         else:

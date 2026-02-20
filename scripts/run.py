@@ -21,10 +21,11 @@ DEFAULT_NUM_TESTS = 1
 CPU_COUNT = os.cpu_count()
 GRAMMARS = ["pytket", "qiskit", "cirq"]
 SIMULATION_CAP = {
-    "pytket" : 16,
-    "qiskit" : 16,
-    "cirq"   : 4,
+    "pytket": 16,
+    "qiskit": 16,
+    "cirq": 4,
 }
+
 
 class Color:
     GREEN = "\033[92m"
