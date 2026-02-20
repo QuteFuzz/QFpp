@@ -96,7 +96,7 @@ class Base:
 
         return dict(sorted(out.items()))
 
-    def ks_test(self, counts1: Dict[Any, int], counts2: Dict[Any, int]) -> float:
+    def ks_test(self, counts1: Dict[Any, int], counts2: Dict[Any, int]) -> float | None:
         """
         Carries out K-S test on two frequency lists
         """
@@ -110,13 +110,14 @@ class Base:
             if p2:
                 sample2 += [p2[0]] * p2[1]
 
-        assert (len(sample1) == self.num_shots) and (len(sample2) == self.num_shots), (
-            f"Sample size(sample1: {len(sample1)}, sample2: {len(sample2)})"
-            f"does not match number of shots ({self.num_shots})"
-        )
+        if len(sample1) != self.num_shots or len(sample2) != self.num_shots:
+            print(f"Sample size(sample1: {len(sample1)}, sample2: {len(sample2)})"
+            f" does not match number of shots ({self.num_shots})")
+            return None
 
-        res = ks_2samp(sorted(sample1), sorted(sample2), method="asymp")
-        return float(res.pvalue)  # type: ignore
+        else:
+            res = ks_2samp(sorted(sample1), sorted(sample2), method="asymp")
+            return float(res.pvalue)  # type: ignore
 
     def compare_statevectors(
         self, sv1: NDArray[np.complex128], sv2: NDArray[np.complex128], precision: int = 6

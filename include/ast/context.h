@@ -7,7 +7,6 @@
 #include <qubit_op.h>
 #include <compound_stmt.h>
 #include <gate.h>
-#include <genome.h>
 #include <ast_utils.h>
 #include <indent.h>
 

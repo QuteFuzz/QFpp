@@ -2,7 +2,6 @@
 #define RESOURCE_H
 
 #include <gate.h>
-#include <dag.h>
 #include <variable.h>
 #include <uint.h>
 
@@ -89,24 +88,12 @@ class Resource : public Node {
             std::cout << resolved_name() << " " << STR_SCOPE(get_scope()) << STR_RESOURCE_KIND(get_resource_kind()) << " is used: " << used << std::endl;
         }
 
-        // void extend_flow_path(const std::shared_ptr<Qubit_op> qubit_op, unsigned int current_port);
-
-        // void extend_dot_string(std::ostringstream& ss) const;
-
-        // void add_path_to_dag(Dag& dag) const;
-
-        // std::vector<Edge> get_flow_path(){ return flow_path; }
-
     private:
         Variable name;
         UInt index;
         bool used = false;
         Scope scope = Scope::GLOB;
         Resource_kind resource_kind;
-
-        // std::vector<Edge> flow_path;
-        std::string flow_path_colour = random_hex_colour();
-        size_t flow_path_length = 0;
 };
 
 

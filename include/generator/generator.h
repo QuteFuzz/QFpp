@@ -3,8 +3,6 @@
 
 #include <grammar.h>
 #include <ast.h>
-#include <genome.h>
-#include <dag.h>
 #include <qf_term.h>
 #include <mutate.h>
 
@@ -53,8 +51,6 @@ struct Generator {
         std::shared_ptr<Grammar> grammar;
         std::string entry_name;
         Scope entry_scope;
-
-        // std::vector<Genome> population;
 };
 
 
