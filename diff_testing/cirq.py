@@ -87,12 +87,10 @@ class cirqTesting(Base):
 
         return counts
 
-    def opt_ks_test(self, circuit: cirq.Circuit, circuit_number: int) -> float:
+    def opt_ks_test(self, circuit: cirq.Circuit, circuit_number: int) -> None:
         counts1 = self.get_counts(circuit=circuit, opt_level=0, circuit_num=circuit_number)
 
         for i in range(1, 4):
             counts2 = self.get_counts(circuit=circuit, opt_level=i, circuit_num=circuit_number)
             ks_value = self.ks_test(counts1, counts2)
             print(f"Optimisation level {i} ks-test p-value: {ks_value}")
-
-        return float(ks_value)

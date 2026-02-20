@@ -293,6 +293,3 @@ Result<Node> Ast::build(){
 	return res;
 }
 
-// Genome Ast::genome(){
-// 	return Genome{.dag = *dag, .dag_score = dag->score()};
-// }

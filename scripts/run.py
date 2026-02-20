@@ -14,12 +14,17 @@ from typing import List
 BUILD_DIR = Path("build")
 OUTPUT_DIR = Path("outputs")
 NIGHTLY_DIR = Path("nightly_results")
-GRAMMARS = ["pytket", "qiskit", "cirq"]
 ENTRY_POINT = "program"
 MIN_KS_VALUE = 1e-8
 TIMEOUT = 2000
 DEFAULT_NUM_TESTS = 1
 CPU_COUNT = os.cpu_count()
+GRAMMARS = ["pytket", "qiskit", "cirq"]
+SIMULATION_CAP = {
+    "pytket": 16,
+    "qiskit": 16,
+    "cirq": 4,
+}
 
 
 class Color:
@@ -170,9 +175,9 @@ class Check_grammar:
         self.nightly_run_dir = NIGHTLY_DIR / timestamp / self.name
         self.regression_seed_dst = self.nightly_run_dir / "regression_seed.txt"
 
-        self.nproc = nproc
+        self.sim_proc = min(nproc, SIMULATION_CAP[name])
 
-        log(f"Using {self.nproc} parallel workers", Color.BLUE)
+        log(f"Using {self.sim_proc} parallel workers for simulation", Color.BLUE)
 
     def generate_tests(self):
         """
@@ -265,8 +270,9 @@ class Check_grammar:
         stdout, stderr, returncode = self.run_circuit(circuit_path)
 
         if returncode != 0:
-            # Analyze the error
             combined_output = stdout + stderr
+
+            print(combined_output)
 
             if ("Error" in combined_output) or ("error" in combined_output):
                 result.had_fuzzer_error = True
@@ -275,25 +281,28 @@ class Check_grammar:
                 result.had_compiler_error = True
                 result.reason = combined_output
 
-        # Parse KS values from output
         result.values = parse_test_output(stdout)
 
-        if len(result.values) > 1:
-            min_ks = min(result.values)
-            if min_ks < MIN_KS_VALUE:
-                result.had_compiler_error = True
-                result.reason = f"Low KS value: {min_ks:.4f} < {MIN_KS_VALUE}; "
+        if "None" in result.values:
+            return result
 
-        elif len(result.values) == 1:
-            dp = result.values[0]
-            if dp != 1:
-                result.had_compiler_error = True
-                result.reason = f"Dot product is not 1, got {dp}"
+        else:
+            if len(result.values) > 1:
+                min_ks = min(result.values)
+                if min_ks < MIN_KS_VALUE:
+                    result.had_compiler_error = True
+                    result.reason = f"Low KS value: {min_ks:.4f} < {MIN_KS_VALUE}; "
 
-        if result.had_compiler_error:
-            log(f"  INTERESTING: {circuit_path}", Color.YELLOW)
+            elif len(result.values) == 1:
+                dp = result.values[0]
+                if dp != 1:
+                    result.had_compiler_error = True
+                    result.reason = f"Dot product is not 1, got {dp}"
 
-        return result
+            if result.had_compiler_error:
+                log(f"  INTERESTING: {circuit_path}", Color.YELLOW)
+
+            return result
 
     def validate_generated_circuits(self):
         circuit_dirs = self.get_ciruit_dirs()
@@ -301,7 +310,7 @@ class Check_grammar:
         interesting_results = []
         completed_threads = 0
 
-        with ThreadPoolExecutor(max_workers=self.nproc) as executor:
+        with ThreadPoolExecutor(max_workers=self.sim_proc) as executor:
             # Submit all tasks
             future_to_circuit = {
                 executor.submit(self.validate_generated_circuit, i, circuit_dir / "prog.py"): (

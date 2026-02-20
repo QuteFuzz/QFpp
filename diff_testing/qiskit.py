@@ -25,7 +25,7 @@ class qiskitTesting(Base):
 
         return counts
 
-    def opt_ks_test(self, circuit: QuantumCircuit, circuit_number: int) -> float:
+    def opt_ks_test(self, circuit: QuantumCircuit, circuit_number: int) -> None:
         """
         Runs circuit on qiskit simulator and returns counts
         """
@@ -37,5 +37,3 @@ class qiskitTesting(Base):
 
             ks_value = self.ks_test(counts1, counts2)
             print(f"Optimisation level {i + 1} ks-test p-value: {ks_value}")
-
-        return float(ks_value)

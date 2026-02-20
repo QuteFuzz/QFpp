@@ -31,10 +31,6 @@ void Generator::ast_to_program(fs::path output_dir, const Control& control, unsi
     rng().seed(seed);
 
     std::ofstream stream;
-
-    stream = get_stream(output_dir, "circuit_seed.txt");
-    stream << seed << std::endl;
-
     stream = get_stream(output_dir, "prog" + control.ext);
 
     std::shared_ptr<Ast> builder = setup_builder(control);
@@ -48,7 +44,6 @@ void Generator::ast_to_program(fs::path output_dir, const Control& control, unsi
 
         if(control.run_mutate){
             fs::path equi_dir = output_dir / "equi_progs";
-
             stream = get_stream(equi_dir, "equi_prog0" + control.ext);
 
             Node ast_root = build_equivalent(ast_root);
