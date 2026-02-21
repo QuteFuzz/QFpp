@@ -21,9 +21,9 @@ DEFAULT_NUM_TESTS = 1
 CPU_COUNT = os.cpu_count()
 GRAMMARS = ["pytket", "qiskit", "cirq"]
 SIMULATION_CAP = {
-    "pytket": 16,
-    "qiskit": 16,
-    "cirq": 4,
+    "pytket": 64,
+    "qiskit": 64,
+    "cirq": 8,
 }
 
 
