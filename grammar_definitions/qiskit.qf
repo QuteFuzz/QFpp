@@ -178,8 +178,10 @@ compound_stmt =
     | barrier_op
     | reset_op;
 
+
 # Barriers and delays
-barrier_op = CIRCUIT_NAME '.barrier([' qubit_list '])';
+all_qubits_list = qubit (", " qubit)[ALL_QUBITS - 1];
+barrier_op = CIRCUIT_NAME '.barrier([' all_qubits_list '])'; # add barrier on all qubits in current circuit
 delay_op = CIRCUIT_NAME '.delay(' INTEGER ', ' qubit ')';
 reset_op = CIRCUIT_NAME '.reset(' qubit ')';
 

@@ -67,7 +67,7 @@ strategy_kwarg = ", "
 
 gate_op = CIRCUIT_NAME ".append(" gate_name gate_op_args strategy_kwarg ")";
 
-gate_op_args = ("(" (float_literal ", ") ")")[NUM_FLOATS] "(" qubit_list ")"; #  ("," bit)[NUM_BITS];
+gate_op_args = ("(" (float_literal ", ") ")")[GATE_FLOATS] "(" qubit_list ")"; #  ("," bit)[GATE_BITS];
 
 m_key = "m_key = cirq.MeasurementKey('" VAR "')";
 apply_measure = CIRCUIT_NAME ".append(cirq.measure(" qubit ", key=m_key))" RESET;

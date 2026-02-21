@@ -69,7 +69,7 @@ singular_bit = NAME;
 register_bit = NAME "[" INDEX "]";
 
 
-gate_op_args = ("(" float_list ") ")[NUM_FLOATS >= 1] qubit_list;
+gate_op_args = ("(" float_list ") ")[GATE_FLOATS >= 1] qubit_list;
 
 gate_op = gate_name " " gate_op_args ";";
 

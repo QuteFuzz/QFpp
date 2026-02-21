@@ -252,12 +252,18 @@ std::shared_ptr<Node> Context::nn_next(Node& ast_root, const Token_kind& kind){
 unsigned int Context::operator()(Token_kind kind) const {
     auto gate = get_current_node<Gate>();
 
-    if (kind == NUM_QUBITS) {
+    if (kind == GATE_QUBITS) {
         return gate->get_num_external_qubits();
-    } else if (kind == NUM_BITS) {
+    } else if (kind == GATE_BITS) {
         return gate->get_num_external_bits();
-    } else if (kind == NUM_FLOATS) {
+    } else if (kind == GATE_FLOATS) {
         return gate->get_num_floats();
+    } else if (kind == ALL_QUBITS) {
+        auto qubits = get_current_circuit()->get_coll<Resource>(Resource_kind::QUBIT);
+        return qubits.size();
+    } else if (kind == ALL_BITS) {
+        auto bits = get_current_circuit()->get_coll<Resource>(Resource_kind::BIT);
+        return bits.size();
     }
 
     return 0;

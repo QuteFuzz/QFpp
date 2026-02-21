@@ -77,7 +77,7 @@ gate_name = h
 #     | float_list ", " qubit_list
 #     ;
 
-gate_op_args = (float_literal ", ")[NUM_FLOATS] qubit_list ("," bit)[NUM_BITS];
+gate_op_args = (float_literal ", ")[GATE_FLOATS] qubit_list ("," bit)[GATE_BITS];
 
 # TODO: think about this for qiskit, for now i've made all qubit definitions singular
 # subroutine_op_arg =
@@ -85,20 +85,20 @@ gate_op_args = (float_literal ", ")[NUM_FLOATS] qubit_list ("," bit)[NUM_BITS];
 #     | "[" qubit_list "]"
 #     ;
 
-subroutine_op_args = qubit_list ("," bit)[NUM_BITS];
+subroutine_op_args = qubit_list ("," bit)[GATE_BITS];
 
-qubit_list = qubit (", " qubit)[NUM_QUBITS - 1];
+qubit_list = qubit (", " qubit)[GATE_QUBITS - 1];
 
 float_literal = FLOAT;
 
-float_list = float_literal  (", " float_literal)[NUM_FLOATS - 1];
+float_list = float_literal  (", " float_literal)[GATE_FLOATS - 1];
 
 qubit =
     singular_qubit
     | register_qubit
     ;
 
-bit_list = bit (", " bit)[NUM_BITS - 1];
+bit_list = bit (", " bit)[GATE_BITS - 1];
 
 bit = singular_bit
     | register_bit
