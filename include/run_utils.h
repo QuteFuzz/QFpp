@@ -37,6 +37,7 @@ struct Control {
     bool swarm_testing;
     bool run_mutate;
     bool step;
+    bool print_circuit_info;
     std::string ext;
 
     std::vector<Expected<unsigned int>> expected_values;

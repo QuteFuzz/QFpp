@@ -204,6 +204,9 @@ void Run::loop(){
         } else if (current_command == "step"){
             TOGGLE_FLAG(current_command, qf_control.step);
 
+        } else if (current_command == "info"){
+            TOGGLE_FLAG(current_command, qf_control.print_circuit_info);
+
         } else if (current_command == "quit"){
             current_generator.reset();
             generators.clear();
