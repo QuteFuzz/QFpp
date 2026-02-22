@@ -1,7 +1,7 @@
 #include <mutate.h>
 #include <resource.h>
 #include <float_literal.h>
-#include <ast_utils.h>
+#include <node_gen.h>
 #include <qubit_op.h>
 
 bool stmt_is_qubit_op(const std::shared_ptr<Node>& compound_stmt){

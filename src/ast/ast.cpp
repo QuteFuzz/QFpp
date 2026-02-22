@@ -22,6 +22,11 @@
 #include <gate_name.h>
 #include <variable.h>
 
+/*
+	features
+*/
+#include <ast_features.h>
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<Node> parent, const Term& term){
@@ -183,14 +188,14 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			}
 		}
 
-		case SUBROUTINE:
-			return context.nn_gate_from_subroutine();
-
 		case GATE_NAME:
 			return std::make_shared<Gate_name>(context.get_current_circuit());
 
 		case EXPR:
 			return std::make_shared<Node>(str, kind);
+
+		case SUBROUTINE:
+			return context.nn_gate_from_subroutine();
 
 		case H: case X: case Y: case Z: case T: case TDG: case S: case SDG: case PROJECT_Z:
 		case V: case VDG: case CX : case CY: case CZ: case CNOT: case XX: case YY: case ZZ:
@@ -285,6 +290,9 @@ Result<Node> Ast::build(){
 				context.print_circuit_info();
 			}
 
+			Feature_vec vec(root);
+			std::cout << vec << std::endl;
+
 			res.set_ok(*root);
 
 		} else {
@@ -294,4 +302,5 @@ Result<Node> Ast::build(){
 
 	return res;
 }
+
 

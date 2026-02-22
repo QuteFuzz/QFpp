@@ -144,6 +144,7 @@ void Run::loop(){
         .swarm_testing = false,
         .run_mutate = false,
         .step = false,
+        .print_circuit_info = false,
         .ext = ".text",
         .expected_values = {
             Expected<unsigned int>("MAX_REG_SIZE", QuteFuzz::MAX_REG_SIZE, CLAMP_DOWN),

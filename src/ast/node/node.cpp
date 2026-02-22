@@ -8,7 +8,7 @@ std::string Node::get_str() const {
     return (kind == SYNTAX) ? escape_string(str) : str;
 }
 
-bool Node::visited(std::vector<std::shared_ptr<Node>*>& visited_slots, std::shared_ptr<Node>* slot, bool track_visited) {
+bool Node::visited(std::vector<std::shared_ptr<Node>*>& visited_slots, std::shared_ptr<Node>* slot, bool track_visited) const {
     for(auto vslot : visited_slots){
         if(vslot == slot) return true;
     }
