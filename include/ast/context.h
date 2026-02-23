@@ -7,7 +7,7 @@
 #include <qubit_op.h>
 #include <compound_stmt.h>
 #include <gate.h>
-#include <ast_utils.h>
+#include <node_gen.h>
 #include <indent.h>
 
 
@@ -69,22 +69,6 @@ struct Current_nodes {
 		std::shared_ptr<Resource> resource;
 		std::shared_ptr<Gate> gate;
 		std::shared_ptr<Qubit_op> qubit_op;
-};
-
-struct Dummy_nodes {
-	std::shared_ptr<Circuit> circuit;
-	std::shared_ptr<UInt> integer;
-	std::shared_ptr<Variable> var;
-
-	Dummy_nodes() {
-		reset_all();
-	}
-
-	void reset_all() {
-		circuit = std::make_shared<Circuit>();
-		integer = std::make_shared<UInt>();
-		var = std::make_shared<Variable>();
-	}
 };
 
 
@@ -150,7 +134,7 @@ struct Context {
 				circuit->print_info();
 			}
 
-			dummies.circuit->print_info();
+			dummy_circuit->print_info();
 		}
 
 		unsigned int operator()(Token_kind kind) const;
@@ -158,9 +142,9 @@ struct Context {
 	private:
 		const Control& control;
 		Current_nodes current;
-		Dummy_nodes dummies;
 
 		std::vector<std::shared_ptr<Circuit>> circuits;
+		std::shared_ptr<Circuit> dummy_circuit = std::make_shared<Circuit>();
 		std::unordered_map<Token_kind, std::unique_ptr<Node_gen>> node_generators;
 
 		unsigned int subroutine_counter = 0;

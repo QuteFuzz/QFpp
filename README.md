@@ -1,4 +1,4 @@
-# QuteFuzz
+# QuteFuzz++
 
 <p align="center" width="100%">
     <img width="25%" src="etc/qutefuzz.png">
@@ -28,7 +28,7 @@ To run fuzzer on its own, setup cmake build dir using
 ./scripts/setup/setup_build.sh
 ```
 
-then running `build/fuzzer`.
+then running `build/qf`.
 
 3. Use `converage html` to generate html for coverage report
 

@@ -22,6 +22,11 @@
 #include <gate_name.h>
 #include <variable.h>
 
+/*
+	features
+*/
+#include <ast_features.h>
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
 std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<Node> parent, const Term& term){
@@ -94,7 +99,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		case RESET:
 			context.reset(RL_QUBITS);
 			context.reset(RL_BITS);
-			return dummy;
+			return std::make_shared<Node>(str, kind);
 
 		case CIRCUIT_NAME:
 			return std::make_shared<Variable>(context.get_current_circuit()->get_owner());
@@ -153,7 +158,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 
 			if(res == nullptr){
 				WARNING("Parent of resource expected to be of `Resource` type! Returning dummy");
-				return dummy;
+				return std::make_shared<Node>("");;
 			} else {
 				return res->clone();
 			}
@@ -177,20 +182,20 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 
 			if(def == nullptr){
 				WARNING("Parent of resource def expected to be of `Resource def` type! Returning dummy");
-				return dummy;
+				return std::make_shared<Node>("");;
 			} else {
 				return def->clone();
 			}
 		}
-
-		case SUBROUTINE:
-			return context.nn_gate_from_subroutine();
 
 		case GATE_NAME:
 			return std::make_shared<Gate_name>(context.get_current_circuit());
 
 		case EXPR:
 			return std::make_shared<Node>(str, kind);
+
+		case SUBROUTINE:
+			return context.nn_gate_from_subroutine();
 
 		case H: case X: case Y: case Z: case T: case TDG: case S: case SDG: case PROJECT_Z:
 		case V: case VDG: case CX : case CY: case CZ: case CNOT: case XX: case YY: case ZZ:
@@ -281,7 +286,12 @@ Result<Node> Ast::build(){
 			root = std::get<std::shared_ptr<Node>>(maybe_root);
 			term_branch_to_child_nodes(root, entry_term);
 
-			context.print_circuit_info();
+			if (control.print_circuit_info){
+				context.print_circuit_info();
+			}
+
+			Feature_vec vec(root);
+			std::cout << vec << std::endl;
 
 			res.set_ok(*root);
 
@@ -292,4 +302,3 @@ Result<Node> Ast::build(){
 
 	return res;
 }
-

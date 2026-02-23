@@ -87,7 +87,7 @@ bool Context::current_circuit_uses_subroutines(){
 /// a new, main circuit. As such, qubit and bit definitions, qubits and bits may have been made globally, and therefore stored in the dummy circuit, so we return that
 std::shared_ptr<Circuit> Context::get_current_circuit() const {
     if((circuits.size() == 0) || (!under_subroutines_node() && circuits.back()->check_if_subroutine())){
-        return dummies.circuit;
+        return dummy_circuit;
     } else {
         return circuits.back();
     }
@@ -115,7 +115,7 @@ std::shared_ptr<Circuit> Context::get_random_circuit(){
 
     } else {
         ERROR("No available circuits to use as subroutines!");
-        return dummies.circuit;
+        return dummy_circuit;
     }
 }
 
@@ -123,7 +123,7 @@ std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk, Scope s
     Ptr_pred_type<Resource> pred = [](const std::shared_ptr<Resource>& elem){ return !elem->is_used(); };
 
     auto filtered_coll = (scope == Scope::GLOB) ?
-            dummies.circuit->get_coll<Resource>(rk) :
+            dummy_circuit->get_coll<Resource>(rk) :
             get_current_circuit()->get_coll<Resource>(rk);
 
     auto random_resource = get_random_from_coll<Resource>(filtered_coll, pred);

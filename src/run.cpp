@@ -144,6 +144,7 @@ void Run::loop(){
         .swarm_testing = false,
         .run_mutate = false,
         .step = false,
+        .print_circuit_info = false,
         .ext = ".text",
         .expected_values = {
             Expected<unsigned int>("MAX_REG_SIZE", QuteFuzz::MAX_REG_SIZE, CLAMP_DOWN),
@@ -203,6 +204,9 @@ void Run::loop(){
 
         } else if (current_command == "step"){
             TOGGLE_FLAG(current_command, qf_control.step);
+
+        } else if (current_command == "info"){
+            TOGGLE_FLAG(current_command, qf_control.print_circuit_info);
 
         } else if (current_command == "quit"){
             current_generator.reset();

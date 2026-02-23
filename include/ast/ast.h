@@ -41,7 +41,6 @@ class Ast{
 
     protected:
         std::shared_ptr<Rule> entry = nullptr;
-        std::shared_ptr<Node> dummy = std::make_shared<Node>("");
         std::shared_ptr<Node> root;
         std::vector<Gate_info> gateset;
         Context context;

@@ -33,8 +33,6 @@ class Gate : public Node {
             return std::to_string(id);
         }
 
-        unsigned int get_n_ports() const override {return get_num_external_qubits();}
-
         unsigned int get_num_external_resource_defs(Resource_kind kind) const;
 
         unsigned int get_num_external_qubits() const {return info.n_qubits;}
