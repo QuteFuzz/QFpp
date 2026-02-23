@@ -302,5 +302,3 @@ Result<Node> Ast::build(){
 
 	return res;
 }
-
-

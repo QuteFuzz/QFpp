@@ -46,7 +46,8 @@ struct Feature_vec {
 
             features = {
                 {"gate_arity_variance", gate_arity_variance()},
-                {"gate_type_entropy", gate_type_entropy()}
+                {"gate_type_entropy", gate_type_entropy()},
+                {"adj_gate_pair_density", adj_gate_pair_density()},
             };
         }
 
@@ -86,13 +87,25 @@ struct Feature_vec {
             return shannon_entropy;
         }
 
+        float adj_gate_pair_density(){
+            unsigned int adj_gate_pairs = 0;
+
+            for(size_t i = 0; i < n_gates - 1; i++){
+                if(*gates[i] == *gates[i+1]){
+                    adj_gate_pairs += 1;
+                }
+            }
+
+            return (float)adj_gate_pairs / (float)(n_gates - 1);
+        }
+
         std::vector<float> feature_vector(){
             std::vector<float> out;
 
             for (auto&[name, val] : features){
                 out.push_back(val);
             }
-            
+
             return out;
         }
 
@@ -110,7 +123,7 @@ struct Feature_vec {
         unsigned int n_gates;
 
         std::unordered_map<std::string, float> features;
-        
+
 };
 
 
