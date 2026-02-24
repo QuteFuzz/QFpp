@@ -39,6 +39,7 @@ See `dev` for dev-specific docs
 
 ## Bugs found
 
-| QSS | Bug in | Fixed |
+| QSS | Bug in | Status |
 |-----|------|-------|
-| Pytket | [Compiler](https://github.com/Quantinuum/tket/issues/2109) | ✅ |
+| Pytket | [tket compiler](https://github.com/Quantinuum/tket/issues/2109) | fixed |
+| Pytket | [tket2 compiler](https://github.com/Quantinuum/tket2/issues/1417) | ack |
