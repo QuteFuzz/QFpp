@@ -5,6 +5,21 @@
 #include <ast.h>
 #include <qf_term.h>
 #include <mutate.h>
+#include <ast_stats.h>
+
+/* 
+    Map elites algorithm utils
+*/
+struct Cell {
+
+    public:
+        Cell() : 
+            genome(Node(""))
+        {}
+
+    private:
+        const Node& genome;
+};
 
 struct Generator {
 
@@ -45,7 +60,24 @@ struct Generator {
 
         Node build_equivalent(Node ast_root);
 
-        void ast_to_program(fs::path output_dir, const Control& control, unsigned int seed);
+        void ast_parse(const std::vector<Node>& asts, const fs::path& output_dir, const Control& control);
+
+        std::vector<Node> generate_n_asts(unsigned int n, const Control& control);
+
+        std::vector<Quality> ast_quality(std::vector<Node>& asts);
+
+        std::vector<Feature_vec> ast_feature_vec(std::vector<Node>& asts);
+
+        std::vector<Node> map_elites(unsigned int n_genomes, const Control& control);
+
+        inline void print_ast(const Node& root){
+            root.print_ast("");
+        }
+
+        inline void render_ast(const Node& root, const fs::path& current_circuit_dir){
+            render([root = root](std::ostringstream& dot_string){root.extend_dot_string(dot_string);},
+                current_circuit_dir / "ast.png");
+        }
 
     private:
         std::shared_ptr<Grammar> grammar;

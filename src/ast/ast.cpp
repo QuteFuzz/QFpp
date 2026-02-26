@@ -25,7 +25,7 @@
 /*
 	features
 */
-#include <ast_features.h>
+#include <ast_stats.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
@@ -289,9 +289,6 @@ Result<Node> Ast::build(){
 			if (control.print_circuit_info){
 				context.print_circuit_info();
 			}
-
-			Feature_vec vec(root);
-			std::cout << vec << std::endl;
 
 			res.set_ok(*root);
 

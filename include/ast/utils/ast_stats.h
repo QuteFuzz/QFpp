@@ -1,37 +1,76 @@
-#ifndef FEATURES_H
-#define FEATURES_H
+#ifndef STATS_H
+#define STATS_H
 
 #include <utils.h>
 #include <gate.h>
 #include <node_gen.h>
 
+/*
+    lil timmy tim's favorite subject
 
-std::vector<std::shared_ptr<Gate>> get_gates(std::shared_ptr<Node> root){
-    std::vector<std::shared_ptr<Gate>> gates;
+    quality measures relate to how well the circuit would stress test the compiler. All are static measures, using 
+    components that interact with the compiler
 
-	for(std::shared_ptr<Node>& node : Node_gen(*root, GATE_NAME)){
-		auto gate = std::dynamic_pointer_cast<Gate>(node->child_at(0));
-        if (gate != nullptr){
-            gates.push_back(gate);
-        }
-	}
+    features are structural descriptors of the AST which effectively describe different *classes* of programs
+*/
 
-	for(std::shared_ptr<Node>& node : Node_gen(*root, SUBROUTINE)){
-		auto gate = std::dynamic_pointer_cast<Gate>(node);
-        if (gate != nullptr) {
-            gates.push_back(gate);
-        }
-	}
+std::vector<std::shared_ptr<Gate>> get_gates(Node& ast);
 
-    return gates;
-}
+struct Feature {
+    std::string name;
+    unsigned int num_bins;
+    unsigned int val = 0;
+};
 
 struct Feature_vec {
 
     public:
-        Feature_vec(){}
+        Feature_vec(Node& _ast):
+            ast(_ast)
+        {
+            vec = {
+                Feature{"max_control_flow_depth", QuteFuzz::NESTED_MAX_DEPTH, max_control_flow_depth()},
+                Feature{"has_subroutines", 2, has_subroutines()},
+            };
+        }
 
-        Feature_vec(std::shared_ptr<Node> root):
+        unsigned int max_control_flow_depth(){
+            unsigned int max_depth = 0;
+            return max_depth;
+        }
+
+        unsigned int has_subroutines(){
+            return ast.find(SUBROUTINE_DEFS) != nullptr;
+        }
+
+        unsigned int archive_size(){
+            unsigned int s = 1;
+
+            for (auto& f : vec){
+                s *= f.num_bins;
+            }
+
+            return s;
+        }
+
+    private:
+        Node& ast;
+        std::vector<Feature> vec;
+
+};
+
+struct Quality {
+
+    public:
+        struct Component {
+            std::string name;
+            float val;
+            float weight = 1.0;
+        };
+
+        Quality(){}
+
+        Quality(Node& root):
             gates(get_gates(root)),
             n_gates(gates.size())
         {
@@ -44,10 +83,10 @@ struct Feature_vec {
                 }
             }
 
-            features = {
-                {"gate_arity_variance", gate_arity_variance()},
-                {"gate_type_entropy", gate_type_entropy()},
-                {"adj_gate_pair_density", adj_gate_pair_density()},
+            components = {
+                Component{"gate_arity_variance", gate_arity_variance()},
+                Component{"gate_type_entropy", gate_type_entropy()},
+                Component{"adj_gate_pair_density", adj_gate_pair_density()},
             };
         }
 
@@ -99,19 +138,19 @@ struct Feature_vec {
             return (float)adj_gate_pairs / (float)(n_gates - 1);
         }
 
-        std::vector<float> feature_vector(){
-            std::vector<float> out;
+        float quality(){
+            float q;
 
-            for (auto&[name, val] : features){
-                out.push_back(val);
+            for (auto& c : components){
+                q += (c.val * c.weight);
             }
 
-            return out;
+            return q;
         }
 
-        friend std::ostream& operator<<(std::ostream& stream, Feature_vec& fv){
-            for (auto&[name, val] : fv.features){
-                stream << name << " " << val << std::endl;
+        friend std::ostream& operator<<(std::ostream& stream, Quality& q){
+            for (auto& c : q.components){
+                stream << c.name << " " << c.val << " w: " << c.weight << std::endl;
             }
 
             return stream;
@@ -122,10 +161,9 @@ struct Feature_vec {
         std::unordered_map<Token_kind, unsigned int> gate_occurances;
         unsigned int n_gates;
 
-        std::unordered_map<std::string, float> features;
+        std::vector<Component> components;
 
 };
-
 
 
 #endif

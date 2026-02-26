@@ -30,15 +30,6 @@ class Ast{
 
         Result<Node> build();
 
-        inline void print_ast(){
-            root->print_ast("");
-        }
-
-        inline void render_ast(const fs::path& current_circuit_dir){
-            render([root = root](std::ostringstream& dot_string){root->extend_dot_string(dot_string);},
-                current_circuit_dir / "ast.png");
-        }
-
     protected:
         std::shared_ptr<Rule> entry = nullptr;
         std::shared_ptr<Node> root;
