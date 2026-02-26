@@ -17,15 +17,20 @@ struct Cell {
 
         // if not filled, simply place
         // if already filled compare quality, only replace if quality is better
-        void place(const std::shared_ptr<Node> genome_prime, float quality_prime){
+        void place(Slot_type genome_prime, float quality_prime){
             if ((genome == nullptr) || (quality < quality_prime)){
                 genome = genome_prime;
             }
         }
 
     private:
-        std::shared_ptr<Node> genome = nullptr;
+        Slot_type genome = nullptr;
         float quality;
+};
+
+struct Ast_entry {
+    std::shared_ptr<Node> ast;
+    Slot_type compilation_unit;
 };
 
 struct Generator {
@@ -55,27 +60,25 @@ struct Generator {
             return stream;
         }
 
-        void print_grammar(){
-            std::cout << *grammar;
-        }
+        inline void print_grammar(){ std::cout << *grammar; }
 
-        void print_tokens(){
-            grammar->print_tokens();
-        }
+        inline void print_tokens(){ grammar->print_tokens(); }
 
         inline std::shared_ptr<Grammar> get_grammar() const { return grammar; }
 
         Node build_equivalent(Node ast_root);
 
-        void ast_parse(const std::vector<Node>& asts, const fs::path& output_dir, const Control& control);
+        Slot_type get_compilation_unit(const std::shared_ptr<Node> ast_root);
 
-        std::vector<Node> generate_n_asts(unsigned int n, const Control& control);
+        void ast_parse(const std::vector<Ast_entry>& entries, const fs::path& output_dir, const Control& control);
 
-        std::vector<Quality> ast_quality(std::vector<Node>& asts);
+        std::vector<Ast_entry> generate_n_asts(unsigned int n, const Control& control);
 
-        std::vector<Feature_vec> ast_feature_vec(std::vector<Node>& asts);
+        std::vector<Quality> comp_unit_quality(const std::vector<Ast_entry>& entries);
 
-        std::vector<Node> map_elites(unsigned int n_genomes, const Control& control);
+        std::vector<Feature_vec> comp_unit_feature_vec(const std::vector<Ast_entry>& entries);
+
+        std::vector<Ast_entry> map_elites(unsigned int n_genomes, const Control& control);
 
         inline void print_ast(const Node& root){
             root.print_ast("");
@@ -90,7 +93,7 @@ struct Generator {
         std::shared_ptr<Grammar> grammar;
         std::string entry_name;
         Scope entry_scope;
-};
+    };
 
 
 #endif

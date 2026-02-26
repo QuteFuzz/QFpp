@@ -110,7 +110,7 @@ class Node : public std::enable_shared_from_this<Node> {
 
         void extend_dot_string(std::ostringstream& ss) const;
 
-        std::vector<std::shared_ptr<Node>> get_children() const {
+        std::vector<std::shared_ptr<Node>>& get_children() {
             return children;
         }
 

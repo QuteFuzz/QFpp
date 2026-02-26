@@ -14,11 +14,11 @@
     features are structural descriptors of the AST which effectively describe different *classes* of programs
 */
 
-std::vector<std::shared_ptr<Gate>> get_gates(Node& ast);
+std::vector<std::shared_ptr<Gate>> get_gates(const std::shared_ptr<Node> compilation_unit);
 
-unsigned int max_control_flow_depth(const Node& node, unsigned int current_depth);
+unsigned int max_control_flow_depth(const std::shared_ptr<Node> node, unsigned int current_depth = 0);
 
-unsigned int subroutine_depth(const Node& node, unsigned int current_depth, bool inside_subroutine = false);
+unsigned int has_mixed_body(const std::shared_ptr<Node> node);
 
 struct Feature {
     std::string name;
@@ -30,12 +30,10 @@ struct Feature {
 struct Feature_vec {
 
     public:
-        Feature_vec(Node& _ast):
-            ast(_ast)
-        {
+        Feature_vec(const std::shared_ptr<Node> compilation_unit){
             vec = {
-                Feature{"max_control_flow_depth", max_control_flow_depth(ast, 0), QuteFuzz::NESTED_MAX_DEPTH},
-                Feature{"subroutine_depth", subroutine_depth(ast, 0), 2},
+                Feature{"max_control_flow_depth", max_control_flow_depth(compilation_unit), QuteFuzz::NESTED_MAX_DEPTH},
+                Feature{"max_control_flow_depth", has_mixed_body(compilation_unit), 2},
             };
 
             for (auto& f : vec){
@@ -87,7 +85,7 @@ struct Feature_vec {
 
 
     private:
-        Node& ast;
+        std::shared_ptr<Node> compilation_unit = nullptr;
         std::vector<Feature> vec;
         unsigned int archive_size = 1;
 
@@ -104,8 +102,8 @@ struct Quality {
 
         Quality(){}
 
-        Quality(Node& root):
-            gates(get_gates(root)),
+        Quality(std::shared_ptr<Node> compilation_unit):
+            gates(get_gates(compilation_unit)),
             n_gates(gates.size())
         {
             for(auto& gate : gates){
@@ -161,15 +159,20 @@ struct Quality {
         }
 
         float adj_gate_pair_density(){
-            unsigned int adj_gate_pairs = 0;
+            if (n_gates >= 2){
+                unsigned int adj_gate_pairs = 0;
 
-            for(size_t i = 0; i < n_gates - 1; i++){
-                if(*gates[i] == *gates[i+1]){
-                    adj_gate_pairs += 1;
+                for(size_t i = 0; i < n_gates - 1; i++){
+                    if(*gates[i] == *gates[i+1]){
+                        adj_gate_pairs += 1;
+                    }
                 }
-            }
 
-            return (float)adj_gate_pairs / (float)(n_gates - 1);
+                return (float)adj_gate_pairs / (float)(n_gates - 1);
+            
+            } else {
+                return 0.0;
+            }
         }
 
         float quality(){

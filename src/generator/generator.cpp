@@ -26,7 +26,19 @@ Node Generator::build_equivalent(Node ast_root){
     return ast_root;
 }
 
-void Generator::ast_parse(const std::vector<Node>& asts, const fs::path& output_dir, const Control& control){
+Slot_type Generator::get_compilation_unit(const std::shared_ptr<Node> ast_root){
+    auto program = ast_root->find(PROGRAM);
+
+    for(auto& child : program->get_children()){
+        if(*child == CIRCUIT || *child == BODY){
+            return &child;
+        }
+    }
+
+    return nullptr;
+}
+
+void Generator::ast_parse(const std::vector<Ast_entry>& entries, const fs::path& output_dir, const Control& control){
 
     std::ofstream stream;
 
@@ -34,70 +46,88 @@ void Generator::ast_parse(const std::vector<Node>& asts, const fs::path& output_
     stream << control.GLOBAL_SEED_VAL << std::endl;
     stream.close();
 
-    for(size_t i = 0; i < asts.size(); i++){
-        const Node& ast = asts[i];
+    for(size_t i = 0; i < entries.size(); i++){
+        auto ast = entries[i].ast;
 
         fs::path current_circuit_dir = output_dir / ("circuit" + std::to_string(i));
 
         stream = get_stream(current_circuit_dir, "prog" + control.ext);
-        ast.print_program(stream);
+        ast->print_program(stream);
         stream.close();
 
         if (control.render) {
-            render_ast(ast, current_circuit_dir);
+            render_ast(*ast, current_circuit_dir);
         }
     }
 }
 
-std::vector<Node> Generator::generate_n_asts(unsigned int n, const Control& control){
-    std::vector<Node> asts;
-    asts.reserve(n);
+/// @brief Generates ASTs and also keeps track of pointers to compilation units within each AST
+/// @param n 
+/// @param control 
+/// @return 
+std::vector<Ast_entry> Generator::generate_n_asts(unsigned int n, const Control& control){
+    std::vector<Ast_entry> entries;
+    entries.reserve(n);
 
     for(size_t i = 0; i < n; i++){
         unsigned int seed = random_uint(UINT32_MAX);
         rng().seed(seed);
 
         std::shared_ptr<Ast> builder = setup_builder(control);
-        Result<Node> maybe_ast_root = builder->build();
+        Result<std::shared_ptr<Node>> maybe_ast_root = builder->build();
 
         if (maybe_ast_root.is_ok()){
-            asts.push_back(maybe_ast_root.get_ok());
+            std::shared_ptr<Node> ast_root = maybe_ast_root.get_ok();
+            auto compilation_unit = get_compilation_unit(ast_root);
+            
+            if (compilation_unit == nullptr) {
+                ERROR("Compilation unit of program must be body or circuit node");
+            }
+
+            entries.push_back({ast_root, compilation_unit});
+
         } else {
             WARNING(maybe_ast_root.get_error());
         }
     }
 
-    return asts;
+    return entries;
 }
 
-std::vector<Quality> Generator::ast_quality(std::vector<Node>& asts){
+/// @brief Get quality of each compilation unit
+/// @param entries 
+/// @return 
+std::vector<Quality> Generator::comp_unit_quality(const std::vector<Ast_entry>& entries){
     std::vector<Quality> quality;
 
-    for (Node& ast : asts){
-        quality.push_back(Quality(ast));
+    for (auto& entry : entries){
+        quality.push_back(Quality(*entry.compilation_unit));
     }
 
     return quality;
 }
 
-std::vector<Feature_vec> Generator::ast_feature_vec(std::vector<Node>& asts){
+/// @brief Get compilation unit feature vector
+/// @param entries 
+/// @return 
+std::vector<Feature_vec> Generator::comp_unit_feature_vec(const std::vector<Ast_entry>& entries){
     std::vector<Feature_vec> vec;
 
-    for (Node& ast : asts){
-        vec.push_back(Feature_vec(ast));
+    for (auto& entry : entries){
+        vec.push_back(Feature_vec(*entry.compilation_unit));
     }
 
     return vec;
 }
 
-std::vector<Node> Generator::map_elites(unsigned int n_genomes, const Control& control){
+std::vector<Ast_entry> Generator::map_elites(unsigned int n_genomes, const Control& control){
     assert(n_genomes >= 1);
 
-    std::vector<Node> asts = generate_n_asts(n_genomes, control);
+    std::vector<Ast_entry> entries = generate_n_asts(n_genomes, control);
     std::vector<bool> placed(n_genomes, false);
     
-    std::vector<Quality> qualities = ast_quality(asts);
-    std::vector<Feature_vec> feature_vecs = ast_feature_vec(asts);
+    std::vector<Quality> qualities = comp_unit_quality(entries);
+    std::vector<Feature_vec> feature_vecs = comp_unit_feature_vec(entries);
 
     float fill_percentage = 0.3; // stop loop when 30% of the archive has been filled
 
@@ -122,8 +152,8 @@ std::vector<Node> Generator::map_elites(unsigned int n_genomes, const Control& c
         Feature_vec& fv = feature_vecs[random_index];
         unsigned int archive_index = fv.get_archive_index();
 
-        archive[archive_index].place(std::make_shared<Node>(asts[random_index]), qualities[random_index].quality());
-        placed[random_index] = true;    
+        archive[archive_index].place(entries[random_index].compilation_unit, qualities[random_index].quality());
+        placed[random_index] = true;
         n_placed += 1;
 
         std::cout << "Index " << archive_index << std::endl;
@@ -132,5 +162,5 @@ std::vector<Node> Generator::map_elites(unsigned int n_genomes, const Control& c
 
     // run main loop
 
-    return asts;
+    return entries;
 }

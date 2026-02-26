@@ -28,7 +28,7 @@ class Ast{
 
         std::variant<std::shared_ptr<Node>, Term> make_child(const std::shared_ptr<Node> parent, const Term& term);
 
-        Result<Node> build();
+        Result<std::shared_ptr<Node>> build();
 
     protected:
         std::shared_ptr<Rule> entry = nullptr;

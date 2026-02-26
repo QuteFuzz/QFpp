@@ -51,6 +51,7 @@ enum Token_kind {
     TOFFOLI,
     U,
     PHASED_X,
+    PROGRAM,
     SUBROUTINE_DEFS,
     CIRCUIT,
     BODY,
@@ -180,6 +181,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     /*
         special rules
     */
+    Token_matcher("program", PROGRAM),
     Token_matcher("subroutine_defs", SUBROUTINE_DEFS),
     Token_matcher("circuit", CIRCUIT),
     Token_matcher("subroutine_circuit", CIRCUIT),

@@ -268,8 +268,8 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 	parent->transition_to_done();
 }
 
-Result<Node> Ast::build(){
-	Result<Node> res;
+Result<std::shared_ptr<Node>> Ast::build(){
+	Result<std::shared_ptr<Node>> res;
 
 	if(entry == nullptr){
 		res.set_error("Entry point not set");
@@ -290,7 +290,7 @@ Result<Node> Ast::build(){
 				context.print_circuit_info();
 			}
 
-			res.set_ok(*root);
+			res.set_ok(root);
 
 		} else {
 			res.set_error("Root was redirected, AST cannot be built");
