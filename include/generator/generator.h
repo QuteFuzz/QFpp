@@ -13,12 +13,19 @@
 struct Cell {
 
     public:
-        Cell() : 
-            genome(Node(""))
-        {}
+        Cell(){}
+
+        // if not filled, simply place
+        // if already filled compare quality, only replace if quality is better
+        void place(const std::shared_ptr<Node> genome_prime, float quality_prime){
+            if ((genome == nullptr) || (quality < quality_prime)){
+                genome = genome_prime;
+            }
+        }
 
     private:
-        const Node& genome;
+        std::shared_ptr<Node> genome = nullptr;
+        float quality;
 };
 
 struct Generator {

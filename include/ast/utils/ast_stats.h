@@ -18,8 +18,9 @@ std::vector<std::shared_ptr<Gate>> get_gates(Node& ast);
 
 struct Feature {
     std::string name;
+    unsigned int val;
     unsigned int num_bins;
-    unsigned int val = 0;
+    unsigned int bin_width = 1;
 };
 
 struct Feature_vec {
@@ -29,9 +30,13 @@ struct Feature_vec {
             ast(_ast)
         {
             vec = {
-                Feature{"max_control_flow_depth", QuteFuzz::NESTED_MAX_DEPTH, max_control_flow_depth()},
-                Feature{"has_subroutines", 2, has_subroutines()},
+                Feature{"max_control_flow_depth", max_control_flow_depth(), QuteFuzz::NESTED_MAX_DEPTH},
+                Feature{"has_subroutines", has_subroutines(), 2},
             };
+
+            for (auto& f : vec){
+                archive_size *= (f.num_bins + 1); // extra bin for stuff that doesn't fit into any bin
+            }
         }
 
         unsigned int max_control_flow_depth(){
@@ -43,19 +48,53 @@ struct Feature_vec {
             return ast.find(SUBROUTINE_DEFS) != nullptr;
         }
 
-        unsigned int archive_size(){
-            unsigned int s = 1;
+        unsigned int get_archive_size(){
+            return archive_size;
+        }
 
-            for (auto& f : vec){
-                s *= f.num_bins;
+        /// figure out where in the archive this feature vec falls
+        unsigned int get_archive_index(){
+            // figure out which bin index each feature falls into
+            std::vector<unsigned int> bins;
+
+            for (auto& feature : vec){
+                unsigned int effective_num_bins = feature.num_bins + 1;
+                for (unsigned int i = 0; i < effective_num_bins; i++){
+                    unsigned int bin_min = i * feature.bin_width;
+                    unsigned int bin_max = bin_min + feature.bin_width;
+                    
+                    if (feature.val >= bin_min && feature.val < bin_max){
+                        bins.push_back(i);
+                        break;
+                    }
+                }
             }
 
-            return s;
+            // second pass to find index while accumulating stride
+            unsigned int index = 0;
+            unsigned int stride = 1;
+
+            for (int j = (int)vec.size() - 1; j >= 0; j--){
+                index += bins[j] * stride;
+                stride *= (vec[j].num_bins + 1); // +1 to account for additional bin
+            }
+            
+            return index;
         }
+
+        friend std::ostream& operator<<(std::ostream& stream, Feature_vec& fv){
+            for (auto& f : fv.vec){
+                stream << f.name << " " << f.val << " n_bins: " << f.num_bins << " bin_width: " << f.bin_width << std::endl;
+            }
+
+            return stream;
+        }
+
 
     private:
         Node& ast;
         std::vector<Feature> vec;
+        unsigned int archive_size = 1;
 
 };
 
@@ -139,12 +178,10 @@ struct Quality {
         }
 
         float quality(){
-            float q;
-
+            float q = 0.0;
             for (auto& c : components){
                 q += (c.val * c.weight);
             }
-
             return q;
         }
 

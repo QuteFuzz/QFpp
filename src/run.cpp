@@ -224,7 +224,7 @@ void Run::loop(){
             } else if (current_command == "pg") {
                 current_generator->print_grammar();
 
-            } else if (n_programs = safe_stoul(current_command, 1)){
+            } else if ((n_programs = safe_stoul(current_command, 1))){
                 remove_all_in_dir(current_output_dir);
                 
                 current_generator->ast_parse(

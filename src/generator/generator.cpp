@@ -94,17 +94,43 @@ std::vector<Node> Generator::map_elites(unsigned int n_genomes, const Control& c
     assert(n_genomes >= 1);
 
     std::vector<Node> asts = generate_n_asts(n_genomes, control);
+    std::vector<bool> placed(n_genomes, false);
+    
     std::vector<Quality> qualities = ast_quality(asts);
     std::vector<Feature_vec> feature_vecs = ast_feature_vec(asts);
 
     float fill_percentage = 0.3; // stop loop when 30% of the archive has been filled
 
-    unsigned int archive_size = feature_vecs[0].archive_size();
-
+    unsigned int archive_size = feature_vecs[0].get_archive_size();
     INFO("Archive size " + std::to_string(archive_size));
 
-    std::vector<Node> archive(archive_size);
+    std::vector<Cell> archive(archive_size);
 
-    // initialise archive
+    // init archive : place all generated genomes into archive
+    unsigned int n_placed = 0;
+
+    while(n_placed < n_genomes){
+        // choose random genome
+        unsigned int random_index = random_uint(n_genomes - 1);
+        
+        // make sure random genome is not already placed
+        while(placed[random_index]){
+            random_index = random_uint(n_genomes - 1);
+        }
+
+        // figure out which cell this genome's feature vector falls into
+        Feature_vec& fv = feature_vecs[random_index];
+        unsigned int archive_index = fv.get_archive_index();
+
+        archive[archive_index].place(std::make_shared<Node>(asts[random_index]), qualities[random_index].quality());
+        placed[random_index] = true;    
+        n_placed += 1;
+
+        std::cout << "Index " << archive_index << std::endl;
+        std::cout << fv << std::endl;
+    }
+
+    // run main loop
+
     return asts;
 }
