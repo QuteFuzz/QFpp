@@ -48,9 +48,7 @@ gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
 # TODO: need to figure out better way of resolving circuit name
 # circuits = (circuit NEWLINE)[UNIFORM(1, 3)];
 
-circuits = circuit;
-
-program = imports NEWLINE NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuits NEWLINE program_footer;
+program = imports NEWLINE NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;
 
 subroutine_body = EXTERNAL::qubit_defs NEWLINE (qubit_op NEWLINE)+;  # subroutines have no bits to facilitate pytket to qiskit conversion
 

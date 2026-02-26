@@ -16,6 +16,10 @@
 
 std::vector<std::shared_ptr<Gate>> get_gates(Node& ast);
 
+unsigned int max_control_flow_depth(const Node& node, unsigned int current_depth);
+
+unsigned int subroutine_depth(const Node& node, unsigned int current_depth, bool inside_subroutine = false);
+
 struct Feature {
     std::string name;
     unsigned int val;
@@ -30,22 +34,13 @@ struct Feature_vec {
             ast(_ast)
         {
             vec = {
-                Feature{"max_control_flow_depth", max_control_flow_depth(), QuteFuzz::NESTED_MAX_DEPTH},
-                Feature{"has_subroutines", has_subroutines(), 2},
+                Feature{"max_control_flow_depth", max_control_flow_depth(ast, 0), QuteFuzz::NESTED_MAX_DEPTH},
+                Feature{"subroutine_depth", subroutine_depth(ast, 0), 2},
             };
 
             for (auto& f : vec){
                 archive_size *= (f.num_bins + 1); // extra bin for stuff that doesn't fit into any bin
             }
-        }
-
-        unsigned int max_control_flow_depth(){
-            unsigned int max_depth = 0;
-            return max_depth;
-        }
-
-        unsigned int has_subroutines(){
-            return ast.find(SUBROUTINE_DEFS) != nullptr;
         }
 
         unsigned int get_archive_size(){

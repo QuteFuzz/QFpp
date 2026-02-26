@@ -82,6 +82,7 @@ enum Token_kind {
     CIRCUIT_ID,
     COMPARE_OP_BITWISE_OR_PAIR,
     COMPOUND_STMT,
+    CF_STMT,
     COMPOUND_STMTS,
     RESOURCE_DEF,
 
@@ -129,6 +130,7 @@ enum Token_kind {
     ONE_OR_MORE,
     OPTIONAL,
     ARROW,
+    EXCL,
     INTERNAL,
     EXTERNAL,
     SCOPE_RES,
@@ -214,6 +216,10 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("circuit_id", CIRCUIT_ID),
     Token_matcher("compare_op_bitwise_or_pair", COMPARE_OP_BITWISE_OR_PAIR),
     Token_matcher("compound_stmt", COMPOUND_STMT),
+    Token_matcher("if_stmt", CF_STMT),
+    Token_matcher("while_stmt", CF_STMT),
+    Token_matcher("for_stmt", CF_STMT),
+    Token_matcher("switch_stmt", CF_STMT),
     Token_matcher("compound_stmts", COMPOUND_STMTS),
     Token_matcher("subroutine_compound_stmts", COMPOUND_STMTS),
     Token_matcher("classical_expr", EXPR),
@@ -320,6 +326,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("+", ONE_OR_MORE),
     Token_matcher("<", LANGLE_BRACKET),
     Token_matcher(">", RANGLE_BRACKET),
+    Token_matcher("!", EXCL),
 };
 
 const std::string FULL_REGEX =
@@ -468,6 +475,7 @@ inline bool is_quiet(const Token_kind& kind){
         (kind == SCOPE_RES) ||
         (kind == ARROW) ||
         (kind == LINE_INDENT) ||
+        (kind == EXCL) ||
         (kind == INDENT);
 }
 

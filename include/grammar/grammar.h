@@ -122,7 +122,6 @@ class Grammar{
         Scope rule_decl_scope = Scope::GLOB;
         bool setting_term_constraint = false;
 
-        // unsigned int nesting_depth_base = 0;
         unsigned int new_rule_counter = 0;
         std::vector<std::shared_ptr<Rule>> rule_pointers;
 

@@ -14,7 +14,7 @@ class Term {
 
         Term(const std::shared_ptr<Rule> rule, const Token_kind& _kind, const Meta_func& _meta_func);
 
-        Term(const std::string& syntax, const Token_kind& RULE_KINDS_TOP);
+        Term(const std::string& syntax, const Token_kind& _kind);
 
         ~Term() = default;
 
