@@ -34,7 +34,7 @@ bit_def = register_bit_def;
 # -----------------
 header = 'OPENQASM 2.0;' NEWLINE 'include "qelib1.inc";';
 
-program = header NEWLINE NEWLINE registers NEWLINE subroutine_defs NEWLINE body;
+program = header NEWLINE NEWLINE registers NEWLINE subroutine_defs NEWLINE !body;
 
 registers = qubit_defs NEWLINE bit_defs;
 

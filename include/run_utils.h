@@ -38,6 +38,8 @@ struct Control {
     bool run_mutate;
     bool step;
     bool print_circuit_info;
+    bool map_elites;
+    
     std::string ext;
 
     std::vector<Expected<unsigned int>> expected_values;

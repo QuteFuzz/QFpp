@@ -101,8 +101,6 @@ void Run::set_grammar(Control& control){
             exp.value = std::min(safe_stoul(current_grammar->dig_to_syntax(exp.rule_name), exp.dflt), exp.dflt);
         }
     }
-
-    // current_generator->set_grammar_control(control);
 }
 
 void Run::tokenise(const std::string& command, const char& delim){
@@ -145,6 +143,7 @@ void Run::loop(){
         .run_mutate = false,
         .step = false,
         .print_circuit_info = false,
+        .map_elites = false,
         .ext = ".text",
         .expected_values = {
             Expected<unsigned int>("MAX_REG_SIZE", QuteFuzz::MAX_REG_SIZE, CLAMP_DOWN),
@@ -175,6 +174,8 @@ void Run::loop(){
     };
 
     init_global_seed(qf_control);
+
+    unsigned int n_programs = 0;
 
     while(true){
         std::cout << "> ";
@@ -208,6 +209,9 @@ void Run::loop(){
         } else if (current_command == "info"){
             TOGGLE_FLAG(current_command, qf_control.print_circuit_info);
 
+        } else if (current_command == "map_elites"){
+            TOGGLE_FLAG(current_command, qf_control.map_elites);
+
         } else if (current_command == "quit"){
             current_generator.reset();
             generators.clear();
@@ -222,19 +226,18 @@ void Run::loop(){
 
             } else if ((n_programs = safe_stoul(current_command, 1))){
                 remove_all_in_dir(current_output_dir);
+                
+                current_generator->ast_parse(
+                    (
+                        qf_control.map_elites ?
+                        current_generator->map_elites(n_programs, qf_control, current_output_dir) :
+                        current_generator->generate_n_asts(n_programs, qf_control)
+                    ),
+                    current_output_dir,
+                    qf_control
+                );
 
-                for(size_t build_counter = 0; build_counter < n_programs; build_counter++){
-                    unsigned int seed = random_uint(UINT32_MAX);
-
-                    std::ofstream stream = get_stream(current_output_dir, "regression_seed.txt");
-                    stream << qf_control.GLOBAL_SEED_VAL << std::endl;
-                    stream.close();
-
-                    fs::path current_circuit_dir = current_output_dir / ("circuit" + std::to_string(build_counter));
-                    current_generator->ast_to_program(current_circuit_dir, qf_control, seed);
-                }
-
-                init_global_seed(qf_control);
+                init_global_seed(qf_control);  // reset global seed due to seed changes by each AST
             }
 
         } else {

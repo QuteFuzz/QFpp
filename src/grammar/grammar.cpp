@@ -126,13 +126,14 @@ void Grammar::add_term_to_current_branch(const Token& token){
     if(token.kind == SYNTAX){
         current_branch.add(Term(token.value, token.kind));
 
-    } else if ((token.kind)){
+    } else if (is_kind_of_rule(token.kind)){
         /*
             each term within the branch of a rule has a scope associated with it
             if explicitis_kind_of_rulely specified like EXTERNAL::term, then the term takes on that scope, otherwise, it
             takes on the scope of the current rule (i.e the rule def)
         */
         Scope scope = (rule_decl_scope == Scope::GLOB) ? current_rule->get_scope() : rule_decl_scope;
+
         current_branch.add(Term(get_rule_pointer(token, scope), token.kind, current_rule_decl_meta_func));
 
     } else if (is_meta(token.kind)){
@@ -248,7 +249,6 @@ void Grammar::build_grammar(){
             // rules that are within branches, rules before `RULE_START` and `RULE_APPEND` are handled at `RULE_START` and `RULE_APPEND`
             if(!stack.empty()){
                 add_term_to_current_branch(token);
-                // add_term_to_current_branches(token);
                 rule_decl_scope = Scope::GLOB; // reset to GLOB scope as default
             }
 

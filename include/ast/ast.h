@@ -28,16 +28,7 @@ class Ast{
 
         std::variant<std::shared_ptr<Node>, Term> make_child(const std::shared_ptr<Node> parent, const Term& term);
 
-        Result<Node> build();
-
-        inline void print_ast(){
-            root->print_ast("");
-        }
-
-        inline void render_ast(const fs::path& current_circuit_dir){
-            render([root = root](std::ostringstream& dot_string){root->extend_dot_string(dot_string);},
-                current_circuit_dir / "ast.png");
-        }
+        Result<std::shared_ptr<Node>> build();
 
     protected:
         std::shared_ptr<Rule> entry = nullptr;
