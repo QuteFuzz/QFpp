@@ -120,7 +120,7 @@ std::vector<Feature_vec> Generator::comp_unit_feature_vec(const std::vector<Ast_
     return vec;
 }
 
-std::vector<Ast_entry> Generator::map_elites(unsigned int n_genomes, const Control& control){
+std::vector<Ast_entry> Generator::map_elites(unsigned int n_genomes, const Control& control, const fs::path& output_dir){
     assert(n_genomes >= 1);
 
     std::vector<Ast_entry> entries = generate_n_asts(n_genomes, control);
@@ -131,13 +131,13 @@ std::vector<Ast_entry> Generator::map_elites(unsigned int n_genomes, const Contr
 
     float fill_percentage = 0.3; // stop loop when 30% of the archive has been filled
 
-    unsigned int archive_size = feature_vecs[0].get_archive_size();
-    INFO("Archive size " + std::to_string(archive_size));
-
-    std::vector<Cell> archive(archive_size);
-
     // init archive : place all generated genomes into archive
+    Feature_vec& fv = feature_vecs[0];
+    unsigned int archive_size = fv.get_archive_size();
+    std::vector<Cell> archive(archive_size);
     unsigned int n_placed = 0;
+
+    INFO("MAP-elites archive size " + std::to_string(archive_size));
 
     while(n_placed < n_genomes){
         // choose random genome
@@ -149,7 +149,7 @@ std::vector<Ast_entry> Generator::map_elites(unsigned int n_genomes, const Contr
         }
 
         // figure out which cell this genome's feature vector falls into
-        Feature_vec& fv = feature_vecs[random_index];
+        fv = feature_vecs[random_index];
         unsigned int archive_index = fv.get_archive_index();
 
         archive[archive_index].place(entries[random_index].compilation_unit, qualities[random_index].quality());
@@ -160,7 +160,43 @@ std::vector<Ast_entry> Generator::map_elites(unsigned int n_genomes, const Contr
         std::cout << fv << std::endl;
     }
 
+    // dump init archive in JSON
+    dump_archive(archive, fv, output_dir / "init_archive.json"); 
+
     // run main loop
 
     return entries;
+}
+
+void dump_archive(const std::vector<Cell>& archive, const Feature_vec& feature_vec, const fs::path& path){
+    std::ofstream f(path);
+
+    f << "{\n";
+    f << "\"dims\" : [\n";
+
+    // feature vec info
+    for (size_t i  = 0; i < feature_vec.size() - 1; i++){
+        Feature feature = feature_vec[i];
+        f << "  {\"name\" : \"" << feature.name << "\", \"bins\" : " << feature.num_bins << "}";
+        if (i == feature_vec.size() - 1){
+            f << ",";
+        }
+        f << "\n";
+    }
+
+    f << "],\n";
+
+    // archive
+    f << "\"cells\" : [\n";
+    for (size_t i = 0; i < archive.size(); i++){
+        const Cell& cell = archive[i];
+        f << "  {";
+        f << "\"index\": " << i << ", ";
+        f << "\"occupied\": " << (cell.is_occupied() ? "true" : "false") << ", ";
+        f << "\"quality\": " << (cell.is_occupied() ? cell.get_quality() : 0.0f);
+        f << "}";
+        if (i < archive.size() - 1) f << ",";
+        f << "\n";
+    }
+    f << "]}\n";
 }

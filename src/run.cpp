@@ -101,8 +101,6 @@ void Run::set_grammar(Control& control){
             exp.value = std::min(safe_stoul(current_grammar->dig_to_syntax(exp.rule_name), exp.dflt), exp.dflt);
         }
     }
-
-    // current_generator->set_grammar_control(control);
 }
 
 void Run::tokenise(const std::string& command, const char& delim){
@@ -177,6 +175,8 @@ void Run::loop(){
 
     init_global_seed(qf_control);
 
+    unsigned int n_programs = 0;
+
     while(true){
         std::cout << "> ";
 
@@ -230,7 +230,7 @@ void Run::loop(){
                 current_generator->ast_parse(
                     (
                         qf_control.map_elites ?
-                        current_generator->map_elites(n_programs, qf_control) :
+                        current_generator->map_elites(n_programs, qf_control, current_output_dir) :
                         current_generator->generate_n_asts(n_programs, qf_control)
                     ),
                     current_output_dir,

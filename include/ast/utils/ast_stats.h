@@ -33,7 +33,7 @@ struct Feature_vec {
         Feature_vec(const std::shared_ptr<Node> compilation_unit){
             vec = {
                 Feature{"max_control_flow_depth", max_control_flow_depth(compilation_unit), QuteFuzz::NESTED_MAX_DEPTH},
-                Feature{"max_control_flow_depth", has_mixed_body(compilation_unit), 2},
+                Feature{"has_mixed_body", has_mixed_body(compilation_unit), 2},
             };
 
             for (auto& f : vec){
@@ -47,7 +47,6 @@ struct Feature_vec {
 
         /// figure out where in the archive this feature vec falls
         unsigned int get_archive_index(){
-            // figure out which bin index each feature falls into
             std::vector<unsigned int> bins;
 
             for (auto& feature : vec){
@@ -73,6 +72,24 @@ struct Feature_vec {
             }
             
             return index;
+        }
+
+        auto begin(){return vec.begin();}
+
+        auto end(){return vec.end();}
+
+        auto begin() const {return vec.begin();}
+
+        auto end() const {return vec.end();}
+
+        size_t size() const {return vec.size();}
+
+        Feature& operator[](size_t index) {
+            return vec[index];
+        }
+
+        const Feature& operator[](size_t index) const {
+            return vec[index];
         }
 
         friend std::ostream& operator<<(std::ostream& stream, Feature_vec& fv){

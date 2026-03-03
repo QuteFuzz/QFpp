@@ -17,10 +17,18 @@ struct Cell {
 
         // if not filled, simply place
         // if already filled compare quality, only replace if quality is better
-        void place(Slot_type genome_prime, float quality_prime){
+        inline void place(Slot_type genome_prime, float quality_prime){
             if ((genome == nullptr) || (quality < quality_prime)){
                 genome = genome_prime;
             }
+        }
+
+        inline bool is_occupied() const {
+            return genome != nullptr;
+        }
+
+        inline float get_quality() const {
+            return quality;
         }
 
     private:
@@ -78,7 +86,7 @@ struct Generator {
 
         std::vector<Feature_vec> comp_unit_feature_vec(const std::vector<Ast_entry>& entries);
 
-        std::vector<Ast_entry> map_elites(unsigned int n_genomes, const Control& control);
+        std::vector<Ast_entry> map_elites(unsigned int n_genomes, const Control& control, const fs::path& output_dir);
 
         inline void print_ast(const Node& root){
             root.print_ast("");
@@ -93,7 +101,9 @@ struct Generator {
         std::shared_ptr<Grammar> grammar;
         std::string entry_name;
         Scope entry_scope;
-    };
+};
 
+
+void dump_archive(const std::vector<Cell>& archive, const Feature_vec& feature_vec, const fs::path& path);
 
 #endif
