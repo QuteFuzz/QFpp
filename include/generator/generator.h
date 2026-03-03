@@ -17,7 +17,10 @@ struct Cell {
 
         // if not filled, simply place
         // if already filled compare quality, only replace if quality is better
-        inline void place(Slot_type genome_prime, float quality_prime){
+        inline void place(const Quality& q){
+            Slot_type genome_prime = q.get_compilation_unit();
+            float quality_prime = q.quality();
+
             if ((genome == nullptr) || (quality < quality_prime)){
                 genome = genome_prime;
             }

@@ -119,80 +119,17 @@ struct Quality {
 
         Quality(){}
 
-        Quality(std::shared_ptr<Node> compilation_unit):
-            gates(get_gates(compilation_unit)),
-            n_gates(gates.size())
-        {
-            for(auto& gate : gates){
-                Token_kind kind = gate->get_node_kind();
-                if (gate_occurances.find(kind) == gate_occurances.end()){
-                    gate_occurances[kind] = 1;
-                } else {
-                    gate_occurances[kind] += 1;
-                }
-            }
+        Quality(Slot_type _compilation_unit);
 
-            components = {
-                Component{"gate_arity_variance", gate_arity_variance()},
-                Component{"gate_type_entropy", gate_type_entropy()},
-                Component{"adj_gate_pair_density", adj_gate_pair_density()},
-            };
-        }
+        Slot_type get_compilation_unit() const { return compilation_unit; }
 
-        float gate_arity_variance(){
-            std::vector<unsigned int> gate_arities;
-            unsigned int sum = 0;
+        float gate_arity_variance();
 
-            for (const auto& gate : gates){
-                unsigned int n_qubits = gate->get_num_external_qubits();
-                gate_arities.push_back(n_qubits);
-                sum += n_qubits;
-            }
+        float gate_type_entropy();
 
-            float n_arities = (float)gate_arities.size();
-            float mean = (float)sum / n_arities;
-            float diff_sq = 0.0;
+        float adj_gate_pair_density();
 
-            for(unsigned int gate_arity : gate_arities){
-                diff_sq += std::pow(((float)gate_arity - mean), 2.0);
-            }
-
-            float variance = diff_sq / n_arities;
-
-            return variance;
-        }
-
-        float gate_type_entropy(){
-            float neg_shannon_entropy = 0.0;
-
-            for(auto&[kind, count] : gate_occurances){
-                float frac = count / (float)n_gates;
-                neg_shannon_entropy += frac * std::log2(frac);
-            }
-
-            float shannon_entropy = -neg_shannon_entropy;
-
-            return shannon_entropy;
-        }
-
-        float adj_gate_pair_density(){
-            if (n_gates >= 2){
-                unsigned int adj_gate_pairs = 0;
-
-                for(size_t i = 0; i < n_gates - 1; i++){
-                    if(*gates[i] == *gates[i+1]){
-                        adj_gate_pairs += 1;
-                    }
-                }
-
-                return (float)adj_gate_pairs / (float)(n_gates - 1);
-            
-            } else {
-                return 0.0;
-            }
-        }
-
-        float quality(){
+        float quality() const {
             float q = 0.0;
             for (auto& c : components){
                 q += (c.val * c.weight);
@@ -214,6 +151,7 @@ struct Quality {
         unsigned int n_gates;
 
         std::vector<Component> components;
+        Slot_type compilation_unit;
 
 };
 

@@ -101,7 +101,8 @@ std::vector<Quality> Generator::comp_unit_quality(const std::vector<Ast_entry>& 
     std::vector<Quality> quality;
 
     for (auto& entry : entries){
-        quality.push_back(Quality(*entry.compilation_unit));
+        quality.push_back(Quality(entry.compilation_unit));
+        std::cout << *(quality.end() - 1) << std::endl;
     }
 
     return quality;
@@ -140,10 +141,8 @@ std::vector<Ast_entry> Generator::map_elites(unsigned int n_genomes, const Contr
     INFO("MAP-elites archive size " + std::to_string(archive_size));
 
     while(n_placed < n_genomes){
-        // choose random genome
         unsigned int random_index = random_uint(n_genomes - 1);
         
-        // make sure random genome is not already placed
         while(placed[random_index]){
             random_index = random_uint(n_genomes - 1);
         }
@@ -152,7 +151,7 @@ std::vector<Ast_entry> Generator::map_elites(unsigned int n_genomes, const Contr
         fv = feature_vecs[random_index];
         unsigned int archive_index = fv.get_archive_index();
 
-        archive[archive_index].place(entries[random_index].compilation_unit, qualities[random_index].quality());
+        archive[archive_index].place(qualities[random_index]);
         placed[random_index] = true;
         n_placed += 1;
 
@@ -175,10 +174,10 @@ void dump_archive(const std::vector<Cell>& archive, const Feature_vec& feature_v
     f << "\"dims\" : [\n";
 
     // feature vec info
-    for (size_t i  = 0; i < feature_vec.size() - 1; i++){
+    for (size_t i  = 0; i < feature_vec.size(); i++){
         Feature feature = feature_vec[i];
         f << "  {\"name\" : \"" << feature.name << "\", \"bins\" : " << feature.num_bins << "}";
-        if (i == feature_vec.size() - 1){
+        if (i != feature_vec.size() - 1){
             f << ",";
         }
         f << "\n";
