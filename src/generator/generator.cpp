@@ -115,7 +115,7 @@ std::vector<Feature_vec> Generator::comp_unit_feature_vec(const std::vector<Ast_
     std::vector<Feature_vec> vec;
 
     for (auto& entry : entries){
-        vec.push_back(Feature_vec(*entry.compilation_unit));
+        vec.push_back(Feature_vec(entry.compilation_unit));
     }
 
     return vec;
@@ -204,4 +204,6 @@ void dump_archive(const std::vector<Cell>& archive, const Feature_vec& feature_v
         f << "\n";
     }
     f << "]}\n";
+
+    INFO("Archive JSON dumped at " + path.string());
 }

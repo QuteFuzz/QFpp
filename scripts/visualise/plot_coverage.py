@@ -20,7 +20,7 @@ from scipy.stats import gaussian_kde
 """
 
 OCCUPIED_CELLS_MIN = 4
-
+CLUSTER_NODES_MIN = 4
 
 @dataclass(frozen=True)
 class Palette:

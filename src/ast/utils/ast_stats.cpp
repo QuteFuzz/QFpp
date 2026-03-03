@@ -1,7 +1,7 @@
 #include <ast_stats.h>
 
-/* 
-    AST features
+/*
+    helpers
 */
 
 std::vector<std::shared_ptr<Gate>> get_gates(const std::shared_ptr<Node> compilation_unit){
@@ -24,22 +24,40 @@ std::vector<std::shared_ptr<Gate>> get_gates(const std::shared_ptr<Node> compila
     return gates;
 }
 
-unsigned int max_control_flow_depth(const std::shared_ptr<Node> node, unsigned int current_depth){
+unsigned int max_control_flow_depth_rec(const std::shared_ptr<Node> node, unsigned int current_depth){
     Token_kind kind = node->get_node_kind();
 
     unsigned int depth = current_depth + (kind == CF_STMT);
     unsigned int max_depth = depth;
 
     for(const std::shared_ptr<Node>& child : node->get_children()){
-        unsigned int child_depth = max_control_flow_depth(child, depth);
+        unsigned int child_depth = max_control_flow_depth_rec(child, depth);
         max_depth = std::max(max_depth, child_depth);
     }
 
     return max_depth;
 }
 
-unsigned int has_mixed_body(const std::shared_ptr<Node> node){
-    for (auto& compound_stmts : Node_gen(*node, COMPOUND_STMTS)){
+
+/* 
+    AST features
+*/
+
+Feature_vec::Feature_vec(const Slot_type _compilation_unit):
+    compilation_unit(_compilation_unit)
+{
+    vec = {
+        Feature{"max_control_flow_depth", max_control_flow_depth(), QuteFuzz::NESTED_MAX_DEPTH},
+        Feature{"has_mixed_body", has_mixed_body(), 2},
+    };
+
+    for (auto& f : vec){
+        archive_size *= (f.num_bins + 1); // extra bin for stuff that doesn't fit into any bin
+    }
+}
+
+unsigned int Feature_vec::has_mixed_body(){
+    for (auto& compound_stmts : Node_gen(**compilation_unit, COMPOUND_STMTS)){
         bool has_gate = compound_stmts->find(QUBIT_OP) != nullptr;
         bool has_cf   = compound_stmts->find(CF_STMT)  != nullptr;
 
@@ -48,6 +66,45 @@ unsigned int has_mixed_body(const std::shared_ptr<Node> node){
 
     return 0;
 }
+
+unsigned int Feature_vec::max_control_flow_depth(){
+    return max_control_flow_depth_rec(*compilation_unit, 0);
+}
+
+
+unsigned int Feature_vec::get_archive_size(){
+    return archive_size;
+}
+
+/// figure out where in the archive this feature vec falls
+unsigned int Feature_vec::get_archive_index(){
+    std::vector<unsigned int> bins;
+
+    for (auto& feature : vec){
+        unsigned int effective_num_bins = feature.num_bins + 1;
+        for (unsigned int i = 0; i < effective_num_bins; i++){
+            unsigned int bin_min = i * feature.bin_width;
+            unsigned int bin_max = bin_min + feature.bin_width;
+            
+            if (feature.val >= bin_min && feature.val < bin_max){
+                bins.push_back(i);
+                break;
+            }
+        }
+    }
+
+    // second pass to find index while accumulating stride
+    unsigned int index = 0;
+    unsigned int stride = 1;
+
+    for (int j = (int)vec.size() - 1; j >= 0; j--){
+        index += bins[j] * stride;
+        stride *= (vec[j].num_bins + 1); // +1 to account for additional bin
+    }
+    
+    return index;
+}
+
 
 /*
     AST quality heuristics
