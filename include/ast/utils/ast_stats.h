@@ -16,9 +16,7 @@
 
 std::vector<std::shared_ptr<Gate>> get_gates(const std::shared_ptr<Node> compilation_unit);
 
-unsigned int max_control_flow_depth(const std::shared_ptr<Node> node, unsigned int current_depth = 0);
-
-unsigned int has_mixed_body(const std::shared_ptr<Node> node);
+unsigned int max_control_flow_depth_rec(const std::shared_ptr<Node> node, unsigned int current_depth = 0);
 
 struct Feature {
     std::string name;
@@ -30,49 +28,15 @@ struct Feature {
 struct Feature_vec {
 
     public:
-        Feature_vec(const std::shared_ptr<Node> compilation_unit){
-            vec = {
-                Feature{"max_control_flow_depth", max_control_flow_depth(compilation_unit), QuteFuzz::NESTED_MAX_DEPTH},
-                Feature{"has_mixed_body", has_mixed_body(compilation_unit), 2},
-            };
+        Feature_vec(const Slot_type compilation_unit);
 
-            for (auto& f : vec){
-                archive_size *= (f.num_bins + 1); // extra bin for stuff that doesn't fit into any bin
-            }
-        }
+        unsigned int num_immediate_compound_stmts();
 
-        unsigned int get_archive_size(){
-            return archive_size;
-        }
+        unsigned int has_multi_qubit_gate();
 
-        /// figure out where in the archive this feature vec falls
-        unsigned int get_archive_index(){
-            std::vector<unsigned int> bins;
+        unsigned int get_archive_size();
 
-            for (auto& feature : vec){
-                unsigned int effective_num_bins = feature.num_bins + 1;
-                for (unsigned int i = 0; i < effective_num_bins; i++){
-                    unsigned int bin_min = i * feature.bin_width;
-                    unsigned int bin_max = bin_min + feature.bin_width;
-                    
-                    if (feature.val >= bin_min && feature.val < bin_max){
-                        bins.push_back(i);
-                        break;
-                    }
-                }
-            }
-
-            // second pass to find index while accumulating stride
-            unsigned int index = 0;
-            unsigned int stride = 1;
-
-            for (int j = (int)vec.size() - 1; j >= 0; j--){
-                index += bins[j] * stride;
-                stride *= (vec[j].num_bins + 1); // +1 to account for additional bin
-            }
-            
-            return index;
-        }
+        unsigned int get_archive_index();
 
         auto begin(){return vec.begin();}
 
@@ -100,9 +64,8 @@ struct Feature_vec {
             return stream;
         }
 
-
     private:
-        std::shared_ptr<Node> compilation_unit = nullptr;
+        Slot_type compilation_unit = nullptr;
         std::vector<Feature> vec;
         unsigned int archive_size = 1;
 
@@ -129,6 +92,10 @@ struct Quality {
 
         float adj_gate_pair_density();
 
+        unsigned int has_mixed_body();
+
+        unsigned int max_control_flow_depth();
+
         float quality() const {
             float q = 0.0;
             for (auto& c : components){
@@ -146,13 +113,12 @@ struct Quality {
         }
 
     private:
+        Slot_type compilation_unit;
         std::vector<std::shared_ptr<Gate>> gates;
-        std::unordered_map<Token_kind, unsigned int> gate_occurances;
         unsigned int n_gates;
+        std::unordered_map<Token_kind, unsigned int> gate_occurances;
 
         std::vector<Component> components;
-        Slot_type compilation_unit;
-
 };
 
 
