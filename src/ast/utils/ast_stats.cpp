@@ -47,8 +47,8 @@ Feature_vec::Feature_vec(const Slot_type _compilation_unit):
     compilation_unit(_compilation_unit)
 {
     vec = {
-        Feature{"max_control_flow_depth", max_control_flow_depth(), QuteFuzz::NESTED_MAX_DEPTH},
-        Feature{"has_mixed_body", has_mixed_body(), 2},
+        Feature{"num_immediate_compound_stmts", num_immediate_compound_stmts(), 10},
+        Feature{"has_multi_qubit_gate", has_multi_qubit_gate(), 2},
     };
 
     for (auto& f : vec){
@@ -56,19 +56,28 @@ Feature_vec::Feature_vec(const Slot_type _compilation_unit):
     }
 }
 
-unsigned int Feature_vec::has_mixed_body(){
-    for (auto& compound_stmts : Node_gen(**compilation_unit, COMPOUND_STMTS)){
-        bool has_gate = compound_stmts->find(QUBIT_OP) != nullptr;
-        bool has_cf   = compound_stmts->find(CF_STMT)  != nullptr;
 
-        if (has_gate && has_cf) return 1;
+unsigned int Feature_vec::num_immediate_compound_stmts(){
+    unsigned int out = 0;
+
+    auto compound_stmts_node = (*compilation_unit)->find(COMPOUND_STMTS);
+
+    for (auto compound_stmt : Node_gen(*compound_stmts_node, COMPOUND_STMT)){
+        out += 1;
     }
 
-    return 0;
+    return out;
 }
 
-unsigned int Feature_vec::max_control_flow_depth(){
-    return max_control_flow_depth_rec(*compilation_unit, 0);
+unsigned int Feature_vec::has_multi_qubit_gate(){
+    for (auto& node : Node_gen(**compilation_unit, GATE_NAME)){
+        auto gate_node = std::dynamic_pointer_cast<Gate>(node->child_at(0));
+
+        if ((gate_node != nullptr) && (gate_node->get_num_external_qubits() > 1)){
+            return 1;
+        }
+    }
+    return 0;
 }
 
 
@@ -82,17 +91,18 @@ unsigned int Feature_vec::get_archive_index(){
 
     for (auto& feature : vec){
         unsigned int effective_num_bins = feature.num_bins + 1;
-        for (unsigned int i = 0; i < effective_num_bins; i++){
-            unsigned int bin_min = i * feature.bin_width;
-            unsigned int bin_max = bin_min + feature.bin_width;
-            
-            if (feature.val >= bin_min && feature.val < bin_max){
-                bins.push_back(i);
-                break;
-            }
-        }
+
+        // clamp to last bin if value exceeds range
+        unsigned int bin = (feature.bin_width > 0)
+            ? feature.val / feature.bin_width
+            : 0;
+
+        bin = std::min(bin, effective_num_bins - 1);
+        bins.push_back(bin);
     }
 
+    assert(bins.size() == vec.size());
+    
     // second pass to find index while accumulating stride
     unsigned int index = 0;
     unsigned int stride = 1;
@@ -128,6 +138,8 @@ Quality::Quality(Slot_type _compilation_unit):
         Component{"gate_arity_variance", gate_arity_variance()},
         Component{"gate_type_entropy", gate_type_entropy()},
         Component{"adj_gate_pair_density", adj_gate_pair_density()},
+        Component{"has_mixed_body", (float)has_mixed_body()},
+        Component{"max_control_flow_depth", (float)max_control_flow_depth()},
     };
 }
 
@@ -183,4 +195,19 @@ float Quality::adj_gate_pair_density(){
     } else {
         return 0.0;
     }
+}
+
+unsigned int Quality::has_mixed_body(){
+    for (auto& compound_stmts : Node_gen(**compilation_unit, COMPOUND_STMTS)){
+        bool has_gate = compound_stmts->find(QUBIT_OP) != nullptr;
+        bool has_cf   = compound_stmts->find(CF_STMT)  != nullptr;
+
+        if (has_gate && has_cf) return 1;
+    }
+
+    return 0;
+}
+
+unsigned int Quality::max_control_flow_depth(){
+    return max_control_flow_depth_rec(*compilation_unit, 0);
 }

@@ -19,7 +19,7 @@
 # default config
 EXTENSION = ".py";
 MAX_REG_SIZE = 2;
-NESTED_MAX_DEPTH = 3;
+NESTED_MAX_DEPTH = 6;
 
 qubit_def = singular_qubit_def | register_qubit_def;
 

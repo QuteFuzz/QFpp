@@ -30,9 +30,9 @@ struct Feature_vec {
     public:
         Feature_vec(const Slot_type compilation_unit);
 
-        unsigned int has_mixed_body();
+        unsigned int num_immediate_compound_stmts();
 
-        unsigned int max_control_flow_depth();
+        unsigned int has_multi_qubit_gate();
 
         unsigned int get_archive_size();
 
@@ -91,6 +91,10 @@ struct Quality {
         float gate_type_entropy();
 
         float adj_gate_pair_density();
+
+        unsigned int has_mixed_body();
+
+        unsigned int max_control_flow_depth();
 
         float quality() const {
             float q = 0.0;

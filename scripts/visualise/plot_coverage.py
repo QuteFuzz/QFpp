@@ -2,6 +2,7 @@ import argparse
 import json
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Dict, List
 
 import matplotlib.colors as mcolors
@@ -21,6 +22,7 @@ from scipy.stats import gaussian_kde
 
 OCCUPIED_CELLS_MIN = 4
 CLUSTER_NODES_MIN = 4
+
 
 @dataclass(frozen=True)
 class Palette:
@@ -118,7 +120,7 @@ def apply_theme(fig: Figure, axes: Dict[str, Axes], p: Palette):
         ax.grid(True, linewidth=0.4, alpha=0.6)
 
 
-def load_archive(path: str):
+def load_archive(path: Path):
     with open(path) as f:
         data = json.load(f)
     return data["dims"], data["cells"]
@@ -348,6 +350,7 @@ def plot_coverage(
     cells: List[Dict],
     palette: Palette,
     seed: int | None,
+    outpath: Path,
     title: str = "Feature Space Coverage",
 ):
     # build feature matrix — only occupied cells
@@ -379,7 +382,7 @@ def plot_coverage(
 
     stats_text(X2d, axes["text_stats"], cells, occupied, qualities, palette)
 
-    plt.savefig("coverage.png", dpi=150, bbox_inches="tight", facecolor=fig.get_facecolor())
+    plt.savefig(outpath, dpi=150, bbox_inches="tight", facecolor=fig.get_facecolor())
     # plt.show() using non-iteractive backend
 
 
@@ -426,7 +429,11 @@ if __name__ == "__main__":
             {"index": i, "occupied": np.random.rand() > 0.4, "quality": float(np.random.rand())}
             for i in range(total)
         ]
-    else:
-        dims, cells = load_archive(args.json)
 
-    plot_coverage(dims, cells, palette, args.seed)
+        outpath = Path("coverage.png")
+    else:
+        json_path = Path(args.json)
+        outpath = json_path.parent / "coverage.png"
+        dims, cells = load_archive(json_path)
+
+    plot_coverage(dims, cells, palette, args.seed, outpath)
