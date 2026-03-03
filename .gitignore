@@ -11,3 +11,4 @@ libs/
 nightly_results
 .coverage
 *.egg-info
+coverage.png

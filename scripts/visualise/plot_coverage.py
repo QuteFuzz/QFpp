@@ -231,7 +231,7 @@ def scatter_plot(X2d : NDArray, n_dims : int, axis : Axes, qualities : NDArray, 
         )
 
 def quality_histogram(axis : Axes, qualities : NDArray, cmap : mcolors.Colormap, norm : mcolors.Normalize):
-    bins = np.linspace(0, 1, 16)
+    bins = np.linspace(qualities.min(), qualities.max(), 16)
 
     n, _, patches = axis.hist(qualities, bins=bins)
 
