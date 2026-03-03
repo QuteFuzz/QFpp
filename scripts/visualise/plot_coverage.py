@@ -1,16 +1,17 @@
-import json
-from matplotlib.axes import Axes
-import matplotlib.colors as mcolors
-from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
-import numpy as np
-import umap
-from scipy.stats import gaussian_kde
-from numpy.typing import NDArray
 import argparse
+import json
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List
+
+import matplotlib.colors as mcolors
+import matplotlib.pyplot as plt
+import numpy as np
+import umap
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+from numpy.typing import NDArray
+from scipy.stats import gaussian_kde
 
 """
     Visualisation script for test case coverage information
@@ -20,92 +21,90 @@ from typing import Dict, List
 
 OCCUPIED_CELLS_MIN = 4
 
+
 @dataclass(frozen=True)
 class Palette:
-    name:         str
-    bg:           str   # figure background
-    bg_ax:        str   # axes background
-    grid:         str   # gridlines / spines
-    tick:         str   # tick labels
-    text_primary: str   # titles, labels
-    text_secondary: str # subtitles, axis labels
-    text_dim:     str   # annotations, minor text
-    accent:       str   # highlights, mean lines, arrows
-    bar_edge:     str   # histogram bar edges
-    scatter_edge: str   # scatter point edges
-    cmap:         str   # matplotlib colormap name for quality
-    kde_cmap:     str   # colormap for density contours
-    stats_box_bg: str   # stats text box background
+    name: str
+    bg: str  # figure background
+    bg_ax: str  # axes background
+    grid: str  # gridlines / spines
+    tick: str  # tick labels
+    text_primary: str  # titles, labels
+    text_secondary: str  # subtitles, axis labels
+    text_dim: str  # annotations, minor text
+    accent: str  # highlights, mean lines, arrows
+    bar_edge: str  # histogram bar edges
+    scatter_edge: str  # scatter point edges
+    cmap: str  # matplotlib colormap name for quality
+    kde_cmap: str  # colormap for density contours
+    stats_box_bg: str  # stats text box background
     stats_box_edge: str
 
 
 class Theme(Enum):
-    DARK       = "dark"
+    DARK = "dark"
     WARM_LIGHT = "warm_light"
     COOL_LIGHT = "cool_light"
 
 
 PALETTES: dict[Theme, Palette] = {
-
     Theme.DARK: Palette(
-        name          = "Dark",
-        bg            = "#080f1a",
-        bg_ax         = "#080f1a",
-        grid          = "#223344",
-        tick          = "#667788",
-        text_primary  = "#ffffff",
-        text_secondary= "#aaccdd",
-        text_dim      = "#667788",
-        accent        = "#ffcc88",
-        bar_edge      = "#080f1a",
-        scatter_edge  = "#ffffff",
-        cmap          = "plasma",
-        kde_cmap      = "Blues",
-        stats_box_bg  = "#0d1b2a",
-        stats_box_edge= "#223344",
+        name="Dark",
+        bg="#080f1a",
+        bg_ax="#080f1a",
+        grid="#223344",
+        tick="#667788",
+        text_primary="#ffffff",
+        text_secondary="#aaccdd",
+        text_dim="#667788",
+        accent="#ffcc88",
+        bar_edge="#080f1a",
+        scatter_edge="#ffffff",
+        cmap="plasma",
+        kde_cmap="Blues",
+        stats_box_bg="#0d1b2a",
+        stats_box_edge="#223344",
     ),
-
     # warm off-white — ink on paper feel
     Theme.WARM_LIGHT: Palette(
-        name          = "Warm Light",
-        bg            = "#faf7f2",
-        bg_ax         = "#f5f0e8",
-        grid          = "#d8cfc4",
-        tick          = "#7a6e64",
-        text_primary  = "#2b2218",
-        text_secondary= "#4a3f35",
-        text_dim      = "#9a8e84",
-        accent        = "#c0392b",
-        bar_edge      = "#faf7f2",
-        scatter_edge  = "#2b2218",
-        cmap          = "YlOrRd",
-        kde_cmap      = "YlOrBr",
-        stats_box_bg  = "#eee8de",
-        stats_box_edge= "#c8bfb4",
+        name="Warm Light",
+        bg="#faf7f2",
+        bg_ax="#f5f0e8",
+        grid="#d8cfc4",
+        tick="#7a6e64",
+        text_primary="#2b2218",
+        text_secondary="#4a3f35",
+        text_dim="#9a8e84",
+        accent="#c0392b",
+        bar_edge="#faf7f2",
+        scatter_edge="#2b2218",
+        cmap="YlOrRd",
+        kde_cmap="YlOrBr",
+        stats_box_bg="#eee8de",
+        stats_box_edge="#c8bfb4",
     ),
-
     # cool blue-grey — technical / scientific report feel
     Theme.COOL_LIGHT: Palette(
-        name          = "Cool Light",
-        bg            = "#f4f6f9",
-        bg_ax         = "#edf0f5",
-        grid          = "#c8d0dc",
-        tick          = "#6a7a8e",
-        text_primary  = "#1a2332",
-        text_secondary= "#344556",
-        text_dim      = "#8a9aaa",
-        accent        = "#2563eb",
-        bar_edge      = "#f4f6f9",
-        scatter_edge  = "#1a2332",
-        cmap          = "viridis",
-        kde_cmap      = "GnBu",
-        stats_box_bg  = "#e4e8f0",
-        stats_box_edge= "#b8c4d0",
+        name="Cool Light",
+        bg="#f4f6f9",
+        bg_ax="#edf0f5",
+        grid="#c8d0dc",
+        tick="#6a7a8e",
+        text_primary="#1a2332",
+        text_secondary="#344556",
+        text_dim="#8a9aaa",
+        accent="#2563eb",
+        bar_edge="#f4f6f9",
+        scatter_edge="#1a2332",
+        cmap="viridis",
+        kde_cmap="GnBu",
+        stats_box_bg="#e4e8f0",
+        stats_box_edge="#b8c4d0",
     ),
 }
 
 
-def apply_theme(fig : Figure, axes : Dict[str, Axes], p: Palette):
+def apply_theme(fig: Figure, axes: Dict[str, Axes], p: Palette):
     """Apply a palette to an existing figure and list of axes."""
     fig.patch.set_facecolor(p.bg)
     for ax in axes.values():
@@ -118,20 +117,22 @@ def apply_theme(fig : Figure, axes : Dict[str, Axes], p: Palette):
         ax.title.set_color(p.text_primary)
         ax.grid(True, linewidth=0.4, alpha=0.6)
 
-def load_archive(path : str):
+
+def load_archive(path: str):
     with open(path) as f:
         data = json.load(f)
     return data["dims"], data["cells"]
 
 
-def coords_from_flat(flat_idx : int, dims : List[Dict]):
+def coords_from_flat(flat_idx: int, dims: List[Dict]):
     coords = []
     for d in reversed(dims):
         coords.append(flat_idx % d["bins"])
         flat_idx //= d["bins"]
     return list(reversed(coords))
 
-def dim_reduction(X : NDArray, seed : int | None) -> NDArray:
+
+def dim_reduction(X: NDArray, seed: int | None) -> NDArray:
     if X.shape[1] > 2:
         reducer = umap.UMAP(
             n_components=2,
@@ -145,7 +146,8 @@ def dim_reduction(X : NDArray, seed : int | None) -> NDArray:
     else:
         return X  # already 2D
 
-def setup_canvas(title : str, qualities : NDArray, p : Palette):
+
+def setup_canvas(title: str, qualities: NDArray, p: Palette):
     fig = plt.figure(figsize=(14, 9))
     fig.suptitle(title, fontsize=13, y=0.98, color=p.text_primary)
 
@@ -154,10 +156,10 @@ def setup_canvas(title : str, qualities : NDArray, p : Palette):
     )
 
     axes = {
-        "scatter" : fig.add_subplot(gs[:, 0]),
-        "text_stats" : fig.add_subplot(gs[0, 1]),
-        "hist" : fig.add_subplot(gs[1, 1]),
-        "bar" : fig.add_subplot(gs[0, 2])
+        "scatter": fig.add_subplot(gs[:, 0]),
+        "text_stats": fig.add_subplot(gs[0, 1]),
+        "hist": fig.add_subplot(gs[1, 1]),
+        "bar": fig.add_subplot(gs[0, 2]),
     }
 
     for ax in axes.values():
@@ -170,7 +172,15 @@ def setup_canvas(title : str, qualities : NDArray, p : Palette):
 
     return cmap, norm, fig, axes
 
-def scatter_plot(X2d : NDArray, n_dims : int, axis : Axes, qualities : NDArray, palette : Palette, norm : mcolors.Normalize):
+
+def scatter_plot(
+    X2d: NDArray,
+    n_dims: int,
+    axis: Axes,
+    qualities: NDArray,
+    palette: Palette,
+    norm: mcolors.Normalize,
+):
     cmap = plt.get_cmap(palette.cmap)
 
     if len(X2d) > OCCUPIED_CELLS_MIN:
@@ -210,12 +220,8 @@ def scatter_plot(X2d : NDArray, n_dims : int, axis : Axes, qualities : NDArray, 
         fontsize=9,
         pad=8,
     )
-    axis.set_xlabel(
-        "UMAP dim 1" if n_dims > 2 else dims[0]["name"], fontsize=8
-    )
-    axis.set_ylabel(
-        "UMAP dim 2" if n_dims > 2 else dims[1]["name"], fontsize=8
-    )
+    axis.set_xlabel("UMAP dim 1" if n_dims > 2 else dims[0]["name"], fontsize=8)
+    axis.set_ylabel("UMAP dim 2" if n_dims > 2 else dims[1]["name"], fontsize=8)
 
     # annotate sparsely: top-5 quality points
     top5 = np.argsort(qualities)[-5:]
@@ -230,7 +236,10 @@ def scatter_plot(X2d : NDArray, n_dims : int, axis : Axes, qualities : NDArray, 
             arrowprops=dict(arrowstyle="-", lw=0.6, color=palette.text_secondary),
         )
 
-def quality_histogram(axis : Axes, qualities : NDArray, cmap : mcolors.Colormap, norm : mcolors.Normalize):
+
+def quality_histogram(
+    axis: Axes, qualities: NDArray, cmap: mcolors.Colormap, norm: mcolors.Normalize
+):
     bins = np.linspace(qualities.min(), qualities.max(), 16)
 
     n, _, patches = axis.hist(qualities, bins=bins)
@@ -252,7 +261,9 @@ def quality_histogram(axis : Axes, qualities : NDArray, cmap : mcolors.Colormap,
     axis.legend(fontsize=7)
 
 
-def dim_occupancies(axis : Axes, dims : List[Dict], cells : List[Dict], cmap : mcolors.Colormap, norm : mcolors.Normalize):
+def dim_occupancies(
+    axis: Axes, dims: List[Dict], cells: List[Dict], cmap: mcolors.Colormap, norm: mcolors.Normalize
+):
     dim_occupancies = []
     for di, d in enumerate(dims):
         bin_filled = 0
@@ -263,7 +274,7 @@ def dim_occupancies(axis : Axes, dims : List[Dict], cells : List[Dict], cmap : m
                     if coords[di] == b:
                         bin_filled += 1
                         break
-        dim_occupancies.append(bin_filled / d["bins"])#
+        dim_occupancies.append(bin_filled / d["bins"])  #
 
     y_pos = np.arange(len(dims))
     axis.set_yticks(y_pos)
@@ -285,7 +296,15 @@ def dim_occupancies(axis : Axes, dims : List[Dict], cells : List[Dict], cmap : m
             fontsize=7,
         )
 
-def stats_text(X2d : NDArray, axis : Axes, cells : List[Dict], occupied : List[Dict], qualities : NDArray, p : Palette):
+
+def stats_text(
+    X2d: NDArray,
+    axis: Axes,
+    cells: List[Dict],
+    occupied: List[Dict],
+    qualities: NDArray,
+    p: Palette,
+):
     total_cells = len(cells)
     filled_cells = len(occupied)
     coverage_pct = 100 * filled_cells / total_cells
@@ -318,10 +337,19 @@ def stats_text(X2d : NDArray, axis : Axes, cells : List[Dict], occupied : List[D
         va="top",
         color=p.text_primary,
         fontfamily="monospace",
-        bbox=dict(boxstyle="round", alpha=0.8, facecolor=p.stats_box_bg, edgecolor=p.stats_box_edge)
+        bbox=dict(
+            boxstyle="round", alpha=0.8, facecolor=p.stats_box_bg, edgecolor=p.stats_box_edge
+        ),
     )
 
-def plot_coverage(dims : List[Dict], cells : List[Dict], palette : Palette, seed : int | None, title : str="Feature Space Coverage"):
+
+def plot_coverage(
+    dims: List[Dict],
+    cells: List[Dict],
+    palette: Palette,
+    seed: int | None,
+    title: str = "Feature Space Coverage",
+):
     # build feature matrix — only occupied cells
     occupied = [c for c in cells if c["occupied"]]
     if len(occupied) < OCCUPIED_CELLS_MIN:
@@ -362,17 +390,9 @@ def parse():
         type=str,
         help="Path to JSON file",
     )
+    parser.add_argument("--seed", type=int, default=42, help="Seed for plotting and np random")
     parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="Seed for plotting and np random"
-    )
-    parser.add_argument(
-        "--theme",
-        type=str,
-        help="Theme (dark, cool-light, warm-light)",
-        default="warm-light"
+        "--theme", type=str, help="Theme (dark, cool-light, warm-light)", default="warm-light"
     )
     return parser.parse_args()
 
@@ -387,7 +407,7 @@ if __name__ == "__main__":
     else:
         palette = PALETTES[Theme.DARK]
 
-    if (args.json is None):
+    if args.json is None:
         # synthetic test data
         dims = [
             {"name": "control_flow_depth", "bins": 4},
