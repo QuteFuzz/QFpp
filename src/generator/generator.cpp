@@ -130,6 +130,11 @@ std::vector<Ast_entry> Generator::map_elites(unsigned int n_genomes, const Contr
     std::vector<Quality> qualities = comp_unit_quality(entries);
     std::vector<Feature_vec> feature_vecs = comp_unit_feature_vec(entries);
 
+    if (qualities.size() != n_genomes || feature_vecs.size() != n_genomes){
+        INFO("Cannot map elites, qualities and feature vecs do not match num of genomess");
+        return entries;
+    }
+
     float fill_percentage = 0.3; // stop loop when 30% of the archive has been filled
 
     // init archive : place all generated genomes into archive
@@ -162,7 +167,7 @@ std::vector<Ast_entry> Generator::map_elites(unsigned int n_genomes, const Contr
     // dump init archive in JSON
     dump_archive(archive, fv, output_dir / "init_archive.json"); 
 
-    // run main loop
+    /// TODO: run main loop
 
     return entries;
 }
@@ -189,10 +194,11 @@ void dump_archive(const std::vector<Cell>& archive, const Feature_vec& feature_v
     f << "\"cells\" : [\n";
     for (size_t i = 0; i < archive.size(); i++){
         const Cell& cell = archive[i];
+        float q = cell.get_quality();
         f << "  {";
         f << "\"index\": " << i << ", ";
         f << "\"occupied\": " << (cell.is_occupied() ? "true" : "false") << ", ";
-        f << "\"quality\": " << (cell.is_occupied() ? cell.get_quality() : 0.0f);
+        f << "\"quality\": " << (cell.is_occupied() ? q : 0.0f); // normalise
         f << "}";
         if (i < archive.size() - 1) f << ",";
         f << "\n";

@@ -18,7 +18,7 @@ from typing import Dict, List
     Written with a lot of help from Claude
 """
 
-NORM = mcolors.Normalize(vmin=0, vmax=1)
+OCCUPIED_CELLS_MIN = 4
 
 @dataclass(frozen=True)
 class Palette:
@@ -145,7 +145,7 @@ def dim_reduction(X : NDArray, seed : int | None) -> NDArray:
     else:
         return X  # already 2D
 
-def setup_canvas(title : str, p : Palette):
+def setup_canvas(title : str, qualities : NDArray, p : Palette):
     fig = plt.figure(figsize=(14, 9))
     fig.suptitle(title, fontsize=13, y=0.98, color=p.text_primary)
 
@@ -164,15 +164,16 @@ def setup_canvas(title : str, p : Palette):
         ax.tick_params(labelsize=8)
 
     cmap = plt.get_cmap(p.cmap)
+    norm = mcolors.Normalize(vmin=qualities.min(), vmax=qualities.max())
 
     apply_theme(fig, axes, p)
 
-    return cmap, fig, axes
+    return cmap, norm, fig, axes
 
-def scatter_plot(X2d : NDArray, n_dims : int, axis : Axes, qualities : NDArray, palette : Palette):
+def scatter_plot(X2d : NDArray, n_dims : int, axis : Axes, qualities : NDArray, palette : Palette, norm : mcolors.Normalize):
     cmap = plt.get_cmap(palette.cmap)
 
-    if len(X2d) > 4:
+    if len(X2d) > OCCUPIED_CELLS_MIN:
         try:
             # background KDE to show density (cluster detection)
             kde = gaussian_kde(X2d.T, bw_method=0.3)
@@ -192,7 +193,7 @@ def scatter_plot(X2d : NDArray, n_dims : int, axis : Axes, qualities : NDArray, 
         X2d[:, 1],
         c=qualities,
         cmap=cmap,
-        norm=NORM,
+        norm=norm,
         s=60,
         alpha=0.85,
         linewidths=0.4,
@@ -229,14 +230,14 @@ def scatter_plot(X2d : NDArray, n_dims : int, axis : Axes, qualities : NDArray, 
             arrowprops=dict(arrowstyle="-", lw=0.6, color=palette.text_secondary),
         )
 
-def quality_histogram(axis : Axes, qualities : NDArray, cmap : mcolors.Colormap):
+def quality_histogram(axis : Axes, qualities : NDArray, cmap : mcolors.Colormap, norm : mcolors.Normalize):
     bins = np.linspace(0, 1, 16)
 
     n, _, patches = axis.hist(qualities, bins=bins)
 
     for patch, left_edge in zip(patches, bins[:-1]):
         bin_mid = left_edge + (bins[1] - bins[0]) / 2
-        patch.set_facecolor(cmap(NORM(bin_mid)))
+        patch.set_facecolor(cmap(norm(bin_mid)))
         patch.set_alpha(0.85)
 
     axis.set_title("Quality distribution", fontsize=8, pad=6)
@@ -251,7 +252,7 @@ def quality_histogram(axis : Axes, qualities : NDArray, cmap : mcolors.Colormap)
     axis.legend(fontsize=7)
 
 
-def dim_occupancies(axis : Axes, dims : List[Dict], cells : List[Dict], cmap : mcolors.Colormap):
+def dim_occupancies(axis : Axes, dims : List[Dict], cells : List[Dict], cmap : mcolors.Colormap, norm : mcolors.Normalize):
     dim_occupancies = []
     for di, d in enumerate(dims):
         bin_filled = 0
@@ -275,7 +276,7 @@ def dim_occupancies(axis : Axes, dims : List[Dict], cells : List[Dict], cmap : m
     bars = axis.barh(y_pos, dim_occupancies)
 
     for bar, v in zip(bars, dim_occupancies):
-        bar.set_facecolor(cmap(NORM(v)))
+        bar.set_facecolor(cmap(norm(v)))
         axis.text(
             v + 0.02,
             bar.get_y() + bar.get_height() / 2,
@@ -323,7 +324,7 @@ def stats_text(X2d : NDArray, axis : Axes, cells : List[Dict], occupied : List[D
 def plot_coverage(dims : List[Dict], cells : List[Dict], palette : Palette, seed : int | None, title : str="Feature Space Coverage"):
     # build feature matrix — only occupied cells
     occupied = [c for c in cells if c["occupied"]]
-    if len(occupied) < 5:
+    if len(occupied) < OCCUPIED_CELLS_MIN:
         print("Not enough occupied cells to plot")
         return
 
@@ -339,14 +340,14 @@ def plot_coverage(dims : List[Dict], cells : List[Dict], palette : Palette, seed
     X2d = dim_reduction(X, seed)
 
     # setup figure
-    cmap, fig, axes = setup_canvas(title, palette)
+    cmap, norm, fig, axes = setup_canvas(title, qualities, palette)
 
     n_dims = X.shape[1]
-    scatter_plot(X2d, n_dims, axes["scatter"], qualities, palette)
+    scatter_plot(X2d, n_dims, axes["scatter"], qualities, palette, norm)
 
-    quality_histogram(axes["hist"], qualities, cmap)
+    quality_histogram(axes["hist"], qualities, cmap, norm)
 
-    dim_occupancies(axes["bar"], dims, cells, cmap)
+    dim_occupancies(axes["bar"], dims, cells, cmap, norm)
 
     stats_text(X2d, axes["text_stats"], cells, occupied, qualities, palette)
 

@@ -23,6 +23,7 @@ struct Cell {
 
             if ((genome == nullptr) || (quality < quality_prime)){
                 genome = genome_prime;
+                quality = quality_prime;
             }
         }
 
@@ -36,7 +37,7 @@ struct Cell {
 
     private:
         Slot_type genome = nullptr;
-        float quality;
+        float quality = 0.0;
 };
 
 struct Ast_entry {
@@ -105,7 +106,6 @@ struct Generator {
         std::string entry_name;
         Scope entry_scope;
 };
-
 
 void dump_archive(const std::vector<Cell>& archive, const Feature_vec& feature_vec, const fs::path& path);
 
