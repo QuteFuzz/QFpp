@@ -142,7 +142,7 @@ def dim_reduction(X: NDArray, seed: int | None) -> NDArray:
             metric="euclidean",
         )
 
-        return reducer.fit_transform(X) # type:ignore
+        return reducer.fit_transform(X)  # type:ignore
     else:
         return X  # already 2D
 
@@ -244,7 +244,7 @@ def quality_histogram(
 
     n, _, patches = axis.hist(qualities, bins=bins)
 
-    for patch, left_edge in zip(patches, bins[:-1]): # type:ignore
+    for patch, left_edge in zip(patches, bins[:-1]):  # type:ignore
         bin_mid = left_edge + (bins[1] - bins[0]) / 2
         patch.set_facecolor(cmap(norm(bin_mid)))
         patch.set_alpha(0.85)
