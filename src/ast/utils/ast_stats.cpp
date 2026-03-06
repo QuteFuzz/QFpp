@@ -11,14 +11,22 @@ std::vector<std::shared_ptr<Gate>> get_gates(const std::shared_ptr<Node> compila
 		auto gate = std::dynamic_pointer_cast<Gate>(node->child_at(0));
         if (gate != nullptr){
             gates.push_back(gate);
-        }
+        } else {
+			std::cout << "GATE_NAME child_at(0) kind: " 
+			<< (node->child_at(0) ? std::to_string(node->child_at(0)->get_node_kind()) : "null")
+			<< std::endl;
+		}
 	}
 
 	for(std::shared_ptr<Node>& node : Node_gen(*compilation_unit, SUBROUTINE)){
 		auto gate = std::dynamic_pointer_cast<Gate>(node);
         if (gate != nullptr) {
             gates.push_back(gate);
-        }
+        } else {
+			std::cout << "GATE_NAME node kind: " 
+			<< (node ? std::to_string(node->get_node_kind()) : "null")
+			<< std::endl;
+		}
 	}
 
     return gates;
@@ -44,11 +52,25 @@ unsigned int max_control_flow_depth_rec(const std::shared_ptr<Node> node, unsign
 */
 
 Feature_vec::Feature_vec(const Slot_type _compilation_unit):
-    compilation_unit(_compilation_unit)
+    compilation_unit(_compilation_unit),
+	gates(get_gates(*_compilation_unit)),
+    n_gates(gates.size())
 {
+	unsigned int multi_qubit_gate_n_bins = 5;
+
+	if (n_gates == 0) {
+		WARNING("Ciruit has no gates");
+		(*compilation_unit)->print_program(std::cout);
+
+	}
+
     vec = {
-        Feature{"num_immediate_compound_stmts", num_immediate_compound_stmts(), 10},
-        Feature{"has_multi_qubit_gate", has_multi_qubit_gate(), 2},
+        Feature{"has_control_flow", has_control_flow()},
+        Feature{"has_subroutine_call", has_subroutine_call()},
+        Feature{"has_barrier", has_barrier()},
+		// done this way such that archive size is constant for all genomes, otherwise could use max number of gates as num of bins
+        Feature{"multi_qubit_gate_ratio", (unsigned int)(multi_qubit_gate_ratio() * multi_qubit_gate_n_bins), multi_qubit_gate_n_bins},
+        Feature{"has_parametrised", has_parametrised()},
     };
 
     for (auto& f : vec){
@@ -57,36 +79,52 @@ Feature_vec::Feature_vec(const Slot_type _compilation_unit):
 }
 
 
-unsigned int Feature_vec::num_immediate_compound_stmts(){
-    unsigned int out = 0;
-
-    auto compound_stmts_node = (*compilation_unit)->find(COMPOUND_STMTS);
-
-    for (auto compound_stmt : Node_gen(*compound_stmts_node, COMPOUND_STMT)){
-        out += 1;
-    }
-
-    return out;
+// activates flow unrolling passes
+unsigned int Feature_vec::has_control_flow(){
+    return (*compilation_unit)->find(CF_STMT) != nullptr ? 1 : 0;
 }
 
-unsigned int Feature_vec::has_multi_qubit_gate(){
-    for (auto& node : Node_gen(**compilation_unit, GATE_NAME)){
-        auto gate_node = std::dynamic_pointer_cast<Gate>(node->child_at(0));
-
-        if ((gate_node != nullptr) && (gate_node->get_num_external_qubits() > 1)){
-            return 1;
-        }
-    }
-    return 0;
+// activates box decomposition
+unsigned int Feature_vec::has_subroutine_call(){
+    return (*compilation_unit)->find(SUBROUTINE_OP) != nullptr ? 1 : 0;
 }
 
+// activates barrier-aware scheduling
+unsigned int Feature_vec::has_barrier(){
+    return (*compilation_unit)->find(BARRIER_OP) != nullptr ? 1 : 0;
+}
 
-unsigned int Feature_vec::get_archive_size(){
+// activates entanglement decomposition
+float Feature_vec::multi_qubit_gate_ratio(){
+	unsigned int n_multi_qubit_gates = 0;
+
+	if (n_gates > 0){
+		for (const auto& gate : gates){
+			n_multi_qubit_gates += (gate->get_num_external_qubits() > 1);
+		}	
+
+		return (float)n_multi_qubit_gates / (float)n_gates;
+
+	} else {
+		return 0;
+	}
+}
+
+// activates symbolic optimization
+unsigned int Feature_vec::has_parametrised(){
+    for (const auto& gate : gates){
+		if (gate->get_num_floats() > 0){return 1;}
+	}
+
+	return 0;
+}
+
+unsigned int Feature_vec::get_archive_size() const {
     return archive_size;
 }
 
 /// figure out where in the archive this feature vec falls
-unsigned int Feature_vec::get_archive_index(){
+unsigned int Feature_vec::get_archive_index() const {
     std::vector<unsigned int> bins;
 
     for (auto& feature : vec){

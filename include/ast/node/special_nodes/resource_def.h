@@ -7,19 +7,19 @@
 #include <uint.h>
 #include <resource.h>
 
-class Resource_def : public Node {
+class Resource_def : public Cloneable<Resource_def> {
 
     public:
 
         /// @brief Dummy definition
         Resource_def() :
-            Node("resource_def", QUBIT_DEF),
+            Cloneable<Resource_def>("resource_def", QUBIT_DEF),
             scope(Scope::GLOB),
             kind(Resource_kind::QUBIT)
         {}
 
         Resource_def(const Scope& _scope, Resource_kind rk, bool is_reg, unsigned int reg_size) :
-            Node("resource_def", (rk == (Resource_kind::QUBIT) ? QUBIT_DEF : BIT_DEF)),
+            Cloneable<Resource_def>("resource_def", (rk == (Resource_kind::QUBIT) ? QUBIT_DEF : BIT_DEF)),
             name(is_reg ? "reg" : "sing", true),
             size(is_reg ? reg_size : 1),
             reg(is_reg),
@@ -69,12 +69,6 @@ class Resource_def : public Node {
 
         inline void print_info() const {
             std::cout << resolved_name() << " " << STR_SCOPE(get_scope()) << STR_RESOURCE_KIND(get_resource_kind()) << " is used: " << used << " is reg: " << reg << std::endl;
-        }
-
-        std::shared_ptr<Resource_def> clone() const {
-            auto new_node = std::make_shared<Resource_def>(*this);
-            new_node->clear_children();
-            return std::make_shared<Resource_def>(*new_node);
         }
 
     private:

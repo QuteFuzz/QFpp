@@ -8,7 +8,7 @@ std::string Node::get_str() const {
     return (kind == SYNTAX) ? escape_string(str) : str;
 }
 
-bool Node::visited(std::vector<std::shared_ptr<Node>*>& visited_slots, std::shared_ptr<Node>* slot, bool track_visited) const {
+bool Node::visited(std::vector<Slot_type>& visited_slots, Slot_type slot, bool track_visited) const {
     for(auto vslot : visited_slots){
         if(vslot == slot) return true;
     }
@@ -17,8 +17,8 @@ bool Node::visited(std::vector<std::shared_ptr<Node>*>& visited_slots, std::shar
     return false;
 }
 
-std::shared_ptr<Node>* Node::find_slot(Token_kind node_kind, std::vector<std::shared_ptr<Node>*>& visited_slots, bool track_visited) {
-    std::shared_ptr<Node>* maybe_find;
+Slot_type Node::find_slot(Token_kind node_kind, std::vector<Slot_type>& visited_slots, bool track_visited) {
+    Slot_type maybe_find;
 
     for(std::shared_ptr<Node>& child : children){
         if((child->get_node_kind() == node_kind) && !visited(visited_slots, &child, track_visited)){
@@ -38,10 +38,24 @@ std::shared_ptr<Node> Node::find(Token_kind node_kind) {
         return shared_from_this();
     }
 
-    std::vector<std::shared_ptr<Node>*> visited_slots = {};
-    std::shared_ptr<Node>* maybe_find = find_slot(node_kind, visited_slots, false);
+    std::vector<Slot_type> visited_slots = {};
+    Slot_type maybe_find = find_slot(node_kind, visited_slots, false);
 
     return (maybe_find == nullptr) ? nullptr : *maybe_find;
+}
+
+std::shared_ptr<Node> Node::clone(const Clone_type& ct) const {
+    auto new_node = std::make_shared<Node>(*this);
+    new_node->children.clear();
+    new_node->incr_id();
+
+    if (ct == DEEP){
+        for (const auto& child : children) {
+            new_node->children.push_back(child->clone(ct));
+        }
+    }
+
+    return new_node;
 }
 
 void Node::print_ast(std::string indent) const {

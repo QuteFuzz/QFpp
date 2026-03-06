@@ -14,28 +14,49 @@ class Ast{
         Ast(const Control& _control) :
             context(_control),
             control(_control)
-        {}
-
-        ~Ast() = default;
-
-        inline void set_entry(const std::shared_ptr<Rule> _entry){
-            entry = _entry;
+        {
+            context.reset(RL_PROGRAM);
         }
 
-        inline bool entry_set(){return entry != nullptr;}
+        Ast(const Context& _context, unsigned int manual_nested_depth) :
+            context(_context),
+            control(_context.get_control())
+        {
+            context.change_nested_depth(manual_nested_depth);
+            context.reset(RL_QUBITS);
+            context.reset(RL_BITS);
+        }
+
+        ~Ast() = default;
 
         void term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& term, unsigned int depth = 0);
 
         std::variant<std::shared_ptr<Node>, Term> make_child(const std::shared_ptr<Node> parent, const Term& term);
 
-        Result<std::shared_ptr<Node>> build();
+        std::shared_ptr<Context> get_context() const { return std::make_shared<Context>(context); }
+
+        Result<std::shared_ptr<Node>> build(std::shared_ptr<Rule> entry);
 
     protected:
-        std::shared_ptr<Rule> entry = nullptr;
         std::shared_ptr<Node> root;
-        std::vector<Gate_info> gateset;
         Context context;
-        const Control& control;
+        Control control;
+};
+
+Slot_type get_compilation_unit(const std::shared_ptr<Node> ast_root);
+
+struct Ast_entry {
+    std::shared_ptr<Node> ast;
+    std::shared_ptr<Context> context;
+
+    bool empty() const {return (ast == nullptr);}
+
+    /// return a clone of this ast entry, by deep cloning the AST, effectively creating a new one, then getting the new compilation unit ptr from that
+    Ast_entry clone() {
+        std::shared_ptr<Node> new_ast = ast->clone(DEEP);
+        return Ast_entry{new_ast, context};
+    }
+
 };
 
 #endif

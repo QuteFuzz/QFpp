@@ -5,8 +5,6 @@
 #include <memory>
 #include <node.h>
 
-using Slot_type = std::shared_ptr<Node>*;
-
 /// Node generator class that works like python's iterator to handle looping through the AST
 class Node_gen {
 

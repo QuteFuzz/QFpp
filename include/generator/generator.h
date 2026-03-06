@@ -7,50 +7,130 @@
 #include <mutate.h>
 #include <ast_stats.h>
 
-/* 
-    Map elites algorithm utils
-*/
+
 struct Cell {
 
     public:
         Cell(){}
 
-        // if not filled, simply place
-        // if already filled compare quality, only replace if quality is better
-        inline void place(const Quality& q){
-            Slot_type genome_prime = q.get_compilation_unit();
-            float quality_prime = q.quality();
+        /// Place genome into cell if it is empty, or if this genome has higher quality. Returns one if cell was
+        /// empty, so we can track unique archive placements 
+        inline int place(const Ast_entry& genome_prime){
+            float quality_prime = Quality(genome_prime.ast->get_compilation_unit()).quality();
 
-            if ((genome == nullptr) || (quality < quality_prime)){
+            if (genome.empty() || (quality < quality_prime)){
+                if (genome.empty()){
+                    // completely new placement into the archive
+                    return 1;
+                }
+                
                 genome = genome_prime;
                 quality = quality_prime;
             }
-        }
 
-        inline bool is_occupied() const {
-            return genome != nullptr;
+            return 0;
         }
 
         inline float get_quality() const {
             return quality;
         }
 
+        inline bool empty() const {
+            return genome.empty();
+        }
+
+        Ast_entry get_genome() const {return genome;}
+
     private:
-        Slot_type genome = nullptr;
+        Ast_entry genome;    // ast and compilation init slot into ast
         float quality = 0.0;
 };
 
-struct Ast_entry {
-    std::shared_ptr<Node> ast;
-    Slot_type compilation_unit;
+struct Archive {
+
+    public:
+        Archive(const std::vector<Ast_entry>& _entries, const fs::path& _output_dir):
+            init_genomes(_entries),
+            n_genomes(init_genomes.size()),
+            dummy_fv(init_genomes[0].ast->get_compilation_unit()),
+            // place arbitrary compilation unit to allow initialisation of feature vec bins, which gives the archive size
+            archive(dummy_fv.get_archive_size()),
+            output_dir(_output_dir)
+        {
+            INFO("MAP-elites archive size " + std::to_string(archive.size()));
+        }
+
+        void dump_archive(const fs::path& path){
+            std::ofstream f(path);
+
+            f << "{\n";
+            f << "\"dims\" : [\n";
+
+            // feature vec info
+            for (size_t i  = 0; i < dummy_fv.size(); i++){
+                Feature feature = dummy_fv[i];
+                f << "  {\"name\" : \"" << feature.name << "\", \"bins\" : " << feature.num_bins << "}";
+                if (i != dummy_fv.size() - 1){
+                    f << ",";
+                }
+                f << "\n";
+            }
+
+            f << "],\n";
+
+            // archive
+            f << "\"cells\" : [\n";
+            for (size_t i = 0; i < archive.size(); i++){
+                const Cell& cell = archive[i];
+                float q = cell.get_quality();
+                f << "  {";
+                f << "\"index\": " << i << ", ";
+                f << "\"occupied\": " << (cell.empty() ? "false" : "true") << ", ";
+                f << "\"quality\": " << (cell.empty() ? 0.0f : q);
+                f << "}";
+                if (i < archive.size() - 1) f << ",";
+                f << "\n";
+            }
+
+            f << "]}\n";
+
+            INFO("Archive JSON dumped at " + path.string());
+        }
+
+        float archive_fill_ratio(){
+            return (float)filled_archive_indices.size() / (float)archive.size();
+        };
+
+        float archive_av_quality(){
+            float total_quality = 0.0;
+
+            for (const Cell& cell : archive){
+                total_quality += cell.get_quality();
+            }
+
+            return total_quality / (float)archive.size();
+        };
+
+        void init_archive();
+
+        void fill_archive(std::shared_ptr<Grammar> grammar);
+
+        std::vector<Ast_entry> get_best_genomes();
+
+    private:
+        const std::vector<Ast_entry>& init_genomes;
+        unsigned int n_genomes;
+        const Feature_vec dummy_fv;
+        std::vector<Cell> archive;
+        std::vector<unsigned int> filled_archive_indices;  // uniquely filled indices
+
+        const fs::path& output_dir;
+
+        float target_fill_ratio = 0.3;
+
 };
 
 struct Generator {
-
-    const std::shared_ptr<Mutation_rule> RULE =
-        std::make_shared<Commutation_rule>(QuteFuzz::Z_BASIS) +
-        std::make_shared<Commutation_rule>(QuteFuzz::Y_BASIS) +
-        std::make_shared<Commutation_rule>(QuteFuzz::X_BASIS);
 
     public:
 
@@ -62,8 +142,6 @@ struct Generator {
             entry_name = _entry_name;
             entry_scope = _entry_scope;
         }
-
-        std::shared_ptr<Ast> setup_builder(const Control& control);
 
         friend std::ostream& operator<<(std::ostream& stream, Generator generator){
             stream << "  . " << generator.grammar->get_name() << ": ";
@@ -78,17 +156,9 @@ struct Generator {
 
         inline std::shared_ptr<Grammar> get_grammar() const { return grammar; }
 
-        Node build_equivalent(Node ast_root);
-
-        Slot_type get_compilation_unit(const std::shared_ptr<Node> ast_root);
-
         void ast_parse(const std::vector<Ast_entry>& entries, const fs::path& output_dir, const Control& control);
 
         std::vector<Ast_entry> generate_n_asts(unsigned int n, const Control& control);
-
-        std::vector<Quality> comp_unit_quality(const std::vector<Ast_entry>& entries);
-
-        std::vector<Feature_vec> comp_unit_feature_vec(const std::vector<Ast_entry>& entries);
 
         std::vector<Ast_entry> map_elites(unsigned int n_genomes, const Control& control, const fs::path& output_dir);
 

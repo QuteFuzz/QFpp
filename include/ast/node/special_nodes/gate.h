@@ -1,19 +1,19 @@
 #ifndef GATE_H
 #define GATE_H
 
-#include <node.h>
+#include <clone_mixin.h>
 #include <coll.h>
 #include <supported_gates.h>
 
 class Resource_def;
 enum class Resource_kind;
 
-class Gate : public Node {
+class Gate : public Cloneable<Gate> {
 
     public:
 
         Gate() :
-            Node("dummy")
+            Cloneable<Gate>("dummy")
         {}
 
         /// @brief Use for predefined gates

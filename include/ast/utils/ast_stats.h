@@ -21,7 +21,7 @@ unsigned int max_control_flow_depth_rec(const std::shared_ptr<Node> node, unsign
 struct Feature {
     std::string name;
     unsigned int val;
-    unsigned int num_bins;
+    unsigned int num_bins = 2;  // binary features by default
     unsigned int bin_width = 1;
 };
 
@@ -30,13 +30,19 @@ struct Feature_vec {
     public:
         Feature_vec(const Slot_type compilation_unit);
 
-        unsigned int num_immediate_compound_stmts();
+        unsigned int has_control_flow();
 
-        unsigned int has_multi_qubit_gate();
+        unsigned int has_subroutine_call();
 
-        unsigned int get_archive_size();
+        unsigned int has_barrier();
 
-        unsigned int get_archive_index();
+        float multi_qubit_gate_ratio();
+
+        unsigned int has_parametrised();
+
+        unsigned int get_archive_size() const;
+
+        unsigned int get_archive_index() const;
 
         auto begin(){return vec.begin();}
 
@@ -66,10 +72,14 @@ struct Feature_vec {
 
     private:
         Slot_type compilation_unit = nullptr;
-        std::vector<Feature> vec;
-        unsigned int archive_size = 1;
+        std::vector<std::shared_ptr<Gate>> gates;
+        unsigned int n_gates;
 
+        std::vector<Feature> vec;
+
+        unsigned int archive_size = 1;
 };
+
 
 struct Quality {
 
@@ -83,8 +93,6 @@ struct Quality {
         Quality(){}
 
         Quality(Slot_type _compilation_unit);
-
-        Slot_type get_compilation_unit() const { return compilation_unit; }
 
         float gate_arity_variance();
 

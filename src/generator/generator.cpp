@@ -1,42 +1,109 @@
 #include <generator.h>
 #include <node_gen.h>
+#include <mutate.h>
 
-std::shared_ptr<Ast> Generator::setup_builder(const Control& control){
-    std::shared_ptr<Ast> builder = std::make_shared<Ast>(control);
+void Archive::init_archive(){
+    std::vector<bool> tried(n_genomes, false);
+    unsigned int n_tried = 0;
 
-    if(grammar->is_rule(entry_name, entry_scope)){
-        builder->set_entry(grammar->get_rule_pointer_if_exists(entry_name, entry_scope));
+    unsigned int archive_index = 0;
+    /*
+        try each genome once for archive placement, but do so not sequentially, but in random order
+        this helps reduce quality biases due to loop order
 
-    } else if(builder->entry_set()){
-        WARNING("Rule " + entry_name + STR_SCOPE(entry_scope) + " is not defined for grammar " + grammar->get_name() + ". Will use previous entry instead");
+        if placement condition passes (cell was empty or this genome had higher quality), mark this archive index
+        as passed
+    */
+    while(n_tried < n_genomes){
+        unsigned int genome_index = random_uint(n_genomes - 1);
+        
+        while(tried[genome_index]){
+            genome_index = random_uint(n_genomes - 1);
+        }
 
-    } else {
-        WARNING("Rule " + entry_name + " is not defined for grammar " + grammar->get_name());
-    }
+        Ast_entry genome = init_genomes[genome_index];
 
-    return builder;
-}
+        // figure out which cell this genome's feature vector falls into
+        Feature_vec fv(genome.ast->get_compilation_unit());
+        archive_index = fv.get_archive_index();
 
-Node Generator::build_equivalent(Node ast_root){
-    // for each COMPOUND_STMTS node, apply mutation rules
-    for(auto& compound_stmts : Node_gen(ast_root, COMPOUND_STMTS)){
-        RULE->apply(compound_stmts);
-    }
+        int place_condition_passed = archive[archive_index].place(genome);
 
-    return ast_root;
-}
+        tried[genome_index] = true;
+        n_tried += 1;
+        
+        // std::cout << fv << std::endl;
 
-Slot_type Generator::get_compilation_unit(const std::shared_ptr<Node> ast_root){
-    auto program = ast_root->find(PROGRAM);
+        if (place_condition_passed){
+            std::cout << "Index " << archive_index << std::endl;
 
-    for(auto& child : program->get_children()){
-        if(*child == CIRCUIT || *child == BODY){
-            return &child;
+            filled_archive_indices.push_back(archive_index);
         }
     }
 
-    return nullptr;
+    INFO("Init archive fill ratio " + std::to_string(archive_fill_ratio()));
+    INFO("Init archive average quality " + std::to_string(archive_av_quality()));
+
+    // dump init archive in JSON
+    dump_archive(output_dir / "init_archive.json");
 }
+
+void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
+    float fill_ratio = archive_fill_ratio();
+
+    /// TODO: figure out what mutations meanigfully move the AST into a new region of the archive
+    while(fill_ratio < target_fill_ratio){
+        // pick random genome from archive
+        unsigned int random_index = filled_archive_indices[random_uint(filled_archive_indices.size() - 1)];
+        Ast_entry in_archive_genome = archive[random_index].get_genome();
+
+        assert(!in_archive_genome.empty());
+    
+        Ast_entry genome = in_archive_genome.clone();
+
+        // mutate genome
+        Statement_mutation(genome, grammar).apply();
+
+        // get new feature vector
+        // recalculation of compilation unit here works well because mutations might change child vectors causing dangling pointers
+        Feature_vec fv(genome.ast->get_compilation_unit());
+
+        // place genome into archive
+        unsigned int archive_index = fv.get_archive_index();
+        int place_condition_passed = archive[archive_index].place(genome);
+
+        // std::cout << "Index " << archive_index << std::endl;
+        // std::cout << fv << std::endl;
+
+        if (place_condition_passed) {
+            filled_archive_indices.push_back(archive_index);
+        }
+
+        fill_ratio = archive_fill_ratio();
+
+        #if 1
+        INFO("Archive fill ratio " + std::to_string(fill_ratio));
+        getchar();
+        #endif
+    }
+
+    INFO("Final archive average quality " + std::to_string(archive_av_quality()));
+
+    dump_archive(output_dir / "final_archive.json");
+}
+
+std::vector<Ast_entry> Archive::get_best_genomes(){
+    std::vector<Ast_entry> out;
+
+    for(const Cell& cell : archive){
+        if (!cell.empty()){
+            out.push_back(cell.get_genome());
+        }
+    }
+
+    return out;
+}
+
 
 void Generator::ast_parse(const std::vector<Ast_entry>& entries, const fs::path& output_dir, const Control& control){
 
@@ -69,22 +136,27 @@ std::vector<Ast_entry> Generator::generate_n_asts(unsigned int n, const Control&
     std::vector<Ast_entry> entries;
     entries.reserve(n);
 
+    auto entry_rule = grammar->get_rule_pointer_if_exists(entry_name, entry_scope);
+
+    if (entry_rule == nullptr){
+        ERROR("Rule " + entry_name + " is not defined for grammar " + grammar->get_name());
+    }
+
     for(size_t i = 0; i < n; i++){
         unsigned int seed = random_uint(UINT32_MAX);
         rng().seed(seed);
 
-        std::shared_ptr<Ast> builder = setup_builder(control);
-        Result<std::shared_ptr<Node>> maybe_ast_root = builder->build();
+        std::shared_ptr<Ast> ast_builder = std::make_shared<Ast>(control);
+        Result<std::shared_ptr<Node>> maybe_ast_root = ast_builder->build(entry_rule);
+        std::shared_ptr<Context> context = ast_builder->get_context();
+
+        if (control.print_circuit_info){
+            context->print_circuit_info();
+        }
 
         if (maybe_ast_root.is_ok()){
-            std::shared_ptr<Node> ast_root = maybe_ast_root.get_ok();
-            auto compilation_unit = get_compilation_unit(ast_root);
-            
-            if (compilation_unit == nullptr) {
-                ERROR("Compilation unit of program must be body or circuit node");
-            }
-
-            entries.push_back({ast_root, compilation_unit});
+            std::shared_ptr<Node> ast_root = maybe_ast_root.get_ok();            
+            entries.push_back({ast_root, context});
 
         } else {
             WARNING(maybe_ast_root.get_error());
@@ -94,116 +166,17 @@ std::vector<Ast_entry> Generator::generate_n_asts(unsigned int n, const Control&
     return entries;
 }
 
-/// @brief Get quality of each compilation unit
-/// @param entries 
-/// @return 
-std::vector<Quality> Generator::comp_unit_quality(const std::vector<Ast_entry>& entries){
-    std::vector<Quality> quality;
-
-    for (auto& entry : entries){
-        quality.push_back(Quality(entry.compilation_unit));
-        std::cout << *(quality.end() - 1) << std::endl;
-    }
-
-    return quality;
-}
-
-/// @brief Get compilation unit feature vector
-/// @param entries 
-/// @return 
-std::vector<Feature_vec> Generator::comp_unit_feature_vec(const std::vector<Ast_entry>& entries){
-    std::vector<Feature_vec> vec;
-
-    for (auto& entry : entries){
-        vec.push_back(Feature_vec(entry.compilation_unit));
-    }
-
-    return vec;
-}
-
 std::vector<Ast_entry> Generator::map_elites(unsigned int n_genomes, const Control& control, const fs::path& output_dir){
     assert(n_genomes >= 1);
 
     std::vector<Ast_entry> entries = generate_n_asts(n_genomes, control);
-    std::vector<bool> placed(n_genomes, false);
+
+    Archive archive(entries, output_dir);
     
-    std::vector<Quality> qualities = comp_unit_quality(entries);
-    std::vector<Feature_vec> feature_vecs = comp_unit_feature_vec(entries);
+    archive.init_archive();
+    archive.fill_archive(grammar);
 
-    if (qualities.size() != n_genomes || feature_vecs.size() != n_genomes){
-        INFO("Cannot map elites, qualities and feature vecs do not match num of genomess");
-        return entries;
-    }
-
-    float fill_percentage = 0.3; // stop loop when 30% of the archive has been filled
-
-    // init archive : place all generated genomes into archive
-    Feature_vec& fv = feature_vecs[0];
-    unsigned int archive_size = fv.get_archive_size();
-    std::vector<Cell> archive(archive_size);
-    unsigned int n_placed = 0;
-
-    INFO("MAP-elites archive size " + std::to_string(archive_size));
-
-    while(n_placed < n_genomes){
-        unsigned int random_index = random_uint(n_genomes - 1);
-        
-        while(placed[random_index]){
-            random_index = random_uint(n_genomes - 1);
-        }
-
-        // figure out which cell this genome's feature vector falls into
-        fv = feature_vecs[random_index];
-        unsigned int archive_index = fv.get_archive_index();
-
-        archive[archive_index].place(qualities[random_index]);
-        placed[random_index] = true;
-        n_placed += 1;
-
-        std::cout << "Index " << archive_index << std::endl;
-        std::cout << fv << std::endl;
-    }
-
-    // dump init archive in JSON
-    dump_archive(archive, fv, output_dir / "init_archive.json"); 
-
-    /// TODO: run main loop
-
-    return entries;
+    /// TODO: figure out why mutations are malformed
+    return entries; // archive.get_best_genomes();
 }
 
-void dump_archive(const std::vector<Cell>& archive, const Feature_vec& feature_vec, const fs::path& path){
-    std::ofstream f(path);
-
-    f << "{\n";
-    f << "\"dims\" : [\n";
-
-    // feature vec info
-    for (size_t i  = 0; i < feature_vec.size(); i++){
-        Feature feature = feature_vec[i];
-        f << "  {\"name\" : \"" << feature.name << "\", \"bins\" : " << feature.num_bins << "}";
-        if (i != feature_vec.size() - 1){
-            f << ",";
-        }
-        f << "\n";
-    }
-
-    f << "],\n";
-
-    // archive
-    f << "\"cells\" : [\n";
-    for (size_t i = 0; i < archive.size(); i++){
-        const Cell& cell = archive[i];
-        float q = cell.get_quality();
-        f << "  {";
-        f << "\"index\": " << i << ", ";
-        f << "\"occupied\": " << (cell.is_occupied() ? "true" : "false") << ", ";
-        f << "\"quality\": " << (cell.is_occupied() ? q : 0.0f); // normalise
-        f << "}";
-        if (i < archive.size() - 1) f << ",";
-        f << "\n";
-    }
-    f << "]}\n";
-
-    INFO("Archive JSON dumped at " + path.string());
-}

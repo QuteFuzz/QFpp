@@ -16,9 +16,19 @@ enum Node_kind {
     NON_TERMINAL,
 };
 
+enum Clone_type {
+    SHALLOW,
+    DEEP,
+};
+
 class UInt;
 class Variable;
 class Branch;
+
+class Node;
+
+using Slot_type = std::shared_ptr<Node>*;
+
 
 /// @brief A node is a term with pointers to other nodes
 class Node : public std::enable_shared_from_this<Node> {
@@ -69,11 +79,13 @@ class Node : public std::enable_shared_from_this<Node> {
             return get_str();
         }
 
-        bool visited(std::vector<std::shared_ptr<Node>*>& visited_slots, std::shared_ptr<Node>* slot, bool track_visited) const ;
+        bool visited(std::vector<Slot_type>& visited_slots, Slot_type slot, bool track_visited) const ;
 
-        std::shared_ptr<Node>* find_slot(Token_kind node_kind, std::vector<std::shared_ptr<Node>*>& visited_slots, bool track_visited = true);
+        Slot_type find_slot(Token_kind node_kind, std::vector<Slot_type>& visited_slots, bool track_visited = true);
 
         std::shared_ptr<Node> find(Token_kind node_kind);
+
+        virtual std::shared_ptr<Node> clone(const Clone_type& ct) const;
 
         inline int count_nodes() const {
             int res = 1;
@@ -132,6 +144,12 @@ class Node : public std::enable_shared_from_this<Node> {
             }
         }
 
+        inline void erase_child(size_t index) {
+            if(index < size()){
+                children.erase(children.begin() + index);
+            }
+        }
+
         size_t size() const {
             return children.size();
         }
@@ -161,6 +179,18 @@ class Node : public std::enable_shared_from_this<Node> {
         void make_partition(int target, int n_children);
 
         void make_control_flow_partition(int target, int n_children);
+
+        inline Slot_type get_compilation_unit(){
+            auto program = find(PROGRAM);
+
+            for(auto& child : program->get_children()){
+                if(*child == CIRCUIT || *child == BODY){
+                    return &child;
+                }
+            }
+
+            ERROR("Compilation unit of program must be body or circuit node");
+        }
 
         inline bool has_constraints(){
             return constraints.has_value();
