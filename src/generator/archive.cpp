@@ -66,7 +66,7 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
 
         fill_ratio = archive_fill_ratio();
 
-        #if 1
+        #if 0
         INFO("Archive fill ratio " + std::to_string(fill_ratio));
         getchar();
         #endif

@@ -76,8 +76,6 @@ float Quality::adj_gate_pair_density(){
 }
 
 unsigned int Quality::has_mixed_body(){
-    std::cout << compilation_unit << std::endl;
-
     for (auto& compound_stmts : Node_gen(**compilation_unit, COMPOUND_STMTS)){
         bool has_gate = compound_stmts->find(QUBIT_OP) != nullptr;
         bool has_cf   = compound_stmts->find(CF_STMT)  != nullptr;
