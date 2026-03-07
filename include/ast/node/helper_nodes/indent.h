@@ -2,16 +2,17 @@
 #define INDENT_H
 
 #include <node.h>
+#include <clone_mixin.h>
 
-class Indent : public Node {
+class Indent : public Cloneable<Indent> {
 
     public:
         Indent():
-            Node("indent", INDENT)
+            Cloneable<Indent>("indent", INDENT)
         {}
 
         Indent(const std::string& str, const Token_kind& kind):
-            Node(str, kind)
+            Cloneable<Indent>(str, kind)
         {}
 
         void print_program(std::ostream& stream, unsigned int indent_level) const override {

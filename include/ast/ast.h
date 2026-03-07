@@ -35,6 +35,8 @@ class Ast{
 
         std::shared_ptr<Context> get_context() const { return std::make_shared<Context>(context); }
 
+        Term make_term_from_rule(std::shared_ptr<Rule> rule_ptr);
+
         Result<std::shared_ptr<Node>> build(std::shared_ptr<Rule> entry);
 
     protected:
@@ -42,8 +44,6 @@ class Ast{
         Context context;
         Control control;
 };
-
-Slot_type get_compilation_unit(const std::shared_ptr<Node> ast_root);
 
 struct Ast_entry {
     std::shared_ptr<Node> ast;

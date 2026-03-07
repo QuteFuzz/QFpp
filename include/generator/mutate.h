@@ -59,9 +59,9 @@ class Mutation_rule {
 class Statement_insertion : public Mutation_rule {
 
     public:
-        Statement_insertion(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, unsigned int _n_stmts, unsigned int _nested_depth = 0):
+        Statement_insertion(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, unsigned int _nested_depth = 0):
             Mutation_rule(_entry, _grammar, COMPOUND_STMTS),
-            n_stmts(_n_stmts),
+            n_stmts(0),
             nested_depth(_nested_depth)
         {}
 

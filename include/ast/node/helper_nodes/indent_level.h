@@ -2,12 +2,13 @@
 #define INDENT_LEVEL_H
 
 #include <node.h>
+#include <clone_mixin.h>
 
-class Indent_level : public Node {
+class Indent_level : public Cloneable<Indent_level> {
 
     public:
         Indent_level():
-            Node("indent_level", INDENT_LEVEL)
+            Cloneable<Indent_level>("indent_level", INDENT_LEVEL)
         {}
 
         void print_program(std::ostream& stream, unsigned int indent_level) const override {

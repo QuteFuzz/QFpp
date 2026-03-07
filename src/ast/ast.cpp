@@ -264,6 +264,11 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 	parent->transition_to_done();
 }
 
+Term Ast::make_term_from_rule(std::shared_ptr<Rule> rule_ptr){
+	Token_kind kind = rule_ptr->get_token().kind;
+	return Term(rule_ptr, kind, Meta_func::NONE);
+}
+
 Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry){
 	Result<std::shared_ptr<Node>> res;
 
@@ -271,9 +276,7 @@ Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry){
 		res.set_error("Entry point not set");
 
 	} else {
-
-		Token_kind entry_token_kind = entry->get_token().kind;
-		Term entry_term(entry, entry_token_kind, Meta_func::NONE);
+		const Term& entry_term = make_term_from_rule(entry);
 
 		auto maybe_root = make_child(std::make_shared<Node>("", RULE), entry_term); // need this call such that the entry node also calls the factory function
 

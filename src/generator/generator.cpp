@@ -73,7 +73,6 @@ std::vector<Ast_entry> Generator::map_elites(unsigned int n_genomes, const Contr
     archive.init_archive();
     archive.fill_archive(grammar);
 
-    /// TODO: figure out why mutations are malformed
-    return entries; // archive.get_best_genomes();
+    return archive.get_best_genomes();
 }
 
