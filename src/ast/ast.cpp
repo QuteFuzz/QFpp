@@ -22,10 +22,7 @@
 #include <gate_name.h>
 #include <variable.h>
 
-/*
-	features
-*/
-#include <ast_stats.h>
+#include <info.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"

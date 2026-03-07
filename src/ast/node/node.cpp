@@ -4,8 +4,49 @@
 
 int Node::node_counter = 0;
 
-std::string Node::get_str() const {
-    return (kind == SYNTAX) ? escape_string(str) : str;
+std::shared_ptr<Node> Node::clone(const Clone_type& ct) const {
+    auto new_node = std::make_shared<Node>(*this);
+    new_node->children.clear();
+    new_node->incr_id();
+
+    if (ct == DEEP){
+        for (const auto& child : children) {
+            new_node->children.push_back(child->clone(ct));
+        }
+    }
+
+    return new_node;
+}
+
+/// Used to print the program
+void Node::print_program(std::ostream& stream, unsigned int indent_level) const {
+    if(kind == SYNTAX){
+        stream << str;
+    } else {
+        for(const std::shared_ptr<Node>& child : children){
+            child->print_program(stream, indent_level);
+        }
+    }
+}
+
+int Node::count_nodes() const {
+    int res = 1;
+
+    for(auto child : children){
+        res += child->count_nodes();
+    }
+
+    return res;
+}
+
+int Node::count_nodes(Token_kind _kind) const {
+    int res = (kind == _kind);
+
+    for(auto child : children){
+        res += child->count_nodes();
+    }
+
+    return res;
 }
 
 bool Node::visited(std::vector<Slot_type>& visited_slots, Slot_type slot, bool track_visited) const {
@@ -44,19 +85,6 @@ std::shared_ptr<Node> Node::find(Token_kind node_kind) {
     return (maybe_find == nullptr) ? nullptr : *maybe_find;
 }
 
-std::shared_ptr<Node> Node::clone(const Clone_type& ct) const {
-    auto new_node = std::make_shared<Node>(*this);
-    new_node->children.clear();
-    new_node->incr_id();
-
-    if (ct == DEEP){
-        for (const auto& child : children) {
-            new_node->children.push_back(child->clone(ct));
-        }
-    }
-
-    return new_node;
-}
 
 void Node::print_ast(std::string indent) const {
     std::cout << indent << str << " " <<  kind << " (" << this << ")" << std::endl;
@@ -150,6 +178,10 @@ void Node::make_partition(int target, int n_children){
 
 }
 
+unsigned int Node::get_n_ports() const {
+    return 1;
+}
+
 std::shared_ptr<Variable> Node::get_name() const {
     return std::make_shared<Variable>();
 }
@@ -161,3 +193,16 @@ std::shared_ptr<UInt> Node::get_size() const {
 std::shared_ptr<UInt> Node::get_index() const {
     return std::make_shared<UInt>();
 }
+
+Slot_type Node::get_compilation_unit(){
+    auto program = find(PROGRAM);
+
+    for(auto& child : program->get_children()){
+        if(*child == CIRCUIT || *child == BODY){
+            return &child;
+        }
+    }
+
+    ERROR("Compilation unit of program must be body or circuit node");
+}
+

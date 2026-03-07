@@ -35,6 +35,8 @@ void Statement_insertion::apply_blockwise(std::shared_ptr<Node> compound_stmts) 
             if (maybe_node.is_ok()){
                 std::shared_ptr<Node> node = maybe_node.get_ok();
 
+                assert(node != nullptr);
+
                 #if 0
                 std::cout << "new node ====> ";
                 node->print_program(std::cout);
