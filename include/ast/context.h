@@ -84,6 +84,10 @@ struct Context {
 			nested_depth = control.get_value("NESTED_MAX_DEPTH");
 		}
 
+		void change_nested_depth(unsigned int new_depth){
+			nested_depth = new_depth;
+		}
+
 		void reduce_nested_depth(){
 			nested_depth = (nested_depth == 0) ? 0 : nested_depth - 1;
 		}
@@ -93,6 +97,8 @@ struct Context {
 		bool can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit);
 
 		bool current_circuit_uses_subroutines();
+
+		const Control& get_control() const { return control; }
 
 		std::shared_ptr<Circuit> get_current_circuit() const;
 
@@ -115,8 +121,6 @@ struct Context {
 		std::shared_ptr<UInt> nn_circuit_id();
 
 		std::shared_ptr<Gate> nn_gate_from_subroutine();
-
-		std::shared_ptr<Node> nn_next(Node& ast_root, const Token_kind& kind);
 
 		template<typename T>
 		inline std::shared_ptr<T> get_current_node() const {
@@ -145,7 +149,6 @@ struct Context {
 
 		std::vector<std::shared_ptr<Circuit>> circuits;
 		std::shared_ptr<Circuit> dummy_circuit = std::make_shared<Circuit>();
-		std::unordered_map<Token_kind, std::unique_ptr<Node_gen>> node_generators;
 
 		unsigned int subroutine_counter = 0;
 		unsigned int current_port = 0;

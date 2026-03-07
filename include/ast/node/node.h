@@ -16,9 +16,19 @@ enum Node_kind {
     NON_TERMINAL,
 };
 
+enum Clone_type {
+    SHALLOW,
+    DEEP,
+};
+
 class UInt;
 class Variable;
 class Branch;
+
+class Node;
+
+using Slot_type = std::shared_ptr<Node>*;
+
 
 /// @brief A node is a term with pointers to other nodes
 class Node : public std::enable_shared_from_this<Node> {
@@ -39,6 +49,10 @@ class Node : public std::enable_shared_from_this<Node> {
 
         virtual ~Node() = default;
 
+        inline virtual std::string resolved_name() const {
+            return get_str();
+        }
+
         inline void add_child(const std::shared_ptr<Node> child){
             children.push_back(child);
         }
@@ -47,70 +61,28 @@ class Node : public std::enable_shared_from_this<Node> {
             state = NB_DONE;
         }
 
-        Node_build_state build_state(){
+        inline Node_build_state build_state() const {
             return state;
         }
 
-        int get_id() const {
+        inline int get_id() const {
             return id;
         }
 
-        void incr_id(){
+        inline void incr_id(){
             id++;
         }
 
-        std::string get_str() const;
+        inline std::string get_str() const {
+            return (kind == SYNTAX) ? escape_string(str) : str;
+        }
 
-        Token_kind get_node_kind() const {
+        inline Token_kind get_node_kind() const {
             return kind;
         }
 
-        virtual std::string resolved_name() const {
-            return get_str();
-        }
 
-        bool visited(std::vector<std::shared_ptr<Node>*>& visited_slots, std::shared_ptr<Node>* slot, bool track_visited) const ;
-
-        std::shared_ptr<Node>* find_slot(Token_kind node_kind, std::vector<std::shared_ptr<Node>*>& visited_slots, bool track_visited = true);
-
-        std::shared_ptr<Node> find(Token_kind node_kind);
-
-        inline int count_nodes() const {
-            int res = 1;
-
-            for(auto child : children){
-                res += child->count_nodes();
-            }
-
-            return res;
-        }
-
-        inline int count_nodes(Token_kind _kind) const {
-            int res = (kind == _kind);
-
-            for(auto child : children){
-                res += child->count_nodes();
-            }
-
-            return res;
-        }
-
-        /// Used to print the program
-        virtual void print_program(std::ostream& stream, unsigned int indent_level = 0) const {
-            if(kind == SYNTAX){
-                stream << str;
-            } else {
-                for(const std::shared_ptr<Node>& child : children){
-                    child->print_program(stream, indent_level);
-                }
-            }
-        }
-
-        void print_ast(std::string indent) const;
-
-        void extend_dot_string(std::ostringstream& ss) const;
-
-        std::vector<std::shared_ptr<Node>>& get_children() {
+        inline std::vector<std::shared_ptr<Node>>& get_children() {
             return children;
         }
 
@@ -132,23 +104,21 @@ class Node : public std::enable_shared_from_this<Node> {
             }
         }
 
-        size_t size() const {
+        inline void erase_child(size_t index) {
+            if(index < size()){
+                children.erase(children.begin() + index);
+            }
+        }
+
+        inline size_t size() const {
             return children.size();
         }
 
-        bool operator==(const Token_kind& other_kind) const {
-            return kind == other_kind;
-        }
-
-        bool operator==(const Node& other) const {
-            return get_str() == other.get_str();
-        }
-
-        bool branch_satisfies_constraints(const Branch& branch){
+        inline bool branch_satisfies_constraints(const Branch& branch){
             return !constraints.has_value() || constraints.value().passed(branch);
         }
 
-        void add_constraint(const Token_kind& rule_kind, unsigned int n_occurances){
+        inline void add_constraint(const Token_kind& rule_kind, unsigned int n_occurances){
             if(constraints.has_value()){
                 constraints.value().add(rule_kind, n_occurances);
             } else {
@@ -156,13 +126,7 @@ class Node : public std::enable_shared_from_this<Node> {
             }
         }
 
-        int get_next_child_target();
-
-        void make_partition(int target, int n_children);
-
-        void make_control_flow_partition(int target, int n_children);
-
-        inline bool has_constraints(){
+                inline bool has_constraints(){
             return constraints.has_value();
         }
 
@@ -178,13 +142,47 @@ class Node : public std::enable_shared_from_this<Node> {
             constraints = std::nullopt;
         }
 
-        virtual unsigned int get_n_ports() const {return 1;}
+        virtual unsigned int get_n_ports() const;
 
         virtual std::shared_ptr<Variable> get_name() const;
 
         virtual std::shared_ptr<UInt> get_size() const;
 
         virtual std::shared_ptr<UInt> get_index() const;
+
+        virtual std::shared_ptr<Node> clone(const Clone_type& ct) const;
+
+        virtual void print_program(std::ostream& stream, unsigned int indent_level = 0) const;
+
+        int count_nodes() const;
+
+        int count_nodes(Token_kind _kind) const;
+
+        bool visited(std::vector<Slot_type>& visited_slots, Slot_type slot, bool track_visited) const ;
+
+        Slot_type find_slot(Token_kind node_kind, std::vector<Slot_type>& visited_slots, bool track_visited = true);
+
+        std::shared_ptr<Node> find(Token_kind node_kind);
+
+        void print_ast(std::string indent) const;
+
+        void extend_dot_string(std::ostringstream& ss) const;
+
+        int get_next_child_target();
+
+        void make_partition(int target, int n_children);
+
+        void make_control_flow_partition(int target, int n_children);
+
+        Slot_type get_compilation_unit();
+
+        bool operator==(const Token_kind& other_kind) const {
+            return kind == other_kind;
+        }
+
+        bool operator==(const Node& other) const {
+            return get_str() == other.get_str();
+        }
 
     protected:
         int id = 0;

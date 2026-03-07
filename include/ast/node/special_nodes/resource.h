@@ -13,19 +13,19 @@ enum class Resource_kind {
 
 #define STR_RESOURCE_KIND(rk) (rk == Resource_kind::QUBIT ? " QUBIT " : (rk == Resource_kind::BIT) ? " BIT " : " PARAM ")
 
-class Resource : public Node {
+class Resource : public Cloneable<Resource> {
     public:
 
         /// @brief Dummy resource
         Resource() :
-            Node("dummy", QUBIT),
+            Cloneable<Resource>("dummy", QUBIT),
             resource_kind(Resource_kind::QUBIT)
         {
             add_constraint(SINGULAR_QUBIT, 1);
         }
 
         Resource(const Variable& _name, const UInt& _index, const Scope& _scope, Resource_kind rk, bool is_reg) :
-            Node("register_resource", (rk == (Resource_kind::QUBIT) ? QUBIT : BIT)),
+            Cloneable<Resource>("register_resource", (rk == (Resource_kind::QUBIT) ? QUBIT : BIT)),
             name(_name),
             index(_index),
             scope(_scope),
@@ -75,13 +75,6 @@ class Resource : public Node {
             bool index_matches = (*get_index() == *other.get_index());
 
             return name_matches && index_matches;
-        }
-
-        std::shared_ptr<Resource> clone() const {
-            auto new_node = std::make_shared<Resource>(*this);
-            new_node->clear_children();
-            new_node->incr_id();
-            return std::make_shared<Resource>(*new_node);
         }
 
         inline void print_info() const {

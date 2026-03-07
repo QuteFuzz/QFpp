@@ -4,7 +4,7 @@
 #include <coll.h>
 
 Gate::Gate(const std::string& str, const Token_kind& kind) :
-    Node(str, kind)
+    Cloneable<Gate>(str, kind)
 {
     bool gate_found = false;
 
@@ -24,7 +24,7 @@ Gate::Gate(const std::string& str, const Token_kind& kind) :
 }
 
 Gate::Gate(const std::string& str, const Token_kind& kind, const Ptr_coll<Resource_def>& _resource_defs) :
-    Node(str, kind),
+    Cloneable<Gate>(str, kind),
     resource_defs(_resource_defs)
 {
     assert(kind == SUBROUTINE);

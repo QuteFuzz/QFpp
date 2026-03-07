@@ -383,6 +383,9 @@ def plot_coverage(
     stats_text(X2d, axes["text_stats"], cells, occupied, qualities, palette)
 
     plt.savefig(outpath, dpi=150, bbox_inches="tight", facecolor=fig.get_facecolor())
+
+    print("Coverage plot saved at", outpath)
+
     # plt.show() using non-iteractive backend
 
 
@@ -433,7 +436,7 @@ if __name__ == "__main__":
         outpath = Path("coverage.png")
     else:
         json_path = Path(args.json)
-        outpath = json_path.parent / "coverage.png"
+        outpath = json_path.with_suffix(".png")
         dims, cells = load_archive(json_path)
 
     plot_coverage(dims, cells, palette, args.seed, outpath)

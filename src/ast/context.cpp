@@ -240,14 +240,6 @@ std::shared_ptr<Qubit_op> Context::nn_qubit_op(){
     return qubit_op;
 }
 
-std::shared_ptr<Node> Context::nn_next(Node& ast_root, const Token_kind& kind){
-
-    if (node_generators.find(kind) == node_generators.end()){
-        node_generators[kind] = std::make_unique<Node_gen>(ast_root, kind);
-    }
-
-    return *node_generators[kind]->begin()++;
-}
 
 unsigned int Context::operator()(Token_kind kind) const {
     auto gate = get_current_node<Gate>();

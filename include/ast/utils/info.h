@@ -1,42 +1,56 @@
-#ifndef STATS_H
-#define STATS_H
+#ifndef INFO_H
+#define INFO_H
 
 #include <utils.h>
 #include <gate.h>
 #include <node_gen.h>
 
 /*
-    lil timmy tim's favorite subject
-
     quality measures relate to how well the circuit would stress test the compiler. All are static measures, using 
     components that interact with the compiler
 
     features are structural descriptors of the AST which effectively describe different *classes* of programs
 */
 
-std::vector<std::shared_ptr<Gate>> get_gates(const std::shared_ptr<Node> compilation_unit);
+class Info {
+
+    public:
+        Info(Slot_type _compilation_unit);
+
+    protected:
+        Slot_type compilation_unit = nullptr;
+        std::vector<std::shared_ptr<Gate>> gates;
+        unsigned int n_gates;
+};
 
 unsigned int max_control_flow_depth_rec(const std::shared_ptr<Node> node, unsigned int current_depth = 0);
 
-struct Feature {
-    std::string name;
-    unsigned int val;
-    unsigned int num_bins;
-    unsigned int bin_width = 1;
-};
 
-struct Feature_vec {
+class Features : public Info {
 
     public:
-        Feature_vec(const Slot_type compilation_unit);
+        struct Feature {
+            std::string name;
+            unsigned int val;
+            unsigned int num_bins = 2;  // binary features by default
+            unsigned int bin_width = 1;
+        };
 
-        unsigned int num_immediate_compound_stmts();
+        Features(Slot_type compilation_unit);
 
-        unsigned int has_multi_qubit_gate();
+        unsigned int has_control_flow();
 
-        unsigned int get_archive_size();
+        unsigned int has_subroutine_call();
 
-        unsigned int get_archive_index();
+        unsigned int has_barrier();
+
+        float multi_qubit_gate_ratio();
+
+        unsigned int has_parametrised();
+
+        unsigned int get_archive_size() const;
+
+        unsigned int get_archive_index() const;
 
         auto begin(){return vec.begin();}
 
@@ -56,7 +70,7 @@ struct Feature_vec {
             return vec[index];
         }
 
-        friend std::ostream& operator<<(std::ostream& stream, Feature_vec& fv){
+        friend std::ostream& operator<<(std::ostream& stream, Features& fv){
             for (auto& f : fv.vec){
                 stream << f.name << " " << f.val << " n_bins: " << f.num_bins << " bin_width: " << f.bin_width << std::endl;
             }
@@ -65,13 +79,12 @@ struct Feature_vec {
         }
 
     private:
-        Slot_type compilation_unit = nullptr;
         std::vector<Feature> vec;
         unsigned int archive_size = 1;
-
 };
 
-struct Quality {
+
+class Quality : public Info {
 
     public:
         struct Component {
@@ -80,11 +93,7 @@ struct Quality {
             float weight = 1.0;
         };
 
-        Quality(){}
-
         Quality(Slot_type _compilation_unit);
-
-        Slot_type get_compilation_unit() const { return compilation_unit; }
 
         float gate_arity_variance();
 
@@ -113,11 +122,7 @@ struct Quality {
         }
 
     private:
-        Slot_type compilation_unit;
-        std::vector<std::shared_ptr<Gate>> gates;
-        unsigned int n_gates;
         std::unordered_map<Token_kind, unsigned int> gate_occurances;
-
         std::vector<Component> components;
 };
 

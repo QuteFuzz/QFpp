@@ -3,92 +3,100 @@
 
 #include <node.h>
 #include <cassert>
+#include <ast.h>
 
 namespace QuteFuzz {
     static const std::set<Token_kind> X_BASIS = {X, RX};
     static const std::set<Token_kind> Y_BASIS = {Y, RY};
     static const std::set<Token_kind> Z_BASIS = {Z, RZ, S, T};
+
+    // used to make sure growth induced by mutations doesn't go out of hand
+    static const std::unordered_map<Token_kind, unsigned int> MAX_NODES = {
+        {COMPOUND_STMTS, 60},
+    };
 };
 
 class Mutation_rule {
     public:
-        Mutation_rule(){}
+        // Mutation_rule(){}
 
-        virtual void apply(std::shared_ptr<Node>& compound_stmts) = 0;
+        Mutation_rule(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind _block_type, bool _on_entire_ast = false):
+            entry(_entry),
+            grammar(_grammar),
+            root(_on_entire_ast ? entry.ast : *entry.ast->get_compilation_unit())
+        {
+            // collect all block nodes first, such that blocks added later during mutation aren't picked up by this loop
+            for(const auto& block_node : Node_gen(*root, _block_type)){
+                block_nodes.push_back(block_node);
+            }
+        }
+
+        void apply(){
+            if (block_nodes.empty()) return;
+
+            // pick one random block rather than mutating all
+            unsigned int idx = random_uint(block_nodes.size() - 1);
+            apply_blockwise(block_nodes[idx]);
+        }
+
+        /// function to apply on each block to be mutated by this rule
+        virtual void apply_blockwise(std::shared_ptr<Node> block_node) = 0;
 
         virtual ~Mutation_rule() = default;
 
     protected:
-        std::shared_ptr<Node> empty = std::make_shared<Node>("");
+        Ast_entry entry;
+        std::shared_ptr<Grammar> grammar;
+        std::shared_ptr<Node> root;
+
+        std::vector<std::shared_ptr<Node>> block_nodes;
 };
 
-class Sequence_rule : public Mutation_rule {
-    public:
-        Sequence_rule(){}
+/**
+ *          SEMNATICS MODIFYING
+ */
 
-        void apply(std::shared_ptr<Node>& compound_stmts) override {
-            for(auto rule : rules){
-                rule->apply(compound_stmts);
-            }
-        }
-
-        void add_rule(std::shared_ptr<Mutation_rule> rule){
-            rules.push_back(rule);
-        }
-
-        std::vector<std::shared_ptr<Mutation_rule>> get_rules() const {
-            return rules;
-        }
-
-    private:
-        std::vector<std::shared_ptr<Mutation_rule>> rules;
-};
-
-class Commutation_rule : public Mutation_rule {
+class Statement_insertion : public Mutation_rule {
 
     public:
-        Commutation_rule(std::set<Token_kind> _basis):
-            Mutation_rule(),
-            basis(_basis)
+        Statement_insertion(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, unsigned int _nested_depth = 0):
+            Mutation_rule(_entry, _grammar, COMPOUND_STMTS),
+            n_stmts(0),
+            nested_depth(_nested_depth)
         {}
 
-        void apply(std::shared_ptr<Node>& compound_stmts);
+        void apply_blockwise(std::shared_ptr<Node> compound_stmts) override;
 
     private:
-        std::set<Token_kind> basis;
+        unsigned int n_stmts;
+        unsigned int nested_depth;
+
 };
 
-class Gate_fission : public Mutation_rule {
+class Statement_deletion : public Mutation_rule {
 
     public:
-        Gate_fission():
-            Mutation_rule()
+        Statement_deletion(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar):
+            Mutation_rule(_entry, _grammar, COMPOUND_STMTS)
         {}
 
-        void apply(std::shared_ptr<Node>& compound_stmts);
+        void apply_blockwise(std::shared_ptr<Node> compound_stmts) override;
 
     private:
+
 };
 
-inline std::shared_ptr<Mutation_rule> operator+(
-    std::shared_ptr<Mutation_rule> lhs,
-    std::shared_ptr<Mutation_rule> rhs
-) {
-    auto seq = std::make_shared<Sequence_rule>();
+class Statement_mutation : public Mutation_rule {
 
-    if (auto lhs_seq = std::dynamic_pointer_cast<Sequence_rule>(lhs)) {
-        for (const auto& r : lhs_seq->get_rules()) seq->add_rule(r);
-    } else {
-        seq->add_rule(lhs);
-    }
+    public:
+        Statement_mutation(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar):
+            Mutation_rule(_entry, _grammar, COMPOUND_STMTS)
+        {}
 
-    if (auto rhs_seq = std::dynamic_pointer_cast<Sequence_rule>(rhs)) {
-        for (const auto& r : rhs_seq->get_rules()) seq->add_rule(r);
-    } else {
-        seq->add_rule(rhs);
-    }
+        void apply_blockwise(std::shared_ptr<Node> compound_stmts) override;
 
-    return seq;
-}
+    private:
+
+};
 
 #endif

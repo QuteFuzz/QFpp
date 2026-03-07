@@ -22,10 +22,7 @@
 #include <gate_name.h>
 #include <variable.h>
 
-/*
-	features
-*/
-#include <ast_stats.h>
+#include <info.h>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wswitch-enum"
@@ -139,15 +136,15 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			create new node pointer to prevent modification of resources / resource defs in circuit collection
 		*/
 		case QUBIT:
-			return context.get_random_resource(Resource_kind::QUBIT)->clone();
+			return context.get_random_resource(Resource_kind::QUBIT)->clone(SHALLOW);
 
 		case BIT:
 			if(*parent == EXPR) context.reset(RL_BITS); // bits can be reused within the same classical expr
-			return context.get_random_resource(Resource_kind::BIT)->clone();
+			return context.get_random_resource(Resource_kind::BIT)->clone(SHALLOW);
 
 		case PARAM:
 			context.reset(RL_PARAMS);
-			return context.get_random_resource(Resource_kind::PARAM, scope)->clone();
+			return context.get_random_resource(Resource_kind::PARAM, scope)->clone(SHALLOW);
 
 		case REGISTER_QUBIT: case REGISTER_BIT:
 		case SINGULAR_QUBIT: case SINGULAR_BIT:
@@ -160,18 +157,18 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 				WARNING("Parent of resource expected to be of `Resource` type! Returning dummy");
 				return std::make_shared<Node>("");;
 			} else {
-				return res->clone();
+				return res->clone(SHALLOW);
 			}
 		}
 
-		case PARAM_DEF:
-			return context.nn_resource_def(scope, Resource_kind::PARAM);
-
 		case QUBIT_DEF:
-			return context.nn_resource_def(scope, Resource_kind::QUBIT);
+			return context.nn_resource_def(scope, Resource_kind::QUBIT)->clone(SHALLOW);
 
 		case BIT_DEF:
-			return context.nn_resource_def(scope, Resource_kind::BIT);
+			return context.nn_resource_def(scope, Resource_kind::BIT)->clone(SHALLOW);
+
+		case PARAM_DEF:
+			return context.nn_resource_def(scope, Resource_kind::PARAM)->clone(SHALLOW);
 
 		case REGISTER_QUBIT_DEF: case REGISTER_BIT_DEF:
 		case SINGULAR_QUBIT_DEF: case SINGULAR_BIT_DEF:
@@ -184,7 +181,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 				WARNING("Parent of resource def expected to be of `Resource def` type! Returning dummy");
 				return std::make_shared<Node>("");;
 			} else {
-				return def->clone();
+				return def->clone(SHALLOW);
 			}
 		}
 
@@ -250,9 +247,8 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 
 				if(std::holds_alternative<Term>(maybe_child)){
 					// redirect
-					INFO("Redirecting ....");
-
 					term_branch_to_child_nodes(parent, std::get<Term>(maybe_child), depth);
+				
 				} else {
 					auto child_node = std::get<std::shared_ptr<Node>>(maybe_child);
 
@@ -268,28 +264,25 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 	parent->transition_to_done();
 }
 
-Result<std::shared_ptr<Node>> Ast::build(){
+Term Ast::make_term_from_rule(std::shared_ptr<Rule> rule_ptr){
+	Token_kind kind = rule_ptr->get_token().kind;
+	return Term(rule_ptr, kind, Meta_func::NONE);
+}
+
+Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry){
 	Result<std::shared_ptr<Node>> res;
 
 	if(entry == nullptr){
 		res.set_error("Entry point not set");
 
 	} else {
-		context.reset(RL_PROGRAM);
-
-		Token_kind entry_token_kind = entry->get_token().kind;
-		Term entry_term(entry, entry_token_kind, Meta_func::NONE);
+		const Term& entry_term = make_term_from_rule(entry);
 
 		auto maybe_root = make_child(std::make_shared<Node>("", RULE), entry_term); // need this call such that the entry node also calls the factory function
 
 		if(std::holds_alternative<std::shared_ptr<Node>>(maybe_root)){
 			root = std::get<std::shared_ptr<Node>>(maybe_root);
 			term_branch_to_child_nodes(root, entry_term);
-
-			if (control.print_circuit_info){
-				context.print_circuit_info();
-			}
-
 			res.set_ok(root);
 
 		} else {

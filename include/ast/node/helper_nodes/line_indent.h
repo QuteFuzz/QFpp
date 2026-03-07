@@ -2,16 +2,17 @@
 #define LINE_INDENT_H
 
 #include <node.h>
+#include <clone_mixin.h>
 
-class Line_indent : public Node {
+class Line_indent : public Cloneable<Line_indent> {
 
     public:
         Line_indent():
-            Node("line_indent", LINE_INDENT)
+            Cloneable<Line_indent>("line_indent", LINE_INDENT)
         {}
 
         Line_indent(const std::string& str, const Token_kind& kind):
-            Node(str, kind)
+            Cloneable<Line_indent>(str, kind)
         {}
 
         void print_program(std::ostream& stream, unsigned int indent_level) const override {
