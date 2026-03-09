@@ -16,6 +16,7 @@ Results:
 
 import argparse
 import os
+from abc import ABC, abstractmethod
 from itertools import zip_longest
 from pathlib import Path
 from typing import Any, Dict, List
@@ -28,7 +29,7 @@ from numpy.typing import NDArray
 from scipy.stats import ks_2samp
 
 
-class Base:
+class Base(ABC):
     OUTPUT_DIR = (Path(__file__).parent.parent / "outputs").resolve()
     TIMEOUT_SECONDS = 30
 
@@ -42,6 +43,9 @@ class Base:
         self.qss_name = qss_name
 
         self.num_shots = 100000
+
+    @abstractmethod
+    def get_counts(self, circuit, opt_level, circuit_num) -> Dict[Any, int]: ...
 
     def qnexus_login(self) -> None:
         """
@@ -125,6 +129,18 @@ class Base:
         self, sv1: NDArray[np.complex128], sv2: NDArray[np.complex128], precision: int = 6
     ) -> float:
         return float(np.round(abs(np.vdot(sv1, sv2)), precision))
+
+    def opt_ks_test(self, circuit, circuit_number: int) -> None:
+        """
+        Runs circuit and returns counts
+        """
+
+        counts1 = self.get_counts(circuit=circuit, opt_level=0, circuit_num=circuit_number)
+
+        for i in range(3):
+            counts2 = self.get_counts(circuit=circuit, opt_level=i + 1, circuit_num=circuit_number)
+            ks_value = self.ks_test(counts1, counts2)
+            print(f"Optimisation level {i + 1} ks-test p-value: {ks_value}")
 
     def plot_histogram(self, res: Dict[Any, int], title: str, circuit_number: int = 0) -> None:
         plots_dir = self.OUTPUT_DIR / self.qss_name / f"circuit{circuit_number}"
