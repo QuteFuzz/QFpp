@@ -15,6 +15,7 @@ dependencies = [
     "pytket-qir",
     "qnexus",
     "tket",
+    "pennylane",
     "umap-learn",
     "selene-sim",
     "jinja2",

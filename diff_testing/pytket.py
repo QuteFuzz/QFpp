@@ -99,18 +99,6 @@ class pytketTesting(Base):
 
         print("Pytket->Qiskit p value", p_val)
 
-    def opt_ks_test(self, circuit: Circuit, circuit_number: int) -> None:
-        """
-        Runs circuit on pytket simulator and returns counts
-        """
-
-        counts1 = self.get_counts(circuit=circuit, opt_level=0, circuit_num=circuit_number)
-
-        for i in range(3):
-            counts2 = self.get_counts(circuit=circuit, opt_level=i + 1, circuit_num=circuit_number)
-            ks_value = self.ks_test(counts1, counts2)
-            print(f"Optimisation level {i + 1} ks-test p-value: {ks_value}")
-
     def run_circ_statevector(self, circuit: Circuit) -> None:
         """
         Runs circuit on pytket simulator and returns statevector
