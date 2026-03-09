@@ -13,11 +13,11 @@ class pennylaneTesting(Base):
         if opt_level == 0:
             result = circuit()
         elif opt_level == 1:
-            result = qml.transforms.cancel_inverses(circuit)()
+            result = qml.transforms.cancel_inverses(circuit)() # type:ignore
         elif opt_level == 2:
-            result = qml.transforms.merge_rotations(qml.transforms.cancel_inverses(circuit))()
+            result = qml.transforms.merge_rotations(qml.transforms.cancel_inverses(circuit))() # type:ignore
         elif opt_level == 3:
-            result = qml.compile(circuit)()
+            result = qml.compile(circuit)() # type:ignore
 
         counts = self.preprocess_counts(dict(result), n_bits=len(list(result.keys())[0]))
         return counts
