@@ -28,11 +28,13 @@ Info::Info(Slot_type _compilation_unit) :
 
     n_gates = gates.size();
 
+    # if 0
     if (n_gates == 0) {
 		WARNING("Ciruit has no gates");
 		(*compilation_unit)->print_program(std::cout);
 
 	}
+    #endif
 }
 
 unsigned int max_control_flow_depth_rec(const std::shared_ptr<Node> node, unsigned int current_depth){

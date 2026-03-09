@@ -154,10 +154,6 @@ class Node : public std::enable_shared_from_this<Node> {
 
         virtual void print_program(std::ostream& stream, unsigned int indent_level = 0) const;
 
-        int count_nodes() const;
-
-        int count_nodes(Token_kind _kind) const;
-
         bool visited(std::vector<Slot_type>& visited_slots, Slot_type slot, bool track_visited) const ;
 
         Slot_type find_slot(Token_kind node_kind, std::vector<Slot_type>& visited_slots, bool track_visited = true);

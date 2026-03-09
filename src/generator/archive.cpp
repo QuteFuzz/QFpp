@@ -8,8 +8,10 @@ void Archive::place(const Ast_entry& genome){
     bool new_placement = archive[archive_index].place(genome);
 
     if (new_placement){
-        std::cout << "Index " << archive_index << std::endl;
         filled_archive_indices.push_back(archive_index);
+
+        std::cout << "Index " << archive_index << std::endl;
+        INFO("fill ratio = " + std::to_string(archive_fill_ratio()));
     }   
 }
 
@@ -39,7 +41,6 @@ void Archive::init_archive(){
         n_tried += 1;
     }
 
-    INFO("Init archive fill ratio " + std::to_string(archive_fill_ratio()));
     INFO("Init archive average quality " + std::to_string(archive_av_quality()));
 
     // dump init archive in JSON
@@ -65,11 +66,6 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
         place(genome);
 
         fill_ratio = archive_fill_ratio();
-
-        #if 0
-        INFO("Archive fill ratio " + std::to_string(fill_ratio));
-        getchar();
-        #endif
     }
 
     INFO("Final archive average quality " + std::to_string(archive_av_quality()));

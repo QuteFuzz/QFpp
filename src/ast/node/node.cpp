@@ -29,26 +29,6 @@ void Node::print_program(std::ostream& stream, unsigned int indent_level) const 
     }
 }
 
-int Node::count_nodes() const {
-    int res = 1;
-
-    for(auto child : children){
-        res += child->count_nodes();
-    }
-
-    return res;
-}
-
-int Node::count_nodes(Token_kind _kind) const {
-    int res = (kind == _kind);
-
-    for(auto child : children){
-        res += child->count_nodes();
-    }
-
-    return res;
-}
-
 bool Node::visited(std::vector<Slot_type>& visited_slots, Slot_type slot, bool track_visited) const {
     for(auto vslot : visited_slots){
         if(vslot == slot) return true;

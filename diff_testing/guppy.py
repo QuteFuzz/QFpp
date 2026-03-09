@@ -1,7 +1,6 @@
 import datetime
 import sys
 import traceback
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict
 
 import pyqir
@@ -19,28 +18,15 @@ from .lib import Base
 
 enable_experimental_features()
 
+# NOT COMPLETED!
+
 
 class guppyTesting(Base):
     def __init__(self) -> None:
         super().__init__("guppy")
 
-    def ks_diff_test(self, circuit: Any, circuit_number: int) -> None:
-        """
-        Compile guppy circuit into hugr and optimise through TKET for differential testing
-        """
-
-        def compile_circuit() -> Any:
-            return circuit.compile()
-
-        # Run the compile with timeout using ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(compile_circuit)
-            # Wait for result, ignoring return value as we just test compilation here?
-            # Original code assigned result but didn't use it immediately except for potential
-            # future passes
-            _ = future.result(timeout=self.TIMEOUT_SECONDS)
-
-        # TODO: Insert TKET optimisation passes here
+    def get_counts(self, circuit, opt_level, circuit_num) -> Dict[Any, int]:
+        return {}
 
     def guppy_qir_diff_test(self, circuit: Any, circuit_number: int, total_num_qubits: int) -> None:
         """

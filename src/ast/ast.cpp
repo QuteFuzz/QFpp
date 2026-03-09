@@ -107,9 +107,6 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		case CIRCUIT:
 			return context.nn_circuit();
 
-		case BODY:
-			return std::make_shared<Node>(str, kind);
-
 		case COMPOUND_STMT:
 			context.reset(RL_QUBITS);
 			context.reset(RL_BITS);

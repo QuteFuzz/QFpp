@@ -19,12 +19,8 @@ MIN_KS_VALUE = 1e-8
 TIMEOUT = 2000
 DEFAULT_NUM_TESTS = 1
 CPU_COUNT = os.cpu_count()
-GRAMMARS = ["pytket", "qiskit", "cirq"]
-SIMULATION_CAP = {
-    "pytket": 64,
-    "qiskit": 64,
-    "cirq": 8,
-}
+GRAMMARS = ["pytket", "qiskit", "cirq", "pennylane"]
+SIMULATION_CAP = {"pytket": 64, "qiskit": 64, "cirq": 8, "pennylane": 64}
 
 
 class Color:

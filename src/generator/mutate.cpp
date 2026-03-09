@@ -47,7 +47,7 @@ void Statement_deletion::apply_blockwise(std::shared_ptr<Node> compound_stmts) {
     unsigned int n_children = compound_stmts->size();
     
     if (n_children > 1){
-        // only remove children if there's at least 2
+        // only remove random child if there's at least 2
         unsigned int idx = random_uint(n_children - 1);
         compound_stmts->erase_child(idx);
     }
@@ -56,16 +56,16 @@ void Statement_deletion::apply_blockwise(std::shared_ptr<Node> compound_stmts) {
 /// @brief Prefer insertion for small nodes, deletion for big nodes
 /// @param compound_stmts 
 void Statement_mutation::apply_blockwise(std::shared_ptr<Node> compound_stmts) {
-    unsigned upper_bound = QuteFuzz::MAX_NODES.at(COMPOUND_STMTS);
+    float upper_bound = 60.0f;
+    float total_children = (float)n_children_across_blocks();
 
-    float random_float = (float)random_uint(upper_bound, 0) / (float)upper_bound;
-    float insert_prob = 1.0f - std::pow(std::min(1.0f, (float)block_nodes.size() / upper_bound), 2);
-
-    // std::cout << "insert prob " << insert_prob << " rand f " << random_float << std::endl;
+    float random_float = (float)random_uint(upper_bound, 0) / upper_bound;
+    float insert_prob = 1.0f - std::pow(std::min(1.0f, total_children / upper_bound), 2.0f);
 
     if (insert_prob > random_float){
-        Statement_insertion(entry, grammar).apply_blockwise(compound_stmts);
-        // Statement_insertion(entry, grammar, 1, 1).apply_blockwise(compound_stmts);
+        for (int depth = 0; depth <= 2; depth++){
+            Statement_insertion(entry, grammar, depth).apply_blockwise(compound_stmts);
+        }
 
     } else {
         Statement_deletion(entry, grammar).apply_blockwise(compound_stmts);

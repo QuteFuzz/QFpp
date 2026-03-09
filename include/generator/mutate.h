@@ -9,11 +9,6 @@ namespace QuteFuzz {
     static const std::set<Token_kind> X_BASIS = {X, RX};
     static const std::set<Token_kind> Y_BASIS = {Y, RY};
     static const std::set<Token_kind> Z_BASIS = {Z, RZ, S, T};
-
-    // used to make sure growth induced by mutations doesn't go out of hand
-    static const std::unordered_map<Token_kind, unsigned int> MAX_NODES = {
-        {COMPOUND_STMTS, 60},
-    };
 };
 
 class Mutation_rule {
@@ -21,22 +16,35 @@ class Mutation_rule {
         // Mutation_rule(){}
 
         Mutation_rule(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind _block_type, bool _on_entire_ast = false):
+            block_type(_block_type),
             entry(_entry),
             grammar(_grammar),
-            root(_on_entire_ast ? entry.ast : *entry.ast->get_compilation_unit())
-        {
-            // collect all block nodes first, such that blocks added later during mutation aren't picked up by this loop
-            for(const auto& block_node : Node_gen(*root, _block_type)){
-                block_nodes.push_back(block_node);
-            }
-        }
+            root(_on_entire_ast ? entry.ast : *entry.ast->get_compilation_unit()),
+            block_nodes{}
+        {}
 
         void apply(){
+            block_nodes.clear();
+
+            for(const auto& node : Node_gen(*root, block_type)){
+                block_nodes.push_back(node);
+            }
+
             if (block_nodes.empty()) return;
 
             // pick one random block rather than mutating all
             unsigned int idx = random_uint(block_nodes.size() - 1);
             apply_blockwise(block_nodes[idx]);
+        }
+
+        unsigned int n_children_across_blocks(){
+            unsigned int out = 0;
+
+            for(const auto& node : block_nodes){
+                out += node->size();
+            }
+
+            return out;
         }
 
         /// function to apply on each block to be mutated by this rule
@@ -45,6 +53,7 @@ class Mutation_rule {
         virtual ~Mutation_rule() = default;
 
     protected:
+        Token_kind block_type;
         Ast_entry entry;
         std::shared_ptr<Grammar> grammar;
         std::shared_ptr<Node> root;
