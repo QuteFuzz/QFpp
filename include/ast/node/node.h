@@ -126,7 +126,7 @@ class Node : public std::enable_shared_from_this<Node> {
             }
         }
 
-                inline bool has_constraints(){
+        inline bool has_constraints(){
             return constraints.has_value();
         }
 

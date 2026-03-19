@@ -16,7 +16,7 @@ Results:
 
 import argparse
 import os
-from abc import ABC, abstractmethod
+from abc import ABC
 from itertools import zip_longest
 from pathlib import Path
 from typing import Any, Dict, List

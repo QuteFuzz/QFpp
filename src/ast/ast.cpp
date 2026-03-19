@@ -283,7 +283,7 @@ Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry){
 			res.set_ok(root);
 
 		} else {
-			res.set_error("Root was redirected, AST cannot be built");
+			res.set_error("Root cannot be build from rule called " + entry->get_name() + ". Redirected to term called " + std::get<Term>(maybe_root).get_string());
 		}
 	}
 

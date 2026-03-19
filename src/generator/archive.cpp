@@ -61,7 +61,10 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
         Ast_entry genome = in_archive_genome.clone();
 
         // mutate genome
-        Statement_mutation(genome, grammar).apply();
+        Mutate_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.3).apply();
+        // Replace_block(genome, grammar, GATE_OP, "subroutine_op", 0.2).apply();
+        // Add_multi_qubit_ops(genome, grammar, 0.3).apply();
+        // Add_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.1, 2).apply();
 
         place(genome);
 

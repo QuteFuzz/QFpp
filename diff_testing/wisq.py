@@ -1,11 +1,15 @@
 import subprocess
 import traceback
 from pathlib import Path
+
 from qiskit import QuantumCircuit
+
 from diff_testing.qiskit import qiskitTesting
+
 from .lib import Base
 
 OPT_TIMEOUTS = [0, 5, 10, 30]
+
 
 class wisqTesting(Base):
     def __init__(self) -> None:
@@ -23,10 +27,14 @@ class wisqTesting(Base):
         out_path = qasm_path.parent / f"wisq_opt{timeout_secs}.qasm"
         subprocess.run(
             [
-                "wisq", str(qasm_path),
-                "--mode", "opt",
-                "-ot", str(timeout_secs),
-                "-o", str(out_path),
+                "wisq",
+                str(qasm_path),
+                "--mode",
+                "opt",
+                "-ot",
+                str(timeout_secs),
+                "-o",
+                str(out_path),
             ],
             check=True,
             capture_output=True,
