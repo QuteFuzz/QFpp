@@ -148,10 +148,10 @@ class Replace_block : public Mutation_rule {
         std::string repl_rule_name;
 };
 
-class Add_multi_qubit_ops : public Mutation_rule {
+class Replace_with_multi_qubit_ops : public Mutation_rule {
 
     public:
-        Add_multi_qubit_ops(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, float _blockwise_rate = 0.1f):
+        Replace_with_multi_qubit_ops(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, float _blockwise_rate = 0.1f):
             Mutation_rule(_entry, _grammar, GATE_OP, _blockwise_rate),
             repl_rule_name("gate_op")
         {}

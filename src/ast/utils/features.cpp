@@ -3,19 +3,16 @@
 Features::Features(Slot_type _compilation_unit) :
     Info(_compilation_unit)
 {
-	unsigned int multi_qubit_gate_n_bins = 5;
-
     vec = {
-        Feature{"has_control_flow", has_control_flow()},
-        Feature{"has_subroutine_call", has_subroutine_call()},
-        Feature{"has_barrier", has_barrier()},
-		// done this way such that archive size is constant for all genomes, otherwise could use max number of gates as num of bins
-        Feature{"multi_qubit_gate_ratio", (unsigned int)(multi_qubit_gate_ratio() * multi_qubit_gate_n_bins), multi_qubit_gate_n_bins},
-        Feature{"has_parametrised", has_parametrised()},
+        Feature("has_control_flow", has_control_flow()),
+        Feature("has_subroutine_call", has_subroutine_call()),
+        Feature("has_barrier", has_barrier()),
+        Feature("has_parametrised", has_parametrised()),
+        Feature("multi_qubit_gate_ratio", multi_qubit_gate_ratio(), 5),
     };
 
     for (auto& f : vec){
-        archive_size *= (f.num_bins + 1); // extra bin for stuff that doesn't fit into any bin
+        archive_size *= f.effective_num_bins(); // extra bin for stuff that doesn't fit into any bin
     }
 }
 
@@ -65,29 +62,12 @@ unsigned int Features::get_archive_size() const {
 }
 
 /// figure out where in the archive this feature vec falls
-unsigned int Features::get_archive_index() const {
-    std::vector<unsigned int> bins;
-
-    for (auto& feature : vec){
-        unsigned int effective_num_bins = feature.num_bins + 1;
-
-        // clamp to last bin if value exceeds range
-        unsigned int bin = (feature.bin_width > 0)
-            ? feature.val / feature.bin_width
-            : 0;
-
-        bin = std::min(bin, effective_num_bins - 1);
-        bins.push_back(bin);
-    }
-
-    assert(bins.size() == vec.size());
-    
-    // second pass to find index while accumulating stride
+unsigned int Features::get_archive_index() {
     unsigned int index = 0;
     unsigned int stride = 1;
 
     for (int j = (int)vec.size() - 1; j >= 0; j--){
-        index += bins[j] * stride;
+        index += vec[j].idx() * stride;
         stride *= (vec[j].num_bins + 1); // +1 to account for additional bin
     }
     

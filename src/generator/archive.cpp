@@ -5,7 +5,7 @@ void Archive::place(const Ast_entry& genome){
     Features fv(genome.ast->get_compilation_unit());
     unsigned int archive_index = fv.get_archive_index();
 
-    bool new_placement = archive[archive_index].place(genome);
+    bool new_placement = archive[archive_index].place(genome, fv);
 
     if (new_placement){
         filled_archive_indices.push_back(archive_index);
@@ -63,7 +63,7 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
         // mutate genome
         Mutate_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.3).apply();
         // Replace_block(genome, grammar, GATE_OP, "subroutine_op", 0.2).apply();
-        // Add_multi_qubit_ops(genome, grammar, 0.3).apply();
+        // Replace_with_multi_qubit_ops(genome, grammar, 0.5).apply();
         // Add_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.1, 2).apply();
 
         place(genome);
@@ -73,8 +73,35 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
 
     INFO("Final archive average quality " + std::to_string(archive_av_quality()));
 
+    fill_distr();
+
     dump_archive(output_dir / "final_archive.json");
 }
+
+void Archive::fill_distr(){
+
+    for (const Cell& cell : archive){
+        Features fv = cell.get_fv();
+
+        for(const auto& f : fv){
+            feature_distr[f.name].at(f.idx()) += 1;
+        }
+    }
+
+    for (const auto&[feat_name, distr] : feature_distr){
+        std::cout << feat_name << std::endl;
+
+        for (size_t i = 0; i < distr.size(); i++){
+            std::cout << "| " << distr[i] << " |";
+
+            if(i == distr.size() - 1){
+                std::cout << std::endl;
+            }
+        }
+    }
+
+}
+
 
 std::vector<Ast_entry> Archive::get_best_genomes(){
     std::vector<Ast_entry> out;

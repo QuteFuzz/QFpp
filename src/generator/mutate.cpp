@@ -81,7 +81,7 @@ void Replace_block::apply_blockwise(Slot_type block) {
     }
 }
 
-void Add_multi_qubit_ops::apply_blockwise(Slot_type block) {
+void Replace_with_multi_qubit_ops::apply_blockwise(Slot_type block) {
     Replace_block(entry, grammar, block_kind, repl_rule_name, blockwise_rate).apply_blockwise(block);
     std::shared_ptr<Node> gate_name = (*block)->find(GATE_NAME);
 

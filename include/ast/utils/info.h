@@ -15,7 +15,11 @@
 class Info {
 
     public:
-        Info(Slot_type _compilation_unit);
+        Info(){}
+
+        Info(Slot_type _compilation_unit, std::shared_ptr<Info> info = nullptr);
+
+        std::vector<std::shared_ptr<Gate>> get_gates() const {return gates;}
 
     protected:
         Slot_type compilation_unit = nullptr;
@@ -30,11 +34,35 @@ class Features : public Info {
 
     public:
         struct Feature {
+
+            Feature(std::string _name, unsigned int _val) : 
+                name(_name),
+                raw_idx(_val)
+            {}
+
+            Feature(std::string _name, float _val, unsigned int _num_bins):
+                name(_name),
+                raw_idx((unsigned int)(_val * _num_bins)),
+                num_bins(_num_bins)
+            {
+                assert((0.0 <= _val) && (_val <= 1.0));
+            }
+
             std::string name;
-            unsigned int val;
+            unsigned int raw_idx;
             unsigned int num_bins = 2;  // binary features by default
             unsigned int bin_width = 1;
+
+            inline unsigned int effective_num_bins() const {return num_bins + 1;} // +1 to account for additional bin
+        
+            inline unsigned int idx() const {
+                return raw_idx / bin_width;
+            }
         };
+
+        Features():
+            Info()
+        {}
 
         Features(Slot_type compilation_unit);
 
@@ -50,7 +78,7 @@ class Features : public Info {
 
         unsigned int get_archive_size() const;
 
-        unsigned int get_archive_index() const;
+        unsigned int get_archive_index();
 
         auto begin(){return vec.begin();}
 
@@ -72,7 +100,7 @@ class Features : public Info {
 
         friend std::ostream& operator<<(std::ostream& stream, Features& fv){
             for (auto& f : fv.vec){
-                stream << f.name << " " << f.val << " n_bins: " << f.num_bins << " bin_width: " << f.bin_width << std::endl;
+                stream << f.name << " " << f.raw_idx << " n_bins: " << f.num_bins << " bin_width: " << f.bin_width << std::endl;
             }
 
             return stream;
@@ -94,6 +122,8 @@ class Quality : public Info {
         };
 
         Quality(Slot_type _compilation_unit);
+
+        Quality(Slot_type _compilation_unit, const Features& fv);
 
         float gate_arity_variance();
 

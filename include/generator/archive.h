@@ -13,8 +13,8 @@ struct Cell {
 
         /// Place genome into cell if it is empty, or if this genome has higher quality. Returns one if cell was
         /// empty, so we can track unique archive placements 
-        inline bool place(const Ast_entry& genome_prime){
-            float quality_prime = Quality(genome_prime.ast->get_compilation_unit()).quality();
+        inline bool place(const Ast_entry& genome_prime, const Features& fv_prime){
+            float quality_prime = Quality(genome_prime.ast->get_compilation_unit(), fv_prime).quality();
             bool new_placement = false;
 
             if (genome.empty() || (quality < quality_prime)){
@@ -24,6 +24,7 @@ struct Cell {
                 }
                 
                 genome = genome_prime;
+                fv = fv_prime;
                 quality = quality_prime;
             }
 
@@ -38,10 +39,15 @@ struct Cell {
             return genome.empty();
         }
 
+        inline Features get_fv() const {
+            return fv;
+        }
+
         Ast_entry get_genome() const {return genome;}
 
     private:
-        Ast_entry genome;    // ast and compilation init slot into ast
+        Ast_entry genome;
+        Features fv;
         float quality = 0.0;
 };
 
@@ -57,6 +63,11 @@ struct Archive {
             output_dir(_output_dir)
         {
             INFO("MAP-elites archive size " + std::to_string(archive.size()));
+
+            // prepare distr map
+            for(const auto& feature : dummy_fv){
+                feature_distr[feature.name] = std::vector<unsigned int>(feature.effective_num_bins(), 0);
+            }
         }
 
         void dump_archive(const fs::path& path){
@@ -114,6 +125,8 @@ struct Archive {
 
         void fill_archive(std::shared_ptr<Grammar> grammar);
 
+        void fill_distr();
+
         std::vector<Ast_entry> get_best_genomes();
 
         void place(const Ast_entry& genome);
@@ -125,6 +138,7 @@ struct Archive {
         unsigned int n_genomes;
         std::vector<Cell> archive;
         std::vector<unsigned int> filled_archive_indices;  // uniquely filled indices
+        std::unordered_map<std::string, std::vector<unsigned int>> feature_distr;
 
         const fs::path& output_dir;
 

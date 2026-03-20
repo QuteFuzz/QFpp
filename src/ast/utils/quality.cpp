@@ -1,7 +1,7 @@
 #include <info.h>
 
-Quality::Quality(Slot_type _compilation_unit):
-    Info(_compilation_unit)
+Quality::Quality(Slot_type _compilation_unit, const Features& fv):
+    Info(_compilation_unit, std::make_shared<Features>(fv))
 {
     for(auto& gate : gates){
         Token_kind kind = gate->get_node_kind();
