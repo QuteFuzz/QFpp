@@ -121,6 +121,10 @@ struct Archive {
             return total_quality / (float)archive.size();
         };
 
+        bool place(const Ast_entry& genome);
+        
+        const Cell& find_nearest_occupied(const Features& fv);
+
         void init_archive();
 
         void fill_archive(std::shared_ptr<Grammar> grammar);
@@ -128,8 +132,6 @@ struct Archive {
         void fill_distr();
 
         std::vector<Ast_entry> get_best_genomes();
-
-        void place(const Ast_entry& genome);
 
     private:
         Features dummy_fv;

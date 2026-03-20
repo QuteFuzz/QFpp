@@ -22,7 +22,6 @@ static Slot_type find_slot_for(std::shared_ptr<Node>& search_root, std::shared_p
 
 class Mutation_rule {
     public:
-        // Mutation_rule(){}
 
         Mutation_rule(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind _block_kind, float _blockwise_rate, bool _on_entire_ast = false):
             entry(_entry),
@@ -148,18 +147,30 @@ class Replace_block : public Mutation_rule {
         std::string repl_rule_name;
 };
 
-class Replace_with_multi_qubit_ops : public Mutation_rule {
+class Remove_block : public Mutation_rule {
 
     public:
-        Replace_with_multi_qubit_ops(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, float _blockwise_rate = 0.1f):
-            Mutation_rule(_entry, _grammar, GATE_OP, _blockwise_rate),
-            repl_rule_name("gate_op")
+        Remove_block(Ast_entry& _entry, Token_kind _block_kind, float _blockwise_rate = 0.1f) :
+            Mutation_rule(_entry, nullptr, _block_kind, _blockwise_rate)
+        {}
+
+        void apply_blockwise(Slot_type block) override;
+};
+
+class Mutate_gate_on_condition : public Mutation_rule {
+
+    public:
+        Mutate_gate_on_condition(std::shared_ptr<Mutation_rule> _mut_rule, std::function<bool(std::shared_ptr<Gate>)> _cond) :
+            Mutation_rule(*_mut_rule),
+            mut_rule(_mut_rule),
+            cond(_cond)
         {}
 
         void apply_blockwise(Slot_type block) override;
 
     private:
-        std::string repl_rule_name;
+        std::shared_ptr<Mutation_rule> mut_rule;
+        std::function<bool(std::shared_ptr<Gate>)> cond;
 };
 
 #endif

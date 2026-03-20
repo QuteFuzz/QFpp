@@ -1,7 +1,7 @@
 #include <archive.h>
 #include <mutate.h>
 
-void Archive::place(const Ast_entry& genome){
+bool Archive::place(const Ast_entry& genome){
     Features fv(genome.ast->get_compilation_unit());
     unsigned int archive_index = fv.get_archive_index();
 
@@ -12,7 +12,34 @@ void Archive::place(const Ast_entry& genome){
 
         std::cout << "Index " << archive_index << std::endl;
         INFO("fill ratio = " + std::to_string(archive_fill_ratio()));
-    }   
+    }
+
+    return new_placement;
+}
+
+const Cell& Archive::find_nearest_occupied(const Features& fv) {
+    assert(filled_archive_indices.size() >= 2); // assume there's at least one other feature vector that can be found
+    
+    float best_dist = std::numeric_limits<float>::max();
+    unsigned int best_idx = filled_archive_indices[0];
+
+    for (unsigned int idx : filled_archive_indices){
+        Features archive_fv = archive[idx].get_fv();
+
+        float dist = 0.0;
+
+        for (size_t feature_idx = 0; feature_idx < fv.size(); feature_idx++){
+            float n_bins_sq = std::pow(archive_fv[feature_idx].num_bins, 2);
+            dist += (float)std::pow(archive_fv[feature_idx].idx() - fv[feature_idx].idx(), 2) / n_bins_sq;
+        }
+
+        if (dist < best_dist){
+            best_dist = dist;
+            best_idx = idx;
+        }
+    }
+
+    return archive[best_idx];
 }
 
 void Archive::init_archive(){
@@ -49,6 +76,7 @@ void Archive::init_archive(){
 
 void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
     float fill_ratio = archive_fill_ratio();
+    unsigned int new_placements = 0, trials = 0;
 
     /// TODO: figure out what mutations meanigfully move the AST into a new region of the archive
     while(fill_ratio < target_fill_ratio){
@@ -60,16 +88,35 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
     
         Ast_entry genome = in_archive_genome.clone();
 
+        /*
+            Crossover and mutation
+        */
+        Features fv = archive[random_index].get_fv();
+        Ast_entry compl_genome = find_nearest_occupied(fv.complement()).get_genome();
+        
         // mutate genome
         Mutate_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.3).apply();
-        // Replace_block(genome, grammar, GATE_OP, "subroutine_op", 0.2).apply();
-        // Replace_with_multi_qubit_ops(genome, grammar, 0.5).apply();
-        // Add_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.1, 2).apply();
+        // Add_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.3, 1).apply();
+        Remove_block(genome, COMPOUND_STMTS, 0.2).apply();
+        
+        auto qubit_cond = [](std::shared_ptr<Gate> gate){return gate->get_num_external_qubits() == 1;};
+        Mutate_gate_on_condition(std::make_shared<Replace_block>(genome, grammar, GATE_OP, "gate_op", 0.5), qubit_cond).apply();
 
-        place(genome);
+        Replace_block(genome, grammar, GATE_OP, "subroutine_op", 0.2).apply();
+
+        // auto floats_cond = [](std::shared_ptr<Gate> gate){return gate->get_num_floats() == 0;};
+        // Mutate_gate( std::make_shared<Replace_block>(genome, grammar, GATE_OP, "gate_op", 0.2), floats_cond).apply();
+        
+        Remove_block(genome, GATE_OP).apply();
+
+        trials += 1;
+
+        new_placements += place(genome);
 
         fill_ratio = archive_fill_ratio();
     }
+
+    std::cout << (float)(new_placements / trials) << "% of trials produce new placements in archive" << std::endl;
 
     INFO("Final archive average quality " + std::to_string(archive_av_quality()));
 

@@ -80,6 +80,8 @@ class Features : public Info {
 
         unsigned int get_archive_index();
 
+        Features complement();
+
         auto begin(){return vec.begin();}
 
         auto end(){return vec.end();}

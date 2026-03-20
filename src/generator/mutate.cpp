@@ -81,8 +81,11 @@ void Replace_block::apply_blockwise(Slot_type block) {
     }
 }
 
-void Replace_with_multi_qubit_ops::apply_blockwise(Slot_type block) {
-    Replace_block(entry, grammar, block_kind, repl_rule_name, blockwise_rate).apply_blockwise(block);
+void Remove_block::apply_blockwise(Slot_type block) {
+    *block = std::make_shared<Node>("");
+}
+
+void Mutate_gate_on_condition::apply_blockwise(Slot_type block) {
     std::shared_ptr<Node> gate_name = (*block)->find(GATE_NAME);
 
     if (gate_name == nullptr){
@@ -94,12 +97,9 @@ void Replace_with_multi_qubit_ops::apply_blockwise(Slot_type block) {
         if (gate == nullptr){
             ERROR("Child of gate name must have node kind of GATE");
         } else {
-            if (gate->get_num_external_qubits() == 1){
+            if (cond(gate)){
+                mut_rule->apply_blockwise(block);
                 apply_blockwise(block);
-            } else {
-                // std::cout << "replacement gate " << std::endl;
-                // gate->print_program(std::cout);
-                // std::cout << "====" << std::endl;
             }
         }
     }

@@ -73,3 +73,12 @@ unsigned int Features::get_archive_index() {
     
     return index;
 }
+
+Features Features::complement() {
+    Features out = *this;
+    for (size_t i = 0; i < out.size(); i++) {
+        // flip to the other extreme of each dimension
+        out[i].raw_idx = out[i].num_bins - out[i].raw_idx;
+    }
+    return out;
+}
