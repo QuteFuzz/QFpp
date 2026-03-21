@@ -43,7 +43,13 @@ struct Cell {
             return fv;
         }
 
-        Ast_entry get_genome() const {return genome;}
+        inline Ast_entry get_genome() const {
+            if (genome.ast == nullptr){
+                ERROR("Genome AST is nullptr");
+            }
+
+            return genome;
+        }
 
     private:
         Ast_entry genome;
@@ -63,73 +69,25 @@ struct Archive {
             output_dir(_output_dir)
         {
             INFO("MAP-elites archive size " + std::to_string(archive.size()));
-
-            // prepare distr map
-            for(const auto& feature : dummy_fv){
-                feature_distr[feature.name] = std::vector<unsigned int>(feature.effective_num_bins(), 0);
-            }
         }
 
-        void dump_archive(const fs::path& path){
-            std::ofstream f(path);
+        void dump(const fs::path& path);
 
-            f << "{\n";
-            f << "\"dims\" : [\n";
+        float archive_fill_ratio();
 
-            // feature vec info
-            for (size_t i  = 0; i < dummy_fv.size(); i++){
-                auto feature = dummy_fv[i];
-                f << "  {\"name\" : \"" << feature.name << "\", \"bins\" : " << feature.num_bins << "}";
-                if (i != dummy_fv.size() - 1){
-                    f << ",";
-                }
-                f << "\n";
-            }
-
-            f << "],\n";
-
-            // archive
-            f << "\"cells\" : [\n";
-            for (size_t i = 0; i < archive.size(); i++){
-                const Cell& cell = archive[i];
-                float q = cell.get_quality();
-                f << "  {";
-                f << "\"index\": " << i << ", ";
-                f << "\"occupied\": " << (cell.empty() ? "false" : "true") << ", ";
-                f << "\"quality\": " << (cell.empty() ? 0.0f : q);
-                f << "}";
-                if (i < archive.size() - 1) f << ",";
-                f << "\n";
-            }
-
-            f << "]}\n";
-
-            INFO("Archive JSON dumped at " + path.string());
-        }
-
-        float archive_fill_ratio(){
-            return (float)filled_archive_indices.size() / (float)archive.size();
-        };
-
-        float archive_av_quality(){
-            float total_quality = 0.0;
-
-            for (const Cell& cell : archive){
-                total_quality += cell.get_quality();
-            }
-
-            return total_quality / (float)archive.size();
-        };
+        float archive_av_quality();
 
         bool place(const Ast_entry& genome);
         
-        const Cell& find_nearest_occupied(const Features& fv);
+        const Cell& find_nearest_complement(const Cell& cell);
 
         void init_archive();
 
-        void fill_archive(std::shared_ptr<Grammar> grammar);
+        Ast_entry crossover(Ast_entry& genome_a, Ast_entry& genome_b);
 
-        void fill_distr();
+        void mutation(Ast_entry& genome, std::shared_ptr<Grammar> grammar);
+
+        void fill_archive(std::shared_ptr<Grammar> grammar);
 
         std::vector<Ast_entry> get_best_genomes();
 
@@ -140,7 +98,6 @@ struct Archive {
         unsigned int n_genomes;
         std::vector<Cell> archive;
         std::vector<unsigned int> filled_archive_indices;  // uniquely filled indices
-        std::unordered_map<std::string, std::vector<unsigned int>> feature_distr;
 
         const fs::path& output_dir;
 

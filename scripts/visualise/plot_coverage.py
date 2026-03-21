@@ -129,8 +129,8 @@ def load_archive(path: Path):
 def coords_from_flat(flat_idx: int, dims: List[Dict]):
     coords = []
     for d in reversed(dims):
-        coords.append(flat_idx % d["bins"])
-        flat_idx //= d["bins"]
+        coords.append(flat_idx % d["n_bins"])
+        flat_idx //= d["n_bins"]
     return list(reversed(coords))
 
 
@@ -269,14 +269,14 @@ def dim_occupancies(
     dim_occupancies = []
     for di, d in enumerate(dims):
         bin_filled = 0
-        for b in range(d["bins"]):
+        for b in range(d["n_bins"]):
             for c in cells:
                 if c["occupied"]:
                     coords = coords_from_flat(c["index"], dims)
                     if coords[di] == b:
                         bin_filled += 1
                         break
-        dim_occupancies.append(bin_filled / d["bins"])  #
+        dim_occupancies.append(bin_filled / d["n_bins"])  #
 
     y_pos = np.arange(len(dims))
     axis.set_yticks(y_pos)
@@ -363,8 +363,8 @@ def plot_coverage(
 
     # normalise each feature axis to [0,1]
     for i, d in enumerate(dims):
-        if d["bins"] > 1:
-            X[:, i] /= d["bins"] - 1
+        if d["n_bins"] > 1:
+            X[:, i] /= d["n_bins"] - 1
 
     qualities = np.array([c["quality"] for c in occupied])
 
@@ -395,6 +395,7 @@ def parse():
         "--json",
         type=str,
         help="Path to JSON file",
+        required=True
     )
     parser.add_argument("--seed", type=int, default=42, help="Seed for plotting and np random")
     parser.add_argument(
@@ -413,30 +414,8 @@ if __name__ == "__main__":
     else:
         palette = PALETTES[Theme.DARK]
 
-    if args.json is None:
-        # synthetic test data
-        dims = [
-            {"name": "control_flow_depth", "bins": 4},
-            {"name": "subroutine_depth", "bins": 3},
-            {"name": "statement_count", "bins": 3},
-            {"name": "has_parametrised", "bins": 2},
-        ]
-        total = 1
-        for d in dims:
-            total *= d["bins"]
-
-        if args.seed is not None:
-            np.random.seed(args.seed)
-
-        cells = [
-            {"index": i, "occupied": np.random.rand() > 0.4, "quality": float(np.random.rand())}
-            for i in range(total)
-        ]
-
-        outpath = Path("coverage.png")
-    else:
-        json_path = Path(args.json)
-        outpath = json_path.with_suffix(".png")
-        dims, cells = load_archive(json_path)
+    json_path = Path(args.json)
+    outpath = json_path.with_suffix(".png")
+    dims, cells = load_archive(json_path)
 
     plot_coverage(dims, cells, palette, args.seed, outpath)

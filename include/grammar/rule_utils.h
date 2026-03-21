@@ -25,8 +25,8 @@ ENABLE_BITMASK_OPERATORS(Scope)
 enum class Meta_func {
     NONE = 0,
     NAME = BIT32(1),
-    INDENT = BIT32(2),
-    LINE_INDENT = BIT32(3)
+    CHILD_INDENT = BIT32(2),
+    SELF_INDENT = BIT32(3)
 };
 
 #define STR_META_FUNC(mf) ( \

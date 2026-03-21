@@ -16,6 +16,22 @@ Features::Features(Slot_type _compilation_unit) :
     }
 }
 
+void Features::dump(std::ofstream& stream){
+    stream << "[";
+
+    for (size_t i = 0; i < vec.size(); i++){
+        auto f = vec[i];
+        stream << "{\"name\": \"" << f.name << "\", \"idx\": " << f.idx() << ", \"n_bins\": " << f.num_bins << ", \"bin_width\": " << f.bin_width << "}";
+        
+        if (i < vec.size() - 1){
+            stream << ",";
+        }
+
+        stream << "\n";
+    }
+
+    stream << "]";
+}
 
 // activates flow unrolling passes
 unsigned int Features::has_control_flow(){
@@ -74,7 +90,7 @@ unsigned int Features::get_archive_index() {
     return index;
 }
 
-Features Features::complement() {
+Features Features::complement() const {
     Features out = *this;
     for (size_t i = 0; i < out.size(); i++) {
         // flip to the other extreme of each dimension

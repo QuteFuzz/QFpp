@@ -20,12 +20,35 @@ std::shared_ptr<Node> Node::clone(const Clone_type& ct) const {
 
 /// Used to print the program
 void Node::print_program(std::ostream& stream, unsigned int indent_level) const {
-    if(kind == SYNTAX){
-        stream << str;
-    } else {
-        for(const std::shared_ptr<Node>& child : children){
-            child->print_program(stream, indent_level);
+    switch(print_mode) {
+        case Print_mode::CHILD_INDENT: {
+            unsigned int inner = indent_level + 1;
+            std::string tabs(inner, '\t');
+            for(const auto& child : children) {
+                stream << tabs;
+                child->print_program(stream, inner);
+            }
+            return;
         }
+        case Print_mode::SELF_INDENT: {
+            std::string tabs(indent_level, '\t');
+            stream << tabs;
+            for(const auto& child : children)
+                child->print_program(stream, indent_level);
+            return;
+        }
+        case Print_mode::INDENT_LEVEL: {
+            stream << indent_level;
+            return;
+        }
+        case Print_mode::DEFAULT: {
+            if(kind == SYNTAX) stream << str;
+            else for(const auto& child : children)
+                child->print_program(stream, indent_level);
+            return;
+        }
+        default:
+            stream << str;
     }
 }
 

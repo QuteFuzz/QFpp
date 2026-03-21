@@ -1,6 +1,57 @@
 #include <archive.h>
 #include <mutate.h>
 
+void Archive::dump(const fs::path& path){
+    std::ofstream stream(path);
+
+    stream << "{\n";
+
+    stream << "\"dims\": " << std::endl;
+
+    dummy_fv.dump(stream);
+
+    stream << "," << std::endl;
+
+    // archive
+    stream << "\"cells\" : [\n";
+    for (size_t i = 0; i < archive.size(); i++){
+        const Cell& cell = archive[i];
+        float q = cell.get_quality();
+        Features fv = cell.get_fv();
+
+        stream << "  {";
+        stream << "\"index\": " << i << ", ";
+        stream << "\"fv\": "; 
+        
+        fv.dump(stream);
+        
+        stream << ", ";
+        stream << "\"occupied\": " << (cell.empty() ? "false" : "true") << ", ";
+        stream << "\"quality\": " << (cell.empty() ? 0.0f : q);
+        stream << "}";
+        if (i < archive.size() - 1) stream << ",";
+        stream << "\n";
+    }
+
+    stream << "]}\n";
+
+    INFO("Archive JSON dumped at " + path.string());
+}
+
+float Archive::archive_fill_ratio(){
+    return (float)filled_archive_indices.size() / (float)archive.size();
+};
+
+float Archive::archive_av_quality(){
+    float total_quality = 0.0;
+
+    for (const Cell& cell : archive){
+        total_quality += cell.get_quality();
+    }
+
+    return total_quality / (float)archive.size();
+};
+
 bool Archive::place(const Ast_entry& genome){
     Features fv(genome.ast->get_compilation_unit());
     unsigned int archive_index = fv.get_archive_index();
@@ -17,20 +68,20 @@ bool Archive::place(const Ast_entry& genome){
     return new_placement;
 }
 
-const Cell& Archive::find_nearest_occupied(const Features& fv) {
-    assert(filled_archive_indices.size() >= 2); // assume there's at least one other feature vector that can be found
+const Cell& Archive::find_nearest_complement(const Cell& cell) {
+    Features fv = cell.get_fv().complement();
     
     float best_dist = std::numeric_limits<float>::max();
     unsigned int best_idx = filled_archive_indices[0];
 
     for (unsigned int idx : filled_archive_indices){
-        Features archive_fv = archive[idx].get_fv();
+        Features other_fv = archive[idx].get_fv();
 
         float dist = 0.0;
 
         for (size_t feature_idx = 0; feature_idx < fv.size(); feature_idx++){
-            float n_bins_sq = std::pow(archive_fv[feature_idx].num_bins, 2);
-            dist += (float)std::pow(archive_fv[feature_idx].idx() - fv[feature_idx].idx(), 2) / n_bins_sq;
+            float n_bins_sq = std::pow(other_fv[feature_idx].num_bins, 2);
+            dist += (float)std::pow(other_fv[feature_idx].idx() - fv[feature_idx].idx(), 2) / n_bins_sq;
         }
 
         if (dist < best_dist){
@@ -71,47 +122,50 @@ void Archive::init_archive(){
     INFO("Init archive average quality " + std::to_string(archive_av_quality()));
 
     // dump init archive in JSON
-    dump_archive(output_dir / "init_archive.json");
+    dump(output_dir / "init_archive.json");
+}
+
+Ast_entry Archive::crossover(Ast_entry& genome_a, Ast_entry& genome_b){
+    // perform crossover
+
+    return genome_b;
+}
+
+void Archive::mutation(Ast_entry& genome, std::shared_ptr<Grammar> grammar){
+    Mutate_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.1).apply();
+    Replace_block(genome, grammar, COMPOUND_STMTS, "qubit_op", 0.1).apply();
+
 }
 
 void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
     float fill_ratio = archive_fill_ratio();
     unsigned int new_placements = 0, trials = 0;
 
-    /// TODO: figure out what mutations meanigfully move the AST into a new region of the archive
     while(fill_ratio < target_fill_ratio){
-        // pick random genome from archive
         unsigned int random_index = filled_archive_indices[random_uint(filled_archive_indices.size() - 1)];
-        Ast_entry in_archive_genome = archive[random_index].get_genome();
+        Cell cell_a = archive[random_index];
+        Ast_entry genome_a = cell_a.get_genome().clone();
+        Ast_entry child = genome_a;
 
-        assert(!in_archive_genome.empty());
-    
-        Ast_entry genome = in_archive_genome.clone();
+        #if 0
+        genome_a.ast->print_program(std::cout);
+        std::cout << "\n=========" << std::endl;
+        Erase_child(genome_a, COMPOUND_STMTS, 0.2).apply();
+        genome_a.ast->print_program(std::cout);
+        getchar();
+        #endif
 
-        /*
-            Crossover and mutation
-        */
-        Features fv = archive[random_index].get_fv();
-        Ast_entry compl_genome = find_nearest_occupied(fv.complement()).get_genome();
-        
-        // mutate genome
-        Mutate_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.3).apply();
-        // Add_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.3, 1).apply();
-        Remove_block(genome, COMPOUND_STMTS, 0.2).apply();
-        
-        auto qubit_cond = [](std::shared_ptr<Gate> gate){return gate->get_num_external_qubits() == 1;};
-        Mutate_gate_on_condition(std::make_shared<Replace_block>(genome, grammar, GATE_OP, "gate_op", 0.5), qubit_cond).apply();
+        if (filled_archive_indices.size() >= 2){
+            Cell cell_b = find_nearest_complement(cell_a);
+            Ast_entry genome_b = cell_b.get_genome().clone();
+            child = crossover(genome_a, genome_b);
+        }
 
-        Replace_block(genome, grammar, GATE_OP, "subroutine_op", 0.2).apply();
-
-        // auto floats_cond = [](std::shared_ptr<Gate> gate){return gate->get_num_floats() == 0;};
-        // Mutate_gate( std::make_shared<Replace_block>(genome, grammar, GATE_OP, "gate_op", 0.2), floats_cond).apply();
-        
-        Remove_block(genome, GATE_OP).apply();
+        mutation(child, grammar);
 
         trials += 1;
 
-        new_placements += place(genome);
+        new_placements += place(child);
 
         fill_ratio = archive_fill_ratio();
     }
@@ -120,33 +174,7 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
 
     INFO("Final archive average quality " + std::to_string(archive_av_quality()));
 
-    fill_distr();
-
-    dump_archive(output_dir / "final_archive.json");
-}
-
-void Archive::fill_distr(){
-
-    for (const Cell& cell : archive){
-        Features fv = cell.get_fv();
-
-        for(const auto& f : fv){
-            feature_distr[f.name].at(f.idx()) += 1;
-        }
-    }
-
-    for (const auto&[feat_name, distr] : feature_distr){
-        std::cout << feat_name << std::endl;
-
-        for (size_t i = 0; i < distr.size(); i++){
-            std::cout << "| " << distr[i] << " |";
-
-            if(i == distr.size() - 1){
-                std::cout << std::endl;
-            }
-        }
-    }
-
+    dump(output_dir / "final_archive.json");
 }
 
 

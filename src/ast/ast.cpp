@@ -5,9 +5,9 @@
 */
 #include <sstream>
 #include <result.h>
-#include <indent.h>
+#include <child_indent.h>
 #include <indent_level.h>
-#include <line_indent.h>
+#include <self_indent.h>
 
 /*
 	node kinds
@@ -59,12 +59,12 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 
 		return node->find(NAME);
 
-	} else if (meta_func == Meta_func::INDENT){
+	} else if (meta_func == Meta_func::CHILD_INDENT){
 		context.reduce_nested_depth();
-	    return std::make_shared<Indent>(str, kind);
+	    return std::make_shared<Child_indent>(str, kind);
 
-	} else if (meta_func == Meta_func::LINE_INDENT){
-		return std::make_shared<Line_indent>(str, kind);
+	} else if (meta_func == Meta_func::SELF_INDENT){
+		return std::make_shared<Self_indent>(str, kind);
 	}
 
 	/**

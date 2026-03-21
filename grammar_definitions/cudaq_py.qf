@@ -108,7 +108,7 @@ subroutine_defs = (subroutine_circuit NEWLINE)*;
 subroutine_circuit =
     "@cudaq.kernel" NEWLINE
     "def " CIRCUIT_NAME "(" EXTERNAL::qubit_defs "):" NEWLINE
-    INDENT<subroutine_body>;
+    CHILD_INDENT<subroutine_body>;
 
 subroutine_body = (qubit_op NEWLINE)[UNIFORM(2, 4)];
 
@@ -118,7 +118,7 @@ subroutine_body = (qubit_op NEWLINE)[UNIFORM(2, 4)];
 # --- MAIN CIRCUIT ---
 # Qubits are allocated INTERNALLY — the top-level kernel takes no args.
 
-circuit = circuit_def_header NEWLINE INDENT<INTERNAL::qubit_defs NEWLINE compound_stmts>;
+circuit = circuit_def_header NEWLINE CHILD_INDENT<INTERNAL::qubit_defs NEWLINE compound_stmts>;
 
 circuit_def_header =
     "@cudaq.kernel" NEWLINE

@@ -80,7 +80,7 @@ class Features : public Info {
 
         unsigned int get_archive_index();
 
-        Features complement();
+        Features complement() const;
 
         auto begin(){return vec.begin();}
 
@@ -100,14 +100,8 @@ class Features : public Info {
             return vec[index];
         }
 
-        friend std::ostream& operator<<(std::ostream& stream, Features& fv){
-            for (auto& f : fv.vec){
-                stream << f.name << " " << f.raw_idx << " n_bins: " << f.num_bins << " bin_width: " << f.bin_width << std::endl;
-            }
-
-            return stream;
-        }
-
+        void dump(std::ofstream& stream);
+    
     private:
         std::vector<Feature> vec;
         unsigned int archive_size = 1;

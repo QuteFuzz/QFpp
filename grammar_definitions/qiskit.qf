@@ -111,13 +111,13 @@ subroutine_op = CIRCUIT_NAME ".append(" subroutine ",[" subroutine_op_args "])";
 # Control flow operations
 while_stmt =
     'with ' CIRCUIT_NAME '.while_loop((' bit ', ' branch_condition ')):'
-    NEWLINE INDENT<compound_stmts>;
+    NEWLINE CHILD_INDENT<compound_stmts>;
 
 for_stmt = for_range;
 
 for_range =
     "with " CIRCUIT_NAME ".for_loop(range(" for_bound "), None):"
-    NEWLINE INDENT<compound_stmts>;
+    NEWLINE CHILD_INDENT<compound_stmts>;
 
 for_bound = 2; #INTEGER;  # TODO: ranges for some meta functions, currently 1-10 by default
 
@@ -126,17 +126,17 @@ for_bound = 2; #INTEGER;  # TODO: ranges for some meta functions, currently 1-10
 
 switch_stmt =
     'with ' CIRCUIT_NAME '.switch(' bit ') as case' INDENT_LEVEL ':' NEWLINE
-    INDENT<((case_stmts NEWLINE) (default_case)?)>;
+    CHILD_INDENT<((case_stmts NEWLINE) (default_case)?)>;
 
-case_stmts = 'with case' INDENT_LEVEL '(' 0 '):' NEWLINE INDENT<compound_stmts> NEWLINE LINE_INDENT<('with case' INDENT_LEVEL '(' 1 '):' NEWLINE INDENT<compound_stmts>)>;
+case_stmts = 'with case' INDENT_LEVEL '(' 0 '):' NEWLINE CHILD_INDENT<compound_stmts> NEWLINE SELF_INDENT<('with case' INDENT_LEVEL '(' 1 '):' NEWLINE CHILD_INDENT<compound_stmts>)>;
 
 case_stmt =
-    'with case(' case_values '):' NEWLINE INDENT<compound_stmts>;
+    'with case(' case_values '):' NEWLINE CHILD_INDENT<compound_stmts>;
 
 case_values = INTEGER (', ' INTEGER)[UNIFORM(0,2)];
 
 default_case =
-    'with case(case.DEFAULT):' NEWLINE INDENT<compound_stmts>;
+    'with case(case.DEFAULT):' NEWLINE CHILD_INDENT<compound_stmts>;
 *)
 
 #TODO: implement `qreg` rule and others stuff needed for register comparison
@@ -165,8 +165,8 @@ classical_expr = bool_expr;
 
 # Update if_stmt to use classical_expr
 if_stmt =
-    'with ' CIRCUIT_NAME '.if_test(' classical_expr ') as else_' INDENT_LEVEL ':' NEWLINE INDENT<compound_stmts>
-    LINE_INDENT<('with else_' INDENT_LEVEL ':' NEWLINE INDENT<compound_stmts>)?>;
+    'with ' CIRCUIT_NAME '.if_test(' classical_expr ') as else_' INDENT_LEVEL ':' NEWLINE CHILD_INDENT<compound_stmts>
+    SELF_INDENT<('with else_' INDENT_LEVEL ':' NEWLINE CHILD_INDENT<compound_stmts>)?>;
 
 # Update compound_stmt
 compound_stmt =

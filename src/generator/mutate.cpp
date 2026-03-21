@@ -6,6 +6,58 @@
 #include <grammar.h>
 #include <ast.h>
 
+static Slot_type find_slot_for(std::shared_ptr<Node>& search_root, std::shared_ptr<Node>& target) {
+    for (auto& child : search_root->get_children()) {
+        if (child.get() == target.get()) return &child;
+        auto found = find_slot_for(child, target);
+        if (found) return found;
+    }
+    return nullptr;
+}
+
+void Mutation_rule::apply(){
+
+    std::vector<std::shared_ptr<Node>> block_nodes;
+
+    for(const auto& node : Node_gen(*root, block_kind)){
+        block_nodes.push_back(node);
+    }
+
+    if(block_nodes.size() >= 1) {
+        // mutate
+        unsigned int total = block_nodes.size();
+        std::vector<unsigned int> mutated_idxs = {};
+        unsigned int n_blocks_to_mutate = std::max(1, (int)(blockwise_rate * total));
+
+        while(mutated_idxs.size() < n_blocks_to_mutate){
+            unsigned int idx = random_uint(total - 1);
+            
+            while(std::find(mutated_idxs.begin(), mutated_idxs.end(), idx) != mutated_idxs.end()){
+                idx = random_uint(total - 1);
+            }
+
+            mutated_idxs.push_back(idx);
+
+            Slot_type slot = find_slot_for(root, block_nodes[idx]);
+            
+            if (slot != nullptr) {
+                apply_blockwise(slot);
+            }
+        }
+    }
+}
+
+/// fresh search to count over live number of blocks
+unsigned int Mutation_rule::n_children_across_blocks(){
+    unsigned int out = 0;
+
+    for(const auto& node : Node_gen(*root, block_kind)){
+        out += node->size();
+    }
+
+    return out;
+}
+
 /**
  *          SEMANTICS MODIFYING
  */
@@ -66,7 +118,7 @@ void Mutate_children::apply_blockwise(Slot_type block) {
         Add_children(entry, grammar, block_kind, rule_name, blockwise_rate, 0).apply_blockwise(block);
 
     } else {
-        Erase_child(entry, grammar, block_kind, blockwise_rate).apply_blockwise(block);
+        Erase_child(entry, block_kind, blockwise_rate).apply_blockwise(block);
 
     }
 }
@@ -77,13 +129,15 @@ void Replace_block::apply_blockwise(Slot_type block) {
     Result<std::shared_ptr<Node>> maybe_new_block = ast_builder->build(rule);
 
     if (maybe_new_block.is_ok()){
-        *block = maybe_new_block.get_ok();
+        std::shared_ptr<Node> new_node = maybe_new_block.get_ok();
+        new_node->print_mode = (*block)->print_mode;
+        *block = new_node;
     }
 }
 
-void Remove_block::apply_blockwise(Slot_type block) {
-    *block = std::make_shared<Node>("");
-}
+// void Remove_block::apply_blockwise(Slot_type block) {
+//     *block = std::make_shared<Node>("");
+// }
 
 void Mutate_gate_on_condition::apply_blockwise(Slot_type block) {
     std::shared_ptr<Node> gate_name = (*block)->find(GATE_NAME);

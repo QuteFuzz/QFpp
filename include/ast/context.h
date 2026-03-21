@@ -8,7 +8,7 @@
 #include <compound_stmt.h>
 #include <gate.h>
 #include <node_gen.h>
-#include <indent.h>
+#include <child_indent.h>
 
 
 enum Reset_level {

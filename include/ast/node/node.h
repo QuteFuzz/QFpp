@@ -21,6 +21,13 @@ enum Clone_type {
     DEEP,
 };
 
+enum class Print_mode {
+    DEFAULT,
+    INDENT_LEVEL,
+    CHILD_INDENT,
+    SELF_INDENT,
+};
+
 class UInt;
 class Variable;
 class Branch;
@@ -35,6 +42,7 @@ class Node : public std::enable_shared_from_this<Node> {
 
     public:
         static int node_counter;
+        Print_mode print_mode = Print_mode::DEFAULT;
 
         Node(){}
 
@@ -190,8 +198,6 @@ class Node : public std::enable_shared_from_this<Node> {
 
         std::vector<int> child_partition;
         unsigned int partition_counter = 0;
-
-        bool indent;
 
     private:
         std::optional<Node_constraints> constraints;

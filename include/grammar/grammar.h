@@ -80,10 +80,10 @@ class Grammar{
 
             if (kind == NAME){
                 stack.top().rule_decl_meta_func = Meta_func::NAME;
-            } else if (kind == INDENT){
-                stack.top().rule_decl_meta_func = Meta_func::INDENT;
-            } else if (kind == LINE_INDENT){
-                stack.top().rule_decl_meta_func = Meta_func::LINE_INDENT;
+            } else if (kind == CHILD_INDENT){
+                stack.top().rule_decl_meta_func = Meta_func::CHILD_INDENT;
+            } else if (kind == SELF_INDENT){
+                stack.top().rule_decl_meta_func = Meta_func::SELF_INDENT;
             } else {
                 throw std::runtime_error("Unknown meta function");
             }
