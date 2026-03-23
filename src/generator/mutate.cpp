@@ -15,6 +15,26 @@ static Slot_type find_slot_for(std::shared_ptr<Node>& search_root, std::shared_p
     return nullptr;
 }
 
+std::shared_ptr<Gate> gate_from_op(Slot_type slot){
+    if ((*slot)->get_node_kind() != GATE_OP) {
+        ERROR("Slot must be of kind GATE_OP");
+    }
+
+    std::shared_ptr<Node> gate_name = (*slot)->find(GATE_NAME);
+
+    if (gate_name == nullptr){
+        ERROR("Gate op node must have gate name as a descendant");
+    }
+
+    std::shared_ptr<Gate> gate = std::dynamic_pointer_cast<Gate>(gate_name->child_at(0));
+
+    if (gate == nullptr){
+        ERROR("Child of gate name must have node kind of GATE");
+    }
+
+    return gate;
+}
+
 void Mutation_rule::apply(){
 
     std::vector<std::shared_ptr<Node>> block_nodes;
@@ -87,7 +107,7 @@ void Add_children::apply_blockwise(Slot_type block) {
             can also check that n_stmts is <= min possible value from term constraint resolution
         */
         // for (size_t i = 0; i < n_stmts; i++);
-        ast_builder->term_branch_to_child_nodes(*block, term);
+        ast_builder->term_branch_to_child_nodes(*block, term, n_children);
     }
 }
 
@@ -115,7 +135,7 @@ void Mutate_children::apply_blockwise(Slot_type block) {
     // std::cout << "total children " << total_children << std::endl; getchar();
 
     if (insert_prob > random_float){
-        Add_children(entry, grammar, block_kind, rule_name, blockwise_rate, 0).apply_blockwise(block);
+        Add_children(entry, grammar, block_kind, rule_name, blockwise_rate, nested_depth).apply_blockwise(block);
 
     } else {
         Erase_child(entry, block_kind, blockwise_rate).apply_blockwise(block);
@@ -135,26 +155,8 @@ void Replace_block::apply_blockwise(Slot_type block) {
     }
 }
 
-// void Remove_block::apply_blockwise(Slot_type block) {
-//     *block = std::make_shared<Node>("");
-// }
-
-void Mutate_gate_on_condition::apply_blockwise(Slot_type block) {
-    std::shared_ptr<Node> gate_name = (*block)->find(GATE_NAME);
-
-    if (gate_name == nullptr){
-        ERROR("Gate op node must have gate name as a descendant");
-
-    } else {
-        std::shared_ptr<Gate> gate = std::dynamic_pointer_cast<Gate>(gate_name->child_at(0));
-
-        if (gate == nullptr){
-            ERROR("Child of gate name must have node kind of GATE");
-        } else {
-            if (cond(gate)){
-                mut_rule->apply_blockwise(block);
-                apply_blockwise(block);
-            }
-        }
+void Mutate_on_condition::apply_blockwise(Slot_type block) {
+    while(cond(block)){
+        mut_rule->apply_blockwise(block);
     }
 }

@@ -4,16 +4,12 @@
 void Archive::dump(const fs::path& path){
     std::ofstream stream(path);
 
-    stream << "{\n";
-
-    stream << "\"dims\": " << std::endl;
+    stream << "{\n" << "\"dims\": " << std::endl;
 
     dummy_fv.dump(stream);
 
-    stream << "," << std::endl;
-
-    // archive
-    stream << "\"cells\" : [\n";
+    stream << ",\n" << "\"cells\" : [\n";
+    
     for (size_t i = 0; i < archive.size(); i++){
         const Cell& cell = archive[i];
         float q = cell.get_quality();
@@ -21,11 +17,6 @@ void Archive::dump(const fs::path& path){
 
         stream << "  {";
         stream << "\"index\": " << i << ", ";
-        stream << "\"fv\": "; 
-        
-        fv.dump(stream);
-        
-        stream << ", ";
         stream << "\"occupied\": " << (cell.empty() ? "false" : "true") << ", ";
         stream << "\"quality\": " << (cell.empty() ? 0.0f : q);
         stream << "}";
@@ -132,9 +123,17 @@ Ast_entry Archive::crossover(Ast_entry& genome_a, Ast_entry& genome_b){
 }
 
 void Archive::mutation(Ast_entry& genome, std::shared_ptr<Grammar> grammar){
-    Mutate_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.1).apply();
-    Replace_block(genome, grammar, COMPOUND_STMTS, "qubit_op", 0.1).apply();
+    Mutate_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.7, 1).apply();
 
+    // auto param_gate_cond = [](Slot_type block){
+    //     return gate_from_op(block)->get_num_floats() == 0;
+    // };
+
+    // Mutate_on_condition(std::make_shared<Replace_block>(genome, grammar, GATE_OP, "gate_op"), param_gate_cond).apply();
+
+    // Replace_block(genome, grammar, QUBIT_OP, "if_stmt", 0.2).apply();
+    // Replace_block(genome, grammar, GATE_OP, "subroutine_op", 0.2).apply();
+    // Replace_block(genome, grammar, QUBIT_OP, "barrier_op", 0.2).apply();
 }
 
 void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
@@ -147,21 +146,19 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
         Ast_entry genome_a = cell_a.get_genome().clone();
         Ast_entry child = genome_a;
 
-        #if 0
-        genome_a.ast->print_program(std::cout);
-        std::cout << "\n=========" << std::endl;
-        Erase_child(genome_a, COMPOUND_STMTS, 0.2).apply();
-        genome_a.ast->print_program(std::cout);
-        getchar();
-        #endif
+        // if (filled_archive_indices.size() >= 2){
+        //     Cell cell_b = find_nearest_complement(cell_a);
+        //     Ast_entry genome_b = cell_b.get_genome().clone();
+        //     child = crossover(genome_a, genome_b);
+        // }
 
-        if (filled_archive_indices.size() >= 2){
-            Cell cell_b = find_nearest_complement(cell_a);
-            Ast_entry genome_b = cell_b.get_genome().clone();
-            child = crossover(genome_a, genome_b);
-        }
+        // child.ast->print_program(std::cout);
+        // std::cout << "\n=========" << std::endl;
 
         mutation(child, grammar);
+
+        // child.ast->print_program(std::cout);
+        // getchar();
 
         trials += 1;
 
@@ -170,7 +167,7 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
         fill_ratio = archive_fill_ratio();
     }
 
-    std::cout << (float)(new_placements / trials) << "% of trials produce new placements in archive" << std::endl;
+    std::cout << (float)new_placements / (float)trials << "% of trials produce new placements in archive" << std::endl;
 
     INFO("Final archive average quality " + std::to_string(archive_av_quality()));
 

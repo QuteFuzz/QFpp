@@ -46,9 +46,15 @@ class Mutation_rule {
 class Add_children : public Mutation_rule {
 
     public:
-        Add_children(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind _block_kind, std::string _rule_name, float _blockwise_rate = 0.1f, unsigned int _nested_depth = 0):
+        Add_children(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind _block_kind, 
+            std::string _rule_name, 
+            float _blockwise_rate = 0.1f,
+            unsigned int _n_children = 1, 
+            unsigned int _nested_depth = 0
+        ):
             Mutation_rule(_entry, _grammar, _block_kind, _blockwise_rate),
             rule_name(_rule_name),
+            n_children(_n_children),
             nested_depth(_nested_depth)
         {}
 
@@ -56,6 +62,7 @@ class Add_children : public Mutation_rule {
 
     private:
         std::string rule_name;
+        unsigned int n_children;
         unsigned int nested_depth;
 
 };
@@ -76,16 +83,24 @@ class Erase_child : public Mutation_rule {
 class Mutate_children : public Mutation_rule {
 
     public:
-        Mutate_children(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind block_kind, std::string _rule_name, float _blockwise_rate = 0.1f):
+        Mutate_children(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind block_kind,
+            std::string _rule_name,
+            float _blockwise_rate = 0.1f,
+            unsigned int _n_children = 1,
+            unsigned int _nested_depth = 0
+        ):
             Mutation_rule(_entry, _grammar, block_kind, _blockwise_rate),
-            rule_name(_rule_name)
+            rule_name(_rule_name),
+            n_children(_n_children),
+            nested_depth(_nested_depth)
         {}
 
         void apply_blockwise(Slot_type block) override;
 
     private:
         std::string rule_name;
-
+        unsigned int n_children;
+        unsigned int nested_depth;
 };
 
 class Replace_block : public Mutation_rule {
@@ -102,20 +117,10 @@ class Replace_block : public Mutation_rule {
         std::string repl_rule_name;
 };
 
-// class Remove_block : public Mutation_rule {
-
-//     public:
-//         Remove_block(Ast_entry& _entry, Token_kind _block_kind, float _blockwise_rate = 0.1f) :
-//             Mutation_rule(_entry, nullptr, _block_kind, _blockwise_rate)
-//         {}
-
-//         void apply_blockwise(Slot_type block) override;
-// };
-
-class Mutate_gate_on_condition : public Mutation_rule {
-
+class Mutate_on_condition : public Mutation_rule {
     public:
-        Mutate_gate_on_condition(std::shared_ptr<Mutation_rule> _mut_rule, std::function<bool(std::shared_ptr<Gate>)> _cond) :
+        // Takes a generic condition based on the block being evaluated
+        Mutate_on_condition(std::shared_ptr<Mutation_rule> _mut_rule, std::function<bool(Slot_type)> _cond) :
             Mutation_rule(*_mut_rule),
             mut_rule(_mut_rule),
             cond(_cond)
@@ -125,7 +130,9 @@ class Mutate_gate_on_condition : public Mutation_rule {
 
     private:
         std::shared_ptr<Mutation_rule> mut_rule;
-        std::function<bool(std::shared_ptr<Gate>)> cond;
+        std::function<bool(Slot_type)> cond;
 };
+
+std::shared_ptr<Gate> gate_from_op(Slot_type slot);
 
 #endif

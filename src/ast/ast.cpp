@@ -211,7 +211,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 #pragma GCC diagnostic pop
 
 
-void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& term, unsigned int depth){
+void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& term, unsigned int term_constraint, unsigned int depth){
 	if (depth >= QuteFuzz::RECURSION_LIMIT){
 		ERROR(ANNOT("Recursion limit reached when writing branch for term: " + parent->get_str()));
 	}
@@ -227,8 +227,12 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 		Branch branch = term.get_rule()->pick_branch(parent);
 
 		for(const Term& child_term : branch){
-			Term_constraint constraint = child_term.get_constaint();
-			unsigned int max = constraint.resolve(std::ref(context));
+			unsigned int max = term_constraint;
+
+			if (term_constraint == 0) {
+				Term_constraint constraint = child_term.get_constaint();
+				max = constraint.resolve(std::ref(context));
+			}
 
 			#if 0
 			if (constraint.get_term_constraint_kind() == Term_constraint_kind::DYNAMIC_MAX){

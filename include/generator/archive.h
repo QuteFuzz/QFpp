@@ -101,7 +101,7 @@ struct Archive {
 
         const fs::path& output_dir;
 
-        float target_fill_ratio = 0.17; // small for now, increase as we get better mutations in
+        float target_fill_ratio = 0.27; // small for now, increase as we get better mutations in
 
 };
 
