@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(QuteFuzz)
+project(QFpp)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -7,7 +7,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -fsanitize=address -O3 -DDEBUG -Wall -Wextra -Wswi
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 
-file(GLOB_RECURSE SRCS "src/*.cpp")
+file(GLOB_RECURSE SRCS "src/*.cpp" "libs/linenoise/linenoise.c")
 
 add_executable(qf ${SRCS})
 

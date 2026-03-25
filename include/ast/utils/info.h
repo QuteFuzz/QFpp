@@ -79,15 +79,9 @@ class Features : public Info {
 
         Features(Slot_type compilation_unit);
 
-        unsigned int has_control_flow();
+        float stmt_ratio(const Token_kind& denominator, const Token_kind& numerator);
 
-        unsigned int has_subroutine_call();
-
-        float barrier_op_ratio();
-
-        float multi_qubit_gate_ratio();
-
-        unsigned int has_parametrised();
+        float gate_ratio(std::function<bool(std::shared_ptr<Gate>)> func);
 
         unsigned int get_archive_size() const;
 

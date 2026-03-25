@@ -9,11 +9,11 @@ Features::Features(Slot_type _compilation_unit) :
         so +1 will get us to 2. 
     */
     vec = {
-        Feature("has_control_flow", has_control_flow()),
-        Feature("has_subroutine_call", has_subroutine_call()),
-        Feature("has_parametrised", has_parametrised()),
-        Feature("barrier_op_ratio", barrier_op_ratio(), 3),
-        Feature("multi_qubit_gate_ratio", multi_qubit_gate_ratio(), 5),
+        Feature("control_flow_ratio", stmt_ratio(COMPOUND_STMT, CF_STMT), 3),
+        Feature("subroutine_call_ratio", stmt_ratio(QUBIT_OP, SUBROUTINE_OP), 3),
+        Feature("parameterised_gate_ratio", gate_ratio([](std::shared_ptr<Gate> gate){return (gate->get_num_floats() > 0);}), 3),
+        Feature("barrier_op_ratio", stmt_ratio(COMPOUND_STMT, BARRIER_OP), 3),
+        Feature("multi_qubit_gate_ratio", gate_ratio([](std::shared_ptr<Gate> gate){return (gate->get_num_external_qubits() > 1);}), 3),
     };
 
     for (auto& f : vec){
@@ -38,59 +38,31 @@ void Features::dump(std::ofstream& stream){
     stream << "]";
 }
 
-// activates flow unrolling passes
-unsigned int Features::has_control_flow(){
-    return (*compilation_unit)->find(CF_STMT) != nullptr ? 1 : 0;
-}
+float Features::stmt_ratio(const Token_kind& denominator, const Token_kind& numerator){
+    unsigned int denom = 0;
+    unsigned int numer = 0;
 
-// activates box decomposition
-unsigned int Features::has_subroutine_call(){
-    return (*compilation_unit)->find(SUBROUTINE_OP) != nullptr ? 1 : 0;
-}
-
-// activates barrier-aware scheduling
-float Features::barrier_op_ratio(){
-    unsigned int n_barriers = 0;
-    unsigned int n_qubit_ops = 0;
-
-    for(const auto& node : Node_gen(**compilation_unit, QUBIT_OP)){
+    for(const auto& node : Node_gen(**compilation_unit, denominator)){
         auto child = node->child_at(0);
 
-        if(child != nullptr && (child->get_node_kind() == BARRIER_OP)){
-            n_barriers += 1;
+        if(child != nullptr && (child->get_node_kind() == numerator)){
+            numer += 1;
         }
 
-        n_qubit_ops += 1;
+        denom += 1;
     }
 
-    return n_qubit_ops == 0 ? 0.0 : (float)n_barriers / (float)n_qubit_ops;
+    return denom == 0 ? 0.0 : (float)numer / (float)denom;
 }
 
-// activates entanglement decomposition
-float Features::multi_qubit_gate_ratio(){
-	unsigned int n_multi_qubit_gates = 0;
-
-	if (n_gates > 0){
-		for (const auto& gate : gates){
-			n_multi_qubit_gates += (gate->get_num_external_qubits() > 1);
-		}	
-
-		return (float)n_multi_qubit_gates / (float)n_gates;
-
-	} else {
-		return 0;
-	}
-}
-
-// activates symbolic optimization
-unsigned int Features::has_parametrised(){
-    unsigned int n_parameterised = 0;
+float Features::gate_ratio(std::function<bool(std::shared_ptr<Gate>)> func){
+	unsigned int n_passed = 0;
 
     for (const auto& gate : gates){
-		if (gate->get_num_floats() > 0){return 1;}
-	}
+        n_passed += func(gate);
+    }	
 
-	return 0;
+    return (n_gates == 0) ? 0.0 : (float)n_passed / (float)n_gates;
 }
 
 unsigned int Features::get_archive_size() const {

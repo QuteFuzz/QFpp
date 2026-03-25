@@ -52,9 +52,14 @@ inline x operator~(x a) {    \
 #define UNUSED(x) (void)(x)
 
 // colours
-#define RED(x) (std::string("\033[31m") + x + std::string("\033[0m"))
-#define YELLOW(x) (std::string("\033[33m") + x + std::string("\033[0m"))
-#define GREEN(x) (std::string("\033[32m") + x + std::string("\033[0m"))
+#define ANSI_ESC std::string("\033[")
+#define ANSI_RESET std::string("0m")
+#define BOLD(x) (ANSI_ESC + "1m" + x + ANSI_ESC + ANSI_RESET)
+#define RED(x) (ANSI_ESC + "31m" + x + ANSI_ESC + ANSI_RESET)
+#define YELLOW(x) (ANSI_ESC + "33m" + x + ANSI_ESC + ANSI_RESET)
+#define GREEN(x) (ANSI_ESC + "32m" + x + ANSI_ESC + ANSI_RESET)
+#define CYAN(x) (ANSI_ESC + "36m" + x + ANSI_ESC + ANSI_RESET)
+#define GREY(x) (ANSI_ESC + "30m" + x + ANSI_ESC + ANSI_RESET)
 
 // location annotation
 #define ANNOT(x) (std::string("at ") + __FILE__ + "," + std::to_string(__LINE__) + ": " + (x))

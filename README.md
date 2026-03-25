@@ -43,3 +43,7 @@ See `dev` for dev-specific docs
 |-----|------|-------|
 | Pytket | [tket compiler](https://github.com/Quantinuum/tket/issues/2109) | fixed |
 | Pytket | [tket2 compiler](https://github.com/Quantinuum/tket2/issues/1417) | ack |
+
+## Acknowledgements
+
+- [Linenoise](https://github.com/antirez/linenoise) library for nicities in REPL loop like command history and tab completion.
