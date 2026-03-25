@@ -35,28 +35,41 @@ class Features : public Info {
     public:
         struct Feature {
 
-            Feature(std::string _name, unsigned int _val) : 
+            Feature(std::string _name, unsigned int _raw_idx):
                 name(_name),
-                raw_idx(_val)
+                raw_idx(_raw_idx),
+                num_bins(2),
+                is_binary(true)
             {}
 
             Feature(std::string _name, float _val, unsigned int _num_bins):
                 name(_name),
                 raw_idx((unsigned int)(_val * _num_bins)),
-                num_bins(_num_bins)
+                num_bins(_num_bins),
+                is_binary(false)
             {
-                assert((0.0 <= _val) && (_val <= 1.0));
+                if((0.0 > _val) || (_val > 1.0)){
+                    ERROR("Non-binary feature " + name + " is expected to have value as a ratio between 0.0 and 1.0");
+                }
             }
 
             std::string name;
             unsigned int raw_idx;
-            unsigned int num_bins = 2;  // binary features by default
+            unsigned int num_bins;
+            bool is_binary;
             unsigned int bin_width = 1;
 
-            inline unsigned int effective_num_bins() const {return num_bins + 1;} // +1 to account for additional bin
+            inline unsigned int effective_num_bins() const {
+                // +1 additional bin for overflows for non-binary features
+                /*
+                    this is done because for binary features, it makes no sense to have an overflow bin,
+                    because the 3rd bin is always unreachable, so we can never fill those cells in the archive
+                */
+                return is_binary ? num_bins : num_bins + 1;
+            }
         
             inline unsigned int idx() const {
-                return raw_idx / bin_width;
+                return std::min(raw_idx, effective_num_bins() - 1) / bin_width;
             }
         };
 
@@ -70,7 +83,7 @@ class Features : public Info {
 
         unsigned int has_subroutine_call();
 
-        unsigned int has_barrier();
+        float barrier_op_ratio();
 
         float multi_qubit_gate_ratio();
 

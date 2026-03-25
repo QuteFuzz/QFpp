@@ -1,13 +1,18 @@
 #include <info.h>
+#include <ast_utils.h>
 
 Features::Features(Slot_type _compilation_unit) :
     Info(_compilation_unit)
 {
+    /*
+        binary features i.e has..... , get 1 not 2 bins, because the effective number always adds 1 for overflows,
+        so +1 will get us to 2. 
+    */
     vec = {
         Feature("has_control_flow", has_control_flow()),
         Feature("has_subroutine_call", has_subroutine_call()),
-        Feature("has_barrier", has_barrier()),
         Feature("has_parametrised", has_parametrised()),
+        Feature("barrier_op_ratio", barrier_op_ratio(), 3),
         Feature("multi_qubit_gate_ratio", multi_qubit_gate_ratio(), 5),
     };
 
@@ -44,8 +49,21 @@ unsigned int Features::has_subroutine_call(){
 }
 
 // activates barrier-aware scheduling
-unsigned int Features::has_barrier(){
-    return (*compilation_unit)->find(BARRIER_OP) != nullptr ? 1 : 0;
+float Features::barrier_op_ratio(){
+    unsigned int n_barriers = 0;
+    unsigned int n_qubit_ops = 0;
+
+    for(const auto& node : Node_gen(**compilation_unit, QUBIT_OP)){
+        auto child = node->child_at(0);
+
+        if(child != nullptr && (child->get_node_kind() == BARRIER_OP)){
+            n_barriers += 1;
+        }
+
+        n_qubit_ops += 1;
+    }
+
+    return n_qubit_ops == 0 ? 0.0 : (float)n_barriers / (float)n_qubit_ops;
 }
 
 // activates entanglement decomposition
@@ -66,6 +84,8 @@ float Features::multi_qubit_gate_ratio(){
 
 // activates symbolic optimization
 unsigned int Features::has_parametrised(){
+    unsigned int n_parameterised = 0;
+
     for (const auto& gate : gates){
 		if (gate->get_num_floats() > 0){return 1;}
 	}
@@ -84,7 +104,7 @@ unsigned int Features::get_archive_index() {
 
     for (int j = (int)vec.size() - 1; j >= 0; j--){
         index += vec[j].idx() * stride;
-        stride *= (vec[j].num_bins + 1); // +1 to account for additional bin
+        stride *= vec[j].effective_num_bins();
     }
     
     return index;

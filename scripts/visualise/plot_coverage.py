@@ -391,12 +391,7 @@ def plot_coverage(
 
 def parse():
     parser = argparse.ArgumentParser(description="Plot coverage information from JSON file")
-    parser.add_argument(
-        "--json",
-        type=str,
-        help="Path to JSON file",
-        required=True
-    )
+    parser.add_argument("--json", type=str, help="Path to JSON file", required=True)
     parser.add_argument("--seed", type=int, default=42, help="Seed for plotting and np random")
     parser.add_argument(
         "--theme", type=str, help="Theme (dark, cool-light, warm-light)", default="warm-light"

@@ -15,26 +15,6 @@ static Slot_type find_slot_for(std::shared_ptr<Node>& search_root, std::shared_p
     return nullptr;
 }
 
-std::shared_ptr<Gate> gate_from_op(Slot_type slot){
-    if ((*slot)->get_node_kind() != GATE_OP) {
-        ERROR("Slot must be of kind GATE_OP");
-    }
-
-    std::shared_ptr<Node> gate_name = (*slot)->find(GATE_NAME);
-
-    if (gate_name == nullptr){
-        ERROR("Gate op node must have gate name as a descendant");
-    }
-
-    std::shared_ptr<Gate> gate = std::dynamic_pointer_cast<Gate>(gate_name->child_at(0));
-
-    if (gate == nullptr){
-        ERROR("Child of gate name must have node kind of GATE");
-    }
-
-    return gate;
-}
-
 void Mutation_rule::apply(){
 
     std::vector<std::shared_ptr<Node>> block_nodes;
@@ -107,7 +87,7 @@ void Add_children::apply_blockwise(Slot_type block) {
             can also check that n_stmts is <= min possible value from term constraint resolution
         */
         // for (size_t i = 0; i < n_stmts; i++);
-        ast_builder->term_branch_to_child_nodes(*block, term, n_children);
+        ast_builder->term_branch_to_child_nodes(*block, term);
     }
 }
 
