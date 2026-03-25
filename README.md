@@ -46,4 +46,4 @@ See `dev` for dev-specific docs
 
 ## Acknowledgements
 
-- [Linenoise](https://github.com/antirez/linenoise) library for nicities in REPL loop like command history and tab completion.
+- [Linenoise](https://github.com/antirez/linenoise) library for nicities in REPL loop like command history and tab completion. Files [here](libs/linenoise/).
