@@ -5,9 +5,9 @@
 */
 #include <sstream>
 #include <result.h>
-#include <indent.h>
+#include <child_indent.h>
 #include <indent_level.h>
-#include <line_indent.h>
+#include <self_indent.h>
 
 /*
 	node kinds
@@ -59,12 +59,12 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 
 		return node->find(NAME);
 
-	} else if (meta_func == Meta_func::INDENT){
+	} else if (meta_func == Meta_func::CHILD_INDENT){
 		context.reduce_nested_depth();
-	    return std::make_shared<Indent>(str, kind);
+	    return std::make_shared<Child_indent>(str, kind);
 
-	} else if (meta_func == Meta_func::LINE_INDENT){
-		return std::make_shared<Line_indent>(str, kind);
+	} else if (meta_func == Meta_func::SELF_INDENT){
+		return std::make_shared<Self_indent>(str, kind);
 	}
 
 	/**
@@ -106,9 +106,6 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 
 		case CIRCUIT:
 			return context.nn_circuit();
-
-		case BODY:
-			return std::make_shared<Node>(str, kind);
 
 		case COMPOUND_STMT:
 			context.reset(RL_QUBITS);
@@ -230,8 +227,12 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 		Branch branch = term.get_rule()->pick_branch(parent);
 
 		for(const Term& child_term : branch){
-			Term_constraint constraint = child_term.get_constaint();
-			unsigned int max = constraint.resolve(std::ref(context));
+			// unsigned int max = term_constraint;
+
+			// if (term_constraint == 0) {
+				Term_constraint constraint = child_term.get_constaint();
+				auto max = constraint.resolve(std::ref(context));
+			// }
 
 			#if 0
 			if (constraint.get_term_constraint_kind() == Term_constraint_kind::DYNAMIC_MAX){
@@ -286,7 +287,7 @@ Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry){
 			res.set_ok(root);
 
 		} else {
-			res.set_error("Root was redirected, AST cannot be built");
+			res.set_error("Root cannot be build from rule called " + entry->get_name() + ". Redirected to term called " + std::get<Term>(maybe_root).get_string());
 		}
 	}
 

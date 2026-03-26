@@ -2,18 +2,56 @@
 #include <ast.h>
 #include <lex.h>
 #include <params.h>
+#include "../libs/linenoise/linenoise.h"
 
 #define TOGGLE_FLAG(name, f) { \
     f = !f;    \
     INFO(name + " " + FLAG_STATUS(f)); \
 }
 
-const fs::path Run::OUTPUT_DIR = fs::path(__FILE__).parent_path().parent_path() / fs::path(QuteFuzz::OUTPUTS_FOLDER_NAME);
+const fs::path Run::OUTPUT_DIR = ".." / fs::path(QuteFuzz::OUTPUTS_FOLDER_NAME);
 
-void init_global_seed(Control& control, std::optional<unsigned int> user_seed) {
+const std::unordered_map<std::string, std::string> COMMANDS = {
+    {"render", "Render AST(s) for program(s) generated"}, 
+    {"step", "Step through program generation node by node in the AST"},
+    {"info", "Print circuit info"},
+    {"map-elites", "Toggle map elites algorithm"},
+    {"seed", "Set global seed"},
+    {"print-grammar", "Print grammar data structure for set grammar"},
+    {"print-tokens", "Print tokens parsed from set grammar"},
+    {"quit \\ Ctrl-D", "Quit"},
+};
+
+static void init_global_seed(Control& control, std::optional<unsigned int> user_seed = std::nullopt) {
     std::random_device rd;
     control.GLOBAL_SEED_VAL = user_seed.value_or(rd());
     rng().seed(control.GLOBAL_SEED_VAL);
+}
+
+static void completion(const char *buf, linenoiseCompletions *lc) {
+    std::string input(buf);
+
+    for (const auto&[cmd, descr] : COMMANDS) {
+        // If the user's input matches the start of a command, suggest it
+        if (cmd.rfind(input, 0) == 0) { 
+            linenoiseAddCompletion(lc, cmd.c_str());
+        }
+    }
+}
+
+static void print_banner() {
+    const char* banner = R"(
+   ____  ______             
+  / __ \/ ____/___  ____    
+ / / / / /_  / __ \/ __ \   
+/ /_/ / __/ / /_/ / /_/ /   
+\___\_\/_/ / .___/ .___/    
+          /_/   /_/         
+    )";
+
+    std::cout << BOLD(CYAN(banner)) << std::endl;
+    std::cout << BOLD(CYAN("    Quantum Compiler Fuzzing Engine")) << std::endl;
+    std::cout << "Type 'h' for help.\n";
 }
 
 Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
@@ -124,12 +162,11 @@ void Run::remove_all_in_dir(const fs::path& dir){
 }
 
 void Run::help(){
-    std::cout << "-> Type enter to write to a file" << std::endl;
-    std::cout << "-> \"grammar_name grammar_entry\" : command to set grammar " << std::endl;
-    std::cout << "  These are the known grammar rules: " << std::endl;
+    std::cout << "Type enter to write to a file" << std::endl;
+    std::cout << "- use " + CYAN("grammar_name") + " " + GREY("entry point") + " to set grammar " << std::endl;
 
-    for(const auto& generator : generators){
-        std::cout << generator.second << std::endl;
+    for(const auto&[cmd, descr] : COMMANDS){
+        std::cout << "- " << BOLD(CYAN(cmd)) << ": " << BOLD(GREY(descr)) << std::endl;
     }
 }
 
@@ -139,8 +176,6 @@ void Run::loop(){
     Control qf_control = {
         .GLOBAL_SEED_VAL = 0,
         .render = false,
-        .swarm_testing = false,
-        .run_mutate = false,
         .step = false,
         .print_circuit_info = false,
         .map_elites = false,
@@ -177,10 +212,23 @@ void Run::loop(){
 
     unsigned int n_programs = 0;
 
-    while(true){
-        std::cout << "> ";
+    linenoiseSetCompletionCallback(completion);
+    const char* history_file = ".qf_history";
+    linenoiseHistoryLoad(history_file);
 
-        std::getline(std::cin, current_command);
+    char* line;
+
+    print_banner();
+
+    while((line = linenoise("> ")) != NULL){
+        current_command = std::string(line);
+        linenoiseFree(line);
+
+        if (!current_command.empty()) {
+            linenoiseHistoryAdd(line);
+            linenoiseHistorySave(history_file);
+        }
+
         tokenise(current_command, ' ');
 
         if(tokens.size() == 2){
@@ -197,19 +245,13 @@ void Run::loop(){
         } else if (current_command == "render"){
             TOGGLE_FLAG(current_command, qf_control.render);
 
-        } else if (current_command == "swarm_testing") {
-            TOGGLE_FLAG(current_command, qf_control.swarm_testing);
-
-        } else if (current_command == "mutate"){
-            TOGGLE_FLAG(current_command, qf_control.run_mutate);
-
         } else if (current_command == "step"){
             TOGGLE_FLAG(current_command, qf_control.step);
 
         } else if (current_command == "info"){
             TOGGLE_FLAG(current_command, qf_control.print_circuit_info);
 
-        } else if (current_command == "map_elites"){
+        } else if (current_command == "map-elites"){
             TOGGLE_FLAG(current_command, qf_control.map_elites);
 
         } else if (current_command == "quit"){
@@ -218,10 +260,10 @@ void Run::loop(){
             break;
 
         } else if(current_generator != nullptr){
-            if (current_command == "pt") {
+            if (current_command == "print-tokens") {
                 current_generator->print_tokens();
 
-            } else if (current_command == "pg") {
+            } else if (current_command == "print-grammar") {
                 current_generator->print_grammar();
 
             } else if ((n_programs = safe_stoul(current_command, 1))){
@@ -245,4 +287,5 @@ void Run::loop(){
 
         }
     }
+
 }

@@ -13,8 +13,8 @@ struct Cell {
 
         /// Place genome into cell if it is empty, or if this genome has higher quality. Returns one if cell was
         /// empty, so we can track unique archive placements 
-        inline bool place(const Ast_entry& genome_prime){
-            float quality_prime = Quality(genome_prime.ast->get_compilation_unit()).quality();
+        inline bool place(const Ast_entry& genome_prime, const Features& fv_prime){
+            float quality_prime = Quality(genome_prime.ast->get_compilation_unit(), fv_prime).quality();
             bool new_placement = false;
 
             if (genome.empty() || (quality < quality_prime)){
@@ -24,6 +24,7 @@ struct Cell {
                 }
                 
                 genome = genome_prime;
+                fv = fv_prime;
                 quality = quality_prime;
             }
 
@@ -38,10 +39,21 @@ struct Cell {
             return genome.empty();
         }
 
-        Ast_entry get_genome() const {return genome;}
+        inline Features get_fv() const {
+            return fv;
+        }
+
+        inline Ast_entry get_genome() const {
+            if (genome.ast == nullptr){
+                ERROR("Genome AST is nullptr");
+            }
+
+            return genome;
+        }
 
     private:
-        Ast_entry genome;    // ast and compilation init slot into ast
+        Ast_entry genome;
+        Features fv;
         float quality = 0.0;
 };
 
@@ -59,64 +71,25 @@ struct Archive {
             INFO("MAP-elites archive size " + std::to_string(archive.size()));
         }
 
-        void dump_archive(const fs::path& path){
-            std::ofstream f(path);
+        void dump(const fs::path& path);
 
-            f << "{\n";
-            f << "\"dims\" : [\n";
+        float archive_fill_ratio();
 
-            // feature vec info
-            for (size_t i  = 0; i < dummy_fv.size(); i++){
-                auto feature = dummy_fv[i];
-                f << "  {\"name\" : \"" << feature.name << "\", \"bins\" : " << feature.num_bins << "}";
-                if (i != dummy_fv.size() - 1){
-                    f << ",";
-                }
-                f << "\n";
-            }
+        float archive_av_quality();
 
-            f << "],\n";
-
-            // archive
-            f << "\"cells\" : [\n";
-            for (size_t i = 0; i < archive.size(); i++){
-                const Cell& cell = archive[i];
-                float q = cell.get_quality();
-                f << "  {";
-                f << "\"index\": " << i << ", ";
-                f << "\"occupied\": " << (cell.empty() ? "false" : "true") << ", ";
-                f << "\"quality\": " << (cell.empty() ? 0.0f : q);
-                f << "}";
-                if (i < archive.size() - 1) f << ",";
-                f << "\n";
-            }
-
-            f << "]}\n";
-
-            INFO("Archive JSON dumped at " + path.string());
-        }
-
-        float archive_fill_ratio(){
-            return (float)filled_archive_indices.size() / (float)archive.size();
-        };
-
-        float archive_av_quality(){
-            float total_quality = 0.0;
-
-            for (const Cell& cell : archive){
-                total_quality += cell.get_quality();
-            }
-
-            return total_quality / (float)archive.size();
-        };
+        bool place(const Ast_entry& genome);
+        
+        const Cell& find_nearest_complement(const Cell& cell);
 
         void init_archive();
+
+        Ast_entry crossover(Ast_entry& genome_a, Ast_entry& genome_b);
+
+        void mutation(Ast_entry& genome, std::shared_ptr<Grammar> grammar);
 
         void fill_archive(std::shared_ptr<Grammar> grammar);
 
         std::vector<Ast_entry> get_best_genomes();
-
-        void place(const Ast_entry& genome);
 
     private:
         Features dummy_fv;
@@ -128,7 +101,7 @@ struct Archive {
 
         const fs::path& output_dir;
 
-        float target_fill_ratio = 0.15; // small for now, increase as we get better mutations in
+        float target_fill_ratio = 0.27; // small for now, increase as we get better mutations in
 
 };
 

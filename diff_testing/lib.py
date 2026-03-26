@@ -16,7 +16,7 @@ Results:
 
 import argparse
 import os
-from abc import ABC, abstractmethod
+from abc import ABC
 from itertools import zip_longest
 from pathlib import Path
 from typing import Any, Dict, List
@@ -44,8 +44,8 @@ class Base(ABC):
 
         self.num_shots = 100000
 
-    @abstractmethod
-    def get_counts(self, circuit, opt_level, circuit_num) -> Dict[Any, int]: ...
+    def get_counts(self, circuit, opt_level, circuit_num) -> Dict[Any, int]:
+        return {}
 
     def qnexus_login(self) -> None:
         """

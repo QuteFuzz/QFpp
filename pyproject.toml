@@ -16,6 +16,7 @@ dependencies = [
     "qnexus",
     "tket",
     "pennylane",
+    "cudaq",
     "umap-learn",
     "selene-sim",
     "jinja2",

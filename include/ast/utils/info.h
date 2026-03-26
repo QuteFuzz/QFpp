@@ -15,7 +15,11 @@
 class Info {
 
     public:
-        Info(Slot_type _compilation_unit);
+        Info(){}
+
+        Info(Slot_type _compilation_unit, std::shared_ptr<Info> info = nullptr);
+
+        std::vector<std::shared_ptr<Gate>> get_gates() const {return gates;}
 
     protected:
         Slot_type compilation_unit = nullptr;
@@ -30,27 +34,60 @@ class Features : public Info {
 
     public:
         struct Feature {
+
+            Feature(std::string _name, unsigned int _raw_idx):
+                name(_name),
+                raw_idx(_raw_idx),
+                num_bins(2),
+                is_binary(true)
+            {}
+
+            Feature(std::string _name, float _val, unsigned int _num_bins):
+                name(_name),
+                raw_idx((unsigned int)(_val * _num_bins)),
+                num_bins(_num_bins),
+                is_binary(false)
+            {
+                if((0.0 > _val) || (_val > 1.0)){
+                    ERROR("Non-binary feature " + name + " is expected to have value as a ratio between 0.0 and 1.0");
+                }
+            }
+
             std::string name;
-            unsigned int val;
-            unsigned int num_bins = 2;  // binary features by default
+            unsigned int raw_idx;
+            unsigned int num_bins;
+            bool is_binary;
             unsigned int bin_width = 1;
+
+            inline unsigned int effective_num_bins() const {
+                // +1 additional bin for overflows for non-binary features
+                /*
+                    this is done because for binary features, it makes no sense to have an overflow bin,
+                    because the 3rd bin is always unreachable, so we can never fill those cells in the archive
+                */
+                return is_binary ? num_bins : num_bins + 1;
+            }
+        
+            inline unsigned int idx() const {
+                return std::min(raw_idx, effective_num_bins() - 1) / bin_width;
+            }
         };
+
+        Features():
+            Info()
+        {}
 
         Features(Slot_type compilation_unit);
 
-        unsigned int has_control_flow();
+        float stmt_ratio(const Token_kind& denominator, const Token_kind& numerator);
 
-        unsigned int has_subroutine_call();
-
-        unsigned int has_barrier();
-
-        float multi_qubit_gate_ratio();
-
-        unsigned int has_parametrised();
+        float gate_ratio(std::function<bool(std::shared_ptr<Gate>)> func);
 
         unsigned int get_archive_size() const;
 
-        unsigned int get_archive_index() const;
+        unsigned int get_archive_index();
+
+        Features complement() const;
 
         auto begin(){return vec.begin();}
 
@@ -70,14 +107,8 @@ class Features : public Info {
             return vec[index];
         }
 
-        friend std::ostream& operator<<(std::ostream& stream, Features& fv){
-            for (auto& f : fv.vec){
-                stream << f.name << " " << f.val << " n_bins: " << f.num_bins << " bin_width: " << f.bin_width << std::endl;
-            }
-
-            return stream;
-        }
-
+        void dump(std::ofstream& stream);
+    
     private:
         std::vector<Feature> vec;
         unsigned int archive_size = 1;
@@ -94,6 +125,8 @@ class Quality : public Info {
         };
 
         Quality(Slot_type _compilation_unit);
+
+        Quality(Slot_type _compilation_unit, const Features& fv);
 
         float gate_arity_variance();
 

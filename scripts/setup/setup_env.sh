@@ -3,6 +3,7 @@ set -e
 
 echo ">>> 1. Installing System Dependencies..."
 sudo apt-get update && sudo apt-get install -y \
+    default-jre \
     clang cmake graphviz git curl build-essential \
     python3 python3-venv gdb llvm-14 llvm-14-dev \
     libllvm14 libpolly-14-dev zlib1g-dev libxml2-dev \

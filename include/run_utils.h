@@ -34,8 +34,6 @@ struct Expected{
 struct Control {
     unsigned int GLOBAL_SEED_VAL;
     bool render;
-    bool swarm_testing;
-    bool run_mutate;
     bool step;
     bool print_circuit_info;
     bool map_elites;
@@ -65,9 +63,5 @@ struct Control {
         throw std::runtime_error("Expected rule " + name + " " + STR_SCOPE(scope) + " not found in control");
     }
 };
-
-void init_global_seed(Control& control, std::optional<unsigned int> user_seed = std::nullopt);
-
-
 
 #endif

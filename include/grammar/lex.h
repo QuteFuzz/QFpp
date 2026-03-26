@@ -97,8 +97,8 @@ enum Token_kind {
     GATE_FLOATS,
     ALL_QUBITS,
     ALL_BITS,
-    INDENT,
-    LINE_INDENT,
+    CHILD_INDENT,
+    SELF_INDENT,
     INDENT_LEVEL,
     UNIFORM,
     INTEGER,
@@ -277,8 +277,8 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("FLOAT", FLOAT),
     Token_matcher("INTEGER", INTEGER),
     Token_matcher("VAR", VAR),
-    Token_matcher("INDENT", INDENT),
-    Token_matcher("LINE_INDENT", LINE_INDENT),
+    Token_matcher("CHILD_INDENT", CHILD_INDENT),
+    Token_matcher("SELF_INDENT", SELF_INDENT),
     Token_matcher("INDENT_LEVEL", INDENT_LEVEL),
     Token_matcher("UNIFORM", UNIFORM),
     Token_matcher("NAME", NAME),
@@ -478,9 +478,9 @@ inline bool is_quiet(const Token_kind& kind){
     return
         (kind == SCOPE_RES) ||
         (kind == ARROW) ||
-        (kind == LINE_INDENT) ||
+        (kind == SELF_INDENT) ||
         (kind == EXCL) ||
-        (kind == INDENT);
+        (kind == CHILD_INDENT);
 }
 
 inline std::string kind_as_str(const Token_kind& kind) {

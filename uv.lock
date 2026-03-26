@@ -532,6 +532,12 @@ wheels = [
 ]
 
 [[package]]
+name = "cudaq"
+version = "0.13.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b7/7e/e87a3f735e24e8355a290ebf34ab8ab35a05afea3ca98d5c166392997304/cudaq-0.13.0.tar.gz", hash = "sha256:9b49d281780f7c62b17cd16f840cc2d03fae4da76459c7f15dbfc1f44159c6e5", size = 9188, upload-time = "2025-11-18T22:18:25.72Z" }
+
+[[package]]
 name = "cycler"
 version = "0.12.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2176,6 +2182,7 @@ source = { editable = "." }
 dependencies = [
     { name = "cirq" },
     { name = "coverage" },
+    { name = "cudaq" },
     { name = "guppylang" },
     { name = "hugr-qir" },
     { name = "jinja2" },
@@ -2204,6 +2211,7 @@ dev = [
 requires-dist = [
     { name = "cirq" },
     { name = "coverage" },
+    { name = "cudaq" },
     { name = "guppylang" },
     { name = "hugr-qir", git = "https://github.com/CQCL/hugr-qir.git" },
     { name = "jinja2" },

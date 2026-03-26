@@ -21,6 +21,13 @@ enum Clone_type {
     DEEP,
 };
 
+enum class Print_mode {
+    DEFAULT,
+    INDENT_LEVEL,
+    CHILD_INDENT,
+    SELF_INDENT,
+};
+
 class UInt;
 class Variable;
 class Branch;
@@ -35,6 +42,7 @@ class Node : public std::enable_shared_from_this<Node> {
 
     public:
         static int node_counter;
+        Print_mode print_mode = Print_mode::DEFAULT;
 
         Node(){}
 
@@ -126,7 +134,7 @@ class Node : public std::enable_shared_from_this<Node> {
             }
         }
 
-                inline bool has_constraints(){
+        inline bool has_constraints(){
             return constraints.has_value();
         }
 
@@ -153,10 +161,6 @@ class Node : public std::enable_shared_from_this<Node> {
         virtual std::shared_ptr<Node> clone(const Clone_type& ct) const;
 
         virtual void print_program(std::ostream& stream, unsigned int indent_level = 0) const;
-
-        int count_nodes() const;
-
-        int count_nodes(Token_kind _kind) const;
 
         bool visited(std::vector<Slot_type>& visited_slots, Slot_type slot, bool track_visited) const ;
 
@@ -194,8 +198,6 @@ class Node : public std::enable_shared_from_this<Node> {
 
         std::vector<int> child_partition;
         unsigned int partition_counter = 0;
-
-        bool indent;
 
     private:
         std::optional<Node_constraints> constraints;
