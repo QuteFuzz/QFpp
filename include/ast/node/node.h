@@ -126,6 +126,10 @@ class Node : public std::enable_shared_from_this<Node> {
             return !constraints.has_value() || constraints.value().passed(branch);
         }
 
+        inline void set_constraints(const std::optional<Node_constraints>& node_constraints) {
+            constraints = node_constraints;
+        }
+
         inline void add_constraint(const Token_kind& rule_kind, unsigned int n_occurances){
             if(constraints.has_value()){
                 constraints.value().add(rule_kind, n_occurances);

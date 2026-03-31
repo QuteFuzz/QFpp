@@ -4,6 +4,8 @@
 #include <lex.h>
 #include <coll.h>
 
+class Gate;
+
 struct Gate_info {
     Token_kind gate;
     unsigned int n_qubits = 0;
@@ -73,5 +75,9 @@ const std::vector<Gate_info> SUPPORTED_GATES = []{
 
     return gates;
 }();
+
+std::shared_ptr<Gate_info> find_gate_info(const Token_kind& gate_kind);
+
+Token_kind find_gate_type_with_same_arity(const std::shared_ptr<Gate> gate);
 
 #endif

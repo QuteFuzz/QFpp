@@ -211,7 +211,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 #pragma GCC diagnostic pop
 
 
-void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& term, unsigned int depth){
+void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& term, std::unordered_map<Token_kind, Node_constraints> descendant_node_constraints, unsigned int depth){
 	if (depth >= QuteFuzz::RECURSION_LIMIT){
 		ERROR(ANNOT("Recursion limit reached when writing branch for term: " + parent->get_str()));
 	}
@@ -227,12 +227,8 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 		Branch branch = term.get_rule()->pick_branch(parent);
 
 		for(const Term& child_term : branch){
-			// unsigned int max = term_constraint;
-
-			// if (term_constraint == 0) {
-				Term_constraint constraint = child_term.get_constaint();
-				auto max = constraint.resolve(std::ref(context));
-			// }
+			Term_constraint constraint = child_term.get_constaint();
+			unsigned int max = constraint.resolve(std::ref(context));
 
 			#if 0
 			if (constraint.get_term_constraint_kind() == Term_constraint_kind::DYNAMIC_MAX){
@@ -248,13 +244,20 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 
 				if(std::holds_alternative<Term>(maybe_child)){
 					// redirect
-					term_branch_to_child_nodes(parent, std::get<Term>(maybe_child), depth);
+					term_branch_to_child_nodes(parent, std::get<Term>(maybe_child), descendant_node_constraints, depth);
 				
 				} else {
 					auto child_node = std::get<std::shared_ptr<Node>>(maybe_child);
+					
+					// if child node constraints were supposed to be set on this child node, set them on the child node
+					for (const auto&[child_node_kind, node_constraints] : descendant_node_constraints) {
+						if (child_node_kind == child_node->get_node_kind()) {
+							child_node->set_constraints(node_constraints);
+						}
+					}
 
 					parent->add_child(child_node);
-					term_branch_to_child_nodes(child_node, child_term, depth + 1);
+					term_branch_to_child_nodes(child_node, child_term, descendant_node_constraints, depth + 1);
 				}
 
 			}
@@ -270,7 +273,7 @@ Term Ast::make_term_from_rule(std::shared_ptr<Rule> rule_ptr){
 	return Term(rule_ptr, kind, Meta_func::NONE);
 }
 
-Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry){
+Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry, std::unordered_map<Token_kind, Node_constraints> descendant_node_constraints){
 	Result<std::shared_ptr<Node>> res;
 
 	if(entry == nullptr){
@@ -283,7 +286,7 @@ Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry){
 
 		if(std::holds_alternative<std::shared_ptr<Node>>(maybe_root)){
 			root = std::get<std::shared_ptr<Node>>(maybe_root);
-			term_branch_to_child_nodes(root, entry_term);
+			term_branch_to_child_nodes(root, entry_term, descendant_node_constraints);
 			res.set_ok(root);
 
 		} else {

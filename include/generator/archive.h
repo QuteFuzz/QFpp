@@ -4,7 +4,7 @@
 #include <utils.h>
 #include <ast.h>
 #include <info.h>
-
+#include <mutation_selector.h>
 
 struct Cell {
 
@@ -85,7 +85,9 @@ struct Archive {
 
         Ast_entry crossover(Ast_entry& genome_a, Ast_entry& genome_b);
 
-        void mutation(Ast_entry& genome, std::shared_ptr<Grammar> grammar);
+        Mutation_selector mutation_selector();
+
+        // void mutation(Ast_entry& genome, std::shared_ptr<Grammar> grammar);
 
         void fill_archive(std::shared_ptr<Grammar> grammar);
 
@@ -100,9 +102,6 @@ struct Archive {
         std::vector<unsigned int> filled_archive_indices;  // uniquely filled indices
 
         const fs::path& output_dir;
-
-        float target_fill_ratio = 0.27; // small for now, increase as we get better mutations in
-
 };
 
 

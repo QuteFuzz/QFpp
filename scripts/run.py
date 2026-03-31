@@ -121,6 +121,7 @@ def parse():
     parser.add_argument(
         "--grammars", nargs="+", default=GRAMMARS, help="Grammars to test (default: all)"
     )
+    parser.add_argument("--map-elites", help="Run with MAP elites algorithm", action="store_true")
     parser.add_argument("--seed", type=int, help="Seed for random number generator", default=None)
     parser.add_argument("--plot", action="store_true", help="Plot results after running circuit")
     parser.add_argument("--coverage", action="store_true", help="Collect coverage info")
@@ -154,6 +155,7 @@ class Check_grammar:
         num_tests: int | None,
         name: str,
         nproc: int,
+        map_elites: bool,
         seed: (int | None) = None,
         mode: Run_mode = Run_mode.CI,
         plot: bool = False,
@@ -161,6 +163,7 @@ class Check_grammar:
     ) -> None:
         self.num_tests = DEFAULT_NUM_TESTS if num_tests is None else num_tests
         self.name = name
+        self.map_elites = map_elites
         self.seed = seed
         self.mode = mode
         self.plot = plot
@@ -171,6 +174,9 @@ class Check_grammar:
         self.nightly_run_dir = NIGHTLY_DIR / timestamp / self.name
         self.regression_seed_dst = self.nightly_run_dir / "regression_seed.txt"
 
+        self.coverage_dir = OUTPUT_DIR / self.name / "coverage_data"
+        self.coverage_dir.mkdir(parents=True, exist_ok=True)
+
         self.sim_proc = min(nproc, SIMULATION_CAP[name])
 
         log(f"Using {self.sim_proc} parallel workers for simulation", Color.BLUE)
@@ -180,16 +186,22 @@ class Check_grammar:
         Feeds fuzzer CLI to produce tests for given grammar
         """
 
-        log(f"Generating {self.num_tests} tests for grammar: {self.name}", Color.YELLOW)
+        log(f"Generating tests for grammar: {self.name}", Color.YELLOW)
+
+        if self.map_elites:
+            log("Map elites mode activated", Color.GREEN)
 
         fuzzer_executable = BUILD_DIR / "qf"
 
-        if self.seed is None:
-            input_str = f"{self.name} {ENTRY_POINT}\n{self.num_tests}\n"
-        else:
-            input_str = f"{self.name} {ENTRY_POINT}\nseed {self.seed}\n{self.num_tests}\n"
+        setup_grammar_str = f"{self.name} {ENTRY_POINT}\n"
+        seed_str = f"seed {self.seed}\n" if (self.seed is not None) else ""
+        map_elites_str = "map-elites\n" if self.map_elites else ""
 
-        input_str += "quit\n"
+        input_str = setup_grammar_str + seed_str + map_elites_str
+
+        # must always come last, as entering after setting grammar and number of tests sets off
+        # the generator
+        input_str += f"{self.num_tests}\nquit\n"
 
         try:
             process = subprocess.Popen(
@@ -234,8 +246,8 @@ class Check_grammar:
                     "-m",
                     "coverage",
                     "run",
-                    "--source",
-                    self.name,
+                    "-p",
+                    f"--source={self.name}",
                     str(script_path),
                 ]
             else:
@@ -249,6 +261,7 @@ class Check_grammar:
                 capture_output=True,
                 text=True,
                 timeout=TIMEOUT,
+                env=self.get_env_with_coverage_file(),
             )
             return result.stdout, result.stderr, result.returncode
         except subprocess.TimeoutExpired:
@@ -303,6 +316,10 @@ class Check_grammar:
     def validate_generated_circuits(self):
         circuit_dirs = self.get_ciruit_dirs()
 
+        num_circuits = len(circuit_dirs)
+
+        log(f"Validating {num_circuits} circuits", Color.YELLOW)
+
         interesting_results = []
         completed_threads = 0
 
@@ -316,7 +333,7 @@ class Check_grammar:
                 for i, circuit_dir in enumerate(circuit_dirs, 1)
             }
 
-            print_progress(0, self.num_tests)
+            print_progress(0, num_circuits)
 
             # Process results as they complete
             for future in as_completed(future_to_circuit):
@@ -330,7 +347,7 @@ class Check_grammar:
                         raise RuntimeError("Fuzzer has a bug")
 
                     completed_threads += 1
-                    print_progress(completed_threads, self.num_tests)
+                    print_progress(completed_threads, num_circuits)
 
                 except Exception as e:
                     log(f"Error validating circuit at {circuit_dir}/prog.py: {e}", Color.RED)
@@ -371,9 +388,25 @@ class Check_grammar:
                 f.write(f"Had compiler error: {result.had_compiler_error}\n")
                 f.write(f"Values: {result.values}\n")
 
+    def erase_coverage_info(self):
+        cmd = [sys.executable, "-m", "coverage", "erase"]
+        subprocess.run(cmd, env=self.get_env_with_coverage_file())
+
+    def get_env_with_coverage_file(self):
+        env = os.environ.copy()
+        env["COVERAGE_FILE"] = str(self.coverage_dir / ".coverage")
+
+        return env
+
+    def combine_coverage_info(self):
+        cmd = [sys.executable, "-m", "coverage", "combine"]
+        subprocess.run(cmd, env=self.get_env_with_coverage_file())
+
     def check(self):
+        self.erase_coverage_info()
         self.generate_tests()
         self.validate_generated_circuits()
+        self.combine_coverage_info()
 
 
 def main():
@@ -390,7 +423,15 @@ def main():
 
     for grammar in args.grammars:
         Check_grammar(
-            run_timestamp, args.num_tests, grammar, args.nproc, args.seed, mode, args.plot
+            run_timestamp,
+            args.num_tests,
+            grammar,
+            args.nproc,
+            args.map_elites,
+            args.seed,
+            mode,
+            args.plot,
+            args.coverage,
         ).check()
 
 

@@ -3,23 +3,23 @@
 #include "assert.h"
 #include <coll.h>
 
+// Gate::Gate(const std::string& str, std::shared_ptr<Gate_info> _info) :
+//     Cloneable<Gate>(str, _info->gate),
+//     info(*_info)
+// {}
+
+
 Gate::Gate(const std::string& str, const Token_kind& kind) :
     Cloneable<Gate>(str, kind)
 {
-    bool gate_found = false;
+    std::shared_ptr<Gate_info> info_ptr = find_gate_info(kind);
 
-    for (auto _info : SUPPORTED_GATES){
-        if(_info.gate == kind){
-            info = _info;
-            gate_found = true;
-            break;
-        }
-    }
-
-    if (!gate_found){
+    if (info_ptr == nullptr){
         info.gate = kind;
         info.n_qubits = random_uint(QuteFuzz::MAX_REG_SIZE, 1);
         WARNING("Gate " + str + " not supported in QuteFuzz, assigning " + std::to_string(info.n_qubits) + " qubits");
+    } else {
+        info = *info_ptr;
     }
 }
 

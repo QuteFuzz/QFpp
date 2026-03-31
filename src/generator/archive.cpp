@@ -54,6 +54,7 @@ bool Archive::place(const Ast_entry& genome){
 
         std::cout << "Index " << archive_index << std::endl;
         INFO("fill ratio = " + std::to_string(archive_fill_ratio()));
+        INFO("av quality = " + std::to_string(archive_av_quality()));
     }
 
     return new_placement;
@@ -122,26 +123,37 @@ Ast_entry Archive::crossover(Ast_entry& genome_a, Ast_entry& genome_b){
     return genome_b;
 }
 
-void Archive::mutation(Ast_entry& genome, std::shared_ptr<Grammar> grammar){
-    Mutate_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.7, 1).apply();
+Mutation_selector Archive::mutation_selector() {
+    Mutation_selector sel;
 
-    // auto param_gate_cond = [](Slot_type block){
-    //     return gate_from_op(block)->get_num_floats() == 0;
-    // };
+    sel.add("mutate_children", 0.7f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Mutate_children>(e, g, COMPOUND_STMTS, "compound_stmts", r, 1);
+        });
 
-    // Mutate_on_condition(std::make_shared<Replace_block>(genome, grammar, GATE_OP, "gate_op"), param_gate_cond).apply();
+    sel.add("gate_type_mutation", 0.5f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Gate_type_mutation>(e, g, r);
+        });
 
-    // Replace_block(genome, grammar, QUBIT_OP, "if_stmt", 0.2).apply();
-    // Replace_block(genome, grammar, GATE_OP, "subroutine_op", 0.2).apply();
-    // Replace_block(genome, grammar, QUBIT_OP, "barrier_op", 0.2).apply();
+    sel.add("swap_qubits", 0.5f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Swap_qubits>(e, r);
+        });
+
+    // add more mutation passes here
+
+    return sel;
 }
 
 void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
-    float fill_ratio = archive_fill_ratio();
-    unsigned int new_placements = 0, trials = 0;
+    Mutation_selector sel = mutation_selector();
+    float init_quality = archive_av_quality();
 
-    while(fill_ratio < target_fill_ratio){
-        unsigned int random_index = filled_archive_indices[random_uint(filled_archive_indices.size() - 1)];
+    while(archive_av_quality() < 4.0 * init_quality){
+        unsigned int n_filled_cells = filled_archive_indices.size();
+        unsigned int random_index = filled_archive_indices[random_uint(n_filled_cells - 1)];
+
         Cell cell_a = archive[random_index];
         Ast_entry genome_a = cell_a.get_genome().clone();
         Ast_entry child = genome_a;
@@ -155,23 +167,19 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
         // child.ast->print_program(std::cout);
         // std::cout << "\n=========" << std::endl;
 
-        mutation(child, grammar);
+        size_t mutation_rule_idx = sel.apply(child, grammar);
+        unsigned int n_new_placements = place(child) ? 1 : 0; // each placement can discover at most one new cell
+        sel.record(mutation_rule_idx, n_new_placements);
 
         // child.ast->print_program(std::cout);
         // getchar();
-
-        trials += 1;
-
-        new_placements += place(child);
-
-        fill_ratio = archive_fill_ratio();
     }
-
-    std::cout << (float)new_placements / (float)trials << "% of trials produce new placements in archive" << std::endl;
 
     INFO("Final archive average quality " + std::to_string(archive_av_quality()));
 
     dump(output_dir / "final_archive.json");
+
+    sel.print_stats(std::cout);
 }
 
 

@@ -29,7 +29,12 @@ class Ast{
 
         ~Ast() = default;
 
-        void term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& term, unsigned int depth = 0);
+        void term_branch_to_child_nodes(
+            std::shared_ptr<Node> parent, 
+            const Term& term, 
+            std::unordered_map<Token_kind, Node_constraints> descendant_node_constraints, 
+            unsigned int depth = 0
+        );
 
         std::variant<std::shared_ptr<Node>, Term> make_child(const std::shared_ptr<Node> parent, const Term& term);
 
@@ -37,7 +42,10 @@ class Ast{
 
         Term make_term_from_rule(std::shared_ptr<Rule> rule_ptr);
 
-        Result<std::shared_ptr<Node>> build(std::shared_ptr<Rule> entry);
+        Result<std::shared_ptr<Node>> build(
+            std::shared_ptr<Rule> entry,
+            std::unordered_map<Token_kind, Node_constraints> descendant_node_constraints = {}
+        );
 
     protected:
         std::shared_ptr<Node> root;

@@ -13,10 +13,10 @@ Quality::Quality(Slot_type _compilation_unit, const Features& fv):
     }
 
     components = {
-        Component{"gate_arity_variance", gate_arity_variance()},
-        Component{"gate_type_entropy", gate_type_entropy()},
+        Component{"gate_arity_variance", gate_arity_variance(), 1.3f},
+        Component{"gate_type_entropy", gate_type_entropy(), 1.2f},
         Component{"adj_gate_pair_density", adj_gate_pair_density()},
-        Component{"max_control_flow_depth", (float)max_control_flow_depth()},
+        Component{"max_control_flow_depth", (float)max_control_flow_depth(), 2.2f},
     };
 }
 

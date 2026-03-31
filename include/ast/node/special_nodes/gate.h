@@ -16,12 +16,12 @@ class Gate : public Cloneable<Gate> {
             Cloneable<Gate>("dummy")
         {}
 
+        // Gate(const std::string& str, std::shared_ptr<Gate_info> _info);
+
         /// @brief Use for predefined gates
         /// @param str
         /// @param kind
         Gate(const std::string& str, const Token_kind& kind);
-
-        // Gate(const std::string& str, const Token_kind& kind, unsigned int n_qubits);
 
         /// @brief Use for subroutines
         /// @param str
