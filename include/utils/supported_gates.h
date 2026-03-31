@@ -74,4 +74,6 @@ const std::vector<Gate_info> SUPPORTED_GATES = []{
     return gates;
 }();
 
+std::shared_ptr<Gate_info> find_gate_info(const Token_kind& gate_kind);
+
 #endif

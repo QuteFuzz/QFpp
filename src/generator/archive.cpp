@@ -123,7 +123,9 @@ Ast_entry Archive::crossover(Ast_entry& genome_a, Ast_entry& genome_b){
 }
 
 void Archive::mutation(Ast_entry& genome, std::shared_ptr<Grammar> grammar){
-    Mutate_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.7, 1).apply();
+    Replace_with_gate_in_same_basis(genome, grammar, 1.0f).apply();
+
+    // Mutate_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.7, 1).apply();
 
     // auto param_gate_cond = [](Slot_type block){
     //     return gate_from_op(block)->get_num_floats() == 0;

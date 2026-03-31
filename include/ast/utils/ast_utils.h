@@ -3,6 +3,10 @@
 
 #include <gate.h>
 
-std::shared_ptr<Gate> gate_from_op(Slot_type slot);
+class Resource;
+
+std::shared_ptr<Gate> gate_from_op(Slot_type gate_op_slot);
+
+void move_qubits(const std::shared_ptr<Node> source_gate_op, Slot_type dest_gate_op);
 
 #endif

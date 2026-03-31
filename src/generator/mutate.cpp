@@ -5,6 +5,26 @@
 #include <qubit_op.h>
 #include <grammar.h>
 #include <ast.h>
+#include <ast_utils.h>
+
+enum class Commutation_basis {
+    NONE,
+    X_BASIS,
+    Y_BASIS,
+    Z_BASIS,
+};
+
+// struct Commutation_info {
+//     Commutation_basis basis;
+//     std::vector<Token_kind> gates;
+//     float angle;
+// };
+
+static const std::unordered_map<Commutation_basis, std::vector<Token_kind>> COMMUTATIVE_GATES = {
+    {Commutation_basis::X_BASIS, {X, RX}},
+    {Commutation_basis::Y_BASIS, {Y, RY}},
+    {Commutation_basis::Z_BASIS, {Z, RZ}},  // S and T removed due to predicate issue in pytket, see grammar
+};
 
 static Slot_type find_slot_for(std::shared_ptr<Node>& search_root, std::shared_ptr<Node>& target) {
     for (auto& child : search_root->get_children()) {
@@ -13,6 +33,25 @@ static Slot_type find_slot_for(std::shared_ptr<Node>& search_root, std::shared_p
         if (found) return found;
     }
     return nullptr;
+}
+
+static Token_kind find_gate_in_same_basis(const Token_kind& gate_kind) {
+    for (const auto&[basis, gates] : COMMUTATIVE_GATES){
+        if (std::find(gates.begin(), gates.end(), gate_kind) != gates.end()) {
+            unsigned int n_gates = gates.size();
+            Token_kind other_gate_kind = gates.at(random_uint(n_gates - 1));
+
+            while(other_gate_kind == gate_kind) {
+                other_gate_kind = gates.at(random_uint(n_gates - 1));
+            }
+
+            std::cout << "replace " << gate_kind << " with " << other_gate_kind << std::endl;
+
+            return other_gate_kind;
+        }
+    }
+    
+    return gate_kind;
 }
 
 void Mutation_rule::apply(){
@@ -87,7 +126,7 @@ void Add_children::apply_blockwise(Slot_type block) {
             can also check that n_stmts is <= min possible value from term constraint resolution
         */
         // for (size_t i = 0; i < n_stmts; i++);
-        ast_builder->term_branch_to_child_nodes(*block, term);
+        ast_builder->term_branch_to_child_nodes(*block, term, std::nullopt);
     }
 }
 
@@ -126,7 +165,7 @@ void Mutate_children::apply_blockwise(Slot_type block) {
 void Replace_block::apply_blockwise(Slot_type block) {
     std::shared_ptr<Rule> rule = grammar->get_rule_pointer_if_exists(repl_rule_name, Scope::GLOB);
     std::shared_ptr<Ast> ast_builder = std::make_shared<Ast>(*entry.context, 0);
-    Result<std::shared_ptr<Node>> maybe_new_block = ast_builder->build(rule);
+    Result<std::shared_ptr<Node>> maybe_new_block = ast_builder->build(rule, child_node_constraints);
 
     if (maybe_new_block.is_ok()){
         std::shared_ptr<Node> new_node = maybe_new_block.get_ok();
@@ -136,7 +175,36 @@ void Replace_block::apply_blockwise(Slot_type block) {
 }
 
 void Mutate_on_condition::apply_blockwise(Slot_type block) {
-    while(cond(block)){
+    if (cond(block)) {
         mut_rule->apply_blockwise(block);
+    }
+}
+
+void Replace_with_gate_in_same_basis::apply_blockwise(Slot_type block) {
+
+    std::shared_ptr<Gate> gate = gate_from_op(block);
+
+    Token_kind other_gate_kind = find_gate_in_same_basis(gate->get_node_kind());
+
+    if (gate->get_node_kind() != other_gate_kind) {
+        // set node constraint to make sure this particular gate name is chosen such that 
+        // the correct number of qubits, bits, floats are generation
+        Child_node_constraints child_node_constraints = {GATE_NAME, Node_constraints(other_gate_kind, 1)};
+
+        std::shared_ptr<Node> old_block = *block;
+
+        // replace this block with another block, rule `gate_op` in the grammar. pass child constraints.
+        // note that block_kind here doesn't matter because we call `apply_blockwise` directly
+        Replace_block(entry, grammar, block_kind, "gate_op", child_node_constraints).apply_blockwise(block);
+
+        move_qubits(old_block, block);
+
+        #if 0
+        old_block->print_program(std::cout);
+        std::cout << " ===> ";
+        (*block)->print_program(std::cout);
+        #endif
+
+        getchar();
     }
 }

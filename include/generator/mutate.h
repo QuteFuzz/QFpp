@@ -5,11 +5,6 @@
 #include <cassert>
 #include <ast.h>
 
-namespace QuteFuzz {
-    static const std::set<Token_kind> X_BASIS = {X, RX};
-    static const std::set<Token_kind> Y_BASIS = {Y, RY};
-    static const std::set<Token_kind> Z_BASIS = {Z, RZ, S, T};
-};
 
 class Mutation_rule {
     public:
@@ -100,15 +95,24 @@ class Mutate_children : public Mutation_rule {
 class Replace_block : public Mutation_rule {
 
     public:
-        Replace_block(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind block_kind, std::string _repl_rule_name, float _blockwise_rate = 0.1f) :
+        Replace_block(
+            Ast_entry& _entry, 
+            std::shared_ptr<Grammar> _grammar, 
+            Token_kind block_kind, 
+            std::string _repl_rule_name, 
+            std::optional<Child_node_constraints> _child_node_constraints = std::nullopt,
+            float _blockwise_rate = 0.1f
+        ) :
             Mutation_rule(_entry, _grammar, block_kind, _blockwise_rate),
-            repl_rule_name(_repl_rule_name)
+            repl_rule_name(_repl_rule_name),
+            child_node_constraints(_child_node_constraints)
         {}
 
         void apply_blockwise(Slot_type block) override;
 
     private:
         std::string repl_rule_name;
+        std::optional<Child_node_constraints> child_node_constraints;
 };
 
 class Mutate_on_condition : public Mutation_rule {
@@ -125,6 +129,21 @@ class Mutate_on_condition : public Mutation_rule {
     private:
         std::shared_ptr<Mutation_rule> mut_rule;
         std::function<bool(Slot_type)> cond;
+};
+
+class Replace_with_gate_in_same_basis : public Mutation_rule {
+
+    public:
+        Replace_with_gate_in_same_basis(
+            Ast_entry& _entry, 
+            std::shared_ptr<Grammar> _grammar,
+            float _blockwise_rate = 0.1f
+        ) :
+            Mutation_rule(_entry, _grammar, GATE_OP, _blockwise_rate)
+        {}
+
+        void apply_blockwise(Slot_type block) override;
+
 };
 
 #endif
