@@ -222,16 +222,22 @@ void Run::loop(){
 
     while((line = linenoise("> ")) != NULL){
         current_command = std::string(line);
-        linenoiseFree(line);
 
         if (!current_command.empty()) {
             linenoiseHistoryAdd(line);
             linenoiseHistorySave(history_file);
         }
 
+        linenoiseFree(line);
+
         tokenise(current_command, ' ');
 
-        if(tokens.size() == 2){
+        if (current_command == "quit"){
+            current_generator.reset();
+            generators.clear();
+            break;
+
+        } else if(tokens.size() == 2){
             if (is_grammar(tokens[0])){
                 set_grammar(qf_control);
             } else if (tokens[0] == "seed") {
@@ -253,11 +259,6 @@ void Run::loop(){
 
         } else if (current_command == "map-elites"){
             TOGGLE_FLAG(current_command, qf_control.map_elites);
-
-        } else if (current_command == "quit"){
-            current_generator.reset();
-            generators.clear();
-            break;
 
         } else if(current_generator != nullptr){
             if (current_command == "print-tokens") {
@@ -287,5 +288,4 @@ void Run::loop(){
 
         }
     }
-
 }
