@@ -121,6 +121,7 @@ def parse():
     parser.add_argument(
         "--grammars", nargs="+", default=GRAMMARS, help="Grammars to test (default: all)"
     )
+    parser.add_argument("--map-elites", help="Run with MAP elites algorithm", action="store_true")
     parser.add_argument("--seed", type=int, help="Seed for random number generator", default=None)
     parser.add_argument("--plot", action="store_true", help="Plot results after running circuit")
     parser.add_argument("--coverage", action="store_true", help="Collect coverage info")
@@ -154,6 +155,7 @@ class Check_grammar:
         num_tests: int | None,
         name: str,
         nproc: int,
+        map_elites: bool,
         seed: (int | None) = None,
         mode: Run_mode = Run_mode.CI,
         plot: bool = False,
@@ -161,6 +163,7 @@ class Check_grammar:
     ) -> None:
         self.num_tests = DEFAULT_NUM_TESTS if num_tests is None else num_tests
         self.name = name
+        self.map_elites = map_elites
         self.seed = seed
         self.mode = mode
         self.plot = plot
@@ -180,16 +183,22 @@ class Check_grammar:
         Feeds fuzzer CLI to produce tests for given grammar
         """
 
-        log(f"Generating {self.num_tests} tests for grammar: {self.name}", Color.YELLOW)
+        log(f"Generating tests for grammar: {self.name}", Color.YELLOW)
+
+        if self.map_elites:
+            log("Map elites mode activated", Color.YELLOW)
 
         fuzzer_executable = BUILD_DIR / "qf"
 
-        if self.seed is None:
-            input_str = f"{self.name} {ENTRY_POINT}\n{self.num_tests}\n"
-        else:
-            input_str = f"{self.name} {ENTRY_POINT}\nseed {self.seed}\n{self.num_tests}\n"
+        setup_grammar_str = f"{self.name} {ENTRY_POINT}\n"
+        seed_str = f"seed {self.seed}\n" if (self.seed is not None) else ""
+        map_elites_str = "map-elites\n" if self.map_elites else ""
 
-        input_str += "quit\n"
+        input_str = setup_grammar_str + seed_str + map_elites_str
+
+        # must always come last, as entering after setting grammar and number of tests sets off
+        # the generator
+        input_str += f"{self.num_tests}\nquit\n"
 
         try:
             process = subprocess.Popen(
@@ -234,7 +243,8 @@ class Check_grammar:
                     "-m",
                     "coverage",
                     "run",
-                    "--source",
+                    "-p",
+                    "--source=",
                     self.name,
                     str(script_path),
                 ]
@@ -390,7 +400,14 @@ def main():
 
     for grammar in args.grammars:
         Check_grammar(
-            run_timestamp, args.num_tests, grammar, args.nproc, args.seed, mode, args.plot
+            run_timestamp,
+            args.num_tests,
+            grammar,
+            args.nproc,
+            args.map_elites,
+            args.seed,
+            mode,
+            args.plot,
         ).check()
 
 
