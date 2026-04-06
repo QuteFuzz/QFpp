@@ -174,6 +174,9 @@ class Check_grammar:
         self.nightly_run_dir = NIGHTLY_DIR / timestamp / self.name
         self.regression_seed_dst = self.nightly_run_dir / "regression_seed.txt"
 
+        self.coverage_dir = OUTPUT_DIR / self.name / "coverage_data"
+        self.coverage_dir.mkdir(parents=True, exist_ok=True)
+
         self.sim_proc = min(nproc, SIMULATION_CAP[name])
 
         log(f"Using {self.sim_proc} parallel workers for simulation", Color.BLUE)
@@ -258,6 +261,7 @@ class Check_grammar:
                 capture_output=True,
                 text=True,
                 timeout=TIMEOUT,
+                env=self.get_env_with_coverage_file(),
             )
             return result.stdout, result.stderr, result.returncode
         except subprocess.TimeoutExpired:
@@ -386,17 +390,23 @@ class Check_grammar:
 
     def erase_coverage_info(self):
         cmd = [sys.executable, "-m", "coverage", "erase"]
-        subprocess.run(cmd)
+        subprocess.run(cmd, env=self.get_env_with_coverage_file())
 
-    def collect_coverage_info(self):
-        cmd = [sys.executable, "-m", "coverage", "html"]
-        subprocess.run(cmd)
+    def get_env_with_coverage_file(self):
+        env = os.environ.copy()
+        env["COVERAGE_FILE"] = str(self.coverage_dir / ".coverage")
+
+        return env
+
+    def combine_coverage_info(self):
+        cmd = [sys.executable, "-m", "coverage", "combine"]
+        subprocess.run(cmd, env=self.get_env_with_coverage_file())
 
     def check(self):
         self.erase_coverage_info()
         self.generate_tests()
         self.validate_generated_circuits()
-        self.collect_coverage_info()
+        self.combine_coverage_info()
 
 
 def main():
