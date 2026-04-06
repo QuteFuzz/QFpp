@@ -66,7 +66,4 @@ struct Node_constraints {
 
 };
 
-// constraints for the child node identified by the `Token_kind`
-using Child_node_constraints = std::pair<Token_kind, Node_constraints>;
-
 #endif

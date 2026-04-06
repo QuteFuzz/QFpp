@@ -123,7 +123,9 @@ Ast_entry Archive::crossover(Ast_entry& genome_a, Ast_entry& genome_b){
 }
 
 void Archive::mutation(Ast_entry& genome, std::shared_ptr<Grammar> grammar){
-    Replace_with_gate_in_same_basis(genome, grammar, 1.0f).apply();
+    // Gate_type_mutation(genome, grammar).apply();
+
+    Swap_qubits(genome, 1.0).apply();
 
     // Mutate_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.7, 1).apply();
 
@@ -154,13 +156,13 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
         //     child = crossover(genome_a, genome_b);
         // }
 
-        // child.ast->print_program(std::cout);
-        // std::cout << "\n=========" << std::endl;
+        child.ast->print_program(std::cout);
+        std::cout << "\n=========" << std::endl;
 
         mutation(child, grammar);
 
-        // child.ast->print_program(std::cout);
-        // getchar();
+        child.ast->print_program(std::cout);
+        getchar();
 
         trials += 1;
 

@@ -3,6 +3,12 @@
 #include "assert.h"
 #include <coll.h>
 
+// Gate::Gate(const std::string& str, std::shared_ptr<Gate_info> _info) :
+//     Cloneable<Gate>(str, _info->gate),
+//     info(*_info)
+// {}
+
+
 Gate::Gate(const std::string& str, const Token_kind& kind) :
     Cloneable<Gate>(str, kind)
 {

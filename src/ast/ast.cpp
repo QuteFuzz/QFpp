@@ -211,7 +211,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 #pragma GCC diagnostic pop
 
 
-void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& term, std::optional<Child_node_constraints> maybe_child_node_constraints, unsigned int depth){
+void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& term, std::unordered_map<Token_kind, Node_constraints> descendant_node_constraints, unsigned int depth){
 	if (depth >= QuteFuzz::RECURSION_LIMIT){
 		ERROR(ANNOT("Recursion limit reached when writing branch for term: " + parent->get_str()));
 	}
@@ -244,22 +244,20 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 
 				if(std::holds_alternative<Term>(maybe_child)){
 					// redirect
-					term_branch_to_child_nodes(parent, std::get<Term>(maybe_child), maybe_child_node_constraints, depth);
+					term_branch_to_child_nodes(parent, std::get<Term>(maybe_child), descendant_node_constraints, depth);
 				
 				} else {
 					auto child_node = std::get<std::shared_ptr<Node>>(maybe_child);
 					
 					// if child node constraints were supposed to be set on this child node, set them on the child node
-					if (maybe_child_node_constraints.has_value()){
-						auto child_node_constraints = maybe_child_node_constraints.value();
-
-						if (child_node_constraints.first == child_node->get_node_kind()) {
-							child_node->set_constraints(child_node_constraints.second);
+					for (const auto&[child_node_kind, node_constraints] : descendant_node_constraints) {
+						if (child_node_kind == child_node->get_node_kind()) {
+							child_node->set_constraints(node_constraints);
 						}
 					}
 
 					parent->add_child(child_node);
-					term_branch_to_child_nodes(child_node, child_term, maybe_child_node_constraints, depth + 1);
+					term_branch_to_child_nodes(child_node, child_term, descendant_node_constraints, depth + 1);
 				}
 
 			}
@@ -275,7 +273,7 @@ Term Ast::make_term_from_rule(std::shared_ptr<Rule> rule_ptr){
 	return Term(rule_ptr, kind, Meta_func::NONE);
 }
 
-Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry, std::optional<Child_node_constraints> child_node_constraints){
+Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry, std::unordered_map<Token_kind, Node_constraints> descendant_node_constraints){
 	Result<std::shared_ptr<Node>> res;
 
 	if(entry == nullptr){
@@ -288,7 +286,7 @@ Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry, std::optio
 
 		if(std::holds_alternative<std::shared_ptr<Node>>(maybe_root)){
 			root = std::get<std::shared_ptr<Node>>(maybe_root);
-			term_branch_to_child_nodes(root, entry_term, child_node_constraints);
+			term_branch_to_child_nodes(root, entry_term, descendant_node_constraints);
 			res.set_ok(root);
 
 		} else {

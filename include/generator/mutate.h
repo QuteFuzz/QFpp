@@ -8,7 +8,6 @@
 
 class Mutation_rule {
     public:
-
         Mutation_rule(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind _block_kind, float _blockwise_rate, bool _on_entire_ast = false):
             entry(_entry),
             grammar(_grammar),
@@ -39,11 +38,10 @@ class Mutation_rule {
  */
 
 class Add_children : public Mutation_rule {
-
     public:
         Add_children(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind _block_kind, 
             std::string _rule_name, 
-            float _blockwise_rate = 0.1f,
+            float _blockwise_rate,
             unsigned int _nested_depth = 0
         ):
             Mutation_rule(_entry, _grammar, _block_kind, _blockwise_rate),
@@ -60,7 +58,6 @@ class Add_children : public Mutation_rule {
 };
 
 class Erase_child : public Mutation_rule {
-
     public:
         Erase_child(Ast_entry& _entry, Token_kind _block_kind, float _blockwise_rate = 0.1f):
             Mutation_rule(_entry, nullptr, _block_kind, _blockwise_rate)
@@ -73,11 +70,10 @@ class Erase_child : public Mutation_rule {
 };
 
 class Mutate_children : public Mutation_rule {
-
     public:
         Mutate_children(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind block_kind,
             std::string _rule_name,
-            float _blockwise_rate = 0.1f,
+            float _blockwise_rate,
             unsigned int _nested_depth = 0
         ):
             Mutation_rule(_entry, _grammar, block_kind, _blockwise_rate),
@@ -93,26 +89,25 @@ class Mutate_children : public Mutation_rule {
 };
 
 class Replace_block : public Mutation_rule {
-
     public:
         Replace_block(
             Ast_entry& _entry, 
             std::shared_ptr<Grammar> _grammar, 
             Token_kind block_kind, 
             std::string _repl_rule_name, 
-            std::optional<Child_node_constraints> _child_node_constraints = std::nullopt,
-            float _blockwise_rate = 0.1f
+            float _blockwise_rate,
+            std::unordered_map<Token_kind, Node_constraints> _descendant_node_constraints = {}
         ) :
             Mutation_rule(_entry, _grammar, block_kind, _blockwise_rate),
             repl_rule_name(_repl_rule_name),
-            child_node_constraints(_child_node_constraints)
+            descendant_node_constraints(_descendant_node_constraints)
         {}
 
         void apply_blockwise(Slot_type block) override;
 
     private:
         std::string repl_rule_name;
-        std::optional<Child_node_constraints> child_node_constraints;
+        std::unordered_map<Token_kind, Node_constraints> descendant_node_constraints;
 };
 
 class Mutate_on_condition : public Mutation_rule {
@@ -131,15 +126,19 @@ class Mutate_on_condition : public Mutation_rule {
         std::function<bool(Slot_type)> cond;
 };
 
-class Replace_with_gate_in_same_basis : public Mutation_rule {
-
+class Gate_type_mutation : public Mutation_rule {
     public:
-        Replace_with_gate_in_same_basis(
-            Ast_entry& _entry, 
-            std::shared_ptr<Grammar> _grammar,
-            float _blockwise_rate = 0.1f
-        ) :
-            Mutation_rule(_entry, _grammar, GATE_OP, _blockwise_rate)
+        Gate_type_mutation(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, float _blockwise_ratio) :
+            Mutation_rule(_entry, _grammar, GATE_OP, _blockwise_ratio)
+        {}
+
+        void apply_blockwise(Slot_type block) override;
+};
+
+class Swap_qubits : public Mutation_rule {
+    public:
+        Swap_qubits(Ast_entry& _entry, float _blockwise_ratio) :
+            Mutation_rule(_entry, nullptr, GATE_OP, _blockwise_ratio)
         {}
 
         void apply_blockwise(Slot_type block) override;

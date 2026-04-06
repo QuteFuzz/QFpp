@@ -6,6 +6,7 @@
 #include <grammar.h>
 #include <ast.h>
 #include <ast_utils.h>
+#include <math.h>
 
 enum class Commutation_basis {
     NONE,
@@ -14,11 +15,6 @@ enum class Commutation_basis {
     Z_BASIS,
 };
 
-// struct Commutation_info {
-//     Commutation_basis basis;
-//     std::vector<Token_kind> gates;
-//     float angle;
-// };
 
 static const std::unordered_map<Commutation_basis, std::vector<Token_kind>> COMMUTATIVE_GATES = {
     {Commutation_basis::X_BASIS, {X, RX}},
@@ -44,8 +40,6 @@ static Token_kind find_gate_in_same_basis(const Token_kind& gate_kind) {
             while(other_gate_kind == gate_kind) {
                 other_gate_kind = gates.at(random_uint(n_gates - 1));
             }
-
-            std::cout << "replace " << gate_kind << " with " << other_gate_kind << std::endl;
 
             return other_gate_kind;
         }
@@ -80,6 +74,7 @@ void Mutation_rule::apply(){
             Slot_type slot = find_slot_for(root, block_nodes[idx]);
             
             if (slot != nullptr) {
+                assert((*slot)->get_node_kind() == block_kind);
                 apply_blockwise(slot);
             }
         }
@@ -98,7 +93,7 @@ unsigned int Mutation_rule::n_children_across_blocks(){
 }
 
 /**
- *          SEMANTICS MODIFYING
+ *          SEMANTICS MODIFYINGast_builder
  */
 
 /// @brief Add child / children to block
@@ -126,7 +121,7 @@ void Add_children::apply_blockwise(Slot_type block) {
             can also check that n_stmts is <= min possible value from term constraint resolution
         */
         // for (size_t i = 0; i < n_stmts; i++);
-        ast_builder->term_branch_to_child_nodes(*block, term, std::nullopt);
+        ast_builder->term_branch_to_child_nodes(*block, term, {});
     }
 }
 
@@ -164,8 +159,8 @@ void Mutate_children::apply_blockwise(Slot_type block) {
 
 void Replace_block::apply_blockwise(Slot_type block) {
     std::shared_ptr<Rule> rule = grammar->get_rule_pointer_if_exists(repl_rule_name, Scope::GLOB);
-    std::shared_ptr<Ast> ast_builder = std::make_shared<Ast>(*entry.context, 0);
-    Result<std::shared_ptr<Node>> maybe_new_block = ast_builder->build(rule, child_node_constraints);
+    std::shared_ptr<Ast> ast_builder = (std::make_shared<Ast>(*entry.context, 0));
+    Result<std::shared_ptr<Node>> maybe_new_block = ast_builder->build(rule, descendant_node_constraints);
 
     if (maybe_new_block.is_ok()){
         std::shared_ptr<Node> new_node = maybe_new_block.get_ok();
@@ -180,31 +175,23 @@ void Mutate_on_condition::apply_blockwise(Slot_type block) {
     }
 }
 
-void Replace_with_gate_in_same_basis::apply_blockwise(Slot_type block) {
-
+void Gate_type_mutation::apply_blockwise(Slot_type block) {
     std::shared_ptr<Gate> gate = gate_from_op(block);
 
-    Token_kind other_gate_kind = find_gate_in_same_basis(gate->get_node_kind());
+    Token_kind replacement_gate_kind = find_gate_type_with_same_arity(gate);
+    std::unordered_map<Token_kind, Node_constraints> descendant_node_constraints = {
+        {GATE_NAME, Node_constraints(replacement_gate_kind, 1)}
+    };
 
-    if (gate->get_node_kind() != other_gate_kind) {
-        // set node constraint to make sure this particular gate name is chosen such that 
-        // the correct number of qubits, bits, floats are generation
-        Child_node_constraints child_node_constraints = {GATE_NAME, Node_constraints(other_gate_kind, 1)};
+    // need to keep old block as it contains qubits that need to be swapped back later
+    std::shared_ptr<Node> old_block = *block;    
 
-        std::shared_ptr<Node> old_block = *block;
+    // GATE_OP here doesn't matter because I call `apply_blockwise` directly
+    Replace_block(entry, grammar, GATE_OP, "gate_op", blockwise_rate, descendant_node_constraints).apply_blockwise(block);
 
-        // replace this block with another block, rule `gate_op` in the grammar. pass child constraints.
-        // note that block_kind here doesn't matter because we call `apply_blockwise` directly
-        Replace_block(entry, grammar, block_kind, "gate_op", child_node_constraints).apply_blockwise(block);
+    move_qubits(old_block, block);
+}
 
-        move_qubits(old_block, block);
-
-        #if 0
-        old_block->print_program(std::cout);
-        std::cout << " ===> ";
-        (*block)->print_program(std::cout);
-        #endif
-
-        getchar();
-    }
+void Swap_qubits::apply_blockwise(Slot_type block) {
+    swap_qubits(block);
 }

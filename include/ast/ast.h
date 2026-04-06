@@ -32,7 +32,7 @@ class Ast{
         void term_branch_to_child_nodes(
             std::shared_ptr<Node> parent, 
             const Term& term, 
-            std::optional<Child_node_constraints> maybe_child_node_constraints, 
+            std::unordered_map<Token_kind, Node_constraints> descendant_node_constraints, 
             unsigned int depth = 0
         );
 
@@ -44,7 +44,7 @@ class Ast{
 
         Result<std::shared_ptr<Node>> build(
             std::shared_ptr<Rule> entry,
-            std::optional<Child_node_constraints> maybe_child_node_constraints = std::nullopt
+            std::unordered_map<Token_kind, Node_constraints> descendant_node_constraints = {}
         );
 
     protected:

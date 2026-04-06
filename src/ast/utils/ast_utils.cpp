@@ -41,3 +41,15 @@ void move_qubits(const std::shared_ptr<Node> source_gate_op, Slot_type dest_gate
     }
 }
 
+void swap_qubits(const Slot_type gate_op) {
+    std::shared_ptr<Gate> gate = gate_from_op(gate_op);
+
+    if (gate->get_num_external_qubits() == 2){
+        auto node_gen = Node_gen(**gate_op, QUBIT);
+
+        auto qubit_0 = node_gen.begin()++;
+        auto qubit_1 = node_gen.begin();
+
+        std::swap(*qubit_0, *qubit_1);
+    }
+}
