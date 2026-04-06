@@ -186,7 +186,7 @@ class Check_grammar:
         log(f"Generating tests for grammar: {self.name}", Color.YELLOW)
 
         if self.map_elites:
-            log("Map elites mode activated", Color.YELLOW)
+            log("Map elites mode activated", Color.GREEN)
 
         fuzzer_executable = BUILD_DIR / "qf"
 
@@ -244,8 +244,7 @@ class Check_grammar:
                     "coverage",
                     "run",
                     "-p",
-                    "--source=",
-                    self.name,
+                    f"--source={self.name}",
                     str(script_path),
                 ]
             else:
@@ -313,6 +312,10 @@ class Check_grammar:
     def validate_generated_circuits(self):
         circuit_dirs = self.get_ciruit_dirs()
 
+        num_circuits = len(circuit_dirs)
+
+        log(f"Validating {num_circuits} circuits", Color.YELLOW)
+
         interesting_results = []
         completed_threads = 0
 
@@ -326,7 +329,7 @@ class Check_grammar:
                 for i, circuit_dir in enumerate(circuit_dirs, 1)
             }
 
-            print_progress(0, self.num_tests)
+            print_progress(0, num_circuits)
 
             # Process results as they complete
             for future in as_completed(future_to_circuit):
@@ -340,7 +343,7 @@ class Check_grammar:
                         raise RuntimeError("Fuzzer has a bug")
 
                     completed_threads += 1
-                    print_progress(completed_threads, self.num_tests)
+                    print_progress(completed_threads, num_circuits)
 
                 except Exception as e:
                     log(f"Error validating circuit at {circuit_dir}/prog.py: {e}", Color.RED)
@@ -381,9 +384,19 @@ class Check_grammar:
                 f.write(f"Had compiler error: {result.had_compiler_error}\n")
                 f.write(f"Values: {result.values}\n")
 
+    def erase_coverage_info(self):
+        cmd = [sys.executable, "-m", "coverage", "erase"]
+        subprocess.run(cmd)
+
+    def collect_coverage_info(self):
+        cmd = [sys.executable, "-m", "coverage", "html"]
+        subprocess.run(cmd)
+
     def check(self):
+        self.erase_coverage_info()
         self.generate_tests()
         self.validate_generated_circuits()
+        self.collect_coverage_info()
 
 
 def main():
@@ -408,6 +421,7 @@ def main():
             args.seed,
             mode,
             args.plot,
+            args.coverage,
         ).check()
 
 

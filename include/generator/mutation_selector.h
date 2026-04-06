@@ -7,7 +7,7 @@
 #include <limits>
 
 /*
-    this file and its corresponding .cpp were largerly written by Claude
+    this file was largerly written by Claude
 */
 
 struct Mutation_arm {
