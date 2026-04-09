@@ -2197,6 +2197,7 @@ dependencies = [
     { name = "selene-sim" },
     { name = "sympy" },
     { name = "tket" },
+    { name = "typing-extensions" },
     { name = "umap-learn" },
     { name = "z3-solver" },
 ]
@@ -2226,6 +2227,7 @@ requires-dist = [
     { name = "selene-sim" },
     { name = "sympy" },
     { name = "tket" },
+    { name = "typing-extensions", specifier = ">=4.15.0" },
     { name = "umap-learn" },
     { name = "z3-solver" },
 ]
