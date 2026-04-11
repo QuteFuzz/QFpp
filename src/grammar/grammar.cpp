@@ -164,7 +164,7 @@ void Grammar::add_constraint_to_last_term(const Term_constraint& constraint){
     if (branch_size == 0){
         ERROR("Current branch should have at least one term to add constraint to");
     } else {
-        current_branch.at(branch_size - 1).add_constraint(constraint);
+        current_branch.at(branch_size - 1).add_term_constraint(constraint);
     }
 }
 

@@ -5,7 +5,6 @@
 #include <cassert>
 #include <ast.h>
 
-
 class Mutation_rule {
     public:
         Mutation_rule(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind _block_kind, float _blockwise_rate, bool _on_entire_ast = false):
@@ -37,24 +36,26 @@ class Mutation_rule {
  *          SEMNATICS MODIFYING
  */
 
-class Add_children : public Mutation_rule {
+class Add_child : public Mutation_rule {
     public:
-        Add_children(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind _block_kind, 
-            std::string _rule_name, 
+        Add_child(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind _block_kind, 
+            std::string _block_rule_name,
             float _blockwise_rate,
-            unsigned int _nested_depth = 0
+            unsigned int _nested_depth = 0,
+            const std::unordered_map<Token_kind, Branch_constraint>& _descendant_node_branch_constraints = {}
         ):
             Mutation_rule(_entry, _grammar, _block_kind, _blockwise_rate),
-            rule_name(_rule_name),
-            nested_depth(_nested_depth)
+            block_rule_name(_block_rule_name),
+            nested_depth(_nested_depth),
+            descendant_node_branch_constraints(_descendant_node_branch_constraints)
         {}
 
         void apply_blockwise(Slot_type block) override;
 
     private:
-        std::string rule_name;
+        std::string block_rule_name;
         unsigned int nested_depth;
-
+        std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints;
 };
 
 class Erase_child : public Mutation_rule {
@@ -69,23 +70,21 @@ class Erase_child : public Mutation_rule {
 
 };
 
-class Mutate_children : public Mutation_rule {
+
+class Add_or_erase_child : public Mutation_rule {
     public:
-        Mutate_children(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind block_kind,
-            std::string _rule_name,
-            float _blockwise_rate,
-            unsigned int _nested_depth = 0
+        Add_or_erase_child(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind block_kind,
+            std::string _block_rule_name,
+            float _blockwise_rate
         ):
             Mutation_rule(_entry, _grammar, block_kind, _blockwise_rate),
-            rule_name(_rule_name),
-            nested_depth(_nested_depth)
+            block_rule_name(_block_rule_name)
         {}
 
         void apply_blockwise(Slot_type block) override;
 
     private:
-        std::string rule_name;
-        unsigned int nested_depth;
+        std::string block_rule_name;
 };
 
 class Replace_block : public Mutation_rule {
@@ -94,20 +93,20 @@ class Replace_block : public Mutation_rule {
             Ast_entry& _entry, 
             std::shared_ptr<Grammar> _grammar, 
             Token_kind block_kind, 
-            std::string _repl_rule_name, 
+            std::string _repl_rule_name,
             float _blockwise_rate,
-            std::unordered_map<Token_kind, Node_constraints> _descendant_node_constraints = {}
+            const std::unordered_map<Token_kind, Branch_constraint>& _descendant_node_branch_constraints = {}
         ) :
             Mutation_rule(_entry, _grammar, block_kind, _blockwise_rate),
             repl_rule_name(_repl_rule_name),
-            descendant_node_constraints(_descendant_node_constraints)
+            descendant_node_branch_constraints(_descendant_node_branch_constraints)
         {}
 
         void apply_blockwise(Slot_type block) override;
 
     private:
         std::string repl_rule_name;
-        std::unordered_map<Token_kind, Node_constraints> descendant_node_constraints;
+        std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints;
 };
 
 class Mutate_on_condition : public Mutation_rule {
@@ -126,23 +125,20 @@ class Mutate_on_condition : public Mutation_rule {
         std::function<bool(Slot_type)> cond;
 };
 
-class Gate_type_mutation : public Mutation_rule {
+class Add_gate_chain : public Mutation_rule {
     public:
-        Gate_type_mutation(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, float _blockwise_ratio) :
-            Mutation_rule(_entry, _grammar, GATE_OP, _blockwise_ratio)
-        {}
-
-        void apply_blockwise(Slot_type block) override;
-};
-
-class Swap_qubits : public Mutation_rule {
-    public:
-        Swap_qubits(Ast_entry& _entry, float _blockwise_ratio) :
-            Mutation_rule(_entry, nullptr, GATE_OP, _blockwise_ratio)
+        Add_gate_chain(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, float _blockwise_rate, const std::vector<Token_kind>& _gate_kinds):
+            Mutation_rule(_entry, _grammar, COMPOUND_STMTS, _blockwise_rate),
+            gate_kinds(_gate_kinds)
         {}
 
         void apply_blockwise(Slot_type block) override;
 
+    private:
+        std::vector<Token_kind> gate_kinds;
+
 };
+
+
 
 #endif

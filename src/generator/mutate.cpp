@@ -8,44 +8,22 @@
 #include <ast_utils.h>
 #include <math.h>
 
-enum class Commutation_basis {
-    NONE,
-    X_BASIS,
-    Y_BASIS,
-    Z_BASIS,
-};
+static std::shared_ptr<Rule> rule_from_name(const std::string& rule_name, std::shared_ptr<Grammar> grammar){
+    auto rule_ptr = grammar->get_rule_pointer_if_exists(rule_name, Scope::GLOB);
 
-
-static const std::unordered_map<Commutation_basis, std::vector<Token_kind>> COMMUTATIVE_GATES = {
-    {Commutation_basis::X_BASIS, {X, RX}},
-    {Commutation_basis::Y_BASIS, {Y, RY}},
-    {Commutation_basis::Z_BASIS, {Z, RZ}},  // S and T removed due to predicate issue in pytket, see grammar
-};
-
-static Slot_type find_slot_for(std::shared_ptr<Node>& search_root, std::shared_ptr<Node>& target) {
-    for (auto& child : search_root->get_children()) {
-        if (child.get() == target.get()) return &child;
-        auto found = find_slot_for(child, target);
-        if (found) return found;
+    if(rule_ptr == nullptr){
+        ERROR("Grammar does not define rule " + rule_name);
     }
-    return nullptr;
+
+    return rule_ptr;
 }
 
-static Token_kind find_gate_in_same_basis(const Token_kind& gate_kind) {
-    for (const auto&[basis, gates] : COMMUTATIVE_GATES){
-        if (std::find(gates.begin(), gates.end(), gate_kind) != gates.end()) {
-            unsigned int n_gates = gates.size();
-            Token_kind other_gate_kind = gates.at(random_uint(n_gates - 1));
-
-            while(other_gate_kind == gate_kind) {
-                other_gate_kind = gates.at(random_uint(n_gates - 1));
-            }
-
-            return other_gate_kind;
-        }
-    }
-    
-    return gate_kind;
+static std::unordered_map<Token_kind, Branch_constraint> branch_constraints_for_gate(const Token_kind& gate_kind) {
+    return {
+        {COMPOUND_STMT, Branch_constraint(QUBIT_OP, 1)},
+        {QUBIT_OP, Branch_constraint(GATE_OP, 1)},
+        {GATE_NAME, Branch_constraint(gate_kind, 1)}
+    };
 }
 
 void Mutation_rule::apply(){
@@ -93,36 +71,14 @@ unsigned int Mutation_rule::n_children_across_blocks(){
 }
 
 /**
- *          SEMANTICS MODIFYINGast_builder
+ *          SEMANTICS MODIFYING
  */
 
-/// @brief Add child / children to block
+/// @brief Add child to block
 /// @param compound_stmts 
-void Add_children::apply_blockwise(Slot_type block) {
-    std::shared_ptr<Rule> rule = grammar->get_rule_pointer_if_exists(rule_name, Scope::GLOB);
-
-    if (rule == nullptr){
-        WARNING("Cannot perform child addition! Grammar does not define rule called " + rule_name);
-    
-    } else {
-        // this build setup resets context at RL_CIRCUIT, so resource usages and depths are as if new
-        std::shared_ptr<Ast> ast_builder = std::make_shared<Ast>(*entry.context, nested_depth);
-        const Term& term = ast_builder->make_term_from_rule(rule);
-
-        /*
-            n_stmts here is not doing what is intended
-            already, the branch from compound_stmts contains more than one compound_stmt term
-
-            compound_stmts = (compound_stmt NEWLINE)[UNIFORM(3,5)];
-
-            a solution could be to limit term constraint node additions using node constaints, then i can set
-            a node constraint on the compound_stmts node here to be able to control things.
-
-            can also check that n_stmts is <= min possible value from term constraint resolution
-        */
-        // for (size_t i = 0; i < n_stmts; i++);
-        ast_builder->term_branch_to_child_nodes(*block, term, {});
-    }
+void Add_child::apply_blockwise(Slot_type block) {
+    std::shared_ptr<Rule> rule = rule_from_name(block_rule_name, grammar);
+    build_ast_children(block, rule, *entry.context, nested_depth, 1, descendant_node_branch_constraints);
 }
 
 /// @brief Remove random child from block
@@ -139,17 +95,15 @@ void Erase_child::apply_blockwise(Slot_type block) {
 
 /// @brief Prefer insertion for small nodes, deletion for big nodes
 /// @param compound_stmts 
-void Mutate_children::apply_blockwise(Slot_type block) {
+void Add_or_erase_child::apply_blockwise(Slot_type block) {
     float upper_bound = 60.0f;
     float total_children = (float)n_children_across_blocks();
 
     float random_float = (float)random_uint(upper_bound, 0) / upper_bound;
     float insert_prob = 1.0f - std::min(1.0f, total_children / upper_bound);
 
-    // std::cout << "total children " << total_children << std::endl; getchar();
-
     if (insert_prob > random_float){
-        Add_children(entry, grammar, block_kind, rule_name, blockwise_rate, nested_depth).apply_blockwise(block);
+        Add_child(entry, grammar, block_kind, block_rule_name, blockwise_rate).apply_blockwise(block);
 
     } else {
         Erase_child(entry, block_kind, blockwise_rate).apply_blockwise(block);
@@ -158,15 +112,9 @@ void Mutate_children::apply_blockwise(Slot_type block) {
 }
 
 void Replace_block::apply_blockwise(Slot_type block) {
-    std::shared_ptr<Rule> rule = grammar->get_rule_pointer_if_exists(repl_rule_name, Scope::GLOB);
-    std::shared_ptr<Ast> ast_builder = (std::make_shared<Ast>(*entry.context, 0));
-    Result<std::shared_ptr<Node>> maybe_new_block = ast_builder->build(rule, descendant_node_constraints);
-
-    if (maybe_new_block.is_ok()){
-        std::shared_ptr<Node> new_node = maybe_new_block.get_ok();
-        new_node->print_mode = (*block)->print_mode;
-        *block = new_node;
-    }
+    std::shared_ptr<Rule> rule = rule_from_name(repl_rule_name, grammar);
+    std::shared_ptr<Node> new_node = build_ast_from_rule(rule, *entry.context, descendant_node_branch_constraints);
+    replace_node(block, new_node);
 }
 
 void Mutate_on_condition::apply_blockwise(Slot_type block) {
@@ -175,23 +123,21 @@ void Mutate_on_condition::apply_blockwise(Slot_type block) {
     }
 }
 
-void Gate_type_mutation::apply_blockwise(Slot_type block) {
-    std::shared_ptr<Gate> gate = gate_from_op(block);
+void Add_gate_chain::apply_blockwise(Slot_type block) {
+    std::shared_ptr<Rule> rule = rule_from_name("compound_stmts", grammar);
 
-    Token_kind replacement_gate_kind = find_gate_type_with_same_arity(gate);
-    std::unordered_map<Token_kind, Node_constraints> descendant_node_constraints = {
-        {GATE_NAME, Node_constraints(replacement_gate_kind, 1)}
-    };
+    size_t chain_size = gate_kinds.size();
 
-    // need to keep old block as it contains qubits that need to be swapped back later
-    std::shared_ptr<Node> old_block = *block;    
+    assert(chain_size >= 1);
 
-    // GATE_OP here doesn't matter because I call `apply_blockwise` directly
-    Replace_block(entry, grammar, GATE_OP, "gate_op", blockwise_rate, descendant_node_constraints).apply_blockwise(block);
+    std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints = branch_constraints_for_gate(gate_kinds[0]);
+    Slot_type last_built_gate_0 = build_ast_children(block, rule, *entry.context, 0, 1, descendant_node_branch_constraints);
 
-    move_qubits(old_block, block);
+    for (size_t i = 1; i < chain_size; i++){
+        descendant_node_branch_constraints = branch_constraints_for_gate(gate_kinds[i]);
+        Slot_type last_built_gate_1 = build_ast_children(block, rule, *entry.context, 0, 1, descendant_node_branch_constraints);
+
+        move_qubits(*last_built_gate_0, last_built_gate_1);
+    }
 }
 
-void Swap_qubits::apply_blockwise(Slot_type block) {
-    swap_qubits(block);
-}

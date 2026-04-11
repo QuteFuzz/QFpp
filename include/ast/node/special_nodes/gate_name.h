@@ -17,7 +17,7 @@ class Gate_name : public Node {
 
             for (auto info : SUPPORTED_GATES){
                 if((info.n_qubits > n_qubits) || (info.n_bits > n_bits)){
-                    add_constraint(info.gate, 0);
+                    add_branch_constraint(info.gate, 0);
                 }
             }
         }

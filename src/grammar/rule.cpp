@@ -46,10 +46,10 @@ Branch Rule::pick_branch(std::shared_ptr<Node> rule_as_node){
     } else {
 
         #ifdef DEBUG
-        if(rule_as_node->has_constraints()){
+        if(rule_as_node->has_branch_constraint()){
             std::cout << "No branch exisits for this rule that satisfies constraints" << std::endl;
             std::cout << *this << std::endl;
-            rule_as_node->print_constraints(std::cout);
+            rule_as_node->print_branch_constraint(std::cout);
         }
         #endif
 

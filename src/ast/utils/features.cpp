@@ -10,6 +10,7 @@ Features::Features(Slot_type _compilation_unit) :
     */
     vec = {
         Feature("control_flow_ratio", stmt_ratio(COMPOUND_STMT, CF_STMT), 3),
+        Feature("max_control_flow_depth", max_control_flow_depth(), QuteFuzz::NESTED_MAX_DEPTH),
         Feature("subroutine_call_ratio", stmt_ratio(QUBIT_OP, SUBROUTINE_OP), 3),
         Feature("parameterised_gate_ratio", gate_ratio([](std::shared_ptr<Gate> gate){return (gate->get_num_floats() > 0);}), 3),
         Feature("barrier_op_ratio", stmt_ratio(COMPOUND_STMT, BARRIER_OP), 3),
@@ -36,6 +37,10 @@ void Features::dump(std::ofstream& stream){
     }
 
     stream << "]";
+}
+
+unsigned int Features::max_control_flow_depth(){
+    return max_control_flow_depth_rec(*compilation_unit, 0);
 }
 
 float Features::stmt_ratio(const Token_kind& denominator, const Token_kind& numerator){

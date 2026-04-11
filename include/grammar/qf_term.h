@@ -18,7 +18,7 @@ class Term {
 
         ~Term() = default;
 
-        inline void add_constraint(const Term_constraint& _constraint){
+        inline void add_term_constraint(const Term_constraint& _constraint){
             constraint = _constraint;
         }
 

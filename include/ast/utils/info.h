@@ -79,6 +79,8 @@ class Features : public Info {
 
         Features(Slot_type compilation_unit);
 
+        unsigned int max_control_flow_depth();
+
         float stmt_ratio(const Token_kind& denominator, const Token_kind& numerator);
 
         float gate_ratio(std::function<bool(std::shared_ptr<Gate>)> func);
@@ -132,7 +134,7 @@ class Quality : public Info {
 
         float gate_type_entropy();
 
-        float adj_gate_pair_density();
+        float non_adj_gate_pair_density();
 
         unsigned int has_mixed_body();
 

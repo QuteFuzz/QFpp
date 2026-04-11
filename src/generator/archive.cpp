@@ -126,22 +126,106 @@ Ast_entry Archive::crossover(Ast_entry& genome_a, Ast_entry& genome_b){
 Mutation_selector Archive::mutation_selector() {
     Mutation_selector sel;
 
-    sel.add("mutate_children", 0.7f,
-        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            return std::make_unique<Mutate_children>(e, g, COMPOUND_STMTS, "compound_stmts", r, 1);
-        });
+    // sel.add("mutate_children", 0.7f,
+        // [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            // return std::make_unique<Add_or_erase_child>(e, g, COMPOUND_STMTS, "compound_stmts", r, 1);
+        // });
 
-    sel.add("gate_type_mutation", 0.5f,
+    sel.add("add_flat_compound_stmt", 0.1f,
         [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            return std::make_unique<Gate_type_mutation>(e, g, r);
-        });
+            return std::make_unique<Add_child>(e, g, COMPOUND_STMTS, "compound_stmts", r, 0);
+        }
+    );
 
-    sel.add("swap_qubits", 0.5f,
+    sel.add("add_nested_compound_stmt", 0.25f,
         [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            return std::make_unique<Swap_qubits>(e, r);
-        });
+            unsigned int nested_depth = 2;
+            return std::make_unique<Add_child>(e, g, COMPOUND_STMTS, "compound_stmts", r, nested_depth);
+        }
+    );
 
-    // add more mutation passes here
+    sel.add("erase_compound_stmt", 0.1f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Erase_child>(e, COMPOUND_STMTS, r);
+        }
+    );
+
+    // inverses and roots
+
+    sel.add("CX_self_inverse", 0.2f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>(2, CX));
+        }
+    );
+
+    sel.add("H_self_inverse", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>(2, H));
+        }
+    );
+
+    sel.add("X_self_inverse", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>(2, X));
+        }
+    );
+
+    /// TODO: removed due to predicate issue with S gates in pytket
+
+    // sel.add("S_phase_root", 0.05f,
+    //     [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+    //         return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>(2, S));
+    //     }
+    // );
+
+    // H transforms
+
+    sel.add("H_sandwitch_X", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{H, X, H});
+        }
+    );
+
+    sel.add("H_sandwitch_Z", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{H, Z, H});
+        }
+    );
+
+    sel.add("H_sandwitch_Y", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{H, Y, H});
+        }
+    );
+
+    // Phase transforms
+    /// TODO: removed due to predicate issue with S gates in pytket
+
+    #if 0
+
+    sel.add("S_Sdg_standwitch_X", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{S, X, SDG});
+        }
+    );
+
+    sel.add("S_Sdg_standwitch_Y", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{S, Y, SDG});
+        }
+    );
+
+    sel.add("S_Sdg_standwitch_Z", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{S, Z, SDG});
+        }
+    );
+
+    #endif
+
+    // CNOT identities
+
+
 
     return sel;
 }
@@ -154,25 +238,21 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
         unsigned int n_filled_cells = filled_archive_indices.size();
         unsigned int random_index = filled_archive_indices[random_uint(n_filled_cells - 1)];
 
-        Cell cell_a = archive[random_index];
-        Ast_entry genome_a = cell_a.get_genome().clone();
-        Ast_entry child = genome_a;
+        Cell cell = archive[random_index];
+        Ast_entry genome = cell.get_genome().clone();
 
-        // if (filled_archive_indices.size() >= 2){
-        //     Cell cell_b = find_nearest_complement(cell_a);
-        //     Ast_entry genome_b = cell_b.get_genome().clone();
-        //     child = crossover(genome_a, genome_b);
-        // }
+        genome.ast->print_program(std::cout);
+        std::cout << "\n=========" << std::endl;
 
-        // child.ast->print_program(std::cout);
-        // std::cout << "\n=========" << std::endl;
+        size_t mutation_rule_idx = sel.apply(genome, grammar);
+        unsigned int n_new_placements = place(genome) ? 1 : 0; // each placement can discover at most one new cell
 
-        size_t mutation_rule_idx = sel.apply(child, grammar);
-        unsigned int n_new_placements = place(child) ? 1 : 0; // each placement can discover at most one new cell
         sel.record(mutation_rule_idx, n_new_placements);
 
-        // child.ast->print_program(std::cout);
-        // getchar();
+        Add_gate_chain(genome, grammar, 1.0, std::vector<Token_kind>(2, H)).apply();
+
+        genome.ast->print_program(std::cout);
+        getchar();
     }
 
     INFO("Final archive average quality " + std::to_string(archive_av_quality()));

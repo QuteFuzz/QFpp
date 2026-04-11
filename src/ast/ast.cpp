@@ -146,7 +146,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		case REGISTER_QUBIT: case REGISTER_BIT:
 		case SINGULAR_QUBIT: case SINGULAR_BIT:
 		case REGISTER_PARAM: case SINGULAR_PARAM: {
-			parent->remove_constraints(); // parent is one of the nodes above, remove constraints as just used to reach here
+			parent->remove_branch_constraint(); // parent is one of the nodes above, remove constraints as just used to reach here
 
 			auto res = std::dynamic_pointer_cast<Resource>(parent);
 
@@ -170,7 +170,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		case REGISTER_QUBIT_DEF: case REGISTER_BIT_DEF:
 		case SINGULAR_QUBIT_DEF: case SINGULAR_BIT_DEF:
 		case REGISTER_PARAM_DEF: case SINGULAR_PARAM_DEF: {
-			parent->remove_constraints(); // parent is one of the nodes above, remove constraints as just used to reach here
+			parent->remove_branch_constraint(); // parent is one of the nodes above, remove constraints as just used to reach here
 
 			auto def = std::dynamic_pointer_cast<Resource_def>(parent);
 
@@ -211,7 +211,18 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 #pragma GCC diagnostic pop
 
 
-void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& term, std::unordered_map<Token_kind, Node_constraints> descendant_node_constraints, unsigned int depth){
+/// The parent node passed here is before it has any children, where the children are expected to come from a branch chosen from the rule inside
+/// `term`. Therefore, `parent` and `term` must be the same "kind" 
+/// returns the slot ptr of the last added child node of `parent` when fully built
+Slot_type Ast::term_branch_to_child_nodes(
+	std::shared_ptr<Node> parent, 
+	const Term& term, 
+	std::optional<unsigned int> term_constraint_max, 
+	std::unordered_map<Token_kind, Branch_constraint>& descendant_node_branch_constraints, 
+	unsigned int depth
+){
+	Slot_type last_built_child = nullptr;
+
 	if (depth >= QuteFuzz::RECURSION_LIMIT){
 		ERROR(ANNOT("Recursion limit reached when writing branch for term: " + parent->get_str()));
 	}
@@ -226,9 +237,14 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 
 		Branch branch = term.get_rule()->pick_branch(parent);
 
+		if (term_constraint_max.has_value() && (branch.size() > 1)){
+			std::cout << branch << std::endl;
+			ERROR(ANNOT("Term constraints can only be overidden in a branch with one term"));
+		}
+
 		for(const Term& child_term : branch){
 			Term_constraint constraint = child_term.get_constaint();
-			unsigned int max = constraint.resolve(std::ref(context));
+			unsigned int max = term_constraint_max.value_or(constraint.resolve(std::ref(context)));
 
 			#if 0
 			if (constraint.get_term_constraint_kind() == Term_constraint_kind::DYNAMIC_MAX){
@@ -244,20 +260,29 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 
 				if(std::holds_alternative<Term>(maybe_child)){
 					// redirect
-					term_branch_to_child_nodes(parent, std::get<Term>(maybe_child), descendant_node_constraints, depth);
+					term_branch_to_child_nodes(parent, std::get<Term>(maybe_child), term_constraint_max, descendant_node_branch_constraints, depth);
 				
 				} else {
-					auto child_node = std::get<std::shared_ptr<Node>>(maybe_child);
-					
-					// if child node constraints were supposed to be set on this child node, set them on the child node
-					for (const auto&[child_node_kind, node_constraints] : descendant_node_constraints) {
-						if (child_node_kind == child_node->get_node_kind()) {
-							child_node->set_constraints(node_constraints);
+					std::shared_ptr<Node> child_node = std::get<std::shared_ptr<Node>>(maybe_child);
+					Token_kind child_node_kind = child_node->get_node_kind();
+
+					auto it = descendant_node_branch_constraints.find(child_node_kind);
+
+					if (it != descendant_node_branch_constraints.end()){
+						INFO("Adding descendant branch constraint to node " + child_node->get_str());
+
+						// need to add a branch constraint to this child node, then remove it from the map
+						child_node->add_branch_constraint(it->second);
+
+						size_t n_erased = descendant_node_branch_constraints.erase(child_node_kind);
+
+						if (n_erased != 1){
+							ERROR("Failed to remove descendant node branch constraint");
 						}
 					}
 
-					parent->add_child(child_node);
-					term_branch_to_child_nodes(child_node, child_term, descendant_node_constraints, depth + 1);
+					last_built_child = parent->add_child(child_node);
+					term_branch_to_child_nodes(child_node, child_term, std::nullopt, descendant_node_branch_constraints, depth + 1);
 				}
 
 			}
@@ -266,6 +291,8 @@ void Ast::term_branch_to_child_nodes(std::shared_ptr<Node> parent, const Term& t
 
 	// done
 	parent->transition_to_done();
+
+	return last_built_child;
 }
 
 Term Ast::make_term_from_rule(std::shared_ptr<Rule> rule_ptr){
@@ -273,7 +300,7 @@ Term Ast::make_term_from_rule(std::shared_ptr<Rule> rule_ptr){
 	return Term(rule_ptr, kind, Meta_func::NONE);
 }
 
-Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry, std::unordered_map<Token_kind, Node_constraints> descendant_node_constraints){
+Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry, std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints){
 	Result<std::shared_ptr<Node>> res;
 
 	if(entry == nullptr){
@@ -286,7 +313,7 @@ Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry, std::unord
 
 		if(std::holds_alternative<std::shared_ptr<Node>>(maybe_root)){
 			root = std::get<std::shared_ptr<Node>>(maybe_root);
-			term_branch_to_child_nodes(root, entry_term, descendant_node_constraints);
+			term_branch_to_child_nodes(root, entry_term, std::nullopt, descendant_node_branch_constraints);
 			res.set_ok(root);
 
 		} else {

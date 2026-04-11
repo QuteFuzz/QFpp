@@ -3,7 +3,7 @@
 
 #include <utils.h>
 #include <lex.h>
-#include <node_constraints.h>
+#include <branch_constraint.h>
 #include <rule.h>
 
 enum Node_build_state {
@@ -61,8 +61,9 @@ class Node : public std::enable_shared_from_this<Node> {
             return get_str();
         }
 
-        inline void add_child(const std::shared_ptr<Node> child){
+        inline Slot_type add_child(const std::shared_ptr<Node> child){
             children.push_back(child);
+            return &children.back();
         }
 
         inline void transition_to_done(){
@@ -123,35 +124,35 @@ class Node : public std::enable_shared_from_this<Node> {
         }
 
         inline bool branch_satisfies_constraints(const Branch& branch){
-            return !constraints.has_value() || constraints.value().passed(branch);
-        }
-
-        inline void set_constraints(const std::optional<Node_constraints>& node_constraints) {
-            constraints = node_constraints;
-        }
-
-        inline void add_constraint(const Token_kind& rule_kind, unsigned int n_occurances){
-            if(constraints.has_value()){
-                constraints.value().add(rule_kind, n_occurances);
+            if (branch_constraint.has_value()){
+                return branch_constraint.value().passed(branch);
             } else {
-                constraints = std::make_optional<Node_constraints>(rule_kind, n_occurances);
+                return true;
             }
         }
 
-        inline bool has_constraints(){
-            return constraints.has_value();
+        inline void add_branch_constraint(const Branch_constraint& _branch_constraint) {
+            branch_constraint = std::move(_branch_constraint);
         }
 
-        inline void print_constraints(std::ostream& stream){
-            if(constraints.has_value()){
-                stream << constraints.value() << std::endl;
+        inline void add_branch_constraint(const Token_kind& singleton_term_token_kind, unsigned int n_occurances){
+            branch_constraint = std::make_optional<Branch_constraint>(singleton_term_token_kind, n_occurances);
+        }
+
+        inline bool has_branch_constraint(){
+            return branch_constraint.has_value();
+        }
+
+        inline void print_branch_constraint(std::ostream& stream){
+            if(branch_constraint.has_value()){
+                stream << branch_constraint.value() << std::endl;
             } else {
                 stream << GREEN("NO CONSTRAINTS") << std::endl;
             }
         }
 
-        inline void remove_constraints(){
-            constraints = std::nullopt;
+        inline void remove_branch_constraint(){
+            branch_constraint = std::nullopt;
         }
 
         virtual unsigned int get_n_ports() const;
@@ -204,7 +205,7 @@ class Node : public std::enable_shared_from_this<Node> {
         unsigned int partition_counter = 0;
 
     private:
-        std::optional<Node_constraints> constraints;
+        std::optional<Branch_constraint> branch_constraint;
 };
 
 #endif

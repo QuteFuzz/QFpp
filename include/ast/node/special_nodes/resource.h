@@ -21,7 +21,7 @@ class Resource : public Cloneable<Resource> {
             Cloneable<Resource>("dummy", QUBIT),
             resource_kind(Resource_kind::QUBIT)
         {
-            add_constraint(SINGULAR_QUBIT, 1);
+            add_branch_constraint(SINGULAR_QUBIT, 1);
         }
 
         Resource(const Variable& _name, const UInt& _index, const Scope& _scope, Resource_kind rk, bool is_reg) :
@@ -32,9 +32,9 @@ class Resource : public Cloneable<Resource> {
             resource_kind(rk)
         {
             if (rk == Resource_kind::QUBIT){
-                add_constraint(REGISTER_QUBIT, is_reg);
+                add_branch_constraint(REGISTER_QUBIT, is_reg);
             } else {
-                add_constraint(REGISTER_BIT, is_reg);
+                add_branch_constraint(REGISTER_BIT, is_reg);
             }
         }
 
