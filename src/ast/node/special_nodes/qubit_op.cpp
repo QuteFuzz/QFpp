@@ -1,5 +1,7 @@
 #include <qubit_op.h>
 #include <circuit.h>
+#include <node_gen.h>
+#include <ast_utils.h>
 
 bool Qubit_op::is_subroutine_op() const{
     return gate_node.has_value() && *gate_node.value() == SUBROUTINE;
@@ -24,4 +26,22 @@ std::string Qubit_op::resolved_name() const {
     }
 
     return _string + ", id: " + std::to_string(id);
+}
+
+/// Need to check for duplication although I use `Node_gen` because it only differentiates nodes
+/// by their address, not the content. If I spawed `QUBIT` nodes twice after cloning in the AST below this qubit op, 
+/// then I get duplicates. I do this in `ast.cpp` to pass `QUBIT` nodes to specific `REGISTER / SINGULAR` qubits
+std::vector<std::string> Qubit_op::get_target_qubit_names() {
+    std::vector<std::string> qubit_resolved_names;
+    std::set<std::string> seen_names;
+
+    for (const auto& qubit : resources_from_anscestor(*this, QUBIT)) {        
+        std::string resolved_name = qubit->resolved_name();
+
+        if (seen_names.insert(resolved_name).second){
+            qubit_resolved_names.push_back(resolved_name);
+        }
+    }
+ 
+    return qubit_resolved_names;
 }

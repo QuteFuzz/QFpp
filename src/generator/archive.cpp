@@ -1,5 +1,6 @@
 #include <archive.h>
 #include <mutate.h>
+#include <chrono>
 
 void Archive::dump(const fs::path& path){
     std::ofstream stream(path);
@@ -54,6 +55,7 @@ bool Archive::place(const Ast_entry& genome){
 
         std::cout << "Index " << archive_index << std::endl;
         INFO("fill ratio = " + std::to_string(archive_fill_ratio()));
+        INFO("av quality = " + std::to_string(archive_av_quality()));
     }
 
     return new_placement;
@@ -110,7 +112,10 @@ void Archive::init_archive(){
         n_tried += 1;
     }
 
+    std::cout << std::endl;
+
     INFO("Init archive average quality " + std::to_string(archive_av_quality()));
+    INFO("Init archive fill ratio  " + std::to_string(archive_fill_ratio()));
 
     // dump init archive in JSON
     dump(output_dir / "init_archive.json");
@@ -122,56 +127,161 @@ Ast_entry Archive::crossover(Ast_entry& genome_a, Ast_entry& genome_b){
     return genome_b;
 }
 
-void Archive::mutation(Ast_entry& genome, std::shared_ptr<Grammar> grammar){
-    Mutate_children(genome, grammar, COMPOUND_STMTS, "compound_stmts", 0.7, 1).apply();
+Mutation_selector Archive::mutation_selector() {
+    Mutation_selector sel;
 
-    // auto param_gate_cond = [](Slot_type block){
-    //     return gate_from_op(block)->get_num_floats() == 0;
-    // };
+    // sel.add("mutate_children", 0.7f,
+        // [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            // return std::make_unique<Add_or_erase_child>(e, g, COMPOUND_STMTS, "compound_stmts", r, 1);
+        // });
 
-    // Mutate_on_condition(std::make_shared<Replace_block>(genome, grammar, GATE_OP, "gate_op"), param_gate_cond).apply();
+    sel.add("add_flat_compound_stmt", 0.1f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_child>(e, g, COMPOUND_STMTS, "compound_stmts", r, 0);
+        }
+    );
 
-    // Replace_block(genome, grammar, QUBIT_OP, "if_stmt", 0.2).apply();
-    // Replace_block(genome, grammar, GATE_OP, "subroutine_op", 0.2).apply();
-    // Replace_block(genome, grammar, QUBIT_OP, "barrier_op", 0.2).apply();
+    sel.add("add_nested_compound_stmt", 0.25f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            unsigned int nested_depth = 2;
+            return std::make_unique<Add_child>(e, g, COMPOUND_STMTS, "compound_stmts", r, nested_depth);
+        }
+    );
+
+    sel.add("erase_compound_stmt", 0.1f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Erase_child>(e, COMPOUND_STMTS, r);
+        }
+    );
+
+    // inverses and roots
+
+    sel.add("CX_self_inverse", 0.2f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>(2, CX));
+        }
+    );
+
+    sel.add("H_self_inverse", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>(2, H));
+        }
+    );
+
+    sel.add("X_self_inverse", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>(2, X));
+        }
+    );
+
+    /// TODO: removed due to predicate issue with S gates in pytket
+
+    // sel.add("S_phase_root", 0.05f,
+    //     [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+    //         return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>(2, S));
+    //     }
+    // );
+
+    // H transforms
+
+    sel.add("H_sandwitch_X", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{H, X, H});
+        }
+    );
+
+    sel.add("H_sandwitch_Z", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{H, Z, H});
+        }
+    );
+
+    sel.add("H_sandwitch_Y", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{H, Y, H});
+        }
+    );
+
+    // Phase transforms
+    /// TODO: removed due to predicate issue with S gates in pytket
+
+    #if 0
+
+    sel.add("S_Sdg_standwitch_X", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{S, X, SDG});
+        }
+    );
+
+    sel.add("S_Sdg_standwitch_Y", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{S, Y, SDG});
+        }
+    );
+
+    sel.add("S_Sdg_standwitch_Z", 0.05f,
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{S, Z, SDG});
+        }
+    );
+
+    #endif
+
+    // CNOT identities
+
+
+
+    return sel;
 }
 
 void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
-    float fill_ratio = archive_fill_ratio();
-    unsigned int new_placements = 0, trials = 0;
+    Mutation_selector sel = mutation_selector();
+    float init_quality = archive_av_quality();
+    unsigned int total_new_placements = 0;
 
-    while(fill_ratio < target_fill_ratio){
-        unsigned int random_index = filled_archive_indices[random_uint(filled_archive_indices.size() - 1)];
-        Cell cell_a = archive[random_index];
-        Ast_entry genome_a = cell_a.get_genome().clone();
-        Ast_entry child = genome_a;
+    auto start_time = std::chrono::steady_clock::now();
 
-        // if (filled_archive_indices.size() >= 2){
-        //     Cell cell_b = find_nearest_complement(cell_a);
-        //     Ast_entry genome_b = cell_b.get_genome().clone();
-        //     child = crossover(genome_a, genome_b);
-        // }
+    while(archive_av_quality() < 10.0 * init_quality){
+        unsigned int n_filled_cells = filled_archive_indices.size();
+        unsigned int random_index = filled_archive_indices[random_uint(n_filled_cells - 1)];
 
-        // child.ast->print_program(std::cout);
+        Cell cell = archive[random_index];
+        Ast_entry genome = cell.get_genome().clone();
+
+        // genome.ast->print_program(std::cout);
         // std::cout << "\n=========" << std::endl;
 
-        mutation(child, grammar);
+        Erase_child(genome, COMPOUND_STMTS, 0.8).apply();
 
-        // child.ast->print_program(std::cout);
+        size_t mutation_rule_idx = sel.apply(genome, grammar);
+        unsigned int n_new_placements = place(genome) ? 1 : 0; // each placement can discover at most one new cell
+        sel.record(mutation_rule_idx, n_new_placements);
+
+        // genome.ast->print_program(std::cout);
         // getchar();
 
-        trials += 1;
-
-        new_placements += place(child);
-
-        fill_ratio = archive_fill_ratio();
+        total_new_placements += n_new_placements;
     }
 
-    std::cout << (float)new_placements / (float)trials << "% of trials produce new placements in archive" << std::endl;
+    auto end_time = std::chrono::steady_clock::now();
+
+    auto duration_mins = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time);
+
+    std::cout << std::endl;
 
     INFO("Final archive average quality " + std::to_string(archive_av_quality()));
+    INFO("Final archive fill ratio " + std::to_string(archive_fill_ratio()));
+
+    std::cout << std::endl;
+
+    INFO("Execution time (mins): " + std::to_string(duration_mins.count()));
+    INFO("Fill rate (new placements / min): " + std::to_string((float)total_new_placements / (float)duration_mins.count()));
+
+    std::cout << std::endl;
 
     dump(output_dir / "final_archive.json");
+
+    sel.print_stats(std::cout);
 }
 
 

@@ -222,7 +222,7 @@ std::shared_ptr<UInt> Context::nn_circuit_id() {
 }
 
 std::shared_ptr<Compound_stmt> Context::nn_compound_stmt(){
-    return Compound_stmt::from_nested_depth(nested_depth);
+    return std::make_shared<Compound_stmt>(nested_depth);
 }
 
 std::shared_ptr<Node> Context::nn_subroutines(){

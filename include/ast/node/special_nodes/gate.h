@@ -21,8 +21,6 @@ class Gate : public Cloneable<Gate> {
         /// @param kind
         Gate(const std::string& str, const Token_kind& kind);
 
-        // Gate(const std::string& str, const Token_kind& kind, unsigned int n_qubits);
-
         /// @brief Use for subroutines
         /// @param str
         /// @param kind
@@ -33,13 +31,13 @@ class Gate : public Cloneable<Gate> {
             return std::to_string(id);
         }
 
+        inline unsigned int get_num_external_qubits() const {return info.n_qubits;}
+
+        inline unsigned int get_num_external_bits() const { return info.n_bits;}
+
+        inline unsigned int get_num_floats() const {return info.n_floats;}
+
         unsigned int get_num_external_resource_defs(Resource_kind kind) const;
-
-        unsigned int get_num_external_qubits() const {return info.n_qubits;}
-
-        unsigned int get_num_external_bits() const { return info.n_bits;}
-
-        unsigned int get_num_floats() const {return info.n_floats;}
 
     private:
         Ptr_coll<Resource_def> resource_defs;

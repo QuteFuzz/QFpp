@@ -14,8 +14,8 @@ add_executable(qf ${SRCS})
 target_include_directories(qf PRIVATE
     ${CMAKE_SOURCE_DIR}/include/generator
     ${CMAKE_SOURCE_DIR}/include/ast
-    ${CMAKE_SOURCE_DIR}/include/ast/node
     ${CMAKE_SOURCE_DIR}/include/ast/utils
+    ${CMAKE_SOURCE_DIR}/include/ast/node
     ${CMAKE_SOURCE_DIR}/include/ast/node/special_nodes
     ${CMAKE_SOURCE_DIR}/include/ast/node/special_child_nodes
     ${CMAKE_SOURCE_DIR}/include/ast/node/helper_nodes

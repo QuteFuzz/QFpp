@@ -5,15 +5,18 @@ Features::Features(Slot_type _compilation_unit) :
     Info(_compilation_unit)
 {
     /*
-        binary features i.e has..... , get 1 not 2 bins, because the effective number always adds 1 for overflows,
-        so +1 will get us to 2. 
+        ratios are used to ensure that the archive size is constant for any program generated. For example, `stmt_ratio`
+        is calculated, then multiplied by the chosen number of bins to get the bin index, instead of using the number of statements 
+        in the compilation unit as this is not a constant value. Otherwise, known constants like `NESTED_MAX_DEPTH` can be used to
+        denote the number of bins
     */
     vec = {
         Feature("control_flow_ratio", stmt_ratio(COMPOUND_STMT, CF_STMT), 3),
+        Feature("max_control_flow_depth", max_control_flow_depth(), QuteFuzz::NESTED_MAX_DEPTH),
         Feature("subroutine_call_ratio", stmt_ratio(QUBIT_OP, SUBROUTINE_OP), 3),
-        Feature("parameterised_gate_ratio", gate_ratio([](std::shared_ptr<Gate> gate){return (gate->get_num_floats() > 0);}), 3),
+        Feature("parameterised_gate_ratio", gate_node_pred_ratio([](std::shared_ptr<Gate> gate){return (gate->get_num_floats() > 0);}), 3),
         Feature("barrier_op_ratio", stmt_ratio(COMPOUND_STMT, BARRIER_OP), 3),
-        Feature("multi_qubit_gate_ratio", gate_ratio([](std::shared_ptr<Gate> gate){return (gate->get_num_external_qubits() > 1);}), 3),
+        Feature("multi_qubit_gate_ratio", gate_node_pred_ratio([](std::shared_ptr<Gate> gate){return (gate->get_num_external_qubits() > 1);}), 3),
     };
 
     for (auto& f : vec){
@@ -38,6 +41,10 @@ void Features::dump(std::ofstream& stream){
     stream << "]";
 }
 
+unsigned int Features::max_control_flow_depth(){
+    return max_control_flow_depth_rec(*compilation_unit, 0);
+}
+
 float Features::stmt_ratio(const Token_kind& denominator, const Token_kind& numerator){
     unsigned int denom = 0;
     unsigned int numer = 0;
@@ -55,14 +62,14 @@ float Features::stmt_ratio(const Token_kind& denominator, const Token_kind& nume
     return denom == 0 ? 0.0 : (float)numer / (float)denom;
 }
 
-float Features::gate_ratio(std::function<bool(std::shared_ptr<Gate>)> func){
+float Features::gate_node_pred_ratio(std::function<bool(std::shared_ptr<Gate>)> func){
 	unsigned int n_passed = 0;
 
     for (const auto& gate : gates){
         n_passed += func(gate);
     }	
 
-    return (n_gates == 0) ? 0.0 : (float)n_passed / (float)n_gates;
+    return (qubit_ops.size() == 0) ? 0.0 : (float)n_passed / (float)qubit_ops.size();
 }
 
 unsigned int Features::get_archive_size() const {

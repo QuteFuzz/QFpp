@@ -2,20 +2,20 @@
 #define FLOAT_H
 
 #include <node.h>
+#include <clone_mixin.h>
 
-class Float : public Node {
+class Float : public Cloneable<Float> {
 
     public:
-        using Node::Node;
 
         Float() :
-            Node(std::to_string(random_float(10.0, 0.0)))
+            Cloneable<Float>(std::to_string(random_float(10.0, 0.0)))
         {
             rng().seed(random_uint());
         }
 
         Float(float n) :
-            Node(std::to_string(n)),
+            Cloneable<Float>(std::to_string(n)),
             num(n)
         {}
 

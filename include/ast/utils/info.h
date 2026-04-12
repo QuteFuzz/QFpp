@@ -3,6 +3,7 @@
 
 #include <utils.h>
 #include <gate.h>
+#include <qubit_op.h>
 #include <node_gen.h>
 
 /*
@@ -20,11 +21,13 @@ class Info {
         Info(Slot_type _compilation_unit, std::shared_ptr<Info> info = nullptr);
 
         std::vector<std::shared_ptr<Gate>> get_gates() const {return gates;}
-
+        
+        std::vector<std::shared_ptr<Qubit_op>> get_qubit_ops() const {return qubit_ops;}
+        
     protected:
         Slot_type compilation_unit = nullptr;
+        std::vector<std::shared_ptr<Qubit_op>> qubit_ops;
         std::vector<std::shared_ptr<Gate>> gates;
-        unsigned int n_gates;
 };
 
 unsigned int max_control_flow_depth_rec(const std::shared_ptr<Node> node, unsigned int current_depth = 0);
@@ -35,11 +38,11 @@ class Features : public Info {
     public:
         struct Feature {
 
-            Feature(std::string _name, unsigned int _raw_idx):
+            Feature(std::string _name, unsigned int _raw_idx, unsigned int _num_bins = 2):
                 name(_name),
                 raw_idx(_raw_idx),
-                num_bins(2),
-                is_binary(true)
+                num_bins(_num_bins),
+                is_binary(_num_bins == 2)
             {}
 
             Feature(std::string _name, float _val, unsigned int _num_bins):
@@ -79,9 +82,11 @@ class Features : public Info {
 
         Features(Slot_type compilation_unit);
 
+        unsigned int max_control_flow_depth();
+
         float stmt_ratio(const Token_kind& denominator, const Token_kind& numerator);
 
-        float gate_ratio(std::function<bool(std::shared_ptr<Gate>)> func);
+        float gate_node_pred_ratio(std::function<bool(std::shared_ptr<Gate>)> func);
 
         unsigned int get_archive_size() const;
 
@@ -124,19 +129,11 @@ class Quality : public Info {
             float weight = 1.0;
         };
 
-        Quality(Slot_type _compilation_unit);
-
         Quality(Slot_type _compilation_unit, const Features& fv);
 
-        float gate_arity_variance();
+        float qubit_interaction_density();
 
-        float gate_type_entropy();
-
-        float adj_gate_pair_density();
-
-        unsigned int has_mixed_body();
-
-        unsigned int max_control_flow_depth();
+        float clifford_interleaving_score();
 
         float quality() const {
             float q = 0.0;

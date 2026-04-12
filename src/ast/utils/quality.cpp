@@ -1,90 +1,80 @@
 #include <info.h>
+#include <ast_utils.h>
 
 Quality::Quality(Slot_type _compilation_unit, const Features& fv):
     Info(_compilation_unit, std::make_shared<Features>(fv))
 {
-    for(auto& gate : gates){
-        Token_kind kind = gate->get_node_kind();
-        if (gate_occurances.find(kind) == gate_occurances.end()){
-            gate_occurances[kind] = 1;
-        } else {
-            gate_occurances[kind] += 1;
-        }
-    }
-
     components = {
-        Component{"gate_arity_variance", gate_arity_variance()},
-        Component{"gate_type_entropy", gate_type_entropy()},
-        Component{"adj_gate_pair_density", adj_gate_pair_density()},
-        Component{"max_control_flow_depth", (float)max_control_flow_depth()},
+        Component{"clifford_interleaving_score", clifford_interleaving_score()},
+        Component{"qubit_interaction_density", qubit_interaction_density()},
     };
 }
 
-float Quality::gate_arity_variance(){
-    if (n_gates == 0) return 0.0;
+float Quality::qubit_interaction_density() {
+    if (qubit_ops.size() == 0) return 0.0;
 
-    std::vector<unsigned int> gate_arities;
-    unsigned int sum = 0;
+    std::set<std::pair<std::string, std::string>> interaction_edges;
+    std::set<std::string> active_qubits;
 
-    for (const auto& gate : gates){
-        unsigned int n_qubits = gate->get_num_external_qubits();
-        gate_arities.push_back(n_qubits);
-        sum += n_qubits;
-    }
+    for (size_t i = 0; i < qubit_ops.size(); i++) {
+        std::shared_ptr<Gate> gate = gates[i]; 
+                
+        unsigned int n_ext_qubits = gate->get_num_external_qubits();
+        std::vector<std::string> target_qubits = qubit_ops[i]->get_target_qubit_names();
 
-    float mean = (float)sum / n_gates;
-    float variance = 0.0;
+        if (target_qubits.size() != n_ext_qubits) {
+            std::cout << "Qubit op: ";
+            qubit_ops[i]->print_program(std::cout);
+            std::cout << std::endl;
 
-    for(unsigned int gate_arity : gate_arities){
-        variance += std::pow(((float)gate_arity - mean), 2.0);
-    }
-
-    assert(variance >= 0.0);
-
-    return variance / n_gates;
-}
-
-float Quality::gate_type_entropy(){
-    float neg_shannon_entropy = 0.0;
-
-    if (n_gates > 0){
-        for(auto&[kind, count] : gate_occurances){
-            float frac = count / (float)n_gates;
-            neg_shannon_entropy += frac * std::log2(frac);
+            ERROR("Collected " + std::to_string(target_qubits.size()) + " target qubits from gate, expected " + std::to_string(n_ext_qubits));        
         }
-    }
+        
+        for (const std::string& q : target_qubits) active_qubits.insert(q);
 
-    return -neg_shannon_entropy;
-}
-
-float Quality::adj_gate_pair_density(){
-    if (n_gates >= 2){
-        unsigned int adj_gate_pairs = 0;
-
-        for(size_t i = 0; i < n_gates - 1; i++){
-            if(*gates[i] == *gates[i+1]){
-                adj_gate_pairs += 1;
+        if (n_ext_qubits >= 2) {
+            for (size_t i = 0; i < n_ext_qubits; i++) {
+                for (size_t j = i + 1; j < n_ext_qubits; j++) {
+                    std::string q1 = std::min(target_qubits[i], target_qubits[j]);
+                    std::string q2 = std::max(target_qubits[i], target_qubits[j]);
+                    interaction_edges.insert({q1, q2});
+                }
             }
         }
+    }
 
-        return (float)adj_gate_pairs / (float)(n_gates - 1);
+    if (active_qubits.size() <= 1) return 0.0;
+
+    float possible_edges = (active_qubits.size() * (active_qubits.size() - 1)) / 2.0;
+    return (float)interaction_edges.size() / possible_edges;
+}
+
+float Quality::clifford_interleaving_score() {
+    unsigned int interleaved_count = 0;
+
+    if (qubit_ops.size() == 0) return 0.0;
     
-    } else {
-        return 0.0;
+    // map to track whether the last gate applied to a particular qubit was clifford
+    std::unordered_map<std::string, bool> last_gate_was_clifford;
+
+    for (size_t i = 0; i < qubit_ops.size(); i++){
+        std::shared_ptr<Gate> gate = gates[i];
+
+        Token_kind kind = gate->get_node_kind();
+        bool is_clifford = (kind == H || kind == S || kind == CX);
+        
+        for (const std::string& q : qubit_ops[i]->get_target_qubit_names()) {
+            if (last_gate_was_clifford.find(q) != last_gate_was_clifford.end()) {
+
+                // state flipped on this qubit (last gate was clifford and this gate isn't and vice versa) 
+                if (last_gate_was_clifford[q] != is_clifford) {
+                    interleaved_count++;
+                }
+            }
+
+            last_gate_was_clifford[q] = is_clifford;
+        }
     }
-}
 
-unsigned int Quality::has_mixed_body(){
-    for (auto& compound_stmts : Node_gen(**compilation_unit, COMPOUND_STMTS)){
-        bool has_gate = compound_stmts->find(QUBIT_OP) != nullptr;
-        bool has_cf   = compound_stmts->find(CF_STMT)  != nullptr;
-
-        if (has_gate && has_cf) return 1;
-    }
-
-    return 0;
-}
-
-unsigned int Quality::max_control_flow_depth(){
-    return max_control_flow_depth_rec(*compilation_unit, 0);
+    return (float)interleaved_count / (float)qubit_ops.size();
 }
