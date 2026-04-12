@@ -16,7 +16,6 @@ struct Cloneable : Base {
         auto copy = std::make_shared<Derived>(static_cast<const Derived&>(*this));
         copy->children.clear();
         copy->incr_id();
-        copy->remove_branch_constraint(); // we need to make sure that branch constraints from original node don't propagate through
 
         if (ct == DEEP){
             for (const auto& child : Base::children)
