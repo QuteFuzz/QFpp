@@ -35,6 +35,7 @@ struct Mutation_arm {
 
     void record(unsigned int new_placements) {
         n_applications++;
+
         n_new_placements += new_placements;
 
         // hill-climb blockwise_ratio based on whether success improved
@@ -47,6 +48,7 @@ struct Mutation_arm {
             ratio_delta *= -0.5f;
             blockwise_ratio = std::clamp(blockwise_ratio + ratio_delta, 0.1f, 1.0f);
         }
+
         prev_success_rate = current_sr;
     }
 };
@@ -91,15 +93,18 @@ struct Mutation_selector {
     }
 
     void print_stats(std::ostream& out) const {
-        out << "=== Mutation arm stats ===" << std::endl;
+        std::cout << std::endl;
+        out << "=== Mutation pass stats ===" << std::endl;
         for (const auto& arm : arms) {
             out << arm.name
-                << "  apps=" << arm.n_applications
-                << "  placements=" << arm.n_new_placements
-                << "  sr=" << arm.success_rate()
-                << "  ratio=" << arm.blockwise_ratio
+                << CYAN("  applications = ") << arm.n_applications
+                << CYAN("  new placements = ") << arm.n_new_placements
+                << CYAN("  success rate = ") << arm.success_rate()
+                << CYAN("  ratio = ") << arm.blockwise_ratio
                 << std::endl;
         }
+        out << CYAN("==========================") << std::endl;
+        std::cout << std::endl;
     }
 };
 

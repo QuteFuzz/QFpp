@@ -1,58 +1,44 @@
 #include <info.h>
 #include <node_gen.h>
+#include <ast_utils.h>
 
 Info::Info(Slot_type _compilation_unit, std::shared_ptr<Info> info) :
     compilation_unit(_compilation_unit)
 {
 
     if (info == nullptr){
-        for(std::shared_ptr<Node>& node : Node_gen(**compilation_unit, GATE_NAME)){
-            auto gate = std::dynamic_pointer_cast<Gate>(node->child_at(0));
-            if (gate != nullptr){
-                gates.push_back(gate);
-            } else {
-                std::cout << "GATE_NAME child_at(0) kind: " 
-                << (node->child_at(0) ? std::to_string(node->child_at(0)->get_node_kind()) : "null")
-                << std::endl;
-            }
-        }
+        for (const auto& node : Node_gen(**compilation_unit, QUBIT_OP)){
+            auto qubit_op = std::dynamic_pointer_cast<Qubit_op>(node);
 
-        for(std::shared_ptr<Node>& node : Node_gen(**compilation_unit, SUBROUTINE)){
-            auto gate = std::dynamic_pointer_cast<Gate>(node);
-            if (gate != nullptr) {
-                gates.push_back(gate);
-            } else {
-                std::cout << "GATE_NAME node kind: " 
-                << (node ? std::to_string(node->get_node_kind()) : "null")
-                << std::endl;
+            if (qubit_op == nullptr){
+                node->print_program(std::cout);
+                std::cout << std::endl;
+                
+                node->print_ast("");
+                std::cout << std::endl;
+
+                ERROR("Nodes of kind `QUBIT_OP` must be of `Qubit_op` type");
             }
+        
+            qubit_ops.push_back(qubit_op);
+            gates.push_back(gate_from_qubit_op(qubit_op));
         }
 
     } else {
-        gates = info->get_gates();
+        qubit_ops = std::move(info->get_qubit_ops());
+        gates = std::move(info->get_gates());
     }
 
-    n_gates = gates.size();
+    if (qubit_ops.size() != gates.size()) {
+        std::cout << "qubit_ops.size() " << qubit_ops.size() << " n_gates " << gates.size() << std::endl;
+        ERROR("Expected the number of `QUBIT_OP` nodes to match the number of nodes of type `Gate`");
+    }
 
     # if 0
-    if (n_gates == 0) {
-		WARNING("Ciruit has no gates");
+    if (qubit_ops.size() == 0) {
+		WARNING("Ciruit has no `QUBIT_OP` nodes");
 		(*compilation_unit)->print_program(std::cout);
 
 	}
     #endif
-}
-
-unsigned int max_control_flow_depth_rec(const std::shared_ptr<Node> node, unsigned int current_depth){
-    Token_kind kind = node->get_node_kind();
-
-    unsigned int depth = current_depth + (kind == CF_STMT);
-    unsigned int max_depth = depth;
-
-    for(const std::shared_ptr<Node>& child : node->get_children()){
-        unsigned int child_depth = max_control_flow_depth_rec(child, depth);
-        max_depth = std::max(max_depth, child_depth);
-    }
-
-    return max_depth;
 }

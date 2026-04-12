@@ -1,5 +1,6 @@
 #include <archive.h>
 #include <mutate.h>
+#include <chrono>
 
 void Archive::dump(const fs::path& path){
     std::ofstream stream(path);
@@ -111,7 +112,10 @@ void Archive::init_archive(){
         n_tried += 1;
     }
 
+    std::cout << std::endl;
+
     INFO("Init archive average quality " + std::to_string(archive_av_quality()));
+    INFO("Init archive fill ratio  " + std::to_string(archive_fill_ratio()));
 
     // dump init archive in JSON
     dump(output_dir / "init_archive.json");
@@ -233,29 +237,47 @@ Mutation_selector Archive::mutation_selector() {
 void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
     Mutation_selector sel = mutation_selector();
     float init_quality = archive_av_quality();
+    unsigned int total_new_placements = 0;
 
-    while(archive_av_quality() < 4.0 * init_quality){
+    auto start_time = std::chrono::steady_clock::now();
+
+    while(archive_av_quality() < 10.0 * init_quality){
         unsigned int n_filled_cells = filled_archive_indices.size();
         unsigned int random_index = filled_archive_indices[random_uint(n_filled_cells - 1)];
 
         Cell cell = archive[random_index];
         Ast_entry genome = cell.get_genome().clone();
 
-        genome.ast->print_program(std::cout);
-        std::cout << "\n=========" << std::endl;
+        // genome.ast->print_program(std::cout);
+        // std::cout << "\n=========" << std::endl;
+
+        Erase_child(genome, COMPOUND_STMTS, 0.8).apply();
 
         size_t mutation_rule_idx = sel.apply(genome, grammar);
         unsigned int n_new_placements = place(genome) ? 1 : 0; // each placement can discover at most one new cell
-
         sel.record(mutation_rule_idx, n_new_placements);
 
-        Add_gate_chain(genome, grammar, 1.0, std::vector<Token_kind>(2, H)).apply();
+        // genome.ast->print_program(std::cout);
+        // getchar();
 
-        genome.ast->print_program(std::cout);
-        getchar();
+        total_new_placements += n_new_placements;
     }
 
+    auto end_time = std::chrono::steady_clock::now();
+
+    auto duration_mins = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time);
+
+    std::cout << std::endl;
+
     INFO("Final archive average quality " + std::to_string(archive_av_quality()));
+    INFO("Final archive fill ratio " + std::to_string(archive_fill_ratio()));
+
+    std::cout << std::endl;
+
+    INFO("Execution time (mins): " + std::to_string(duration_mins.count()));
+    INFO("Fill rate (new placements / min): " + std::to_string((float)total_new_placements / (float)duration_mins.count()));
+
+    std::cout << std::endl;
 
     dump(output_dir / "final_archive.json");
 

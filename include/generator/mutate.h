@@ -139,6 +139,16 @@ class Add_gate_chain : public Mutation_rule {
 
 };
 
+class CCNOT : public Mutation_rule {
+
+    public:
+        CCNOT(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, float _blockwise_rate):
+            Mutation_rule(_entry, _grammar, COMPOUND_STMTS, _blockwise_rate)
+        {}
+
+        void apply_blockwise(Slot_type block) override;
+
+};
 
 
 #endif

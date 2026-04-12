@@ -6,19 +6,20 @@
 #include <resource.h>
 #include <params.h>
 #include <run_utils.h>
+#include <clone_mixin.h>
 
-class Circuit : public Node {
+class Circuit : public Cloneable<Circuit> {
 
     public:
 
         Circuit() :
-            Node("circuit", CIRCUIT),
+            Cloneable<Circuit>("circuit", CIRCUIT),
             owner("dummy_circuit")
         {}
 
         /// @brief Generating a random circuit from scratch
         Circuit(std::string owner_name, bool _is_subroutine) :
-            Node("circuit", CIRCUIT),
+            Cloneable<Circuit>("circuit", CIRCUIT),
             owner(owner_name),
             is_subroutine(_is_subroutine)
         {}

@@ -1,3 +1,5 @@
+# Dev
+
 ## Linting and type checking
 
 1. Install pyright and ruff vscode extensions. The former is for type checking, the latter is for formatting.

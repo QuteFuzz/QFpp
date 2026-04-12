@@ -131,13 +131,26 @@ void Add_gate_chain::apply_blockwise(Slot_type block) {
     assert(chain_size >= 1);
 
     std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints = branch_constraints_for_gate(gate_kinds[0]);
-    Slot_type last_built_gate_0 = build_ast_children(block, rule, *entry.context, 0, 1, descendant_node_branch_constraints);
+
+    // need to deref immediately because `build_ast_children` modifies the AST => might lead to child vector reallocs which frees the ptrs in the children vector
+    // so derefing later would cause use-after-free error
+    std::shared_ptr<Node> last_built_gate_0 = *build_ast_children(block, rule, *entry.context, 0, 1, descendant_node_branch_constraints);
 
     for (size_t i = 1; i < chain_size; i++){
         descendant_node_branch_constraints = branch_constraints_for_gate(gate_kinds[i]);
         Slot_type last_built_gate_1 = build_ast_children(block, rule, *entry.context, 0, 1, descendant_node_branch_constraints);
 
-        move_qubits(*last_built_gate_0, last_built_gate_1);
+        move_qubits(last_built_gate_0, last_built_gate_1);
     }
 }
 
+void CCNOT::apply_blockwise(Slot_type block) {
+    std::shared_ptr<Rule> rule = rule_from_name("compound_stmts", grammar);
+    
+    auto descendant_node_branch_constraints = branch_constraints_for_gate(CX);
+
+    std::shared_ptr<Node> cx_node = build_ast_from_rule(rule, *entry.context, descendant_node_branch_constraints);
+
+    auto resources = resources_from_anscestor(*cx_node, QUBIT);
+
+}

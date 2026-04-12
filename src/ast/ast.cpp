@@ -146,7 +146,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		case REGISTER_QUBIT: case REGISTER_BIT:
 		case SINGULAR_QUBIT: case SINGULAR_BIT:
 		case REGISTER_PARAM: case SINGULAR_PARAM: {
-			parent->remove_branch_constraint(); // parent is one of the nodes above, remove constraints as just used to reach here
+			// parent->remove_branch_constraint(); // parent is one of the nodes above, remove constraints as just used to reach here
 
 			auto res = std::dynamic_pointer_cast<Resource>(parent);
 
@@ -170,7 +170,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		case REGISTER_QUBIT_DEF: case REGISTER_BIT_DEF:
 		case SINGULAR_QUBIT_DEF: case SINGULAR_BIT_DEF:
 		case REGISTER_PARAM_DEF: case SINGULAR_PARAM_DEF: {
-			parent->remove_branch_constraint(); // parent is one of the nodes above, remove constraints as just used to reach here
+			// parent->remove_branch_constraint(); // parent is one of the nodes above, remove constraints as just used to reach here
 
 			auto def = std::dynamic_pointer_cast<Resource_def>(parent);
 
@@ -269,7 +269,7 @@ Slot_type Ast::term_branch_to_child_nodes(
 					auto it = descendant_node_branch_constraints.find(child_node_kind);
 
 					if (it != descendant_node_branch_constraints.end()){
-						INFO("Adding descendant branch constraint to node " + child_node->get_str());
+						// INFO("Adding descendant branch constraint to node " + child_node->get_str());
 
 						// need to add a branch constraint to this child node, then remove it from the map
 						child_node->add_branch_constraint(it->second);

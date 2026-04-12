@@ -1,5 +1,4 @@
 #include <ast_utils.h>
-#include <node_gen.h>
 #include <resource.h>
 #include <grammar.h>
 #include <ast.h>
@@ -73,25 +72,29 @@ Slot_type build_ast_children(
     return ast_builder->term_branch_to_child_nodes(*root, term, n_children, descendant_node_branch_constraints);
 }
 
-std::shared_ptr<Gate> gate_from_op(Slot_type gate_op_slot) {
-    if ((*gate_op_slot)->get_node_kind() != GATE_OP) {
-        ERROR("Slot must be of kind GATE_OP");
+std::shared_ptr<Gate> gate_from_qubit_op(std::shared_ptr<Node> qubit_op) {
+    std::shared_ptr<Gate> gate;
+
+    if (qubit_op->get_node_kind() != QUBIT_OP) {
+        ERROR("Slot must be of kind QUBIT_OP");
     }
 
-    std::shared_ptr<Node> gate_name = (*gate_op_slot)->find(GATE_NAME);
+    std::shared_ptr<Node> gate_name_primitive = qubit_op->find(GATE_NAME);
+    std::shared_ptr<Node> gate_subroutine = qubit_op->find(SUBROUTINE);
 
-    if (gate_name == nullptr){
-        ERROR("Gate op node must have gate name as a descendant");
-    }
+    std::shared_ptr<Gate> primitive_gate = 
+        (gate_name_primitive == nullptr) ? 
+            nullptr : 
+            std::dynamic_pointer_cast<Gate>(gate_name_primitive->child_at(0));
 
-    std::shared_ptr<Gate> gate = std::dynamic_pointer_cast<Gate>(gate_name->child_at(0));
+    gate = (primitive_gate == nullptr) ? std::dynamic_pointer_cast<Gate>(gate_subroutine) : primitive_gate;
 
     if (gate == nullptr){
         std::cout << "========================" << std::endl;
-        (*gate_op_slot)->print_program(std::cout);
+        qubit_op->print_program(std::cout);
         std::cout << "========================" << std::endl;
 
-        ERROR("Child of gate name must have node kind of GATE");
+        ERROR("`Gate` node not found anywhere under this qubit op");
     }
 
     return gate;
@@ -116,4 +119,32 @@ void move_qubits(const std::shared_ptr<Node> source_qubit_anscestor, Slot_type d
         dest_it++;
         source_it++;
     }
+}
+
+unsigned int max_control_flow_depth_rec(const std::shared_ptr<Node> node, unsigned int current_depth) {
+    Token_kind kind = node->get_node_kind();
+
+    unsigned int depth = current_depth + (kind == CF_STMT);
+    unsigned int max_depth = depth;
+
+    for(const std::shared_ptr<Node>& child : node->get_children()){
+        unsigned int child_depth = max_control_flow_depth_rec(child, depth);
+        max_depth = std::max(max_depth, child_depth);
+    }
+
+    return max_depth;
+}
+
+std::vector<std::shared_ptr<Resource>> resources_from_anscestor(Node& anscestor, Token_kind resource_node_kind){
+    std::vector<std::shared_ptr<Resource>> out;
+
+    for (const auto& qubit : Node_gen(anscestor, resource_node_kind)) {
+        auto resource = std::dynamic_pointer_cast<Resource>(qubit);
+        
+        if (resource == nullptr) continue;
+    
+        out.push_back(resource);
+    }
+
+    return out;
 }

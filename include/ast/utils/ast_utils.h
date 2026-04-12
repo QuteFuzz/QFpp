@@ -2,6 +2,7 @@
 #define AST_UTILS_H
 
 #include <node.h>
+#include <node_gen.h>
 
 class Gate;
 
@@ -28,10 +29,14 @@ Slot_type build_ast_children(
     std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints
 );
 
-std::shared_ptr<Gate> gate_from_op(Slot_type gate_op_slot);
+std::shared_ptr<Gate> gate_from_qubit_op(std::shared_ptr<Node> qubit_op);
 
 void move_qubits(const std::shared_ptr<Node> source_qubit_anscestor, Slot_type dest_qubit_anscestor);
 
 void replace_node(Slot_type old_node, std::shared_ptr<Node> new_node);
+
+unsigned int max_control_flow_depth_rec(const std::shared_ptr<Node> node, unsigned int current_depth);
+
+std::vector<std::shared_ptr<Resource>> resources_from_anscestor(Node& anscestor, Token_kind resource_node_kind);
 
 #endif
