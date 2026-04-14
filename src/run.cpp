@@ -2,7 +2,7 @@
 #include <ast.h>
 #include <lex.h>
 #include <params.h>
-#include "../libs/linenoise/linenoise.h"
+#include "../external/linenoise/linenoise.h"
 
 #define TOGGLE_FLAG(name, f) { \
     f = !f;    \

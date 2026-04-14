@@ -7,7 +7,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -fsanitize=address -O3 -DDEBUG -Wall -Wextra -Wswi
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 
-file(GLOB_RECURSE SRCS "src/*.cpp" "libs/linenoise/linenoise.c")
+file(GLOB_RECURSE SRCS "src/*.cpp" "external/linenoise/linenoise.c")
 
 add_executable(qf ${SRCS})
 

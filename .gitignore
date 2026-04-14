@@ -1,14 +1,15 @@
-.vscode
-build
-outputs
-local_saved_circuits
-.venv
 __pycache__
+
+.vscode
+.venv
 .DS_Store
 .env
 .devcontainer
-# libs/
-nightly_results
 .coverage
+
+build
+outputs
+external
+nightly_results
+
 *.egg-info
-coverage.png

@@ -175,7 +175,9 @@ register_bit = NAME "[" INDEX "]";
 
 program_footer = compiler_call;
 
-compiler_call = CIRCUIT_NAME ".measure_all()" NEWLINE "pt = pytketTesting() " NEWLINE testing_method | "pt = pytketTesting(tket2=True) " NEWLINE statevector_test;
+# compiler_call = CIRCUIT_NAME ".measure_all()" NEWLINE "pt = pytketTesting() " NEWLINE testing_method | "pt = pytketTesting(tket2=True) " NEWLINE statevector_test;
+
+compiler_call = CIRCUIT_NAME ".measure_all()" NEWLINE "pt = pytketTesting() " NEWLINE testing_method;
 
 testing_method = opt_ks_test | pytket_qiskit_conv_test;
 

@@ -41,7 +41,7 @@ jobs:
           # Use workflow inputs if provided, otherwise defaults
           GRAMMARS="${{ github.event.inputs.grammars || 'pytket qiskit' }}"
 
-          uv run scripts/run.py \
+          uv run -m scripts.run \
             --nightly \
             --num-tests 1200 \
             --grammars $GRAMMARS

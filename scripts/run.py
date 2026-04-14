@@ -11,24 +11,22 @@ from enum import Enum
 from pathlib import Path
 from typing import List
 
+from .utils import Color, log, pipe_to_process, run_command
+
 BUILD_DIR = Path("build")
 OUTPUT_DIR = Path("outputs")
 NIGHTLY_DIR = Path("nightly_results")
 ENTRY_POINT = "program"
+
 MIN_KS_VALUE = 1e-8
 TIMEOUT = 2000
 DEFAULT_NUM_TESTS = 1
 CPU_COUNT = os.cpu_count()
+
 GRAMMARS = ["pytket", "qiskit", "cirq", "pennylane"]
 SIMULATION_CAP = {"pytket": 64, "qiskit": 64, "cirq": 8, "pennylane": 64}
 
-
-class Color:
-    GREEN = "\033[92m"
-    RED = "\033[91m"
-    YELLOW = "\033[93m"
-    BLUE = "\033[94m"
-    RESET = "\033[0m"
+FUZZER_EXECUTABLE = "./qf"
 
 
 class Run_mode(Enum):
@@ -37,46 +35,22 @@ class Run_mode(Enum):
 
 
 @dataclass
-class CircuitResult:
+class CircuitRunInfo:
     """Tracks the result of running a single circuit"""
 
     circuit_path: Path
     grammar: str
-    had_fuzzer_error: bool = False
-    had_compiler_error: bool = False
+    runtime_error: bool = False
+    possible_miscompilation_error: bool = False
     values: List[float] = field(default_factory=list)
-    reason: str = ""
+    logs: str = ""
 
 
-def log(msg, color=Color.RESET):
-    print(f"{color} {msg}{Color.RESET}")
-
-
-def run_command(command, cwd=None, env=None, capture_output=False):
-    """Helper to run shell commands"""
-    try:
-        result = subprocess.run(
-            command,
-            cwd=cwd,
-            env=env,
-            check=True,
-            shell=True,
-            capture_output=capture_output,
-            text=True,
-        )
-        return result
-    except subprocess.CalledProcessError as e:
-        log(f"Command failed: {command}", Color.RED)
-        if capture_output:
-            print(e.stderr)
-        raise e
-
-
-def parse_test_output(output: str) -> List[float]:
+def parse_for_testing_values(process_result: subprocess.CompletedProcess) -> List[float]:
     values = []
     pattern = r"ks-test p-value:\s*([\d.]+)|Dot product\s*([\d.]+)"
 
-    matches = re.findall(pattern, output)
+    matches = re.findall(pattern, process_result.stdout)
 
     for ks, dot in matches:
         try:
@@ -102,12 +76,11 @@ def clean_and_build():
 
     log("Compiling QuteFuzz...", Color.YELLOW)
     try:
-        run_command("cmake -DCMAKE_BUILD_TYPE=Release ..", cwd=BUILD_DIR)
-        run_command("make -j$(nproc)", cwd=BUILD_DIR)
+        run_command(["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."], cwd=BUILD_DIR)
+        run_command(["make", "-j", str(CPU_COUNT)], cwd=BUILD_DIR)
         log("Build successful.", Color.GREEN)
-    except Exception:
-        log("Build failed.", Color.RED)
-        sys.exit(1)
+    except Exception as e:
+        raise e
 
 
 def parse():
@@ -191,8 +164,6 @@ class Check_grammar:
         if self.map_elites:
             log("Map elites mode activated", Color.GREEN)
 
-        fuzzer_executable = BUILD_DIR / "qf"
-
         setup_grammar_str = f"{self.name} {ENTRY_POINT}\n"
         seed_str = f"seed {self.seed}\n" if (self.seed is not None) else ""
         map_elites_str = "map-elites\n" if self.map_elites else ""
@@ -203,26 +174,7 @@ class Check_grammar:
         # the generator
         input_str += f"{self.num_tests}\nquit\n"
 
-        try:
-            process = subprocess.Popen(
-                [str(fuzzer_executable.absolute())],
-                cwd=BUILD_DIR,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-            stdout, stderr = process.communicate(input=input_str)
-
-            if process.returncode != 0:
-                print(stderr)
-                raise Exception("Fuzzer exited with errors")
-
-            log("Generation complete.", Color.GREEN)
-
-        except Exception as e:
-            log(f"Failed to generate tests: {e}", Color.RED)
-            sys.exit(1)
+        pipe_to_process(FUZZER_EXECUTABLE, BUILD_DIR, input_str)
 
     def get_ciruit_dirs(self) -> List[Path]:
         """Get list of generated circuit directories"""
@@ -235,83 +187,54 @@ class Check_grammar:
             [d for d in current_output_dir.iterdir() if d.is_dir() and d.name.startswith("circuit")]
         )
 
-    def run_circuit(self, script_path: Path) -> tuple[str, str, int]:
+    def run_circuit(self, script_path: Path) -> subprocess.CompletedProcess:
         """
-        Run a single circuit and capture output
+        Run a single circuit and records result
         """
-        try:
-            if self.coverage:
-                cmd = [
-                    sys.executable,
-                    "-m",
-                    "coverage",
-                    "run",
-                    "-p",
-                    f"--source={self.name}",
-                    str(script_path),
-                ]
-            else:
-                cmd = [sys.executable, str(script_path)]
 
-            if self.plot:
-                cmd.append("--plot")
+        cmd = [sys.executable, str(script_path)]
 
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=TIMEOUT,
-                env=self.get_env_with_coverage_file(),
-            )
-            return result.stdout, result.stderr, result.returncode
-        except subprocess.TimeoutExpired:
-            return "", f"Circuit execution timed out after {TIMEOUT}s", 1
-        except Exception as e:
-            return "", f"Exception running circuit: {str(e)}", 1
+        if self.plot:
+            cmd.append("--plot")
 
-    def validate_generated_circuit(self, index: int, circuit_path: Path) -> CircuitResult:
-        result = CircuitResult(circuit_path=circuit_path, grammar=self.name)
+        result = run_command(cmd, cwd=None, capture_output=True, timeout=TIMEOUT)
+
+        return result
+
+    def validate_generated_circuit(self, circuit_path: Path) -> CircuitRunInfo:
 
         if not circuit_path.exists():
             log("Circuit not found at" + str(circuit_path), Color.RED)
             sys.exit(0)
 
-        stdout, stderr, returncode = self.run_circuit(circuit_path)
+        run_info = CircuitRunInfo(circuit_path, self.name)
 
-        if returncode != 0:
-            combined_output = stdout + stderr
+        result: subprocess.CompletedProcess = self.run_circuit(circuit_path)
 
-            print(combined_output)
+        if result.returncode == 0:
+            run_info.values = parse_for_testing_values(result)
 
-            if ("Error" in combined_output) or ("error" in combined_output):
-                result.had_fuzzer_error = True
-                result.reason = combined_output
-            else:
-                result.had_compiler_error = True
-                result.reason = combined_output
+            if len(run_info.values) > 1:
+                min_ks = min(run_info.values)
+                if min_ks < MIN_KS_VALUE:
+                    run_info.possible_miscompilation_error = True
+                    run_info.logs = f"Low KS value: {min_ks:.4f} < {MIN_KS_VALUE}; "
 
-        result.values = parse_test_output(stdout)
+                    log(f"  INTERESTING: {circuit_path}", Color.YELLOW)
 
-        if "None" in result.values:
-            return result
+            elif len(run_info.values) == 1:
+                dp = run_info.values[0]
+                if dp != 1:
+                    run_info.possible_miscompilation_error = True
+                    run_info.logs = f"Dot product is not 1, got {dp}"
+
+                    log(f"  INTERESTING: {circuit_path}", Color.YELLOW)
 
         else:
-            if len(result.values) > 1:
-                min_ks = min(result.values)
-                if min_ks < MIN_KS_VALUE:
-                    result.had_compiler_error = True
-                    result.reason = f"Low KS value: {min_ks:.4f} < {MIN_KS_VALUE}; "
+            run_info.logs = result.stdout + result.stderr
+            run_info.runtime_error = True
 
-            elif len(result.values) == 1:
-                dp = result.values[0]
-                if dp != 1:
-                    result.had_compiler_error = True
-                    result.reason = f"Dot product is not 1, got {dp}"
-
-            if result.had_compiler_error:
-                log(f"  INTERESTING: {circuit_path}", Color.YELLOW)
-
-            return result
+        return run_info
 
     def validate_generated_circuits(self):
         circuit_dirs = self.get_ciruit_dirs()
@@ -326,25 +249,22 @@ class Check_grammar:
         with ThreadPoolExecutor(max_workers=self.sim_proc) as executor:
             # Submit all tasks
             future_to_circuit = {
-                executor.submit(self.validate_generated_circuit, i, circuit_dir / "prog.py"): (
-                    i,
-                    circuit_dir,
+                executor.submit(self.validate_generated_circuit, circuit_dir / "prog.py"): (
+                    circuit_dir
                 )
-                for i, circuit_dir in enumerate(circuit_dirs, 1)
+                for circuit_dir in circuit_dirs
             }
 
             print_progress(0, num_circuits)
 
             # Process results as they complete
             for future in as_completed(future_to_circuit):
-                i, circuit_dir = future_to_circuit[future]
+                circuit_dir = future_to_circuit[future]
                 try:
-                    result = future.result()
-                    if result.had_compiler_error:
-                        interesting_results.append(result)
+                    run_info: CircuitRunInfo = future.result()
 
-                    if result.had_fuzzer_error:
-                        raise RuntimeError("Fuzzer has a bug")
+                    if run_info.possible_miscompilation_error:
+                        interesting_results.append(run_info)
 
                     completed_threads += 1
                     print_progress(completed_threads, num_circuits)
@@ -357,56 +277,39 @@ class Check_grammar:
         log("Validation complete.", Color.GREEN)
 
         if self.mode == Run_mode.NIGHTLY and len(interesting_results):
-            log(f"Found {len(interesting_results)} interesting circuits.", Color.GREEN)
+            self.save_interesting_circuits(interesting_results)
 
-            self.nightly_run_dir.mkdir(parents=True, exist_ok=True)
+    def save_interesting_circuits(self, interesting_results):
+        log(f"Found {len(interesting_results)} interesting circuits.", Color.GREEN)
 
-            for ires in interesting_results:
-                self.save_interesting_circuit(ires)
+        self.nightly_run_dir.mkdir(parents=True, exist_ok=True)
 
-            # copy over regression seed to nightly results directory
-            log(f"Saving regression seed {self.regression_seed_src} -> {self.regression_seed_dst}")
+        for run_info in interesting_results:
+            src_dir = run_info.circuit_path.parent
+            dst_dir = self.nightly_run_dir / run_info.circuit_path.parent.name
 
-            self.regression_seed_dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(self.regression_seed_src, self.regression_seed_dst)
+            log(f"Saving interesting circuit {src_dir} -> {dst_dir}")
 
-    def save_interesting_circuit(self, result: CircuitResult):
-        src_dir = result.circuit_path.parent
-        dst_dir = self.nightly_run_dir / result.circuit_path.parent.name
+            if src_dir.exists():
+                shutil.copytree(src_dir, dst_dir, dirs_exist_ok=True)
 
-        log(f"Saving interesting circuit {src_dir} -> {dst_dir}")
+                # Save metadata about why it's interesting
+                metadata_path = dst_dir / "analysis.txt"
+                with open(metadata_path, "w") as f:
+                    f.write(f"Circuit: {run_info.circuit_path.name}\n")
+                    f.write(f"Grammar: {run_info.grammar}\n")
+                    f.write(f"Logs: {run_info.logs}\n")
+                    f.write(f"Values (KS or dot product): {run_info.values}\n")
 
-        if src_dir.exists():
-            shutil.copytree(src_dir, dst_dir, dirs_exist_ok=True)
+        # copy over regression seed to nightly results directory
+        log(f"Saving regression seed {self.regression_seed_src} -> {self.regression_seed_dst}")
 
-            # Save metadata about why it's interesting
-            metadata_path = dst_dir / "analysis.txt"
-            with open(metadata_path, "w") as f:
-                f.write(f"Circuit: {result.circuit_path.name}\n")
-                f.write(f"Grammar: {result.grammar}\n")
-                f.write(f"Reason: {result.reason}\n")
-                f.write(f"Had compiler error: {result.had_compiler_error}\n")
-                f.write(f"Values: {result.values}\n")
-
-    def erase_coverage_info(self):
-        cmd = [sys.executable, "-m", "coverage", "erase"]
-        subprocess.run(cmd, env=self.get_env_with_coverage_file())
-
-    def get_env_with_coverage_file(self):
-        env = os.environ.copy()
-        env["COVERAGE_FILE"] = str(self.coverage_dir / ".coverage")
-
-        return env
-
-    def combine_coverage_info(self):
-        cmd = [sys.executable, "-m", "coverage", "combine"]
-        subprocess.run(cmd, env=self.get_env_with_coverage_file())
+        self.regression_seed_dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(self.regression_seed_src, self.regression_seed_dst)
 
     def check(self):
-        self.erase_coverage_info()
         self.generate_tests()
         self.validate_generated_circuits()
-        self.combine_coverage_info()
 
 
 def main():
