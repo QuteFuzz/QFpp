@@ -1,4 +1,5 @@
 import argparse
+import multiprocessing
 import os
 import re
 import shutil
@@ -10,8 +11,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import List
-
-from .utils import Color, log, pipe_to_process, run_command
+from .utils import Color, log, pipe_to_process, run_command, pipe_to_process, modify_env
 
 BUILD_DIR = Path("build")
 OUTPUT_DIR = Path("outputs")
@@ -97,7 +97,6 @@ def parse():
     parser.add_argument("--map-elites", help="Run with MAP elites algorithm", action="store_true")
     parser.add_argument("--seed", type=int, help="Seed for random number generator", default=None)
     parser.add_argument("--plot", action="store_true", help="Plot results after running circuit")
-    parser.add_argument("--coverage", action="store_true", help="Collect coverage info")
     parser.add_argument("--nproc", type=int, default=CPU_COUNT, help="Num workers")
 
     return parser.parse_args()
@@ -132,7 +131,6 @@ class Check_grammar:
         seed: (int | None) = None,
         mode: Run_mode = Run_mode.CI,
         plot: bool = False,
-        coverage: bool = False,
     ) -> None:
         self.num_tests = DEFAULT_NUM_TESTS if num_tests is None else num_tests
         self.name = name
@@ -140,7 +138,6 @@ class Check_grammar:
         self.seed = seed
         self.mode = mode
         self.plot = plot
-        self.coverage = coverage
         self.current_output_dir = OUTPUT_DIR / self.name
         self.regression_seed_src = self.current_output_dir / "regression_seed.txt"
 
@@ -334,7 +331,6 @@ def main():
             args.seed,
             mode,
             args.plot,
-            args.coverage,
         ).check()
 
 

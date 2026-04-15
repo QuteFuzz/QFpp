@@ -10,21 +10,21 @@ from .utils import Color, log, modify_env, run_command
 HOME = Path.home()
 USR = Path("/usr")
 
+BUILD_TYPE = "Debug"
+
 LLVM_SYS_140_PREFIX = USR / "lib" / "llvm-14"
 LLVM_CONFIG_PATH = USR / "bin" / "llvm-config-14"
 CARGO_BIN = HOME / ".cargo" / "bin"
 LOCAL_BIN = HOME / ".local" / "bin"
 
 EXTERNAL_DIR = Path("external")
-
-SYMENGINE_DIR = EXTERNAL_DIR / "symengine"
-SYMENGINE_BUILD_DIR = SYMENGINE_DIR / "build"
 LINENOISE_DIR = EXTERNAL_DIR / "linenoise"
 QIR_RUNNER_DIR = EXTERNAL_DIR / "qir-runner"
 QISKIT_DIR = EXTERNAL_DIR / "qiskit"
-TKET_DIR = EXTERNAL_DIR / "tket"
-TKET_BUILD_DIR = TKET_DIR / "tket" / "build"
 
+TKET_DIR = EXTERNAL_DIR / "tket"
+TKET_CONAN_OUT = TKET_DIR / "build" / "tket"
+TKET_BUILD_DIR = TKET_CONAN_OUT / "build" / BUILD_TYPE
 
 @dataclass
 class RepoInstall:
@@ -150,7 +150,7 @@ def install_repos():
                 "--user=tket",
                 "--channel=stable",
                 "-s",
-                "build_type=Debug",
+                f"build_type={BUILD_TYPE}",
                 "--build=tket",
                 "--build=missing",
                 "-o",
@@ -166,9 +166,8 @@ def install_repos():
             env=env,
         )
 
-        build_dir = TKET_DIR / "build" / "tket" / "build" / "Debug"
-        if build_dir.exists():
-            run_command(["sudo", "make", "install"], cwd=str(build_dir))
+        # if TKET_BUILD_DIR.exists():
+            # run_command(["sudo", "make", "install"], cwd=str(TKET_BUILD_DIR))
 
     clone_externals(
         [
@@ -203,12 +202,18 @@ def sync_python_environment():
             "LLVM_SYS_140_PREFIX": [LLVM_SYS_140_PREFIX],
             "LLVM_CONFIG_PATH": [LLVM_CONFIG_PATH],
             "RUSTFLAGS": f"-L native={llvm_lib_dir}",
-            "CXXFLAGS": "-fprofile-arcs -ftest-coverage",
-            "LDFLAGS": "-lgcov",
         }
     )
 
-    run_command(["uv", "sync"], env=env)
+    if BUILD_TYPE == "Debug":
+        env["CFLAGS"] = "-fprofile-arcs -ftest-coverage -O0 -g"
+        env["CXXFLAGS"] = "-fprofile-arcs -ftest-coverage -O0 -g"
+        env["LDFLAGS"] = "-fprofile-arcs -ftest-coverage -lgcov"
+    else:
+        env["CFLAGS"] = "-O3"
+        env["CXXFLAGS"] = "-O3"
+
+    run_command(["uv", "sync", "--reinstall-package", "pytket"], env=env)
 
 
 def setup_ci_env():
