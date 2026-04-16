@@ -25,6 +25,7 @@ QISKIT_DIR = EXTERNAL_DIR / "qiskit"
 TKET_DIR = EXTERNAL_DIR / "tket"
 TKET_CONAN_OUT = TKET_DIR / "build" / "tket"
 TKET_BUILD_DIR = TKET_CONAN_OUT / "build" / BUILD_TYPE
+# LD_LIBRARY_PATH = TKET_BUILD_DIR / "lib"
 
 @dataclass
 class RepoInstall:
@@ -136,38 +137,23 @@ def install_repos():
     def build_tket():
         log(">>> Building tket C++ core with Conan (Coverage Enabled) ...")
 
-        env = modify_env(
-            {"PATH": [LOCAL_BIN], "CXXFLAGS": "-fprofile-arcs -ftest-coverage", "LDFLAGS": "-lgcov"}
-        )
+        env = modify_env({"PATH": [LOCAL_BIN]})
 
-        # Conan handles all the micro-libraries and the main core automatically
-        # We just pass the exact flags from the README for coverage: https://github.com/Quantinuum/tket/blob/main/tket/README.md
         run_command(
             [
-                "conan",
-                "build",
-                "tket",
-                "--user=tket",
-                "--channel=stable",
-                "-s",
-                f"build_type={BUILD_TYPE}",
-                "--build=tket",
+                "conan", "build", "tket",
+                "--user=tket", "--channel=stable",
+                "-s", f"build_type={BUILD_TYPE}",
                 "--build=missing",
-                "-o",
-                "boost/*:header_only=True",
-                "-o",
-                "tket/*:profile_coverage=True",
+                "-o", "boost/*:header_only=True",
+                "-o", "tket/*:profile_coverage=True",
                 # "-o", "test-tket/*:with_coverage=True",
                 # "-o", "with_test=True",
-                "-of",
-                "build/tket",
+                "-of", "build/tket",
             ],
             cwd=str(TKET_DIR),
             env=env,
         )
-
-        # if TKET_BUILD_DIR.exists():
-            # run_command(["sudo", "make", "install"], cwd=str(TKET_BUILD_DIR))
 
     clone_externals(
         [
@@ -198,21 +184,13 @@ def sync_python_environment():
 
     env = modify_env(
         {
-            "TKET_DIR": [TKET_BUILD_DIR.resolve()],
+            # "TKET_DIR": [TKET_BUILD_DIR.resolve()],
             "LLVM_SYS_140_PREFIX": [LLVM_SYS_140_PREFIX],
             "LLVM_CONFIG_PATH": [LLVM_CONFIG_PATH],
-            "RUSTFLAGS": f"-L native={llvm_lib_dir}",
+            # "RUSTFLAGS": f"-L native={llvm_lib_dir}",
         }
     )
-
-    if BUILD_TYPE == "Debug":
-        env["CFLAGS"] = "-fprofile-arcs -ftest-coverage -O0 -g"
-        env["CXXFLAGS"] = "-fprofile-arcs -ftest-coverage -O0 -g"
-        env["LDFLAGS"] = "-fprofile-arcs -ftest-coverage -lgcov"
-    else:
-        env["CFLAGS"] = "-O3"
-        env["CXXFLAGS"] = "-O3"
-
+    
     run_command(["uv", "sync", "--reinstall-package", "pytket"], env=env)
 
 
