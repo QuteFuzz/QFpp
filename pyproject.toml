@@ -5,6 +5,7 @@ description = "Fuzzing framework for quantum compilers"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "conan",
     "pytket",
     "qiskit",
     "pytket-qiskit",
@@ -21,7 +22,8 @@ dependencies = [
     "jinja2",
     "guppylang",
     "coverage",
-    "hugr-qir @ git+https://github.com/CQCL/hugr-qir.git",
+    "hugr-qir",
+    "qirrunner",
     "pyyaml>=6.0.3",
     "typing-extensions>=4.15.0",
 ]
@@ -30,9 +32,8 @@ dependencies = [
 required-environments = "sys_platform == 'linux' and platform_machine == 'x86_64'"
 
 [tool.uv.sources]
-qir-runner = { path = "external/qir-runner/pip" }
-qiskit = { path = "external/qiskit" }
-pytket = { path = "external/tket/pytket" }
+qirrunner = { git = "https://github.com/CQCL/qir-runner.git", subdirectory = "pip" }
+hugr-qir = { git = "https://github.com/CQCL/hugr-qir.git" }
 
 [dependency-groups]
 dev = [

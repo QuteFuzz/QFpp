@@ -1,4 +1,5 @@
 import os
+from pdb import run
 import shutil
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -10,29 +11,54 @@ from .utils import Color, log, modify_env, run_command
 HOME = Path.home()
 USR = Path("/usr")
 
-BUILD_TYPE = "Debug"
-
 LLVM_SYS_140_PREFIX = USR / "lib" / "llvm-14"
+LLVM_LIB_DIR = LLVM_SYS_140_PREFIX / "lib"
 LLVM_CONFIG_PATH = USR / "bin" / "llvm-config-14"
 CARGO_BIN = HOME / ".cargo" / "bin"
 LOCAL_BIN = HOME / ".local" / "bin"
 
 EXTERNAL_DIR = Path("external")
 LINENOISE_DIR = EXTERNAL_DIR / "linenoise"
-QIR_RUNNER_DIR = EXTERNAL_DIR / "qir-runner"
 QISKIT_DIR = EXTERNAL_DIR / "qiskit"
 
 TKET_DIR = EXTERNAL_DIR / "tket"
 TKET_CONAN_OUT = TKET_DIR / "build" / "tket"
-TKET_BUILD_DIR = TKET_CONAN_OUT / "build" / BUILD_TYPE
-# LD_LIBRARY_PATH = TKET_BUILD_DIR / "lib"
+TKET_BUILD_DIR = TKET_CONAN_OUT / "build" / "Debug"
 
 @dataclass
-class RepoInstall:
-    github_url: str
-    dir: Path
-    build_step: Callable | None = None
+class Repo:
+    url : str
+    dest_dir  : Path
 
+REPOS = [
+    Repo("https://github.com/CQCL/tket.git", TKET_DIR),
+    Repo("https://github.com/Qiskit/qiskit.git", QISKIT_DIR),
+    Repo("https://github.com/antirez/linenoise.git",LINENOISE_DIR)
+]
+
+
+def clone_repos():
+    log(">>> Cloning repos", Color.BLUE)
+
+    for repo in REPOS:
+        if not repo.dest_dir.exists():
+            log("Cloning " + repo.url)
+            run_command(["git", "clone", repo.url, str(repo.dest_dir)])
+
+def check_conan_profile():
+    conan2_profile_path = Path.home() / ".conan2" / "profiles" / "default"
+
+    if not conan2_profile_path.exists():
+        log(">>> Generating default Conan profile...", Color.BLUE)
+        run_command(["bash", "-c", "conan profile detect"])
+
+        log(">>> Adding Quantinuum tket-libs remote...", Color.BLUE)
+        run_command([
+            "bash", "-c", 
+            "conan remote add tket-libs https://quantinuumsw.jfrog.io/artifactory/api/conan/tket1-libs --index 0"
+        ])
+    else:
+        log(">>> Conan default profile already exists, skipping generation.")
 
 def install_rust_and_uv():
     log(">>> Installing Rust & uv ...", Color.BLUE)
@@ -56,22 +82,6 @@ def install_rust_and_uv():
         and not (LOCAL_BIN / "uv").exists()
     ):
         run_command(["bash", "-c", "curl -LsSf https://astral.sh/uv/install.sh | sh"])
-
-
-def install_conan():
-    log(">>> Installing Conan ...", Color.BLUE)
-
-    if not shutil.which("conan"):
-        run_command(["pipx", "install", "conan"])
-
-    conan2_profile_path = Path.home() / ".conan2" / "profiles" / "default"
-
-    if not conan2_profile_path.exists():
-        log(">>> Generating default Conan profile...", Color.BLUE)
-        run_command(["bash", "-c", "conan profile detect"])
-    else:
-        log(">>> Conan default profile already exists, skipping generation.")
-
 
 def install_deps():
     log(">>> Installing system dependencies ... ", Color.BLUE)
@@ -97,101 +107,58 @@ def install_deps():
         "libncurses-dev",
         "libffi-dev",
         "gcovr",
-        "pipx",
     ]
 
     run_command(["sudo", "apt-get", "install", "-y"] + packages)
 
     install_rust_and_uv()
-    install_conan()
 
+def build_tket_with_coverage():
+    log(">>> Building tket C++ core with Conan (Coverage Enabled) ...")
 
-def install_repos():
-    log(">>> Installing and building external dependencies ...", Color.BLUE)
-    EXTERNAL_DIR.mkdir(exist_ok=True)
+    shared_opts = [
+        "--user=tket", "--channel=stable",
+        "-s", "build_type=Debug",
+        "-o", "boost/*:header_only=True",
+        "-o", "tket/*:profile_coverage=True",
+        "-of", "build/tket",
+    ]
 
-    def clone_externals(externals: List[RepoInstall]):
-        for ext in externals:
-            if not ext.dir.exists():
-                log("Cloning " + ext.github_url)
-                run_command(["git", "clone", ext.github_url, str(ext.dir)])
-
-            if ext.build_step:
-                ext.build_step()
-
-    def build_qir_runner():
-        log("Building qir-runner ...")
-
-        llvm_lib_dir = LLVM_SYS_140_PREFIX / "lib"
-
-        env = modify_env(
-            {
-                "LLVM_SYS_140_PREFIX": [LLVM_SYS_140_PREFIX],
-                "LLVM_CONFIG_PATH": [LLVM_CONFIG_PATH],
-                "RUSTFLAGS": f"-L native={llvm_lib_dir}",
-            }
-        )
-
-        run_command(["cargo", "build", "--release"], cwd=str(QIR_RUNNER_DIR), env=env)
-
-    def build_tket():
-        log(">>> Building tket C++ core with Conan (Coverage Enabled) ...")
-
-        env = modify_env({"PATH": [LOCAL_BIN]})
-
-        run_command(
-            [
-                "conan", "build", "tket",
-                "--user=tket", "--channel=stable",
-                "-s", f"build_type={BUILD_TYPE}",
-                "--build=missing",
-                "-o", "boost/*:header_only=True",
-                "-o", "tket/*:profile_coverage=True",
-                # "-o", "test-tket/*:with_coverage=True",
-                # "-o", "with_test=True",
-                "-of", "build/tket",
-            ],
-            cwd=str(TKET_DIR),
-            env=env,
-        )
-
-    clone_externals(
-        [
-            RepoInstall(
-                github_url="https://github.com/CQCL/qir-runner.git",
-                dir=QIR_RUNNER_DIR,
-                build_step=build_qir_runner,
-            ),
-            RepoInstall(
-                github_url="https://github.com/CQCL/tket.git", dir=TKET_DIR, build_step=build_tket
-            ),
-            RepoInstall(
-                github_url="https://github.com/Qiskit/qiskit.git",
-                dir=QISKIT_DIR,
-            ),
-            RepoInstall(
-                github_url="https://github.com/antirez/linenoise.git",
-                dir=LINENOISE_DIR,
-            ),
-        ]
-    )
-
-
-def sync_python_environment():
-    log(">>> Syncing Python Environment ...", Color.BLUE)
-
-    llvm_lib_dir = LLVM_SYS_140_PREFIX / "lib"
-
-    env = modify_env(
-        {
-            # "TKET_DIR": [TKET_BUILD_DIR.resolve()],
-            "LLVM_SYS_140_PREFIX": [LLVM_SYS_140_PREFIX],
-            "LLVM_CONFIG_PATH": [LLVM_CONFIG_PATH],
-            # "RUSTFLAGS": f"-L native={llvm_lib_dir}",
-        }
+    log(">>> Building tket with coverage flags ...", Color.YELLOW)
+    run_command(
+        ["conan", "build", "tket", "--build=missing"] + shared_opts,
+        cwd=str(TKET_DIR)
     )
     
-    run_command(["uv", "sync", "--reinstall-package", "pytket"], env=env)
+    log(">>> tket coverage build complete.", Color.GREEN)
+    log(f"    use `find {TKET_BUILD_DIR} -name \"*.gcno\"` to find .gcno files", Color.GREEN)
+
+
+def inject_pytket_into_venv():
+    log(">>> Injecting instrumented pytket into virtual environment...", Color.BLUE)
+    pytket_dir = TKET_DIR / "pytket"
+
+    # manually creating the _version.py file to appease scm
+    version_file = pytket_dir / "pytket" / "_version.py"
+    version_file.write_text('__version__ = "2.16.0"\n')
+    
+    run_command(
+        [
+            "uv", "pip", "install", "--reinstall", "--no-build-isolation", "."
+        ],
+        env=env,
+        cwd=pytket_dir
+    )
+
+def build_pytket():
+    build_tket_with_coverage()
+    inject_pytket_into_venv()
+
+def build_external_deps():
+    log(">>> Building external dependencies ...", Color.BLUE)
+    EXTERNAL_DIR.mkdir(exist_ok=True)
+
+    build_pytket()
 
 
 def setup_ci_env():
@@ -209,14 +176,29 @@ def setup_ci_env():
         with open(github_path, "a") as f:
             f.write(f"{CARGO_BIN}\n")
 
-
 if __name__ == "__main__":
     install_deps()
-    install_repos()
+    clone_repos()
 
-    sync_python_environment()
+    log(">>> Running initial uv sync to prepare the venv...", Color.BLUE)
+    # these flags are needed for cargo builds to work
+    env = modify_env(
+        {
+            "LLVM_SYS_140_PREFIX": [LLVM_SYS_140_PREFIX],
+            "LLVM_CONFIG_PATH": [LLVM_CONFIG_PATH],
+            "RUSTFLAGS": f"-L native={LLVM_LIB_DIR}",
+        }
+    )
+
+    run_command(["uv", "sync"], env=env)
+    run_command(["bash", "-c", "source .venv/bin/activate"])
+
+    check_conan_profile()
+
+    build_external_deps()
+
     setup_ci_env()
 
     print("Setup complete!", Color.GREEN)
-    print("Source .venv with source .venv/bin/activate")
-    print("Run with uv run -m scripts.run", Color.BLUE)
+
+    print("\nRun tests with .venv/bin/python3 test.py NOT uv run", Color.YELLOW)
