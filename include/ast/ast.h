@@ -44,7 +44,7 @@ class Ast{
 
         Term make_term_from_rule(std::shared_ptr<Rule> rule_ptr);
 
-        Result<std::shared_ptr<Node>> build(std::shared_ptr<Rule> entry, std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints = {});
+        std::shared_ptr<Node> build(std::shared_ptr<Rule> entry, std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints = {});
 
     protected:
         std::shared_ptr<Node> root;

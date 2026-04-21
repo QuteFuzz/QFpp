@@ -6,8 +6,7 @@
 #include "string.h"
 #include <stdlib.h>
 #include <fstream>
-
-#include <result.h>
+#include <utils.h>
 #include <params.h>
 
 enum Token_kind {
@@ -92,6 +91,7 @@ enum Token_kind {
 
     META_FUNC_TOP,                                /// ADD META FUNCS BELOW!
     CIRCUIT_NAME,
+    GATE,
     GATE_QUBITS,
     GATE_BITS,
     GATE_FLOATS,
@@ -119,7 +119,8 @@ enum Token_kind {
     RULE_START,
     RULE_APPEND,
     RULE_END,
-    SYNTAX,
+    STRING,
+    NUMBER,
     LPAREN,
     LBRACK,
     LBRACE,
@@ -153,7 +154,7 @@ struct Token{
     }
 
     friend std::ostream& operator<<(std::ostream& stream, const Token t){
-        if(t.kind == SYNTAX) std::cout << t.kind << " " << std::quoted(t.value);
+        if(t.kind == STRING) std::cout << t.kind << " " << std::quoted(t.value);
         else std::cout << t.kind << " " << t.value;
 
         return stream;
@@ -286,25 +287,26 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("SIZE", SIZE),
     Token_matcher("RESET", RESET),
     Token_matcher("CIRCUIT_NAME", CIRCUIT_NAME),
+    Token_matcher("GATE", GATE),
     Token_matcher("GATE_QUBITS", GATE_QUBITS),
     Token_matcher("GATE_BITS", GATE_BITS),
     Token_matcher("GATE_FLOATS", GATE_FLOATS),
     Token_matcher("ALL_QUBITS", ALL_QUBITS),
     Token_matcher("ALL_BITS", ALL_BITS),
     // meta functions ish, that get immediately converted into syntax because we know before hand what the replacement should be
-    Token_matcher("LPAREN", SYNTAX, "("),
-    Token_matcher("RPAREN", SYNTAX, ")"),
-    Token_matcher("LBRACK", SYNTAX, "["),
-    Token_matcher("RBRACK", SYNTAX, "]"),
-    Token_matcher("LBRACE", SYNTAX, "{"),
-    Token_matcher("RBRACE", SYNTAX, "}"),
-    Token_matcher("COMMA", SYNTAX, ","),
-    Token_matcher("SPACE", SYNTAX, " "),
-    Token_matcher("DOT", SYNTAX, "."),
-    Token_matcher("SINGLE_QUOTE", SYNTAX, "\'"),
-    Token_matcher("DOUBLE_QUOTE", SYNTAX, "\""),
-    Token_matcher("EQUALS", SYNTAX, "="),
-    Token_matcher("NEWLINE", SYNTAX, "\n"),
+    Token_matcher("LPAREN", STRING, "("),
+    Token_matcher("RPAREN", STRING, ")"),
+    Token_matcher("LBRACK", STRING, "["),
+    Token_matcher("RBRACK", STRING, "]"),
+    Token_matcher("LBRACE", STRING, "{"),
+    Token_matcher("RBRACE", STRING, "}"),
+    Token_matcher("COMMA", STRING, ","),
+    Token_matcher("SPACE", STRING, " "),
+    Token_matcher("DOT", STRING, "."),
+    Token_matcher("SINGLE_QUOTE", STRING, "\'"),
+    Token_matcher("DOUBLE_QUOTE", STRING, "\""),
+    Token_matcher("EQUALS", STRING, "="),
+    Token_matcher("NEWLINE", STRING, "\n"),
 
     /*
         multi char tokens
@@ -334,7 +336,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
 };
 
 const std::string FULL_REGEX =
-    R"([a-zA-Z_][a-zA-Z0-9_]*|[0-9]+(\.[0-9]+)?|#[^\n]*|\(\*|\*\)|\".*?\"|\'.*?\'|->|::|\+=|>=|<=|.)";
+    R"([a-zA-Z_][a-zA-Z0-9_]*|(\-)?[0-9]+(\.[0-9]+)?|#[^\n]*|\(\*|\*\)|\".*?\"|\'.*?\'|->|::|\+=|>=|<=|.)";
 
 
 class Lexer{
@@ -360,7 +362,6 @@ class Lexer{
 
         void lex(){
             std::string input, matched_string;
-            std::vector<Token> tokens;
             std::ifstream stream(_filename);
 
             std::regex full_pattern(FULL_REGEX, std::regex::icase);
@@ -421,41 +422,30 @@ class Lexer{
                     if (isalpha(text[0]) || text[0] == '_') {
                         tokens.push_back(Token{text, RULE});
 
-                    } else if (isdigit(text[0])) {
-                        tokens.push_back(Token{text, SYNTAX});
+                    } else if (isdigit(text[0]) || ((text[0] == '-') && (text.size() > 1) && isdigit(text[1]))) {
+                        tokens.push_back(Token{text, NUMBER});
 
                     } else {
-                        tokens.push_back(Token{remove_outer_quotes(text), SYNTAX});
+                        tokens.push_back(Token{remove_outer_quotes(text), STRING});
                     }
                 }
             }
 
             tokens.push_back(Token{.value = "", .kind = _EOF});
-            result.set_ok(tokens);
         }
 
         void print_tokens() const {
-
-            if(result.is_error()){
-                ERROR(result.get_error());
-
-            } else {
-                std::vector<Token> tokens = result.get_ok();
-
-                for(size_t i = 0; i < tokens.size(); ++i){
-                    std::cout << tokens[i] << std::endl;
-                }
+            for(size_t i = 0; i < tokens.size(); ++i){
+                std::cout << tokens[i] << std::endl;
             }
         }
 
-
         std::vector<Token> get_tokens(){
-            std::vector<Token> tokens = result.get_ok();
             return tokens;
         }
 
     private:
-        Result<std::vector<Token>> result;
+        std::vector<Token> tokens;
         std::string _filename = "bnf.bnf";
         bool ignore = false;
 

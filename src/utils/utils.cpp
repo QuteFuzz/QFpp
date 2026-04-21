@@ -2,12 +2,32 @@
 #include <sstream>
 #include <params.h>
 
-std::ofstream get_stream(fs::path output_dir, std::string file_name){
+[[noreturn]]
+void ERROR(const std::string& msg, std::source_location location){
+    std::cerr << "[ERROR] " << RED(msg) 
+            << " (" << location.file_name() << ":" << location.line() << ")" 
+            << std::endl;
+    std::exit(EXIT_FAILURE);
+}
+
+void WARNING(const std::string& msg, std::source_location location){
+    std::cout << "[WARNING] " << YELLOW(msg) 
+              << " (" << location.file_name() << ":" << location.line() << ")" 
+              << std::endl;
+}
+
+void INFO(const std::string& msg, std::source_location location){
+    std::cout << "[INFO] " << GREEN(msg) 
+              << " (" << location.file_name() << ":" << location.line() << ")" 
+              << std::endl;
+}
+
+std::ofstream get_stream(fs::path output_dir, std::string file_name, const std::source_location loc){
     fs::create_directory(output_dir);
     fs::path path = output_dir / file_name;
     std::ofstream stream(path.string());
 
-    INFO("Writing to " + path.string());
+    INFO("Writing to " + path.string(), loc);
 
     return stream;
 }
@@ -122,13 +142,13 @@ void pipe_to_command(std::string command, std::string write){
     FILE* pipe = popen(command.c_str(), "w");
 
     if(!pipe){
-        throw std::runtime_error(ANNOT("Failed to open pipe to command " + command));
+        ERROR("Failed to open pipe to command " + command);
     }
 
     fwrite(write.c_str(), sizeof(char), write.size(), pipe);
 
     if(pclose(pipe)){
-        throw std::runtime_error(ANNOT("Command " + command + " failed"));
+        ERROR("Command " + command + " failed");
     }
 }
 

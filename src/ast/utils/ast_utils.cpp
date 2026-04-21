@@ -50,13 +50,7 @@ std::shared_ptr<Node> build_ast_from_rule(
     std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints
 ) {
     std::shared_ptr<Ast> ast_builder = std::make_shared<Ast>(context, 0);
-    Result<std::shared_ptr<Node>> maybe_new_block = ast_builder->build(rule, descendant_node_branch_constraints);
-
-    if (maybe_new_block.is_error()){
-        ERROR(maybe_new_block.get_error());
-    }
-
-    return maybe_new_block.get_ok();
+    return ast_builder->build(rule, descendant_node_branch_constraints);
 }
 
 Slot_type build_ast_children(

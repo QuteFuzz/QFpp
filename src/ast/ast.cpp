@@ -4,7 +4,6 @@
 	utils
 */
 #include <sstream>
-#include <result.h>
 #include <child_indent.h>
 #include <indent_level.h>
 #include <self_indent.h>
@@ -35,7 +34,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 	Token_kind kind = term.get_node_kind();
 
 	if(parent == nullptr){
-		throw std::runtime_error(ANNOT("Node must have a parent!"));
+		ERROR("Node must have a parent!");
 	}
 
 	/**
@@ -72,8 +71,8 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 	*/
 	switch(kind){
 
-		case SYNTAX:
-			return std::make_shared<Node>(str);
+		case STRING: case NUMBER:
+			return std::make_shared<Node>(str, kind);
 
 		case NAME:
 			return parent->get_name();
@@ -224,7 +223,7 @@ Slot_type Ast::term_branch_to_child_nodes(
 	Slot_type last_built_child = nullptr;
 
 	if (depth >= QuteFuzz::RECURSION_LIMIT){
-		ERROR(ANNOT("Recursion limit reached when writing branch for term: " + parent->get_str()));
+		ERROR("Recursion limit reached when writing branch for term: " + parent->get_str());
 	}
 
 	if (control.step){
@@ -239,12 +238,11 @@ Slot_type Ast::term_branch_to_child_nodes(
 
 		if (term_constraint_max.has_value() && (branch.size() > 1)){
 			std::cout << branch << std::endl;
-			ERROR(ANNOT("Term constraints can only be overidden in a branch with one term"));
+			ERROR("Term constraints can only be overidden in a branch with one term");
 		}
 
 		for(const Term& child_term : branch){
-			Term_constraint constraint = child_term.get_constaint();
-			unsigned int max = term_constraint_max.value_or(constraint.resolve(std::ref(context)));
+			unsigned int max = term_constraint_max.value_or(child_term.eval_constraint(context));
 
 			#if 0
 			if (constraint.get_term_constraint_kind() == Term_constraint_kind::DYNAMIC_MAX){
@@ -300,11 +298,9 @@ Term Ast::make_term_from_rule(std::shared_ptr<Rule> rule_ptr){
 	return Term(rule_ptr, kind, Meta_func::NONE);
 }
 
-Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry, std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints){
-	Result<std::shared_ptr<Node>> res;
-
+std::shared_ptr<Node> Ast::build(std::shared_ptr<Rule> entry, std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints){
 	if(entry == nullptr){
-		res.set_error("Entry point not set");
+		ERROR("Entry point not set");
 
 	} else {
 		const Term& entry_term = make_term_from_rule(entry);
@@ -314,12 +310,10 @@ Result<std::shared_ptr<Node>> Ast::build(std::shared_ptr<Rule> entry, std::unord
 		if(std::holds_alternative<std::shared_ptr<Node>>(maybe_root)){
 			root = std::get<std::shared_ptr<Node>>(maybe_root);
 			term_branch_to_child_nodes(root, entry_term, std::nullopt, descendant_node_branch_constraints);
-			res.set_ok(root);
-
+			
+			return root;
 		} else {
-			res.set_error("Root cannot be build from rule called " + entry->get_name() + ". Redirected to term called " + std::get<Term>(maybe_root).get_string());
+			ERROR("Root cannot be build from rule called " + entry->get_name() + ". Redirected to term called " + std::get<Term>(maybe_root).get_string());
 		}
 	}
-
-	return res;
 }

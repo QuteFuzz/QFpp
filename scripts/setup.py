@@ -152,7 +152,7 @@ def inject_pytket_into_venv():
 
 def build_pytket():
     build_tket_with_coverage()
-    inject_pytket_into_venv()
+    # inject_pytket_into_venv()
 
 def build_external_deps():
     log(">>> Building external dependencies ...", Color.BLUE)

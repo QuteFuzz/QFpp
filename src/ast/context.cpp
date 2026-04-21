@@ -241,10 +241,12 @@ std::shared_ptr<Qubit_op> Context::nn_qubit_op(){
 }
 
 
-unsigned int Context::operator()(Token_kind kind) const {
+unsigned int Context::resolve_var(Token_kind kind) const {
     auto gate = get_current_node<Gate>();
 
-    if (kind == GATE_QUBITS) {
+    if (kind == GATE){
+        return gate->get_node_kind();
+    } else if (kind == GATE_QUBITS) {
         return gate->get_num_external_qubits();
     } else if (kind == GATE_BITS) {
         return gate->get_num_external_bits();

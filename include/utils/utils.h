@@ -14,6 +14,7 @@
 #include <set>
 #include <string_view>
 #include <filesystem>
+#include <cstdlib>
 #include <unordered_map>
 #include <algorithm>
 #include <cctype>
@@ -25,6 +26,7 @@
 #include <functional>
 #include <cassert>
 #include <type_traits>
+#include <source_location>
 
 #define ENABLE_BITMASK_OPERATORS(x)  \
 inline x operator|(x a, x b) {       \
@@ -61,14 +63,6 @@ inline x operator~(x a) {    \
 #define CYAN(x) (ANSI_ESC + "36m" + x + ANSI_ESC + ANSI_RESET)
 #define GREY(x) (ANSI_ESC + "30m" + x + ANSI_ESC + ANSI_RESET)
 
-// location annotation
-#define ANNOT(x) (std::string("at ") + __FILE__ + "," + std::to_string(__LINE__) + ": " + (x))
-
-// logging
-#define ERROR(x) throw std::runtime_error("[ERROR] " + RED(ANNOT(x)))
-#define WARNING(x) std::cout << (std::string("[WARNING] ") + YELLOW(ANNOT(x))) << std::endl
-#define INFO(x) std::cout << (std::string("[INFO] ") + GREEN(x)) << std::endl
-
 // flag status
 #define FLAG_STATUS(x) (x ? YELLOW("enabled") : YELLOW("disabled"))
 
@@ -81,9 +75,16 @@ namespace fs = std::filesystem;
 
 struct Control;
 
+[[noreturn]]
+void ERROR(const std::string& msg, std::source_location location = std::source_location::current());
+
+void WARNING(const std::string& msg, std::source_location location = std::source_location::current());
+
+void INFO(const std::string& msg, std::source_location location = std::source_location::current());
+
 void lower(std::string& str);
 
-std::ofstream get_stream(fs::path output_dir, std::string file_name);
+std::ofstream get_stream(fs::path output_dir, std::string file_name, const std::source_location loc = std::source_location::current());
 
 std::mt19937& rng();
 

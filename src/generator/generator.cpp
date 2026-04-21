@@ -44,20 +44,14 @@ std::vector<Ast_entry> Generator::generate_n_asts(unsigned int n, const Control&
         rng().seed(seed);
 
         std::shared_ptr<Ast> ast_builder = std::make_shared<Ast>(control);
-        Result<std::shared_ptr<Node>> maybe_ast_root = ast_builder->build(entry_rule);
+        std::shared_ptr<Node> ast_root = ast_builder->build(entry_rule);
         std::shared_ptr<Context> context = ast_builder->get_context();
 
         if (control.print_circuit_info){
             context->print_circuit_info();
         }
 
-        if (maybe_ast_root.is_ok()){
-            std::shared_ptr<Node> ast_root = maybe_ast_root.get_ok();            
-            entries.push_back({ast_root, context});
-
-        } else {
-            WARNING(maybe_ast_root.get_error());
-        }
+        entries.push_back({ast_root, context});
     }
 
     return entries;

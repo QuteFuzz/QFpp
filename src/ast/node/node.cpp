@@ -42,7 +42,7 @@ void Node::print_program(std::ostream& stream, unsigned int indent_level) const 
             return;
         }
         case Print_mode::DEFAULT: {
-            if(kind == SYNTAX) stream << str;
+            if(kind == STRING || kind == INTEGER) stream << str;
             else for(const auto& child : children)
                 child->print_program(stream, indent_level);
             return;
@@ -101,7 +101,7 @@ void Node::print_ast(std::string indent) const {
 void Node::extend_dot_string(std::ostringstream& ss) const {
 
     for(const std::shared_ptr<Node>& child : children){
-        if(child->get_node_kind() != SYNTAX){
+        if((child->get_node_kind() != STRING) && (child->get_node_kind() != NUMBER)){
             int child_id = child->get_id();
 
             ss << "  " << id << " [label=\"" << get_str() << "\"];" << std::endl;

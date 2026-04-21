@@ -3,7 +3,7 @@ name = "qutefuzz"
 version = "1.0.0"
 description = "Fuzzing framework for quantum compilers"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10,<3.14"
 dependencies = [
     "conan",
     "pytket",
@@ -16,7 +16,7 @@ dependencies = [
     "pytket-qir",
     "qnexus",
     "pennylane",
-    "cudaq",
+    "cuda-quantum-cu12",
     "umap-learn",
     "selene-sim",
     "jinja2",
@@ -34,6 +34,7 @@ required-environments = "sys_platform == 'linux' and platform_machine == 'x86_64
 [tool.uv.sources]
 qirrunner = { git = "https://github.com/CQCL/qir-runner.git", subdirectory = "pip" }
 hugr-qir = { git = "https://github.com/CQCL/hugr-qir.git" }
+pytket = { path = "external/tket/pytket" }
 
 [dependency-groups]
 dev = [
