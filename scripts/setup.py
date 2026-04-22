@@ -24,11 +24,12 @@ TKET_BUILD_DIR = TKET_CONAN_OUT / "build" / "Debug"
 
 IN_ACTIONS = os.environ.get("GITHUB_ACTIONS") == "true"
 
+
 @dataclass
 class Repo:
     url: str
     dest_dir: Path
-    engine_dep : bool = False
+    engine_dep: bool = False
 
 
 REPOS = [
@@ -139,7 +140,9 @@ def build_tket_with_coverage():
     ]
 
     log(">>> Building tket with coverage flags ...", Color.YELLOW)
-    run_command(["uv", "run", "conan", "build", "tket", "--build=missing"] + shared_opts, cwd=str(TKET_DIR))
+    run_command(
+        ["uv", "run", "conan", "build", "tket", "--build=missing"] + shared_opts, cwd=str(TKET_DIR)
+    )
 
     log(">>> tket coverage build complete.", Color.GREEN)
     log(f'    use `find {TKET_BUILD_DIR} -name "*.gcno"` to find .gcno files', Color.GREEN)
@@ -149,9 +152,7 @@ def inject_pytket_into_venv():
     log(">>> Injecting instrumented pytket into virtual environment...", Color.BLUE)
     pytket_dir = TKET_DIR / "pytket"
 
-    env = modify_env(
-        {"SETUPTOOLS_SCM_PRETEND_VERSION": "2.16.0"}
-    )
+    env = modify_env({"SETUPTOOLS_SCM_PRETEND_VERSION": "2.16.0"})
 
     # manually creating the _version.py file to appease scm
     version_file = pytket_dir / "pytket" / "_version.py"
@@ -160,7 +161,7 @@ def inject_pytket_into_venv():
     run_command(
         ["uv", "pip", "install", "--reinstall", "--no-build-isolation", "."],
         env=env,
-        cwd=pytket_dir
+        cwd=pytket_dir,
     )
 
 
