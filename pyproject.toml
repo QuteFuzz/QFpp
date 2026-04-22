@@ -34,7 +34,6 @@ required-environments = "sys_platform == 'linux' and platform_machine == 'x86_64
 [tool.uv.sources]
 qirrunner = { git = "https://github.com/CQCL/qir-runner.git", subdirectory = "pip" }
 hugr-qir = { git = "https://github.com/CQCL/hugr-qir.git" }
-pytket = { path = "external/tket/pytket" }
 
 [dependency-groups]
 dev = [
