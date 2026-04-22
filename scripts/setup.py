@@ -50,14 +50,14 @@ def check_conan_profile():
 
     if not conan2_profile_path.exists():
         log(">>> Generating default Conan profile...", Color.BLUE)
-        run_command(["bash", "-c", "conan profile detect"])
+        run_command(["bash", "-c", "uv run conan profile detect"])
 
         log(">>> Adding Quantinuum tket-libs remote...", Color.BLUE)
         run_command(
             [
                 "bash",
                 "-c",
-                "conan remote add tket-libs "
+                "uv run conan remote add tket-libs "
                 "https://quantinuumsw.jfrog.io/artifactory/api/conan/tket1-libs --index 0",
             ]
         )
