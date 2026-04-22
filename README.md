@@ -19,6 +19,7 @@ qf++ is a grammar-driven fuzzing framework for quantum compilers. It generates s
 | [Writing a Grammar](docs/writing-grammars.md) | Step-by-step guide to adding a new quantum framework |
 | [MAP-Elites](docs/map-elites.md) | How diversity-driven generation works and where to take it next |
 | [Differential Testing](docs/diff-testing.md) | How circuits are validated and bugs are classified |
+| [Dev](docs/dev.md) | Notes for dev environment |
 
 ## Quick start
 

@@ -30,9 +30,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          submodules: recursive  # Ensure your external/tket submodule is pulled
-          fetch-depth: 0         # Downloads all history and tags for setuptools_scm
 
       - name: Run Setup Script
         run: |
