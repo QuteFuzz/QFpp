@@ -22,7 +22,6 @@ TKET_DIR = EXTERNAL_DIR / "tket"
 TKET_CONAN_OUT = TKET_DIR / "build" / "tket"
 TKET_BUILD_DIR = TKET_CONAN_OUT / "build" / "Debug"
 
-
 @dataclass
 class Repo:
     url: str
@@ -137,7 +136,7 @@ def build_tket_with_coverage():
     ]
 
     log(">>> Building tket with coverage flags ...", Color.YELLOW)
-    run_command(["conan", "build", "tket", "--build=missing"] + shared_opts, cwd=str(TKET_DIR))
+    run_command(["uv", "run", "conan", "build", "tket", "--build=missing"] + shared_opts, cwd=str(TKET_DIR))
 
     log(">>> tket coverage build complete.", Color.GREEN)
     log(f'    use `find {TKET_BUILD_DIR} -name "*.gcno"` to find .gcno files', Color.GREEN)
@@ -192,7 +191,11 @@ def setup_ci_env():
 
 if __name__ == "__main__":
     install_deps()
-    clone_repos()
+
+    in_actions = os.environ.get("GITHUB_ACTIONS") == "true"
+
+    if in_actions: 
+        clone_repos()
 
     log(">>> Running initial uv sync to prepare the venv...", Color.BLUE)
     # these flags are needed for cargo builds to work
@@ -205,12 +208,10 @@ if __name__ == "__main__":
     )
 
     run_command(["uv", "sync"], env=env)
-    run_command(["bash", "-c", "source .venv/bin/activate"])
 
-    check_conan_profile()
-
-    build_external_deps()
-
-    setup_ci_env()
+    if in_actions:
+        check_conan_profile()
+        build_external_deps()
+        setup_ci_env()
 
     print("Setup complete!", Color.GREEN)
