@@ -194,8 +194,7 @@ if __name__ == "__main__":
 
     in_actions = os.environ.get("GITHUB_ACTIONS") == "true"
 
-    if in_actions: 
-        clone_repos()
+    clone_repos()
 
     log(">>> Running initial uv sync to prepare the venv...", Color.BLUE)
     # these flags are needed for cargo builds to work
