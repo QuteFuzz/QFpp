@@ -147,6 +147,10 @@ def inject_pytket_into_venv():
     log(">>> Injecting instrumented pytket into virtual environment...", Color.BLUE)
     pytket_dir = TKET_DIR / "pytket"
 
+    env = modify_env(
+        {"SETUPTOOLS_SCM_PRETEND_VERSION": "2.16.0"}
+    )
+
     # manually creating the _version.py file to appease scm
     version_file = pytket_dir / "pytket" / "_version.py"
     version_file.write_text('__version__ = "2.16.0"\n')
@@ -154,7 +158,7 @@ def inject_pytket_into_venv():
     run_command(
         ["uv", "pip", "install", "--reinstall", "--no-build-isolation", "."],
         env=env,
-        cwd=pytket_dir,
+        cwd=pytket_dir
     )
 
 
