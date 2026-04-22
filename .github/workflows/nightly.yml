@@ -30,11 +30,13 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          submodules: recursive  # Ensure your external/tket submodule is pulled
+          fetch-depth: 0         # Downloads all history and tags for setuptools_scm
 
       - name: Run Setup Script
         run: |
-          chmod +x scripts/setup/setup_env.sh
-          ./scripts/setup/setup_env.sh
+          python3 -m scripts.setup
 
       - name: Run Nightly Pipeline
         run: |
