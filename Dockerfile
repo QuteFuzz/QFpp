@@ -13,12 +13,12 @@ WORKDIR /app
 # Copy project files
 COPY . .
 
-# Run the existing setup script (installs all dependencies and builds)
-RUN python3 -m scripts.setup
-
-# Add Cargo and local bin to PATH
+# Add Cargo and local bin to PATH so uv can be found
 ENV PATH="/root/.cargo/bin:/root/.local/bin:${PATH}"
 ENV LLVM_SYS_140_PREFIX="/usr/lib/llvm-14"
+
+# Run the existing setup script (installs all dependencies and builds)
+RUN python3 -m scripts.setup
 
 # Default command
 CMD ["/bin/bash"]
