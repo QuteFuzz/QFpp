@@ -1,5 +1,4 @@
 import argparse
-import multiprocessing
 import os
 import re
 import shutil
@@ -11,7 +10,8 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import List
-from .utils import Color, log, pipe_to_process, run_command, pipe_to_process, modify_env
+
+from .utils import Color, log, pipe_to_process, run_command
 
 BUILD_DIR = Path("build")
 OUTPUT_DIR = Path("outputs")
