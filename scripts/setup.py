@@ -22,16 +22,19 @@ TKET_DIR = EXTERNAL_DIR / "tket"
 TKET_CONAN_OUT = TKET_DIR / "build" / "tket"
 TKET_BUILD_DIR = TKET_CONAN_OUT / "build" / "Debug"
 
+IN_ACTIONS = os.environ.get("GITHUB_ACTIONS") == "true"
+
 @dataclass
 class Repo:
     url: str
     dest_dir: Path
+    engine_dep : bool = False
 
 
 REPOS = [
     Repo("https://github.com/CQCL/tket.git", TKET_DIR),
     Repo("https://github.com/Qiskit/qiskit.git", QISKIT_DIR),
-    Repo("https://github.com/antirez/linenoise.git", LINENOISE_DIR),
+    Repo("https://github.com/antirez/linenoise.git", LINENOISE_DIR, engine_dep=True),
 ]
 
 
@@ -39,7 +42,7 @@ def clone_repos():
     log(">>> Cloning repos", Color.BLUE)
 
     for repo in REPOS:
-        if not repo.dest_dir.exists():
+        if not repo.dest_dir.exists() and (not IN_ACTIONS or repo.engine_dep):
             log("Cloning " + repo.url)
             run_command(["git", "clone", repo.url, str(repo.dest_dir)])
 
@@ -192,8 +195,6 @@ def setup_ci_env():
 if __name__ == "__main__":
     install_deps()
 
-    in_actions = os.environ.get("GITHUB_ACTIONS") == "true"
-
     clone_repos()
 
     log(">>> Running initial uv sync to prepare the venv...", Color.BLUE)
@@ -208,7 +209,7 @@ if __name__ == "__main__":
 
     run_command(["uv", "sync"], env=env)
 
-    if in_actions:
+    if not IN_ACTIONS:
         check_conan_profile()
         build_external_deps()
         setup_ci_env()
