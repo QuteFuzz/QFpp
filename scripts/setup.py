@@ -200,5 +200,3 @@ if __name__ == "__main__":
     setup_ci_env()
 
     print("Setup complete!", Color.GREEN)
-
-    print("\nRun tests with .venv/bin/python3 test.py NOT uv run", Color.YELLOW)

@@ -53,7 +53,7 @@ Parentheses create an anonymous sub-rule. The sub-rule can have a wildcard appli
 Anything in double or single quotes is a literal string in the output:
 
 ```qf
-gate_op = CIRCUIT_NAME ".append(" gate_name "(" gate_op_args "))";
+gate_op = GET_CIRCUIT_NAME ".append(" gate_name "(" gate_op_args "))";
 ```
 
 Shorthand keywords that expand to common punctuation (avoids quoting issues):
@@ -141,19 +141,19 @@ Meta functions are resolved at AST build time. They emit a node whose content is
 
 | Meta function | Emits |
 |--------------|-------|
-| `NAME` | The name variable of the parent node (e.g. the variable name of a qubit register) |
-| `SIZE` | The size of the parent node (register width as an integer) |
-| `INDEX` | The index of the parent node (qubit/bit index within a register) |
-| `CIRCUIT_NAME` | The current circuit's owner name (`main_circuit` or `subN`) |
+| `GET_NAME` | The name variable of the parent node (e.g. the variable name of a qubit register) |
+| `GET_SIZE` | The size of the parent node (register width as an integer) |
+| `GET_INDEX` | The index of the parent node (qubit/bit index within a register) |
+| `GET_CIRCUIT_NAME` | The current circuit's owner name (`main_circuit` or `subN`) |
 | `CIRCUIT_ID` | The global circuit counter (used in testing harness calls) |
 
 ### Value generators
 
 | Meta function | Emits |
 |--------------|-------|
-| `FLOAT` | A random float (seeded from node counter) |
-| `INTEGER` | A random unsigned integer |
-| `VAR` | A random 5-character alphanumeric string |
+| `MAKE_FLOAT` | A random float (seeded from node counter) |
+| `MAKE_INTEGER` | A random unsigned integer |
+| `MAKE_VAR` | A random 5-character alphanumeric string |
 
 ### Indentation
 
@@ -161,21 +161,21 @@ Meta functions are resolved at AST build time. They emit a node whose content is
 |--------------|-----------|
 | `CHILD_INDENT<rule>` | Printout will print each child node preprended with a tab sized depending on current indentation depth. Increases indentation depth for child nodes. |
 | `SELF_INDENT<rule>` | Printout will prepend the node itself with a tab sized depending on current indentation depth. Increases indentation depth for child nodes. |
-| `INDENT_LEVEL` | Emits the current numeric indent depth as a digit (used in Qiskit's `else_N` pattern) |
+| `GET_INDENT_LEVEL` | Emits the current numeric indent depth as a digit (used in Qiskit's `else_N` pattern) |
 
 Usage:
 
 ```qf
 if_stmt =
-    'with ' CIRCUIT_NAME '.if_test(' classical_expr ') as else_' INDENT_LEVEL ':' NEWLINE
+    'with ' GET_CIRCUIT_NAME '.if_test(' classical_expr ') as else_' GET_INDENT_LEVEL ':' NEWLINE
     CHILD_INDENT<compound_stmts>
-    SELF_INDENT<('with else_' INDENT_LEVEL ':' NEWLINE CHILD_INDENT<compound_stmts>)?>;
+    SELF_INDENT<('with else_' GET_INDENT_LEVEL ':' NEWLINE CHILD_INDENT<compound_stmts>)?>;
 ```
 
 ### Reset
 
 ```qf
-apply_measure = CIRCUIT_NAME ".append(cirq.measure(" qubit ", key=m_key))" RESET;
+apply_measure = GET_CIRCUIT_NAME ".append(cirq.measure(" qubit ", key=m_key))" RESET;
 ```
 
 `RESET` resets the qubit and bit usage counters so the next gate can reuse the same qubits. This is done automatically after each `qubit_op`, but is also exposed as  a meta function for cases where the operation is defined as a `qubit_op` like the `apply_measure` rule above.
@@ -193,12 +193,12 @@ EXTERNAL {
     qubit_def = singular_qubit_def | register_qubit_def;
 
     singular_qubit_def =
-        NAME " = QuantumRegister(1, '" NAME "')" NEWLINE
-        CIRCUIT_NAME ".add_register(" NAME ")";
+        GET_NAME " = QuantumRegister(1, '" GET_NAME "')" NEWLINE
+        GET_CIRCUIT_NAME ".add_register(" GET_NAME ")";
 
     register_qubit_def =
-        NAME " = QuantumRegister(" SIZE ", '" NAME "')" NEWLINE
-        CIRCUIT_NAME ".add_register(" NAME ")";
+        GET_NAME " = QuantumRegister(" GET_SIZE ", '" GET_NAME "')" NEWLINE
+        GET_CIRCUIT_NAME ".add_register(" GET_NAME ")";
 }
 ```
 

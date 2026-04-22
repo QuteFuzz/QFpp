@@ -48,7 +48,7 @@ class Resource_def : public Cloneable<Resource_def> {
         }
 
         inline std::string resolved_name() const override {
-            return get_name()->get_str() + " SIZE(" + get_size()->get_str() + ")";
+            return get_name()->get_str() + " GET_SIZE(" + get_size()->get_str() + ")";
         }
 
         void reset(){

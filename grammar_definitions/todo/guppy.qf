@@ -87,7 +87,7 @@ register_qubit_def_discard =  "measure_array(" qubit_def_name ")";
 
 compound_stmt = qubit_op | if_stmt;
 
-float_list = "angle(" FLOAT ")" (", angle(" FLOAT ")")*; # override
+float_list = "angle(" MAKE_FLOAT ")" (", angle(" MAKE_FLOAT ")")*; # override
 
 measure_and_record_qreg =  "result(" DOUBLE_QUOTE qubit_def_name DOUBLE_QUOTE COMMA "measure_array" LPAREN qubit_def_name RPAREN RPAREN;
 

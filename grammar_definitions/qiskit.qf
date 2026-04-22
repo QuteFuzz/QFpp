@@ -25,23 +25,23 @@ t = "t";
 s = "s";
 measure = "measure";
 
-singular_qubit = NAME "[0]";
+singular_qubit = GET_NAME "[0]";
 
-register_qubit = NAME "[" INDEX "]";
+register_qubit = GET_NAME "[" GET_INDEX "]";
 
-singular_bit = NAME "[0]";
+singular_bit = GET_NAME "[0]";
 
-register_bit = NAME "[" INDEX "]";
+register_bit = GET_NAME "[" GET_INDEX "]";
 
 parameter_defs = (param_def NEWLINE)+;
 
 param_def = singular_param_def;
 
-singular_param_def = NAME " = Parameter('" NAME "')";
+singular_param_def = GET_NAME " = Parameter('" GET_NAME "')";
 
 param = singular_param;
 
-singular_param = NAME;
+singular_param = GET_NAME;
 
 # Redefine base program structure to fit Qiskit
 program = imports NEWLINE NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuit NEWLINE compiler_call;
@@ -63,9 +63,9 @@ subroutine_body = EXTERNAL::qubit_defs NEWLINE subroutine_compound_stmts;
 
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
 
-subroutine_def_footer = CIRCUIT_NAME " = " CIRCUIT_NAME ".to_gate()" NEWLINE;
+subroutine_def_footer = GET_CIRCUIT_NAME " = " GET_CIRCUIT_NAME ".to_gate()" NEWLINE;
 
-circuit_def_header = NEWLINE CIRCUIT_NAME " = QuantumCircuit(0)";
+circuit_def_header = NEWLINE GET_CIRCUIT_NAME " = QuantumCircuit(0)";
 
 # Redefine EXTERNAL scope for Qiskit register and circuit definitions
 EXTERNAL {
@@ -76,20 +76,20 @@ EXTERNAL {
 
     # Qiskit registers are defined by size and name, not individually
     singular_qubit_def =
-        NAME " = QuantumRegister(1, '" NAME "')" NEWLINE
-                        CIRCUIT_NAME ".add_register(" NAME ")";
+        GET_NAME " = QuantumRegister(1, '" GET_NAME "')" NEWLINE
+                        GET_CIRCUIT_NAME ".add_register(" GET_NAME ")";
 
     register_qubit_def =
-        NAME " = QuantumRegister(" SIZE ", '" NAME "')" NEWLINE
-                        CIRCUIT_NAME ".add_register(" NAME ")";
+        GET_NAME " = QuantumRegister(" GET_SIZE ", '" GET_NAME "')" NEWLINE
+                        GET_CIRCUIT_NAME ".add_register(" GET_NAME ")";
 
     singular_bit_def =
-        NAME " = ClassicalRegister(1, '" NAME "')" NEWLINE
-                        CIRCUIT_NAME ".add_register(" NAME ")";
+        GET_NAME " = ClassicalRegister(1, '" GET_NAME "')" NEWLINE
+                        GET_CIRCUIT_NAME ".add_register(" GET_NAME ")";
 
     register_bit_def =
-        NAME " = ClassicalRegister(" SIZE ", '" NAME "')" NEWLINE
-                        CIRCUIT_NAME ".add_register(" NAME ")";
+        GET_NAME " = ClassicalRegister(" GET_SIZE ", '" GET_NAME "')" NEWLINE
+                        GET_CIRCUIT_NAME ".add_register(" GET_NAME ")";
 }
 
 imports =
@@ -104,36 +104,36 @@ imports =
 compound_stmts = (compound_stmt NEWLINE)[UNIFORM(3, 10)];
 
 # Redefine gate_op for Qiskit syntax: circuit.gate(args)
-gate_op = CIRCUIT_NAME "." gate_name "(" gate_op_args ")";
+gate_op = GET_CIRCUIT_NAME "." gate_name "(" gate_op_args ")";
 
-subroutine_op = CIRCUIT_NAME ".append(" subroutine ",[" subroutine_op_args "])";
+subroutine_op = GET_CIRCUIT_NAME ".append(" subroutine ",[" subroutine_op_args "])";
 
 # Control flow operations
 while_stmt =
-    'with ' CIRCUIT_NAME '.while_loop((' bit ', ' branch_condition ')):'
+    'with ' GET_CIRCUIT_NAME '.while_loop((' bit ', ' branch_condition ')):'
     NEWLINE CHILD_INDENT<compound_stmts>;
 
 for_stmt = for_range;
 
 for_range =
-    "with " CIRCUIT_NAME ".for_loop(range(" for_bound "), None):"
+    "with " GET_CIRCUIT_NAME ".for_loop(range(" for_bound "), None):"
     NEWLINE CHILD_INDENT<compound_stmts>;
 
-for_bound = 2; #INTEGER;  # TODO: ranges for some meta functions, currently 1-10 by default
+for_bound = 2; #MAKE_INTEGER;  # TODO: ranges for some meta functions, currently 1-10 by default
 
 (*
     TODO: SWITCH STMTS: more complex with switch over registers and case option tracking via some feature
 
 switch_stmt =
-    'with ' CIRCUIT_NAME '.switch(' bit ') as case' INDENT_LEVEL ':' NEWLINE
+    'with ' GET_CIRCUIT_NAME '.switch(' bit ') as case' GET_INDENT_LEVEL ':' NEWLINE
     CHILD_INDENT<((case_stmts NEWLINE) (default_case)?)>;
 
-case_stmts = 'with case' INDENT_LEVEL '(' 0 '):' NEWLINE CHILD_INDENT<compound_stmts> NEWLINE SELF_INDENT<('with case' INDENT_LEVEL '(' 1 '):' NEWLINE CHILD_INDENT<compound_stmts>)>;
+case_stmts = 'with case' GET_INDENT_LEVEL '(' 0 '):' NEWLINE CHILD_INDENT<compound_stmts> NEWLINE SELF_INDENT<('with case' GET_INDENT_LEVEL '(' 1 '):' NEWLINE CHILD_INDENT<compound_stmts>)>;
 
 case_stmt =
     'with case(' case_values '):' NEWLINE CHILD_INDENT<compound_stmts>;
 
-case_values = INTEGER (', ' INTEGER)[UNIFORM(0,2)];
+case_values = MAKE_INTEGER (', ' MAKE_INTEGER)[UNIFORM(0,2)];
 
 default_case =
     'with case(case.DEFAULT):' NEWLINE CHILD_INDENT<compound_stmts>;
@@ -143,7 +143,7 @@ default_case =
 # 1. Expressions that return a Number (Uint)
 uint_expr =
     qreg
-    | INTEGER
+    | MAKE_INTEGER
     | 'expr.bit_and(' uint_expr ', ' uint_expr ')'
     | 'expr.bit_or(' uint_expr ', ' uint_expr ')'
     | 'expr.bit_xor(' uint_expr ', ' uint_expr ')';
@@ -165,8 +165,8 @@ classical_expr = bool_expr;
 
 # Update if_stmt to use classical_expr
 if_stmt =
-    'with ' CIRCUIT_NAME '.if_test(' classical_expr ') as else_' INDENT_LEVEL ':' NEWLINE CHILD_INDENT<compound_stmts>
-    SELF_INDENT<('with else_' INDENT_LEVEL ':' NEWLINE CHILD_INDENT<compound_stmts>)?>;
+    'with ' GET_CIRCUIT_NAME '.if_test(' classical_expr ') as else_' GET_INDENT_LEVEL ':' NEWLINE CHILD_INDENT<compound_stmts>
+    SELF_INDENT<('with else_' GET_INDENT_LEVEL ':' NEWLINE CHILD_INDENT<compound_stmts>)?>;
 
 # Update compound_stmt
 compound_stmt =
@@ -181,13 +181,13 @@ compound_stmt =
 
 # Barriers and delays
 all_qubits_list = qubit (", " qubit)[ALL_QUBITS - 1];
-barrier_op = CIRCUIT_NAME '.barrier([' all_qubits_list '])'; # add barrier on all qubits in current circuit
-delay_op = CIRCUIT_NAME '.delay(' INTEGER ', ' qubit ')';
-reset_op = CIRCUIT_NAME '.reset(' qubit ')';
+barrier_op = GET_CIRCUIT_NAME '.barrier([' all_qubits_list '])'; # add barrier on all qubits in current circuit
+delay_op = GET_CIRCUIT_NAME '.delay(' MAKE_INTEGER ', ' qubit ')';
+reset_op = GET_CIRCUIT_NAME '.reset(' qubit ')';
 
 branch_condition = 1 | 0;
 
-compiler_call = CIRCUIT_NAME ".measure_all()" NEWLINE "qt = qiskitTesting()" NEWLINE testing_method;
+compiler_call = GET_CIRCUIT_NAME ".measure_all()" NEWLINE "qt = qiskitTesting()" NEWLINE testing_method;
 
 testing_method = opt_ks_test;
 

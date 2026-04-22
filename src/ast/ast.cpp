@@ -51,12 +51,12 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 	// 	return context.nn_next(*root, kind);
 	// }
 
-	if (meta_func == Meta_func::NAME){
+	if (meta_func == Meta_func::GET_NAME){
 		auto node = root->find(kind);
 		// TODO: throw an error saying that they have tried to get the name of a node that could not have been defined at this point in the AST
 		assert(node != nullptr);
 
-		return node->find(NAME);
+		return node->find(GET_NAME);
 
 	} else if (meta_func == Meta_func::CHILD_INDENT){
 		context.reduce_nested_depth();
@@ -74,22 +74,22 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 		case STRING: case NUMBER:
 			return std::make_shared<Node>(str, kind);
 
-		case NAME:
+		case GET_NAME:
 			return parent->get_name();
 
-		case SIZE:
+		case GET_SIZE:
 			return parent->get_size();
 
-		case INDEX:
+		case GET_INDEX:
 			return parent->get_index();
 
-		case FLOAT:
+		case MAKE_FLOAT:
 			return std::make_shared<Float>();
 
-		case VAR:
+		case MAKE_VAR:
 			return std::make_shared<Variable>(random_str(5));
 
-		case INTEGER:
+		case MAKE_INTEGER:
 			return std::make_shared<UInt>();
 
 		case RESET:
@@ -97,10 +97,10 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			context.reset(RL_BITS);
 			return std::make_shared<Node>(str, kind);
 
-		case CIRCUIT_NAME:
+		case GET_CIRCUIT_NAME:
 			return std::make_shared<Variable>(context.get_current_circuit()->get_owner());
 
-		case INDENT_LEVEL:
+		case GET_INDENT_LEVEL:
 			return std::make_shared<Indent_level>();
 
 		case CIRCUIT:

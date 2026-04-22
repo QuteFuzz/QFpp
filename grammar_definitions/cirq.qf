@@ -32,10 +32,10 @@ EXTERNAL {
     qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 4)];
 
     singular_qubit_def =
-        NAME " = cirq.NamedQubit('" NAME "')";
+        GET_NAME " = cirq.NamedQubit('" GET_NAME "')";
 
     register_qubit_def =
-        NAME " = cirq.NamedQubit.range(" SIZE ", prefix='" NAME "')";
+        GET_NAME " = cirq.NamedQubit.range(" GET_SIZE ", prefix='" GET_NAME "')";
 }
 
 imports =
@@ -44,9 +44,9 @@ imports =
     ;
 
 
-# subroutine_def_footer = CIRCUIT_NAME " = cirq.CircuitOperation(" CIRCUIT_NAME ".freeze())" NEWLINE;
+# subroutine_def_footer = GET_CIRCUIT_NAME " = cirq.CircuitOperation(" GET_CIRCUIT_NAME ".freeze())" NEWLINE;
 
-circuit_def_header = CIRCUIT_NAME " = cirq.Circuit()";
+circuit_def_header = GET_CIRCUIT_NAME " = cirq.Circuit()";
 
 compound_stmts = (compound_stmt NEWLINE)[5];
 
@@ -65,15 +65,15 @@ insert_strategy = "cirq.InsertStrategy.EARLIEST"
 strategy_kwarg = ", "
     | ", strategy=" insert_strategy;
 
-gate_op = CIRCUIT_NAME ".append(" gate_name gate_op_args strategy_kwarg ")";
+gate_op = GET_CIRCUIT_NAME ".append(" gate_name gate_op_args strategy_kwarg ")";
 
 gate_op_args = ("(" (float_literal ", ") ")")[GATE_FLOATS] "(" qubit_list ")"; #  ("," bit)[GATE_BITS];
 
-m_key = "m_key = cirq.MeasurementKey('" VAR "')";
-apply_measure = CIRCUIT_NAME ".append(cirq.measure(" qubit ", key=m_key))" RESET;
+m_key = "m_key = cirq.MeasurementKey('" MAKE_VAR "')";
+apply_measure = GET_CIRCUIT_NAME ".append(cirq.measure(" qubit ", key=m_key))" RESET;
 condition = "cirq.KeyCondition(m_key)";
 
-if_stmt = m_key NEWLINE apply_measure NEWLINE CIRCUIT_NAME ".append(" gate_name gate_op_args ".with_classical_controls(" condition ")" strategy_kwarg ")";
+if_stmt = m_key NEWLINE apply_measure NEWLINE GET_CIRCUIT_NAME ".append(" gate_name gate_op_args ".with_classical_controls(" condition ")" strategy_kwarg ")";
 
 gate_name = rx
     | ry
@@ -95,9 +95,9 @@ gate_name = rx
     | zz
     ;
 
-singular_qubit = NAME;
+singular_qubit = GET_NAME;
 
-register_qubit = NAME "[" INDEX "]";
+register_qubit = GET_NAME "[" GET_INDEX "]";
 
 compiler_call = "ct = cirqTesting()" NEWLINE testing_method;
 
@@ -105,6 +105,6 @@ testing_method = opt_ks_test;
 
 opt_ks_test = "ct.opt_ks_test(main_circuit" COMMA circuit_id RPAREN NEWLINE;
 
-measurement = CIRCUIT_NAME ".append(cirq.measure(*" CIRCUIT_NAME ".all_qubits(), key='all_measurements'))" NEWLINE;
+measurement = GET_CIRCUIT_NAME ".append(cirq.measure(*" GET_CIRCUIT_NAME ".all_qubits(), key='all_measurements'))" NEWLINE;
 
 program_footer = measurement NEWLINE compiler_call;

@@ -90,7 +90,7 @@ enum Token_kind {
     RULE_KINDS_BOTTOM,                            /// ADD NEW RULES ABOVE!
 
     META_FUNC_TOP,                                /// ADD META FUNCS BELOW!
-    CIRCUIT_NAME,
+    GET_CIRCUIT_NAME,
     GATE,
     GATE_QUBITS,
     GATE_BITS,
@@ -99,14 +99,14 @@ enum Token_kind {
     ALL_BITS,
     CHILD_INDENT,
     SELF_INDENT,
-    INDENT_LEVEL,
+    GET_INDENT_LEVEL,
     UNIFORM,
-    INTEGER,
-    FLOAT,
-    VAR,
-    NAME,
-    SIZE,
-    INDEX,
+    MAKE_INTEGER,
+    MAKE_FLOAT,
+    MAKE_VAR,
+    GET_NAME,
+    GET_SIZE,
+    GET_INDEX,
     RESET,
     META_FUNC_BOTTOM,                             /// ADD META FUNCS ABOVE!
 
@@ -275,18 +275,18 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     /**
         meta functions
     */
-    Token_matcher("FLOAT", FLOAT),
-    Token_matcher("INTEGER", INTEGER),
-    Token_matcher("VAR", VAR),
+    Token_matcher("MAKE_FLOAT", MAKE_FLOAT),
+    Token_matcher("MAKE_INTEGER", MAKE_INTEGER),
+    Token_matcher("MAKE_VAR", MAKE_VAR),
     Token_matcher("CHILD_INDENT", CHILD_INDENT),
     Token_matcher("SELF_INDENT", SELF_INDENT),
-    Token_matcher("INDENT_LEVEL", INDENT_LEVEL),
+    Token_matcher("GET_INDENT_LEVEL", GET_INDENT_LEVEL),
     Token_matcher("UNIFORM", UNIFORM),
-    Token_matcher("NAME", NAME),
-    Token_matcher("INDEX", INDEX),
-    Token_matcher("SIZE", SIZE),
+    Token_matcher("GET_NAME", GET_NAME),
+    Token_matcher("GET_INDEX", GET_INDEX),
+    Token_matcher("GET_SIZE", GET_SIZE),
     Token_matcher("RESET", RESET),
-    Token_matcher("CIRCUIT_NAME", CIRCUIT_NAME),
+    Token_matcher("GET_CIRCUIT_NAME", GET_CIRCUIT_NAME),
     Token_matcher("GATE", GATE),
     Token_matcher("GATE_QUBITS", GATE_QUBITS),
     Token_matcher("GATE_BITS", GATE_BITS),

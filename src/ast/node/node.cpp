@@ -42,7 +42,7 @@ void Node::print_program(std::ostream& stream, unsigned int indent_level) const 
             return;
         }
         case Print_mode::DEFAULT: {
-            if(kind == STRING || kind == INTEGER) stream << str;
+            if(kind == STRING || kind == NUMBER) stream << str;
             else for(const auto& child : children)
                 child->print_program(stream, indent_level);
             return;

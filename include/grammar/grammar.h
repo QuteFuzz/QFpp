@@ -91,8 +91,8 @@ class Grammar{
         inline void set_meta_func(const Token_kind& kind){
             assert(!stack.empty());
 
-            if (kind == NAME){
-                stack.top().rule_decl_meta_func = Meta_func::NAME;
+            if (kind == GET_NAME){
+                stack.top().rule_decl_meta_func = Meta_func::GET_NAME;
             } else if (kind == CHILD_INDENT){
                 stack.top().rule_decl_meta_func = Meta_func::CHILD_INDENT;
             } else if (kind == SELF_INDENT){
