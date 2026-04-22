@@ -32,7 +32,7 @@
 **`Lexer`** (`lex.h`) tokenises a `.qf` file using a single regex. Every token is classified into one of three groups:
 
 - **Rule kinds** (`RULE_KINDS_TOP` to `RULE_KINDS_BOTTOM`): terminals that the AST builder knows how to specialise — `GATE_NAME`, `QUBIT_DEF`, `CIRCUIT`, `COMPOUND_STMT`, etc.
-- **Meta functions** (`META_FUNC_TOP` to `META_FUNC_BOTTOM`): dynamic tokens resolved at AST build time — `CIRCUIT_NAME`, `GATE_QUBITS`, `NAME`, `SIZE`, `INDEX`, `FLOAT`, `CHILD_INDENT`, etc.
+- **Meta functions** (`META_FUNC_TOP` to `META_FUNC_BOTTOM`): dynamic tokens resolved at AST build time — `GET_CIRCUIT_NAME`, `GATE_QUBITS`, `GET_NAME`, `GET_SIZE`, `GET_INDEX`, `MAKE_FLOAT`, `CHILD_INDENT`, etc.
 - **Grammar syntax**: `=`, `|`, `;`, `(`, `)`, `[`, `]`, `{`, `}`, `*`, `+`, `?`, `<`, `>`, `::`, `+=`.
 
 **`Grammar`** (`grammar.h/cpp`) builds a graph of `Rule` objects from tokens. Each rule has one or more `Branch`es; each branch is a sequence of `Term`s. Terms are either syntax literals or pointers to other rules (allowing recursion). A `Term_constraint` on a term controls how many times it is repeated when the AST builder expands that term.
@@ -53,7 +53,7 @@ All semantic decisions — which qubit to pick, what gate to use, whether subrou
 - Nested depth (decremented each time a `CHILD_INDENT` node is created)
 - The `Control` struct (grammar-level config: `MAX_REG_SIZE`, `NESTED_MAX_DEPTH`, expected rules)
 
-**Printing** — `Node::print_program()` traverses the tree and writes text. `Print_mode` on a node controls indentation: `DEFAULT` (recurse into children), `CHILD_INDENT` (add one tab level for all children), `SELF_INDENT` (add the current tab level prefix before this node), `INDENT_LEVEL` (emit the raw integer depth for things like Qiskit's `else_N` variable names).
+**Printing** — `Node::print_program()` traverses the tree and writes text. `Print_mode` on a node controls indentation: `DEFAULT` (recurse into children), `CHILD_INDENT` (add one tab level for all children), `SELF_INDENT` (add the current tab level prefix before this node), `GET_INDENT_LEVEL` (emit the raw integer depth for things like Qiskit's `else_N` variable names).
 
 ### Generator layer (`include/generator/`, `src/generator/`)
 

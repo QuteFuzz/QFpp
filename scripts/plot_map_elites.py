@@ -345,7 +345,7 @@ def stats_text(
     )
 
 
-def plot_coverage(
+def plot_map_elites(
     dims: List[Dict],
     cells: List[Dict],
     palette: Palette,
@@ -413,4 +413,4 @@ if __name__ == "__main__":
     outpath = json_path.with_suffix(".png")
     dims, cells = load_archive(json_path)
 
-    plot_coverage(dims, cells, palette, args.seed, outpath)
+    plot_map_elites(dims, cells, palette, args.seed, outpath)

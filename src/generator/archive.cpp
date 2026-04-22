@@ -148,11 +148,11 @@ Mutation_selector Archive::mutation_selector() {
         }
     );
 
-    sel.add("erase_compound_stmt", 0.1f,
-        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            return std::make_unique<Erase_child>(e, COMPOUND_STMTS, r);
-        }
-    );
+    // sel.add("erase_compound_stmt", 0.1f,
+        // [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            // return std::make_unique<Erase_child>(e, COMPOUND_STMTS, r);
+        // }
+    // );
 
     // inverses and roots
 

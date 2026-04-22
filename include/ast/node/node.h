@@ -46,9 +46,16 @@ class Node : public std::enable_shared_from_this<Node> {
 
         Node(){}
 
-        Node(std::string _str, Token_kind _kind = SYNTAX):
+        Node(std::string _str, Token_kind _kind = STRING):
             str(_str),
             kind(_kind)
+        {
+            id = node_counter++;
+        }
+
+        Node(unsigned int _val):
+            str(std::to_string(_val)),
+            kind(NUMBER)
         {
             id = node_counter++;
         }
@@ -83,7 +90,7 @@ class Node : public std::enable_shared_from_this<Node> {
         }
 
         inline std::string get_str() const {
-            return (kind == SYNTAX) ? escape_string(str) : str;
+            return (kind == STRING) ? escape_string(str) : str;
         }
 
         inline Token_kind get_node_kind() const {

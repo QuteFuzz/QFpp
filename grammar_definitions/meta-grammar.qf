@@ -61,9 +61,9 @@ compound_stmt = qubit_op;
 
 qubit_op = gate_op | subroutine_op;
 
-gate_op = CIRCUIT_NAME "." gate_name "(" gate_op_args ")";
+gate_op = GET_CIRCUIT_NAME "." gate_name "(" gate_op_args ")";
 
-subroutine_op = CIRCUIT_NAME ".add_gate(" subroutine ",[" subroutine_op_args "])";
+subroutine_op = GET_CIRCUIT_NAME ".add_gate(" subroutine ",[" subroutine_op_args "])";
 
 gate_name = h
     | x
@@ -95,7 +95,7 @@ subroutine_op_args = qubit_list ("," bit)[GATE_BITS];
 
 qubit_list = qubit (", " qubit)[GATE_QUBITS - 1];
 
-float_literal = FLOAT;
+float_literal = MAKE_FLOAT;
 
 float_list = float_literal  (", " float_literal)[GATE_FLOATS - 1];
 

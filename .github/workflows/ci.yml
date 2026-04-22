@@ -12,10 +12,9 @@ jobs:
 
       - name: Run Setup Script
         run: |
-          chmod +x scripts/setup/setup_env.sh
-          ./scripts/setup/setup_env.sh
+          python3 -m scripts.setup
 
-      - name: Linting (Ruff & Pyright) for Python only (C++ later)
+      - name: Formatting
         run: |
           # Check for linting errors
           uv run ruff check .
@@ -25,4 +24,4 @@ jobs:
           uv run pyright
 
       - name: Run CI Pipeline
-        run: uv run scripts/run.py --num-tests 10
+        run: uv run -m scripts.run --num-tests 10

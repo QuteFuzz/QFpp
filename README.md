@@ -19,18 +19,19 @@ qf++ is a grammar-driven fuzzing framework for quantum compilers. It generates s
 | [Writing a Grammar](docs/writing-grammars.md) | Step-by-step guide to adding a new quantum framework |
 | [MAP-Elites](docs/map-elites.md) | How diversity-driven generation works and where to take it next |
 | [Differential Testing](docs/diff-testing.md) | How circuits are validated and bugs are classified |
+| [Dev](docs/dev.md) | Notes for dev environment |
 
 ## Quick start
 
 ```sh
-# 1. Install everything
-./scripts/setup/setup_env.sh
+# 1. Setup
+python3 -m scripts.setup
 
 # 2. Run CI pipeline (10 circuits per grammar)
-uv run scripts/run.py --num-tests 10
+uv run -m scripts.run --num-tests 10
 
 # 3. Run nightly (1200 circuits, saves interesting ones)
-uv run scripts/run.py --nightly --num-tests 1200 --grammars pytket qiskit
+uv run -m scripts.run --nightly --num-tests 1200 --grammars pytket qiskit
 
 # 4. Use the interactive fuzzer REPL directly
 ./build/qf
@@ -59,7 +60,7 @@ uv run scripts/run.py --nightly --num-tests 1200 --grammars pytket qiskit
 
 ## Acknowledgements
 
-- [Linenoise](https://github.com/antirez/linenoise) library for nicities in REPL loop like command history and tab completion. Downloaded code [here](libs/linenoise/).
+- [Linenoise](https://github.com/antirez/linenoise) library for nicities in REPL loop like command history and tab completion.
 
 ## Note
 - *Only GCC/clang compilers due to some use of GCC pragmas*

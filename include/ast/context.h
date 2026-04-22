@@ -141,7 +141,7 @@ struct Context {
 			dummy_circuit->print_info();
 		}
 
-		unsigned int operator()(Token_kind kind) const;
+		unsigned int resolve_var(Token_kind kind) const;
 
 	private:
 		const Control& control;

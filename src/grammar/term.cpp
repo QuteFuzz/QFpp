@@ -1,5 +1,6 @@
-#include "../../include/grammar/qf_term.h"
+#include <qf_term.h>
 #include <rule.h>
+#include <context.h>
 
 Term::Term(const std::shared_ptr<Rule> rule, const Token_kind& _kind, const Meta_func& _meta_func){
     value = std::weak_ptr<Rule>(rule),
@@ -50,7 +51,15 @@ bool Term::is_rule() const {
     return std::holds_alternative<std::weak_ptr<Rule>>(value);
 }
 
-std::ostream& operator<<(std::ostream& stream, Term term){
+int Term::eval_constraint(const Context& context) const {
+    if (constraint == nullptr){
+        return 1;
+    } else {
+        return constraint->eval(context);
+    }
+}
+
+std::ostream& operator<<(std::ostream& stream, const Term& term){
     if(term.is_syntax()){
         stream << std::quoted(term.get_syntax());
 
@@ -59,8 +68,10 @@ std::ostream& operator<<(std::ostream& stream, Term term){
 
         if (rule_ptr == nullptr){
             stream << "[[DELETED RULE]]";
+        } else if (term.constraint == nullptr) {
+            stream << RED(rule_ptr->get_name());
         } else {
-            stream << rule_ptr->get_name() << term.constraint;
+            stream << RED(rule_ptr->get_name()) << YELLOW("[") << *term.constraint << YELLOW("]");
         }
     }
 

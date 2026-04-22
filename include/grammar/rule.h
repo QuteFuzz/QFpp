@@ -51,11 +51,11 @@ class Rule {
         }
 
         friend std::ostream& operator<<(std::ostream& stream, const Rule& rule){
-            stream << rule.get_name() << " = ";
+            stream << BOLD(CYAN(rule.get_name())) << " = ";
 
             for(size_t i = 0; i < rule.branches.size(); i++){
                 stream << rule.branches[i];
-                if(i < rule.branches.size() - 1) stream << " | ";
+                if(i < rule.branches.size() - 1) stream << BOLD(CYAN(" | "));
             }
 
             stream << " ; " << STR_SCOPE(rule.scope) << " " << std::endl;

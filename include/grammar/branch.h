@@ -1,7 +1,7 @@
 #ifndef BRANCH_H
 #define BRANCH_H
 
-#include <qf_term.h>
+#include "qf_term.h"
 
 class Branch {
 

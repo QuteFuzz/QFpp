@@ -24,7 +24,7 @@ ENABLE_BITMASK_OPERATORS(Scope)
 
 enum class Meta_func {
     NONE = 0,
-    NAME = BIT32(1),
+    GET_NAME = BIT32(1),
     CHILD_INDENT = BIT32(2),
     SELF_INDENT = BIT32(3)
 };

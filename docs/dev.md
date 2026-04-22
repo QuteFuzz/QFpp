@@ -41,10 +41,16 @@
 }
 ```
 
-Run `pre-commit run --all-files` to run checks locally
+- `uv run ruff format .` to format all files
+- `uv run ruff check --fix .` to check formatting and fix issues
 
-### Seeds to explore
-1. Wildly different ks values for specific optimisation levels
-- 3266767068: qiskit
-2. Runtime error
-- 1737423893: pytket
+## Coverage
+
+Pytket is built from source by the setup script. To override the prebuilt version, create a `local-override.toml` file with 
+```
+[tool.uv.sources]
+pytket = { path = "external/tket/pytket", editable = true }
+```
+
+then set the environment variable `export UV_OVERRIDE="local-override.toml"`. All `uv` commands now run in the modified env.
+

@@ -2,7 +2,7 @@
 #include <ast.h>
 #include <lex.h>
 #include <params.h>
-#include "../libs/linenoise/linenoise.h"
+#include "../external/linenoise/linenoise.h"
 
 #define TOGGLE_FLAG(name, f) { \
     f = !f;    \
@@ -119,7 +119,7 @@ void Run::set_grammar(Control& control){
     control.ext = current_generator->get_grammar()->dig_to_syntax("EXTENSION");
 
     if(control.ext == ""){
-        throw std::runtime_error(ANNOT("Grammar " + grammar_name + " does not define an extension"));
+        ERROR("Grammar (" + grammar_name + ") does not define an extension");
     }
 
     std::shared_ptr<Grammar> current_grammar = current_generator->get_grammar();
@@ -128,7 +128,7 @@ void Run::set_grammar(Control& control){
         exp.value = current_grammar->get_rule_pointer_if_exists(exp.rule_name, exp.scope);
 
         if(exp.value == nullptr){
-            throw std::runtime_error("Rule " + exp.rule_name + STR_SCOPE(exp.scope) + " MUST be defined either by default in the meta-grammar, or redefined in the input grammar");
+            ERROR("Rule " + exp.rule_name + STR_SCOPE(exp.scope) + " MUST be defined either by default in the meta-grammar, or redefined in the input grammar");
         }
     }
 

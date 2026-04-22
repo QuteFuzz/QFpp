@@ -4,9 +4,10 @@
 #include <utils.h>
 #include <lex.h>
 #include <rule_utils.h>
-#include <term_constraint.h>
+#include <expr.h>
 
 class Rule;
+class Context;
 
 class Term {
     public:
@@ -18,12 +19,12 @@ class Term {
 
         ~Term() = default;
 
-        inline void add_term_constraint(const Term_constraint& _constraint){
-            constraint = _constraint;
-        }
+        // Term(Term&&) = default;  // generate move constructor
+        
+        // Term& operator=(Term&&) = default;  // generate move assignment op
 
-        Term_constraint get_constaint() const {
-            return constraint;
+        inline void add_term_constraint(std::shared_ptr<Expr> _constraint){
+            constraint = _constraint;
         }
 
         std::shared_ptr<Rule> get_rule() const;
@@ -40,7 +41,9 @@ class Term {
 
         bool is_rule() const;
 
-        friend std::ostream& operator<<(std::ostream& stream, Term term);
+        int eval_constraint(const Context& context) const;
+
+        friend std::ostream& operator<<(std::ostream& stream, const Term& term);
 
         bool operator==(const Term& other) const;
 
@@ -50,7 +53,7 @@ class Term {
         std::variant<std::weak_ptr<Rule>, std::string> value;
         Token_kind kind;
         Meta_func meta_func = Meta_func::NONE;
-        Term_constraint constraint;
+        std::shared_ptr<Expr> constraint = nullptr;
 };
 
 #endif

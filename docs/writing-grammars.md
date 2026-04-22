@@ -77,8 +77,8 @@ The run-time requires pointers to all six of these rules in EXTERNAL, INTERNAL, 
 
 | Rule | Notes |
 |------|-------|
-| `singular_qubit` | How a single qubit is referenced (e.g. `NAME "[0]"` or just `NAME`) |
-| `register_qubit` | How a register qubit is referenced (e.g. `NAME "[" INDEX "]"`) |
+| `singular_qubit` | How a single qubit is referenced (e.g. `GET_NAME "[0]"` or just `GET_NAME`) |
+| `register_qubit` | How a register qubit is referenced (e.g. `GET_NAME "[" GET_INDEX "]"`) |
 | `singular_bit` | Analogous for bits |
 | `register_bit` | Analogous for bits |
 
@@ -124,8 +124,8 @@ rx = "MyFramework.RX";
 EXTERNAL {
     qubit_defs = (qubit_def NEWLINE)[UNIFORM(2, 4)];
 
-    singular_qubit_def = NAME " = framework.qubit('" NAME "')";
-    register_qubit_def = NAME " = framework.qvec(" SIZE ", '" NAME "')";
+    singular_qubit_def = GET_NAME " = framework.qubit('" GET_NAME "')";
+    register_qubit_def = GET_NAME " = framework.qvec(" GET_SIZE ", '" GET_NAME "')";
 
     # If no bit support:
     singular_bit_def = "";
@@ -137,11 +137,11 @@ EXTERNAL {
 }
 
 # ── Resource references ──────────────────────────────────────
-singular_qubit = NAME;
-register_qubit = NAME "[" INDEX "]";
+singular_qubit = GET_NAME;
+register_qubit = GET_NAME "[" GET_INDEX "]";
 
-singular_bit = NAME;
-register_bit = NAME "[" INDEX "]";
+singular_bit = GET_NAME;
+register_bit = GET_NAME "[" GET_INDEX "]";
 
 # ── Gate operation ────────────────────────────────────────────
 gate_op = gate_name "(" gate_op_args ")";
@@ -153,7 +153,7 @@ circuit = circuit_def_header NEWLINE body NEWLINE;
 
 circuit_def_header =
     "@framework.kernel" NEWLINE
-    "def " CIRCUIT_NAME "():";
+    "def " GET_CIRCUIT_NAME "():";
 
 body = CHILD_INDENT<EXTERNAL::qubit_defs NEWLINE compound_stmts>;
 
@@ -170,7 +170,7 @@ program_footer = "mt = myframeworkTesting()" NEWLINE testing_method;
 
 testing_method = opt_ks_test;
 
-opt_ks_test = "mt.opt_ks_test(" CIRCUIT_NAME COMMA circuit_id RPAREN NEWLINE;
+opt_ks_test = "mt.opt_ks_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN NEWLINE;
 ```
 
 ---
@@ -237,7 +237,7 @@ uv run scripts/run.py --grammars myframework --num-tests 5
 
 ### Qubit references break at runtime
 
-`singular_qubit` and `register_qubit` are expanded when a `qubit` node is encountered. The `NAME` and `INDEX` meta functions resolve to the *parent node's* name and index — which is the `Resource` object allocated by the `qubit_def`. Make sure your qubit reference syntax matches your qubit allocation syntax.
+`singular_qubit` and `register_qubit` are expanded when a `qubit` node is encountered. The `GET_NAME` and `GET_INDEX` meta functions resolve to the *parent node's* name and index — which is the `Resource` object allocated by the `qubit_def`. Make sure your qubit reference syntax matches your qubit allocation syntax.
 
 ### Gate applies wrong number of arguments
 
