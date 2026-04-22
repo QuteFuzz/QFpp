@@ -11,7 +11,7 @@ def _apply_opt_level_1(kernel) -> None:
     Aggressive early inlining + dead-code elimination.
     Corresponds roughly to -O1 in nvq++ (fast, cheap passes only).
     """
-    cudaq.passes.aggressive_early_inlining(kernel)  #type: ignore
+    cudaq.passes.aggressive_early_inlining(kernel)  # type: ignore
 
 
 def _apply_opt_level_2(kernel) -> None:
@@ -19,8 +19,8 @@ def _apply_opt_level_2(kernel) -> None:
     Level 1 passes + unitary synthesis for small qubit blocks.
     Corresponds roughly to -O2 in nvq++.
     """
-    cudaq.passes.aggressive_early_inlining(kernel)  #type: ignore
-    cudaq.passes.unitary_synthesis(kernel)  #type: ignore
+    cudaq.passes.aggressive_early_inlining(kernel)  # type: ignore
+    cudaq.passes.unitary_synthesis(kernel)  # type: ignore
 
 
 def _apply_opt_level_3(kernel) -> None:
@@ -28,9 +28,9 @@ def _apply_opt_level_3(kernel) -> None:
     Full optimization: level 2 + decomposition into a native gate set.
     Corresponds roughly to -O3 in nvq++.
     """
-    cudaq.passes.aggressive_early_inlining(kernel)  #type: ignore
-    cudaq.passes.unitary_synthesis(kernel)  #type: ignore
-    cudaq.passes.decompose_to_basis(kernel)  #type: ignore
+    cudaq.passes.aggressive_early_inlining(kernel)  # type: ignore
+    cudaq.passes.unitary_synthesis(kernel)  # type: ignore
+    cudaq.passes.decompose_to_basis(kernel)  # type: ignore
 
 
 _OPT_PASSES = {
