@@ -53,14 +53,14 @@ def check_conan_profile():
 
     if not conan2_profile_path.exists():
         log(">>> Generating default Conan profile...", Color.BLUE)
-        run_command(["bash", "-c", "uv run conan profile detect"])
+        run_command(["bash", "-c", "conan profile detect"])
 
         log(">>> Adding Quantinuum tket-libs remote...", Color.BLUE)
         run_command(
             [
                 "bash",
                 "-c",
-                "uv run conan remote add tket-libs "
+                "conan remote add tket-libs "
                 "https://quantinuumsw.jfrog.io/artifactory/api/conan/tket1-libs --index 0",
             ]
         )
@@ -209,6 +209,10 @@ if __name__ == "__main__":
     )
 
     run_command(["uv", "sync"], env=env)
+
+    log(">>> Activating virtual environment for script session...", Color.BLUE)
+    venv_bin = Path.cwd() / ".venv" / "bin"
+    os.environ["PATH"] = f"{venv_bin}{os.pathsep}{os.environ.get('PATH', '')}"
 
     if not IN_ACTIONS:
         check_conan_profile()
