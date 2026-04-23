@@ -16,18 +16,16 @@ void WARNING(const std::string& msg, std::source_location location){
               << std::endl;
 }
 
-void INFO(const std::string& msg, std::source_location location){
-    std::cout << "[INFO] " << GREEN(msg) 
-              << " (" << location.file_name() << ":" << location.line() << ")" 
-              << std::endl;
+void INFO(const std::string& msg){
+    std::cout << "[INFO] " << GREEN(msg) << std::endl;
 }
 
-std::ofstream get_stream(fs::path output_dir, std::string file_name, const std::source_location loc){
+std::ofstream get_stream(fs::path output_dir, std::string file_name){
     fs::create_directory(output_dir);
     fs::path path = output_dir / file_name;
     std::ofstream stream(path.string());
 
-    INFO("Writing to " + path.string(), loc);
+    INFO("Writing to " + path.string());
 
     return stream;
 }

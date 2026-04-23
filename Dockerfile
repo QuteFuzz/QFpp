@@ -16,6 +16,8 @@ COPY . .
 # Add Cargo and local bin to PATH so uv can be found
 ENV PATH="/root/.cargo/bin:/root/.local/bin:${PATH}"
 ENV LLVM_SYS_140_PREFIX="/usr/lib/llvm-14"
+ENV LLVM_CONFIG_PATH="/usr/bin/llvm-config-14"
+ENV RUSTFLAGS="-L native=/usr/lib/llvm-14/lib"
 
 # Run the existing setup script (installs all dependencies and builds)
 RUN python3 -m scripts.setup

@@ -80,11 +80,11 @@ void ERROR(const std::string& msg, std::source_location location = std::source_l
 
 void WARNING(const std::string& msg, std::source_location location = std::source_location::current());
 
-void INFO(const std::string& msg, std::source_location location = std::source_location::current());
+void INFO(const std::string& msg);
 
 void lower(std::string& str);
 
-std::ofstream get_stream(fs::path output_dir, std::string file_name, const std::source_location loc = std::source_location::current());
+std::ofstream get_stream(fs::path output_dir, std::string file_name);
 
 std::mt19937& rng();
 
