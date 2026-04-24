@@ -4,12 +4,11 @@
 cat > ~/.config/containers/storage.conf << 'EOF'
 [storage]
 driver = "vfs"
-runroot = "/tmp/containers-run-$UID"
-graphroot = "$HOME/.local/share/containers/storage"
+runroot = "/tmp/$USER/containers/run"
+graphroot = "/tmp/$USER/containers/storage"
 EOF
 
-mkdir -p "/tmp/containers-run-$UID"
-mkdir -p $HOME/.local/share/containers/storage
+mkdir -p "/tmp/$USER/containers/{run,storage}
 
 # create image
 echo "Creating docker image"
