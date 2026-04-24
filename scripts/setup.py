@@ -1,6 +1,6 @@
+import argparse
 import os
 import shutil
-import argparse
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -23,6 +23,7 @@ TKET_DIR = EXTERNAL_DIR / "tket"
 TKET_CONAN_OUT = TKET_DIR / "build" / "tket"
 TKET_BUILD_DIR = TKET_CONAN_OUT / "build" / "Debug"
 
+
 @dataclass
 class Repo:
     url: str
@@ -37,7 +38,7 @@ REPOS = [
 ]
 
 
-def clone_repos(dev : bool):
+def clone_repos(dev: bool):
     log(">>> Cloning repos", Color.BLUE)
 
     for repo in REPOS:
@@ -45,10 +46,16 @@ def clone_repos(dev : bool):
             log("Cloning " + repo.url)
             run_command(["git", "clone", repo.url, str(repo.dest_dir)])
 
+
 def parse():
     parser = argparse.ArgumentParser(description="QuteFuzz CI/Nightly Pipeline")
-    parser.add_argument("--dev", action="store_true", help="Setup environment in dev mode (Install and build tket from source)")
+    parser.add_argument(
+        "--dev",
+        action="store_true",
+        help="Setup environment in dev mode (Install and build tket from source)",
+    )
     return parser.parse_args()
+
 
 def check_conan_profile():
     conan2_profile_path = Path.home() / ".conan2" / "profiles" / "default"
@@ -221,7 +228,7 @@ if __name__ == "__main__":
     if parser.dev:
         check_conan_profile()
         build_external_deps()
-    
+
     setup_ci_env()
 
     print("Setup complete!", Color.GREEN)
