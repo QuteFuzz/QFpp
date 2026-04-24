@@ -1,5 +1,6 @@
 import os
 import shutil
+import argparse
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -22,9 +23,6 @@ TKET_DIR = EXTERNAL_DIR / "tket"
 TKET_CONAN_OUT = TKET_DIR / "build" / "tket"
 TKET_BUILD_DIR = TKET_CONAN_OUT / "build" / "Debug"
 
-IN_ACTIONS = os.environ.get("GITHUB_ACTIONS") == "true"
-
-
 @dataclass
 class Repo:
     url: str
@@ -39,14 +37,18 @@ REPOS = [
 ]
 
 
-def clone_repos():
+def clone_repos(dev : bool):
     log(">>> Cloning repos", Color.BLUE)
 
     for repo in REPOS:
-        if not repo.dest_dir.exists() and (not IN_ACTIONS or repo.engine_dep):
+        if not repo.dest_dir.exists() and (dev or repo.engine_dep):
             log("Cloning " + repo.url)
             run_command(["git", "clone", repo.url, str(repo.dest_dir)])
 
+def parse():
+    parser = argparse.ArgumentParser(description="QuteFuzz CI/Nightly Pipeline")
+    parser.add_argument("--dev", action="store_true", help="Setup environment in dev mode (Install and build tket from source)")
+    return parser.parse_args()
 
 def check_conan_profile():
     conan2_profile_path = Path.home() / ".conan2" / "profiles" / "default"
@@ -194,9 +196,11 @@ def setup_ci_env():
 
 
 if __name__ == "__main__":
+    parser = parse()
+
     install_deps()
 
-    clone_repos()
+    clone_repos(parser.dev)
 
     log(">>> Running initial uv sync to prepare the venv...", Color.BLUE)
     # these flags are needed for cargo builds to work
@@ -214,9 +218,10 @@ if __name__ == "__main__":
     venv_bin = Path.cwd() / ".venv" / "bin"
     os.environ["PATH"] = f"{venv_bin}{os.pathsep}{os.environ.get('PATH', '')}"
 
-    if not IN_ACTIONS:
+    if parser.dev:
         check_conan_profile()
         build_external_deps()
-        setup_ci_env()
+    
+    setup_ci_env()
 
     print("Setup complete!", Color.GREEN)
