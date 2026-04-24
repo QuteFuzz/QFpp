@@ -8,7 +8,7 @@ runroot = "/tmp/$USER/containers/run"
 graphroot = "/tmp/$USER/containers/storage"
 EOF
 
-mkdir -p "/tmp/$USER/containers/{run,storage}
+mkdir -p "/tmp/$USER/containers/{run,storage}"
 
 # create image
 echo "Creating docker image"
