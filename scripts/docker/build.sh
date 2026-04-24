@@ -3,15 +3,13 @@
 # config filesystem
 cat > ~/.config/containers/storage.conf << 'EOF'
 [storage]
-driver = "overlay"
-runroot = "$HOME/.local/share/containers/run"
+driver = "vfs"
+runroot = "/tmp/containers-run-$UID"
 graphroot = "$HOME/.local/share/containers/storage"
-
-[storage.options.overlay]
-mount_program = "/usr/bin/fuse-overlayfs"
 EOF
 
-mkdir -p $HOME/.local/share/containers/{run,storage}
+mkdir -p "/tmp/containers-run-$UID"
+mkdir -p $HOME/.local/share/containers/storage
 
 # create image
 echo "Creating docker image"
