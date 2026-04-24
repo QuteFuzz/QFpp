@@ -5,7 +5,7 @@ cat > ~/.config/containers/storage.conf << 'EOF'
 [storage]
 driver = "overlay"
 runroot = "$HOME/.local/share/containers/run"
-graphroot = $HOME/.local/share/containers/storage"
+graphroot = "$HOME/.local/share/containers/storage"
 
 [storage.options.overlay]
 mount_program = "/usr/bin/fuse-overlayfs"
