@@ -26,6 +26,7 @@ dependencies = [
     "qirrunner",
     "pyyaml>=6.0.3",
     "typing-extensions>=4.15.0",
+    "qwasm>=1.0.1",
 ]
 
 [tool.uv]

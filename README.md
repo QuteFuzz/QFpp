@@ -40,6 +40,18 @@ uv run -m scripts.run --nightly --num-tests 1200 --grammars pytket qiskit
 > quit
 ```
 
+A Dockerfile has also been provided. To use it run 
+```sh
+./scripts/docker/build.sh
+```
+
+to create the docker image, then
+```sh
+./scripts/docker/run.sh
+```
+
+to create a docker container and start a shell inside it. From there, run setup commands as normal.
+
 ## Supported quantum frameworks
 
 | Grammar file | Framework | Test method |
@@ -48,7 +60,6 @@ uv run -m scripts.run --nightly --num-tests 1200 --grammars pytket qiskit
 | `qiskit.qf` | Qiskit + Aer | KS test across optimisation levels 0–3 |
 | `cirq.qf` | Cirq | KS test across 3 custom transpile levels |
 | `pennylane.qf` | PennyLane Lightning | KS test across 4 transform pipelines |
-| `cudaq_py.qf` | CUDA-Q | KS test (WIP) |
 
 
 ## Bugs found
