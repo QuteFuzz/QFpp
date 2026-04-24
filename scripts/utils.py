@@ -89,7 +89,7 @@ def modify_env(vars: Dict[str, List[Path] | str]):
 
             if old_vals == "":
                 env[var] = joined_new_vals
-            else:
+            elif joined_new_vals != "":
                 env[var] = f"{joined_new_vals}{os.pathsep}{old_vals}"
 
     return env
