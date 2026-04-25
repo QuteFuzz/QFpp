@@ -97,7 +97,7 @@ class pytketTesting(Base):
 
         p_val = self.ks_test(qiskit_counts, pytket_counts)
 
-        print("Pytket->Qiskit p value", p_val)
+        print("Pytket->Qiskit p-value: ", p_val)
 
     def run_circ_statevector(self, circuit: Circuit) -> None:
         """
