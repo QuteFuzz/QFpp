@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 from .utils import Color, log, pipe_to_process, run_command
 
@@ -34,38 +34,40 @@ class Run_mode(Enum):
     NIGHTLY = 1
 
 
+class Result_kind(Enum):
+    DOT_PROD = (0,)
+    KS_TEST = 1
+
+
 @dataclass
 class CircuitRunInfo:
     """Tracks the result of running a single circuit"""
 
     circuit_path: Path
     grammar: str
-    runtime_error: bool = False
     possible_miscompilation_error: bool = False
     values: List[float] = field(default_factory=list)
     logs: str = ""
 
 
-def parse_for_testing_values(process_result: subprocess.CompletedProcess) -> List[float]:
-    values = []
-    pattern = r"ks-test p-value:\s*([\d.]+)|Dot product\s*([\d.]+)"
-
+def parse_for_testing_values(
+    process_result: subprocess.CompletedProcess,
+) -> Tuple[List[float], Result_kind | None]:
+    pattern = r"p-value:\s*([\d.]+)|Dot product\s*([\d.]+)"
     matches = re.findall(pattern, process_result.stdout)
 
+    values = []
+    result_kind = None
+
     for ks, dot in matches:
-        try:
-            if ks:
-                values.append(float(ks))
-            elif dot:
-                values.append(float(dot))
-            else:
-                log("Must match at one of ks of dot product output", Color.RED)
-                sys.exit(1)
+        if ks:
+            values.append(float(ks))
+            result_kind = Result_kind.KS_TEST
+        elif dot:
+            values.append(float(dot))
+            result_kind = Result_kind.DOT_PROD
 
-        except ValueError:
-            continue
-
-    return values
+    return values, result_kind
 
 
 def clean_and_build():
@@ -209,9 +211,9 @@ class Check_grammar:
         result: subprocess.CompletedProcess = self.run_circuit(circuit_path)
 
         if result.returncode == 0:
-            run_info.values = parse_for_testing_values(result)
+            run_info.values, result_kind = parse_for_testing_values(result)
 
-            if len(run_info.values) > 1:
+            if result_kind == Result_kind.KS_TEST:
                 min_ks = min(run_info.values)
                 if min_ks < MIN_KS_VALUE:
                     run_info.possible_miscompilation_error = True
@@ -219,7 +221,7 @@ class Check_grammar:
 
                     log(f"  INTERESTING: {circuit_path}", Color.YELLOW)
 
-            elif len(run_info.values) == 1:
+            elif result_kind == Result_kind.DOT_PROD:
                 dp = run_info.values[0]
                 if dp != 1:
                     run_info.possible_miscompilation_error = True
@@ -227,9 +229,14 @@ class Check_grammar:
 
                     log(f"  INTERESTING: {circuit_path}", Color.YELLOW)
 
+            else:
+                raise Exception(
+                    "Result must be ks values or dot product, got None."
+                    "\nStdout: \n{result.stdout}"
+                )
+
         else:
-            run_info.logs = result.stdout + result.stderr
-            run_info.runtime_error = True
+            raise Exception(result.stdout + result.stderr)
 
         return run_info
 
