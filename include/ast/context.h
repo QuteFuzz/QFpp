@@ -105,8 +105,6 @@ struct Context {
 
 		std::shared_ptr<Circuit> get_random_circuit();
 
-		Ptr_coll<Resource> get_current_resources(Resource_kind rk) const;
-
 		std::shared_ptr<Resource> get_random_resource(Resource_kind rk, Scope scope = ALL_SCOPES);
 
 		std::shared_ptr<Resource_def> nn_resource_def(Scope& scope, Resource_kind rk);
@@ -124,6 +122,50 @@ struct Context {
 		std::shared_ptr<UInt> nn_circuit_id();
 
 		std::shared_ptr<Gate> nn_gate_from_subroutine();
+
+		template<typename T>
+		Ptr_coll<T> get_current_coll(Resource_kind rk) const {
+			return get_current_circuit()->get_coll<T>(rk);
+		}
+
+		template <typename T>
+		void push_var(const std::string& var, std::shared_ptr<T> item) {
+			if constexpr (std::is_same_v<T, Resource>) {
+				resource_var_bindings[var].push_back(item);
+			} 
+			else if constexpr (std::is_same_v<T, Resource_def>) {
+				resource_def_var_bindings[var].push_back(item);
+			} 
+			else {
+				ERROR("Unsupported type passed to push_var");
+			}
+		}
+
+		void pop_var(const std::string& var);
+
+		template<typename T>
+		std::shared_ptr<T> get_value_bound_to(const std::string& var){
+			typename std::unordered_map<std::string, Ptr_coll<T>>::iterator iter;
+			typename std::unordered_map<std::string, Ptr_coll<T>>::iterator end;
+
+			if constexpr (std::is_same_v<T, Resource>) {
+				iter = resource_var_bindings.find(var);
+				end = resource_var_bindings.end();
+			} 
+			else if constexpr (std::is_same_v<T, Resource_def>) {
+				iter = resource_def_var_bindings.find(var);
+				end = resource_def_var_bindings.end();
+			} 
+			else {
+				ERROR("Unsupported type passed to push_var");
+			}
+
+			if (iter == end || iter->second.size() == 0){
+				return nullptr;
+			} else {
+				return iter->second.back();
+			}
+		}
 
 		template<typename T>
 		inline std::shared_ptr<T> get_current_node() const {
@@ -144,30 +186,11 @@ struct Context {
 			dummy_circuit->print_info();
 		}
 
-		inline void push_var(const std::string& var, std::shared_ptr<Resource> resource){
-			var_bindings[var].push_back(resource);
-		}
-
-		inline void pop_var(const std::string& var){
-			if (var_bindings.find(var) != var_bindings.end()){
-				var_bindings[var].pop_back();
-			}
-		}
-
-		inline std::shared_ptr<Resource> get_resource_bound_to(const std::string& var){
-			auto iter = var_bindings.find(var);
-
-			if ((iter == var_bindings.end()) || (iter->second.size() == 0)){
-				return nullptr;
-			} else {
-				return iter->second.back();
-			}
-		}
-
 	private:
 		const Control& control;
 		Current_nodes current;
-		std::unordered_map<std::string, Ptr_coll<Resource>> var_bindings;
+		std::unordered_map<std::string, Ptr_coll<Resource>> resource_var_bindings;
+		std::unordered_map<std::string, Ptr_coll<Resource_def>> resource_def_var_bindings;
 
 		std::vector<std::shared_ptr<Circuit>> circuits;
 		std::shared_ptr<Circuit> dummy_circuit = std::make_shared<Circuit>();

@@ -159,8 +159,8 @@ Meta functions are resolved at AST build time. They emit a node whose content is
 
 | Meta function | Behaviour |
 |--------------|-----------|
-| `ci(rule)` | Printout will print each child node preprended with a tab sized depending on current indentation depth. Increases indentation depth for child nodes. |
-| `si(rule)` | Printout will prepend the node itself with a tab sized depending on current indentation depth. Increases indentation depth for child nodes. |
+| `ci<rule>` | Printout will print each child node preprended with a tab sized depending on current indentation depth. Increases indentation depth for child nodes. |
+| `si<rule>` | Printout will prepend the node itself with a tab sized depending on current indentation depth. Increases indentation depth for child nodes. |
 | `GET_INDENT_LEVEL` | Emits the current numeric indent depth as a digit (used in Qiskit's `else_N` pattern) |
 
 Usage:
@@ -168,8 +168,8 @@ Usage:
 ```qf
 if_stmt =
     'with ' GET_CIRCUIT_NAME '.if_test(' classical_expr ') as else_' GET_INDENT_LEVEL ':' NEWLINE
-    ci(compound_stmts)
-    si(('with else_' GET_INDENT_LEVEL ':' NEWLINE ci(compound_stmts))?);
+    ci<compound_stmts>
+    si<('with else_' GET_INDENT_LEVEL ':' NEWLINE ci<compound_stmts>>?);
 ```
 
 ### Reset

@@ -67,17 +67,17 @@ class Expr {
         virtual ~Expr() = default;
 
         virtual Expr_kind get_kind() const { return Expr_kind::UNKNOWN; }
-        
+
         // evaluating maths
-        virtual int eval_int(Context& ctx) const { return 0; }
+        virtual int eval_int(Context& /*ctx*/) const { return 0; }
         
         // evaluating conditions (e.g., res.is_singular)
-        virtual bool eval_bool(Context& ctx) const { return false; }
+        virtual bool eval_bool(Context& /*ctx*/) const { return false; }
         
-        virtual std::shared_ptr<Rule> eval_rule(Context& ctx) const { return nullptr; }
+        virtual std::shared_ptr<Rule> eval_rule(Context& /*ctx*/) const { return nullptr; }
         
         // yielding a list of rule names to expand from a loop
-        virtual std::vector<std::shared_ptr<Rule>> eval_rule_list(Context& ctx) const { return {}; }
+        virtual std::vector<std::shared_ptr<Rule>> eval_rule_list(Context& /*ctx*/) const { return {}; }
 
         virtual void print(std::ostream& stream) const = 0;
 
@@ -140,19 +140,18 @@ class PropertyAccessExpr : public Expr {
     public:
         PropertyAccessExpr(std::string obj, std::string prop) :
             obj_name(std::move(obj)), 
-            prop_name(std::move(prop)) 
+            prop_name(std::move(prop))
         {}
 
         Expr_kind get_kind() const override { return Expr_kind::BOOL; }
 
-        bool eval_bool(Context& ctx) const override;
+        bool eval_bool(Context& context) const override;
 
         void print(std::ostream& stream) const override;
 
     private:
         std::string obj_name;
         std::string prop_name;
-
 };
 
 class BinExpr : public Expr {
@@ -186,7 +185,12 @@ class IfExpr : public Expr {
             true_branch(std::move(t)),
             false_branch(std::move(f)) 
         {
-            if (cond->get_kind() != Expr_kind::BOOL || true_branch->get_kind() != Expr_kind::RULE || false_branch->get_kind() != Expr_kind::RULE){
+            assert((true_branch != nullptr) && (cond != nullptr));
+
+            if (cond->get_kind() != Expr_kind::BOOL ||
+                true_branch->get_kind() != Expr_kind::RULE || 
+                (false_branch != nullptr && false_branch->get_kind() != Expr_kind::RULE))
+            {
                 ERROR("If expr expeceted conditional to return bool, and true and false branches to return string");
             }
         }
@@ -205,17 +209,17 @@ class IfExpr : public Expr {
 
 class ForExpr : public Expr {
     public:
-        ForExpr(const std::string& var, const Token& iter, std::unique_ptr<Expr> b):
+        ForExpr(const std::string& var, const std::string& iter, std::unique_ptr<Expr> b):
             iter_var(var),
-            iterable(iter.kind),
+            iterable(iter),
             body(std::move(b)) 
         {
             if (body->get_kind() != Expr_kind::RULE){
                 ERROR("For expr body must return RULE type");
             }
 
-            if (iter.kind != ALL_QUBITS && iter.kind != ALL_BITS){
-                ERROR("Unknown iterable " + iter.value);
+            if (iter != "ALL_QUBITS" && iter != "ALL_BITS" && iter != "ALL_QUBIT_DEFS" && iter != "ALL_BIT_DEFS"){
+                ERROR("Unknown iterable " + iter);
             }
         }
 
@@ -227,7 +231,7 @@ class ForExpr : public Expr {
 
     private:
         std::string iter_var;
-        Token_kind iterable; 
+        std::string iterable; 
         std::unique_ptr<Expr> body;
 
 };

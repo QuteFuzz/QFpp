@@ -95,8 +95,6 @@ enum Token_kind {
     GATE_FLOATS,
     N_QUBITS,
     N_BITS,
-    ALL_QUBITS,
-    ALL_BITS,
     GET_INDENT_LEVEL,
     MAKE_INTEGER,
     MAKE_FLOAT,
@@ -119,6 +117,8 @@ enum Token_kind {
     RPAREN,
     RBRACK,
     RBRACE,
+    RANGLE,
+    LANGLE,
     ZERO_OR_MORE,
     ONE_OR_MORE,
     OPTIONAL,
@@ -271,8 +271,6 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("GATE_FLOATS", GATE_FLOATS),
     Token_matcher("N_QUBITS", N_QUBITS),
     Token_matcher("N_BITS", N_BITS),
-    Token_matcher("ALL_QUBITS", ALL_QUBITS),
-    Token_matcher("ALL_BITS", ALL_BITS),
 
     // some tokens get immediately converted into syntax because we know before hand what the replacement should be
     Token_matcher("LPAREN", STRING, "("),
@@ -304,6 +302,8 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher(")", RPAREN),
     Token_matcher("[", LBRACK),
     Token_matcher("]", RBRACK),
+    Token_matcher("<", LANGLE),
+    Token_matcher(">", RANGLE),
     Token_matcher("{", LBRACE),
     Token_matcher("}", RBRACE),
     Token_matcher("*", ZERO_OR_MORE),
@@ -312,7 +312,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
 };
 
 const std::string FULL_REGEX =
-    R"([a-zA-Z_][a-zA-Z0-9_]*|(\-)?[0-9]+(\.[0-9]+)?|#[^\n]*|\(\*|\*\)|\".*?\"|\'.*?\'|->|::|\+=|>=|<=|!!|.)";
+    R"([a-zA-Z_][a-zA-Z0-9_]*|(\-)?[0-9]+(\.[0-9]+)?|#[^\n]*|\(\*|\*\)|\".*?\"|\'.*?\'|->|::|\+=|>=|<=|&&|\|\||.)";
 
 
 class Lexer{
@@ -442,6 +442,8 @@ inline bool is_meta(const Token_kind& kind){
 
 inline bool is_quiet(const Token_kind& kind){
     return
+        (kind == RANGLE) ||
+        (kind == LANGLE) ||
         (kind == SCOPE_RES) ||
         (kind == ARROW) ;
 }

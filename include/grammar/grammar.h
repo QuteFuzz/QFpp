@@ -38,7 +38,15 @@ class Grammar{
 
         std::shared_ptr<Rule> get_rule_pointer(const Token& token, const Scope& scope);
 
-        void build_grammar();
+        Token_kind parse_token();
+
+        inline void build_grammar(Token_kind until = _EOF){
+            while(true){
+                if(parse_token() == until){
+                    break;
+                }
+            }
+        }
 
         void print_rules() const;
 

@@ -248,7 +248,7 @@ std::unique_ptr<Expr> Grammar::for_expr(){
 
     consume("in");
 
-    Token iter = curr_token;
+    std::string iter = curr_token.value;
     consume();
 
     consume(":");
@@ -267,18 +267,27 @@ std::unique_ptr<Expr> Grammar::if_expr() {
     consume(":");
     
     auto true_expr = expr();
-    consume();
-    
-    consume("else");
-    consume(":");
-    
-    auto false_expr = expr();
+    std::unique_ptr<Expr> false_expr = nullptr;
+
+    peek();
+    if (next_token.value == "else"){
+        consume(2); // consume true expr and "else"
+
+        if (curr_token.value == ":"){
+            consume();
+            false_expr = expr();
+        } else if (curr_token.value == "if"){
+            return if_expr();
+        } else {
+            ERROR("Unexpected " + curr_token.value + " after else");
+        }
+    }
 
     return std::make_unique<IfExpr>(std::move(logic_expr_res), std::move(true_expr), std::move(false_expr));
 }
 
 std::unique_ptr<Expr> Grammar::logic_expr() {
-    return parse_binary_op([this](){ return math_expr(); }, {">", "<", ">=", "<=", "=="});
+    return parse_binary_op([this](){ return math_expr(); }, {">", "<", ">=", "<=", "==", "&&", "||"});
 }
 
 std::unique_ptr<Expr> Grammar::math_expr() {
@@ -349,13 +358,9 @@ std::unique_ptr<Expr> Grammar::factor() {
 /// @brief Builds the grammar. Note the `consume` at the bottom, which advances to the next token. This means that any computations that deal with a series
 /// of tokens must always exit with `curr_token` pointing at the LAST token in the series. For example in an expression [3 + 5], after building the `Expr` AST,
 /// `curr_token` must point to `5`.
-void Grammar::build_grammar(){
+Token_kind Grammar::parse_token(){
 
-    if (curr_token.kind == _EOF) {
-        // must not peek if at EOF
-        return;
-
-    } else if (curr_token.kind == LBRACK){
+    if (curr_token.kind == LBRACK){
         consume();
         curr_expr = std::move(expr());
 
@@ -458,7 +463,7 @@ void Grammar::build_grammar(){
     consume();
     peek(); // always peek to prepare for next token
 
-    build_grammar();
+    return curr_token.kind;
 }
 
 /// @brief Does not include meta-grammar tokens

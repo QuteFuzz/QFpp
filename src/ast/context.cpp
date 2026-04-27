@@ -143,11 +143,6 @@ std::shared_ptr<Circuit> Context::get_random_circuit(){
 }
 
 
-Ptr_coll<Resource> Context::get_current_resources(Resource_kind rk) const {
-    return get_current_circuit()->get_coll<Resource>(rk);
-}
-
-
 std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk, Scope scope){
     Ptr_pred_type<Resource> pred = [](const std::shared_ptr<Resource>& elem){ return !elem->is_used(); };
 
@@ -268,3 +263,15 @@ std::shared_ptr<Qubit_op> Context::nn_qubit_op(){
     current.set<Qubit_op>(qubit_op);
     return qubit_op;
 }
+
+void Context::pop_var(const std::string& var){
+    if (resource_var_bindings.find(var) != resource_var_bindings.end()){
+        resource_var_bindings[var].pop_back();
+    }
+
+    if (resource_def_var_bindings.find(var) != resource_def_var_bindings.end()){
+        resource_def_var_bindings[var].pop_back();
+    }
+}
+
+

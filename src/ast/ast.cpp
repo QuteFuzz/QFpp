@@ -182,6 +182,10 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 	if (std::holds_alternative<std::shared_ptr<Node>>(child)){
 		std::get<std::shared_ptr<Node>>(child)->print_mode = pm;
 	}
+
+	if (kind == CF_STMT){
+		context.reduce_nested_depth();
+	}
 	
 	return child;
 }
