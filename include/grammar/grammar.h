@@ -16,7 +16,7 @@
 struct Current {
     std::shared_ptr<Rule> rule = nullptr;
     Branch branch;
-    Meta_func rule_decl_meta_func = Meta_func::NONE;
+    Print_mode print_mode = Print_mode::DEFAULT;
 
     Current(){}
 
@@ -70,36 +70,35 @@ class Grammar{
 
         void peek();
 
+        void add_term_to_current_branch(const Term& term);
+
         void add_term_to_current_branch(const Token& token);
 
         void add_branch_to_current_rule();
 
-        void add_constraint_to_last_term();
+        void add_expr_to_last_term();
 
-        std::unique_ptr<Expr> build_factor();
+        template<typename NextFunc>
+        std::unique_ptr<Expr> parse_binary_op(NextFunc parse_next, std::initializer_list<std::string> valid_ops);
 
-        std::unique_ptr<Expr> build_term();
+        std::unique_ptr<Expr> expr();
 
-        std::unique_ptr<Expr> build_expr();
+        std::unique_ptr<Expr> for_expr(); 
+
+        std::unique_ptr<Expr> if_expr();
+
+        std::unique_ptr<Expr> logic_expr();
+
+        std::unique_ptr<Expr> math_expr();
+
+        std::unique_ptr<Expr> term();
+
+        std::unique_ptr<Expr> factor();
 
         /// complete rule (does stack pop to return to home if needed)
         inline void complete_rule(){
             add_branch_to_current_rule();
             stack.pop();
-        }
-
-        inline void set_meta_func(const Token_kind& kind){
-            assert(!stack.empty());
-
-            if (kind == GET_NAME){
-                stack.top().rule_decl_meta_func = Meta_func::GET_NAME;
-            } else if (kind == CHILD_INDENT){
-                stack.top().rule_decl_meta_func = Meta_func::CHILD_INDENT;
-            } else if (kind == SELF_INDENT){
-                stack.top().rule_decl_meta_func = Meta_func::SELF_INDENT;
-            } else {
-                throw std::runtime_error("Unknown meta function");
-            }
         }
 
         /*

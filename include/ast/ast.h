@@ -30,6 +30,8 @@ class Ast{
 
         ~Ast() = default;
 
+        std::vector<Term> resolve_term_expr(const Term& init_child_term, std::optional<unsigned int> term_constraint_max);
+
         Slot_type term_branch_to_child_nodes(
             std::shared_ptr<Node> parent, 
             const Term& term,

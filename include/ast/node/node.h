@@ -6,28 +6,6 @@
 #include <branch_constraint.h>
 #include <rule.h>
 
-enum Node_build_state {
-    NB_DONE,
-    NB_BUILD,
-};
-
-enum Node_kind {
-    TERMINAL,
-    NON_TERMINAL,
-};
-
-enum Clone_type {
-    SHALLOW,
-    DEEP,
-};
-
-enum class Print_mode {
-    DEFAULT,
-    INDENT_LEVEL,
-    CHILD_INDENT,
-    SELF_INDENT,
-};
-
 class UInt;
 class Variable;
 class Branch;

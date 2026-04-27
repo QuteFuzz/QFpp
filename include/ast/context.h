@@ -8,7 +8,6 @@
 #include <compound_stmt.h>
 #include <gate.h>
 #include <node_gen.h>
-#include <child_indent.h>
 
 
 enum Reset_level {
@@ -100,9 +99,13 @@ struct Context {
 
 		const Control& get_control() const { return control; }
 
+		unsigned int resolve_var(Token_kind kind) const;
+
 		std::shared_ptr<Circuit> get_current_circuit() const;
 
 		std::shared_ptr<Circuit> get_random_circuit();
+
+		Ptr_coll<Resource> get_current_resources(Resource_kind rk) const;
 
 		std::shared_ptr<Resource> get_random_resource(Resource_kind rk, Scope scope = ALL_SCOPES);
 
@@ -141,11 +144,30 @@ struct Context {
 			dummy_circuit->print_info();
 		}
 
-		unsigned int resolve_var(Token_kind kind) const;
+		inline void push_var(const std::string& var, std::shared_ptr<Resource> resource){
+			var_bindings[var].push_back(resource);
+		}
+
+		inline void pop_var(const std::string& var){
+			if (var_bindings.find(var) != var_bindings.end()){
+				var_bindings[var].pop_back();
+			}
+		}
+
+		inline std::shared_ptr<Resource> get_resource_bound_to(const std::string& var){
+			auto iter = var_bindings.find(var);
+
+			if ((iter == var_bindings.end()) || (iter->second.size() == 0)){
+				return nullptr;
+			} else {
+				return iter->second.back();
+			}
+		}
 
 	private:
 		const Control& control;
 		Current_nodes current;
+		std::unordered_map<std::string, Ptr_coll<Resource>> var_bindings;
 
 		std::vector<std::shared_ptr<Circuit>> circuits;
 		std::shared_ptr<Circuit> dummy_circuit = std::make_shared<Circuit>();
