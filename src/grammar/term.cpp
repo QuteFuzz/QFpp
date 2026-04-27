@@ -2,10 +2,10 @@
 #include <rule.h>
 #include <context.h>
 
-Term::Term(const std::shared_ptr<Rule> rule, const Token_kind& _kind, const Meta_func& _meta_func){
+Term::Term(const std::shared_ptr<Rule> rule, const Token_kind& _kind, const Print_mode& _print_mode){
     value = std::weak_ptr<Rule>(rule),
     kind = _kind;
-    meta_func = _meta_func;
+    pm = _print_mode;
 }
 
 Term::Term(const std::string& syntax, const Token_kind& _kind){
@@ -39,8 +39,8 @@ Scope Term::get_scope() const {
     }
 }
 
-Meta_func Term::get_meta_func() const {
-    return meta_func;
+Print_mode Term::get_print_mode() const {
+    return pm;
 }
 
 bool Term::is_syntax() const {
@@ -49,14 +49,6 @@ bool Term::is_syntax() const {
 
 bool Term::is_rule() const {
     return std::holds_alternative<std::weak_ptr<Rule>>(value);
-}
-
-int Term::eval_constraint(const Context& context) const {
-    if (constraint == nullptr){
-        return 1;
-    } else {
-        return constraint->eval(context);
-    }
 }
 
 std::ostream& operator<<(std::ostream& stream, const Term& term){
@@ -68,11 +60,13 @@ std::ostream& operator<<(std::ostream& stream, const Term& term){
 
         if (rule_ptr == nullptr){
             stream << "[[DELETED RULE]]";
-        } else if (term.constraint == nullptr) {
-            stream << RED(rule_ptr->get_name());
         } else {
-            stream << RED(rule_ptr->get_name()) << YELLOW("[") << *term.constraint << YELLOW("]");
+            stream << RED(rule_ptr->get_name());
         }
+    }
+
+    if (term.expr != nullptr){
+        stream << YELLOW("[") << *term.expr << YELLOW("]");
     }
 
     return stream;

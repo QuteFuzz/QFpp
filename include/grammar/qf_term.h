@@ -13,19 +13,19 @@ class Term {
     public:
         Term(){}
 
-        Term(const std::shared_ptr<Rule> rule, const Token_kind& _kind, const Meta_func& _meta_func);
+        Term(const std::shared_ptr<Rule> rule, const Token_kind& _kind, const Print_mode& _print_mode);
 
         Term(const std::string& syntax, const Token_kind& _kind);
 
         ~Term() = default;
 
-        // Term(Term&&) = default;  // generate move constructor
-        
-        // Term& operator=(Term&&) = default;  // generate move assignment op
-
-        inline void add_term_constraint(std::shared_ptr<Expr> _constraint){
-            constraint = _constraint;
+        inline void add_expr(std::shared_ptr<Expr> _expr){
+            expr = _expr;
         }
+
+        inline std::shared_ptr<Expr> get_expr() const {
+            return expr;
+        };
 
         std::shared_ptr<Rule> get_rule() const;
 
@@ -35,13 +35,11 @@ class Term {
 
         Scope get_scope() const;
 
-        Meta_func get_meta_func() const;
+        Print_mode get_print_mode() const;
 
         bool is_syntax() const;
 
         bool is_rule() const;
-
-        int eval_constraint(const Context& context) const;
 
         friend std::ostream& operator<<(std::ostream& stream, const Term& term);
 
@@ -52,8 +50,8 @@ class Term {
     private:
         std::variant<std::weak_ptr<Rule>, std::string> value;
         Token_kind kind;
-        Meta_func meta_func = Meta_func::NONE;
-        std::shared_ptr<Expr> constraint = nullptr;
+        Print_mode pm = Print_mode::DEFAULT;
+        std::shared_ptr<Expr> expr = nullptr;
 };
 
 #endif

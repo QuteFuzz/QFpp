@@ -11,7 +11,6 @@
 
 enum Token_kind {
     _EOF = 0,
-
     RULE_KINDS_TOP,                  /// ADD NEW RULES BELOW!
     RULE,
     H,
@@ -86,7 +85,6 @@ enum Token_kind {
     CF_STMT,
     COMPOUND_STMTS,
     RESOURCE_DEF,
-
     RULE_KINDS_BOTTOM,                            /// ADD NEW RULES ABOVE!
 
     META_FUNC_TOP,                                /// ADD META FUNCS BELOW!
@@ -95,12 +93,9 @@ enum Token_kind {
     GATE_QUBITS,
     GATE_BITS,
     GATE_FLOATS,
-    ALL_QUBITS,
-    ALL_BITS,
-    CHILD_INDENT,
-    SELF_INDENT,
+    N_QUBITS,
+    N_BITS,
     GET_INDENT_LEVEL,
-    UNIFORM,
     MAKE_INTEGER,
     MAKE_FLOAT,
     MAKE_VAR,
@@ -108,13 +103,8 @@ enum Token_kind {
     GET_SIZE,
     GET_INDEX,
     RESET,
-    META_FUNC_BOTTOM,                             /// ADD META FUNCS ABOVE!
+    META_FUNC_BOTTOM,                            /// ADD META FUNCS ABOVE!
 
-    GRAMMAR_SYNTAX_TOP,                           /// ADD GRAMMAR SYNTAX BELOW!
-    /*
-        Tokens that aren't special rule types, but rather, are syntax used in the language
-        Add new syntax below
-    */
     SEPARATOR,
     RULE_START,
     RULE_APPEND,
@@ -127,20 +117,17 @@ enum Token_kind {
     RPAREN,
     RBRACK,
     RBRACE,
-    LANGLE_BRACKET,
-    RANGLE_BRACKET,
+    RANGLE,
+    LANGLE,
     ZERO_OR_MORE,
     ONE_OR_MORE,
     OPTIONAL,
     ARROW,
-    EXCL,
+    SELF_INDENT,
+    CHILD_INDENT,
     INTERNAL,
     EXTERNAL,
     SCOPE_RES,
-    /*
-        Grammar syntax end, add new syntax above
-    */
-    GRAMMAR_SYNTAX_BOTTOM,                      /// ADD GRAMMAR SYNTAX ABOVE!
 };
 
 inline std::string kind_as_str(const Token_kind& kind);
@@ -267,21 +254,12 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("u", U),
 
     /*
-        scopes
-    */
-    Token_matcher("EXTERNAL", EXTERNAL),
-    Token_matcher("INTERNAL", INTERNAL),
-
-    /**
         meta functions
     */
     Token_matcher("MAKE_FLOAT", MAKE_FLOAT),
     Token_matcher("MAKE_INTEGER", MAKE_INTEGER),
     Token_matcher("MAKE_VAR", MAKE_VAR),
-    Token_matcher("CHILD_INDENT", CHILD_INDENT),
-    Token_matcher("SELF_INDENT", SELF_INDENT),
     Token_matcher("GET_INDENT_LEVEL", GET_INDENT_LEVEL),
-    Token_matcher("UNIFORM", UNIFORM),
     Token_matcher("GET_NAME", GET_NAME),
     Token_matcher("GET_INDEX", GET_INDEX),
     Token_matcher("GET_SIZE", GET_SIZE),
@@ -291,9 +269,10 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("GATE_QUBITS", GATE_QUBITS),
     Token_matcher("GATE_BITS", GATE_BITS),
     Token_matcher("GATE_FLOATS", GATE_FLOATS),
-    Token_matcher("ALL_QUBITS", ALL_QUBITS),
-    Token_matcher("ALL_BITS", ALL_BITS),
-    // meta functions ish, that get immediately converted into syntax because we know before hand what the replacement should be
+    Token_matcher("N_QUBITS", N_QUBITS),
+    Token_matcher("N_BITS", N_BITS),
+
+    // some tokens get immediately converted into syntax because we know before hand what the replacement should be
     Token_matcher("LPAREN", STRING, "("),
     Token_matcher("RPAREN", STRING, ")"),
     Token_matcher("LBRACK", STRING, "["),
@@ -308,15 +287,13 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("EQUALS", STRING, "="),
     Token_matcher("NEWLINE", STRING, "\n"),
 
-    /*
-        multi char tokens
-    */
+    Token_matcher("EXTERNAL", EXTERNAL),
+    Token_matcher("INTERNAL", INTERNAL),
+    Token_matcher("ci", CHILD_INDENT),
+    Token_matcher("si", SELF_INDENT),
     Token_matcher("::", SCOPE_RES),
     Token_matcher("->", ARROW),
     Token_matcher("+=", RULE_APPEND),
-    /*
-        single character tokens
-    */
     Token_matcher("=", RULE_START),
     Token_matcher(":", RULE_START),
     Token_matcher("|", SEPARATOR),
@@ -325,18 +302,17 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher(")", RPAREN),
     Token_matcher("[", LBRACK),
     Token_matcher("]", RBRACK),
+    Token_matcher("<", LANGLE),
+    Token_matcher(">", RANGLE),
     Token_matcher("{", LBRACE),
     Token_matcher("}", RBRACE),
     Token_matcher("*", ZERO_OR_MORE),
     Token_matcher("?", OPTIONAL),
     Token_matcher("+", ONE_OR_MORE),
-    Token_matcher("<", LANGLE_BRACKET),
-    Token_matcher(">", RANGLE_BRACKET),
-    Token_matcher("!", EXCL),
 };
 
 const std::string FULL_REGEX =
-    R"([a-zA-Z_][a-zA-Z0-9_]*|(\-)?[0-9]+(\.[0-9]+)?|#[^\n]*|\(\*|\*\)|\".*?\"|\'.*?\'|->|::|\+=|>=|<=|.)";
+    R"([a-zA-Z_][a-zA-Z0-9_]*|(\-)?[0-9]+(\.[0-9]+)?|#[^\n]*|\(\*|\*\)|\".*?\"|\'.*?\'|->|::|\+=|>=|<=|&&|\|\||.)";
 
 
 class Lexer{
@@ -466,11 +442,10 @@ inline bool is_meta(const Token_kind& kind){
 
 inline bool is_quiet(const Token_kind& kind){
     return
+        (kind == RANGLE) ||
+        (kind == LANGLE) ||
         (kind == SCOPE_RES) ||
-        (kind == ARROW) ||
-        (kind == SELF_INDENT) ||
-        (kind == EXCL) ||
-        (kind == CHILD_INDENT);
+        (kind == ARROW) ;
 }
 
 inline std::string kind_as_str(const Token_kind& kind) {

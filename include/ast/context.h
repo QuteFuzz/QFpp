@@ -8,7 +8,6 @@
 #include <compound_stmt.h>
 #include <gate.h>
 #include <node_gen.h>
-#include <child_indent.h>
 
 
 enum Reset_level {
@@ -100,6 +99,8 @@ struct Context {
 
 		const Control& get_control() const { return control; }
 
+		unsigned int resolve_var(Token_kind kind) const;
+
 		std::shared_ptr<Circuit> get_current_circuit() const;
 
 		std::shared_ptr<Circuit> get_random_circuit();
@@ -123,6 +124,50 @@ struct Context {
 		std::shared_ptr<Gate> nn_gate_from_subroutine();
 
 		template<typename T>
+		Ptr_coll<T> get_current_coll(Resource_kind rk) const {
+			return get_current_circuit()->get_coll<T>(rk);
+		}
+
+		template <typename T>
+		void push_var(const std::string& var, std::shared_ptr<T> item) {
+			if constexpr (std::is_same_v<T, Resource>) {
+				resource_var_bindings[var].push_back(item);
+			} 
+			else if constexpr (std::is_same_v<T, Resource_def>) {
+				resource_def_var_bindings[var].push_back(item);
+			} 
+			else {
+				ERROR("Unsupported type passed to push_var");
+			}
+		}
+
+		void pop_var(const std::string& var);
+
+		template<typename T>
+		std::shared_ptr<T> get_value_bound_to(const std::string& var){
+			typename std::unordered_map<std::string, Ptr_coll<T>>::iterator iter;
+			typename std::unordered_map<std::string, Ptr_coll<T>>::iterator end;
+
+			if constexpr (std::is_same_v<T, Resource>) {
+				iter = resource_var_bindings.find(var);
+				end = resource_var_bindings.end();
+			} 
+			else if constexpr (std::is_same_v<T, Resource_def>) {
+				iter = resource_def_var_bindings.find(var);
+				end = resource_def_var_bindings.end();
+			} 
+			else {
+				ERROR("Unsupported type passed to push_var");
+			}
+
+			if (iter == end || iter->second.size() == 0){
+				return nullptr;
+			} else {
+				return iter->second.back();
+			}
+		}
+
+		template<typename T>
 		inline std::shared_ptr<T> get_current_node() const {
 			return current.get<T>();
 		}
@@ -141,11 +186,11 @@ struct Context {
 			dummy_circuit->print_info();
 		}
 
-		unsigned int resolve_var(Token_kind kind) const;
-
 	private:
 		const Control& control;
 		Current_nodes current;
+		std::unordered_map<std::string, Ptr_coll<Resource>> resource_var_bindings;
+		std::unordered_map<std::string, Ptr_coll<Resource_def>> resource_def_var_bindings;
 
 		std::vector<std::shared_ptr<Circuit>> circuits;
 		std::shared_ptr<Circuit> dummy_circuit = std::make_shared<Circuit>();

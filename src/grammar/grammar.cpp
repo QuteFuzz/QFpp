@@ -130,38 +130,44 @@ std::shared_ptr<Rule> Grammar::get_rule_pointer(const Token& token, const Scope&
     return dummy;
 }
 
+void Grammar::add_term_to_current_branch(const Term& term){
+    Branch& current_branch = stack.top().branch;
+    std::shared_ptr<Rule>& current_rule = stack.top().rule;
+
+    assert(current_rule != nullptr);
+
+    current_branch.add(term);
+
+    if((term.get_string() == current_rule->get_name()) && is_kind_of_rule(term.get_node_kind())){
+        current_branch.set_recursive_flag();
+    }
+}
+
 void Grammar::add_term_to_current_branch(const Token& token){
     std::shared_ptr<Rule>& current_rule = stack.top().rule;
-    Branch& current_branch = stack.top().branch;
-    Meta_func current_rule_decl_meta_func = stack.top().rule_decl_meta_func;
+    Term term;
 
     assert(current_rule != nullptr);
 
     if(token.kind == STRING || token.kind == NUMBER){
-        current_branch.add(Term(token.value, token.kind));
+        term = Term(token.value, token.kind);
 
-    } else if (is_kind_of_rule(token.kind)){
+    } else if (is_kind_of_rule(token.kind) || is_meta(token.kind)){
         /*
             each term within the branch of a rule has a scope associated with it
             if explicitis_kind_of_rulely specified like EXTERNAL::term, then the term takes on that scope, otherwise, it
             takes on the scope of the current rule (i.e the rule def)
         */
         Scope scope = (rule_decl_scope == Scope::GLOB) ? current_rule->get_scope() : rule_decl_scope;
+        Print_mode current_rule_print_mode = token.kind == GET_INDENT_LEVEL ? Print_mode::INDENT_LEVEL : stack.top().print_mode;
 
-        current_branch.add(Term(get_rule_pointer(token, scope), token.kind, current_rule_decl_meta_func));
-
-    } else if (is_meta(token.kind)){
-        assert(current_rule_decl_meta_func == Meta_func::NONE); // this is a meta-func used for node creation, should not have a meta func applied to itself
-        assert(rule_decl_scope == Scope::GLOB); // also should not have scope set explictly
-        current_branch.add(Term(get_rule_pointer(token, current_rule->get_scope()), token.kind, Meta_func::NONE));
+        term = Term(get_rule_pointer(token, scope), token.kind, current_rule_print_mode);
 
     } else {
-        ERROR("add_term_to_branch should only be called on syntax or rule tokens!");
+        grammar_error("`add_term_to_branch` called on invalid token " + token.value);
     }
 
-    if((token.value == current_rule->get_name()) && is_kind_of_rule(token.kind)){
-        current_branch.set_recursive_flag();
-    }
+    add_term_to_current_branch(term);
 }
 
 void Grammar::add_branch_to_current_rule(){
@@ -170,118 +176,199 @@ void Grammar::add_branch_to_current_rule(){
     stack.top().branch.clear();
 }
 
-void Grammar::add_constraint_to_last_term(){
-    Branch& current_branch = stack.top().branch;
+void Grammar::add_expr_to_last_term(){
+    assert(curr_expr != nullptr);
 
-    size_t branch_size = current_branch.size();
+    auto expr_kind = curr_expr->get_kind();
 
-    if (branch_size == 0){
-        ERROR("Current branch should have at least one term to add constraint to");
-    } else {
-        current_branch.at(branch_size - 1).add_term_constraint(curr_expr);
-    }
-}
+    if (expr_kind == Expr_kind::INT){
+        Branch& current_branch = stack.top().branch;
+        size_t branch_size = current_branch.size();
 
-std::unique_ptr<Expr> Grammar::build_factor() {
-    if (curr_token.value == "(") {
-        consume(); // advance to the first token inside parens
-        auto expr = build_expr(); 
-        consume(); // advance to ')'
-        check(")"); // ensure it is ')', check does not consume so ) remains as curr_token
-        expr->paren = true;
-        return expr;
+        if (branch_size == 0){
+            grammar_error("Current branch should have at least one term to add constraint to");
+        } else {
+            current_branch.at(branch_size - 1).add_expr(curr_expr);
+        }
 
-    } else if (curr_token.value == "UNIFORM"){
-        consume(); // consume UNIFORM
-        consume("("); // checks and consumes '('
-        
-        auto left = build_expr(); // curr_token lands on last token of left expr
-        
-        consume(); // advance to ','
-        consume(","); // checks and consumes ','
-        
-        auto right = build_expr(); // curr_token lands on last token of right expr
-        
-        consume(); // advance to ')'
-        check(")"); // ensure it is ')'
-        return std::make_unique<BinExpr>("UNIFORM", std::move(left), std::move(right));
-
-    } else if (curr_token.kind == NUMBER){
-        return std::make_unique<IntExpr>(safe_stoi(curr_token.value, 0));
+    } else if (expr_kind == Expr_kind::RULE_LIST){
+        Term term("here", STRING);
+        term.add_expr(curr_expr);
+        add_term_to_current_branch(term);
 
     } else {
-        return std::make_unique<VarExpr>(curr_token.kind); 
+        grammar_error("Expr expected to have return type of INT or RULE_LIST, got " + std::to_string((int)expr_kind));
     }
 }
 
-std::unique_ptr<Expr> Grammar::build_term() {
-    auto left = build_factor();
-    peek(); 
-    
-    while (next_token.value == "*" || next_token.value == "/" || 
-           next_token.value == ">" || next_token.value == "<" || 
-           next_token.value == "<=" || next_token.value == ">=") 
-    {
-        consume(); // advance curr_token to the operator itself
-        std::string op = curr_token.value;
-        
-        consume(); // advance curr_token past the operator to the next factor
-        auto right = build_factor();
-        
-        // fold the tree downward and leftward
-        left = std::make_unique<BinExpr>(op, std::move(left), std::move(right));
-        
-        peek(); // peek ahead again to see if the chain continues
-    }
-    
-    return left;
-}
-
-
-std::unique_ptr<Expr> Grammar::build_expr() {
-    auto left = build_term();
+template<typename NextFunc>
+std::unique_ptr<Expr> Grammar::parse_binary_op(NextFunc parse_next, std::initializer_list<std::string> valid_ops) {
+    auto left = parse_next();
     peek();
     
-    while (next_token.value == "+" || next_token.value == "-" || 
-           next_token.value == "==" || next_token.value == "!=") 
-    {
+    auto match_op = [&]() {
+        for (const auto& op : valid_ops) {
+            if (next_token.value == op) return true;
+        }
+        return false;
+    };
+
+    while (match_op()) {
         consume(); // advance curr_token to the operator itself
         std::string op = curr_token.value;
         
         consume(); // advance curr_token past the operator to the next term
-        auto right = build_term();
+        
+        // parse the right side
+        auto right = parse_next();
         
         // fold the tree downward and leftward
         left = std::make_unique<BinExpr>(op, std::move(left), std::move(right));
         
-        peek(); // peek ahead again to see if the chain continues
+        peek(); // peek ahead again
     }
     
     return left;
 }
 
+std::unique_ptr<Expr> Grammar::expr() {
+    if (curr_token.value == "for"){
+        return for_expr();
+    } else if (curr_token.value == "if"){
+        return if_expr();
+    } else {
+        return logic_expr();
+    }
+}
+
+std::unique_ptr<Expr> Grammar::for_expr(){
+    consume("for");
+    std::string identifier = curr_token.value;
+    consume();
+
+    consume("in");
+
+    std::string iter = curr_token.value;
+    consume();
+
+    consume(":");
+
+    auto expr_res = expr();
+
+    return std::make_unique<ForExpr>(identifier, iter, std::move(expr_res));
+}
+
+std::unique_ptr<Expr> Grammar::if_expr() {
+    consume("if");
+    
+    auto logic_expr_res = logic_expr();
+    consume();
+
+    consume(":");
+    
+    auto true_expr = expr();
+    std::unique_ptr<Expr> false_expr = nullptr;
+
+    peek();
+    if (next_token.value == "else"){
+        consume(2); // consume true expr and "else"
+
+        if (curr_token.value == ":"){
+            consume();
+            false_expr = expr();
+        } else if (curr_token.value == "if"){
+            return if_expr();
+        } else {
+            ERROR("Unexpected " + curr_token.value + " after else");
+        }
+    }
+
+    return std::make_unique<IfExpr>(std::move(logic_expr_res), std::move(true_expr), std::move(false_expr));
+}
+
+std::unique_ptr<Expr> Grammar::logic_expr() {
+    return parse_binary_op([this](){ return math_expr(); }, {">", "<", ">=", "<=", "==", "&&", "||"});
+}
+
+std::unique_ptr<Expr> Grammar::math_expr() {
+    if (curr_token.value == "UNIFORM"){
+        consume(); // consume UNIFORM
+        consume("("); // checks and consumes '('
+        
+        auto left = term(); // curr_token lands on last token of left expr
+        
+        consume(); // advance to ','
+        consume(","); // checks and consumes ','
+
+        auto right = term(); // curr_token lands on last token of right expr
+
+        consume(); // advance to ')'
+        check(")"); // ensure it is ')'
+        return std::make_unique<BinExpr>("UNIFORM", std::move(left), std::move(right));
+    
+    } else {
+        return parse_binary_op([this](){ return term(); }, {"+", "-"});
+    }
+}
+
+std::unique_ptr<Expr> Grammar::term() {
+    return parse_binary_op([this](){ return factor(); }, {"/", "*"});
+}
+
+std::unique_ptr<Expr> Grammar::factor() {
+    if (curr_token.value == "(") {
+        consume(); // advance to the first token inside parens
+        auto expr_res = expr(); 
+        consume(); // advance to ')'
+        check(")"); // ensure it is ')', check does not consume so ) remains as curr_token
+        expr_res->paren = true;
+        
+        return expr_res;
+
+    } else if (curr_token.kind == NUMBER){
+        return std::make_unique<IntExpr>(safe_stoi(curr_token.value, 0));
+
+    } else if (is_meta(curr_token.kind)) {
+        return std::make_unique<VarExpr>(curr_token.kind);
+    
+    } else {
+        std::string obj_name = curr_token.value;
+
+        peek();
+        if(next_token.value == "."){
+            consume(2);
+
+            std::string prop = curr_token.value;
+
+            return std::make_unique<PropertyAccessExpr>(obj_name, prop);
+        
+        } else {
+            auto rule = get_rule_pointer_if_exists(obj_name, rule_def_scope);
+
+            if (rule == nullptr){
+                grammar_error("Rule used in expr must be defined before being used. Got: " + obj_name);
+            }
+
+            return std::make_unique<RuleExpr>(rule);
+        } 
+    }
+}
+
+
 /// @brief Builds the grammar. Note the `consume` at the bottom, which advances to the next token. This means that any computations that deal with a series
 /// of tokens must always exit with `curr_token` pointing at the LAST token in the series. For example in an expression [3 + 5], after building the `Expr` AST,
 /// `curr_token` must point to `5`.
-void Grammar::build_grammar(){
+Token_kind Grammar::parse_token(){
 
-    if (curr_token.kind == _EOF) {
-        // must not peek if at EOF
-        return;
-
-    } else if (curr_token.kind == LBRACK){
+    if (curr_token.kind == LBRACK){
         consume();
-        curr_expr = std::move(build_expr());
+        curr_expr = std::move(expr());
 
     } else if (curr_token.kind == RBRACK){
-        add_constraint_to_last_term();
+        add_expr_to_last_term();
+        curr_expr = nullptr;
 
-    } else if (is_meta(curr_token.kind) && (next_token.kind != LANGLE_BRACKET)){
-        // if next token is `<`, this is a meta func application, handled at `<` using previous curr_token
-        add_term_to_current_branch(curr_token);
-
-    } else if(is_kind_of_rule(curr_token.kind) || curr_token.kind == STRING || curr_token.kind == NUMBER){
-
+    } else if(is_kind_of_rule(curr_token.kind) || is_meta(curr_token.kind) || curr_token.kind == STRING || curr_token.kind == NUMBER){
         // rules that are within branches, rules before `RULE_START` and `RULE_APPEND` are handled at `RULE_START` and `RULE_APPEND`
         if(!stack.empty()){
             add_term_to_current_branch(curr_token);
@@ -323,15 +410,15 @@ void Grammar::build_grammar(){
 
     } else if (curr_token.kind == OPTIONAL){
         curr_expr = std::make_shared<IntExpr>(random_uint(1, 0));
-        add_constraint_to_last_term();
+        add_expr_to_last_term();
 
     } else if (curr_token.kind == ONE_OR_MORE){
         curr_expr = std::make_shared<IntExpr>(random_uint(QuteFuzz::WILDCARD_MAX, 1));
-        add_constraint_to_last_term();
+        add_expr_to_last_term();
 
     } else if (curr_token.kind == ZERO_OR_MORE){
         curr_expr = std::make_shared<IntExpr>(random_uint(QuteFuzz::WILDCARD_MAX, 0));
-        add_constraint_to_last_term();
+        add_expr_to_last_term();
 
     } else if (curr_token.kind == LBRACE){
         // scope has been set to some other scope
@@ -341,12 +428,16 @@ void Grammar::build_grammar(){
         // reset to GLOB scope as default
         rule_def_scope = Scope::GLOB;
 
-    } else if (curr_token.kind == LANGLE_BRACKET){
-        // use previous curr_token to set meta function
-        set_meta_func(prev_token.kind);
+    } else if (curr_token.kind == SELF_INDENT){
+        // use previous token to set meta function
+        // set_meta_func(prev_token.kind);
+        assert(!stack.empty());
+        stack.top().print_mode = Print_mode::SELF_INDENT;
 
-    } else if (curr_token.kind == RANGLE_BRACKET){
-        stack.top().rule_decl_meta_func = Meta_func::NONE; // reset to NONE as default
+    } else if (curr_token.kind == CHILD_INDENT){
+        // stack.top().rule_decl_meta_func = Meta_func::NONE; // reset to NONE as default
+        assert(!stack.empty());
+        stack.top().print_mode = Print_mode::CHILD_INDENT;
 
     } else if (curr_token.kind == EXTERNAL){
         if(next_token.kind == SCOPE_RES){
@@ -365,14 +456,14 @@ void Grammar::build_grammar(){
     } else if (is_quiet(curr_token.kind)){
 
     } else {
-        ERROR("Unknown curr_token: " + curr_token.value);
+        grammar_error("Unknown curr_token: " + curr_token.value);
     }
 
     prev_token = curr_token;
     consume();
     peek(); // always peek to prepare for next token
 
-    build_grammar();
+    return curr_token.kind;
 }
 
 /// @brief Does not include meta-grammar tokens

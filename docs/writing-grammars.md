@@ -155,7 +155,7 @@ circuit_def_header =
     "@framework.kernel" NEWLINE
     "def " GET_CIRCUIT_NAME "():";
 
-body = CHILD_INDENT<EXTERNAL::qubit_defs NEWLINE compound_stmts>;
+body = CHILD_INDENT<EXTERNAL::qubit_defs NEWLINE compound_stmts);
 
 compound_stmts = (compound_stmt NEWLINE)[UNIFORM(5, 15)];
 
@@ -253,7 +253,3 @@ For subroutine support you need:
 - `subroutine_op_args` — the qubit arguments for the call
 
 Look at `qiskit.qf` or `pytket.qf` for a complete example.
-
-### Output indentation is wrong
-
-Use `CHILD_INDENT<rule>` for Python-style indented blocks. Each `CHILD_INDENT` decrements the nested depth counter, which bounds recursive control flow generation. Do not use raw spaces or tabs — they will not compose correctly with nesting.

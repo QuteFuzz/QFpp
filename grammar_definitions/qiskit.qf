@@ -111,13 +111,13 @@ subroutine_op = GET_CIRCUIT_NAME ".append(" subroutine ",[" subroutine_op_args "
 # Control flow operations
 while_stmt =
     'with ' GET_CIRCUIT_NAME '.while_loop((' bit ', ' branch_condition ')):'
-    NEWLINE CHILD_INDENT<compound_stmts>;
+    NEWLINE ci<compound_stmts>;
 
 for_stmt = for_range;
 
 for_range =
     "with " GET_CIRCUIT_NAME ".for_loop(range(" for_bound "), None):"
-    NEWLINE CHILD_INDENT<compound_stmts>;
+    NEWLINE ci<compound_stmts>;
 
 for_bound = 2; #MAKE_INTEGER;  # TODO: ranges for some meta functions, currently 1-10 by default
 
@@ -126,17 +126,17 @@ for_bound = 2; #MAKE_INTEGER;  # TODO: ranges for some meta functions, currently
 
 switch_stmt =
     'with ' GET_CIRCUIT_NAME '.switch(' bit ') as case' GET_INDENT_LEVEL ':' NEWLINE
-    CHILD_INDENT<((case_stmts NEWLINE) (default_case)?)>;
+    ci<((case_stmts NEWLINE> (default_case)?));
 
-case_stmts = 'with case' GET_INDENT_LEVEL '(' 0 '):' NEWLINE CHILD_INDENT<compound_stmts> NEWLINE SELF_INDENT<('with case' GET_INDENT_LEVEL '(' 1 '):' NEWLINE CHILD_INDENT<compound_stmts>)>;
+case_stmts = 'with case' GET_INDENT_LEVEL '(' 0 '):' NEWLINE ci<compound_stmts> NEWLINE si<('with case' GET_INDENT_LEVEL '(' 1 '>:' NEWLINE ci<compound_stmts>));
 
 case_stmt =
-    'with case(' case_values '):' NEWLINE CHILD_INDENT<compound_stmts>;
+    'with case(' case_values '):' NEWLINE ci<compound_stmts>;
 
 case_values = MAKE_INTEGER (', ' MAKE_INTEGER)[UNIFORM(0,2)];
 
 default_case =
-    'with case(case.DEFAULT):' NEWLINE CHILD_INDENT<compound_stmts>;
+    'with case(case.DEFAULT):' NEWLINE ci<compound_stmts>;
 *)
 
 #TODO: implement `qreg` rule and others stuff needed for register comparison
@@ -165,8 +165,8 @@ classical_expr = bool_expr;
 
 # Update if_stmt to use classical_expr
 if_stmt =
-    'with ' GET_CIRCUIT_NAME '.if_test(' classical_expr ') as else_' GET_INDENT_LEVEL ':' NEWLINE CHILD_INDENT<compound_stmts>
-    SELF_INDENT<('with else_' GET_INDENT_LEVEL ':' NEWLINE CHILD_INDENT<compound_stmts>)?>;
+    'with ' GET_CIRCUIT_NAME '.if_test(' classical_expr ') as else_' GET_INDENT_LEVEL ':' NEWLINE ci<compound_stmts>
+    si<('with else_' GET_INDENT_LEVEL ':' NEWLINE ci<compound_stmts>>?);
 
 # Update compound_stmt
 compound_stmt =
@@ -180,7 +180,7 @@ compound_stmt =
 
 
 # Barriers and delays
-all_qubits_list = qubit (", " qubit)[ALL_QUBITS - 1];
+all_qubits_list = qubit (", " qubit)[N_QUBITS - 1];
 barrier_op = GET_CIRCUIT_NAME '.barrier([' all_qubits_list '])'; # add barrier on all qubits in current circuit
 delay_op = GET_CIRCUIT_NAME '.delay(' MAKE_INTEGER ', ' qubit ')';
 reset_op = GET_CIRCUIT_NAME '.reset(' qubit ')';

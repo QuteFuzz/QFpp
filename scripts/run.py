@@ -231,8 +231,7 @@ class Check_grammar:
 
             else:
                 raise Exception(
-                    "Result must be ks values or dot product, got None."
-                    "\nStdout: \n{result.stdout}"
+                    "Result must be ks values or dot product, got None.\nStdout: \n{result.stdout}"
                 )
 
         else:

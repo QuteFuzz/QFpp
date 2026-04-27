@@ -22,15 +22,4 @@ ENABLE_BITMASK_OPERATORS(Scope)
 
 #define scope_matches(a, b) ((a & b) != Scope::NONE)
 
-enum class Meta_func {
-    NONE = 0,
-    GET_NAME = BIT32(1),
-    CHILD_INDENT = BIT32(2),
-    SELF_INDENT = BIT32(3)
-};
-
-#define STR_META_FUNC(mf) ( \
-    str_bitset(mf, 2) \
-)
-
 #endif

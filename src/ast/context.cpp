@@ -2,7 +2,6 @@
 #include <generator.h>
 #include <params.h>
 #include <variable.h>
-#include <child_indent.h>
 
 int Context::ast_counter = -1;
 
@@ -82,6 +81,30 @@ bool Context::current_circuit_uses_subroutines(){
     return false;
 }
 
+
+unsigned int Context::resolve_var(Token_kind kind) const {
+    auto gate = get_current_node<Gate>();
+
+    if (kind == GATE){
+        return gate->get_node_kind();
+    } else if (kind == GATE_QUBITS) {
+        return gate->get_num_external_qubits();
+    } else if (kind == GATE_BITS) {
+        return gate->get_num_external_bits();
+    } else if (kind == GATE_FLOATS) {
+        return gate->get_num_floats();
+    } else if (kind == N_QUBITS) {
+        auto qubits = get_current_circuit()->get_coll<Resource>(Resource_kind::QUBIT);
+        return qubits.size();
+    } else if (kind == N_BITS) {
+        auto bits = get_current_circuit()->get_coll<Resource>(Resource_kind::BIT);
+        return bits.size();
+    }
+
+    return 0;
+}
+
+
 /// In normal cases, current circuit is the last added circuit into the circuits vector. The exception is if we are no longer under the `subroutines`
 /// node in the AST, but the last added circuit is a subroutine. This implies that after the `subroutines` node, there's no `circuit` node to generate
 /// a new, main circuit. As such, qubit and bit definitions, qubits and bits may have been made globally, and therefore stored in the dummy circuit, so we return that
@@ -119,12 +142,13 @@ std::shared_ptr<Circuit> Context::get_random_circuit(){
     }
 }
 
+
 std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk, Scope scope){
     Ptr_pred_type<Resource> pred = [](const std::shared_ptr<Resource>& elem){ return !elem->is_used(); };
 
     auto filtered_coll = (scope == Scope::GLOB) ?
-            dummy_circuit->get_coll<Resource>(rk) :
-            get_current_circuit()->get_coll<Resource>(rk);
+        dummy_circuit->get_coll<Resource>(rk) :
+        get_current_circuit()->get_coll<Resource>(rk);
 
     auto random_resource = get_random_from_coll<Resource>(filtered_coll, pred);
     random_resource->set_used();
@@ -240,25 +264,14 @@ std::shared_ptr<Qubit_op> Context::nn_qubit_op(){
     return qubit_op;
 }
 
-
-unsigned int Context::resolve_var(Token_kind kind) const {
-    auto gate = get_current_node<Gate>();
-
-    if (kind == GATE){
-        return gate->get_node_kind();
-    } else if (kind == GATE_QUBITS) {
-        return gate->get_num_external_qubits();
-    } else if (kind == GATE_BITS) {
-        return gate->get_num_external_bits();
-    } else if (kind == GATE_FLOATS) {
-        return gate->get_num_floats();
-    } else if (kind == ALL_QUBITS) {
-        auto qubits = get_current_circuit()->get_coll<Resource>(Resource_kind::QUBIT);
-        return qubits.size();
-    } else if (kind == ALL_BITS) {
-        auto bits = get_current_circuit()->get_coll<Resource>(Resource_kind::BIT);
-        return bits.size();
+void Context::pop_var(const std::string& var){
+    if (resource_var_bindings.find(var) != resource_var_bindings.end()){
+        resource_var_bindings[var].pop_back();
     }
 
-    return 0;
+    if (resource_def_var_bindings.find(var) != resource_def_var_bindings.end()){
+        resource_def_var_bindings[var].pop_back();
+    }
 }
+
+

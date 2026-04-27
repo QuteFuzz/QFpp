@@ -21,9 +21,7 @@ class Branch {
 
         inline void set_recursive_flag(){recursive = true;}
 
-        inline void add(const Term& term){
-            terms.push_back(term);
-        }
+        inline void add(const Term& term){terms.push_back(term);}
 
         inline size_t size() const {return terms.size();}
 

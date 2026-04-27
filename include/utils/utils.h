@@ -75,6 +75,28 @@ namespace fs = std::filesystem;
 
 struct Control;
 
+enum Node_build_state {
+    NB_DONE,
+    NB_BUILD,
+};
+
+enum Node_kind {
+    TERMINAL,
+    NON_TERMINAL,
+};
+
+enum Clone_type {
+    SHALLOW,
+    DEEP,
+};
+
+enum class Print_mode {
+    DEFAULT,
+    INDENT_LEVEL,
+    CHILD_INDENT,
+    SELF_INDENT,
+};
+
 [[noreturn]]
 void ERROR(const std::string& msg, std::source_location location = std::source_location::current());
 
