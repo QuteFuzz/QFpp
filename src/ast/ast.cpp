@@ -116,13 +116,15 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			case REGISTER_PARAM: case SINGULAR_PARAM: {
 				parent->remove_branch_constraint(); // parent is one of the nodes above, remove constraints as just used to reach here
 
-				auto res = std::dynamic_pointer_cast<Resource>(parent);
+				auto res_parent = std::dynamic_pointer_cast<Resource>(parent);
 
-				if(res == nullptr){
+				if(res_parent == nullptr){
 					WARNING("Parent of resource expected to be of `Resource` type! Returning dummy");
 					return std::make_shared<Node>("");;
 				} else {
-					return res->clone(SHALLOW);
+					auto res = res_parent->clone(SHALLOW);
+					res->set_node_kind(kind);
+					return res;
 				}
 			}
 
@@ -140,13 +142,15 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			case REGISTER_PARAM_DEF: case SINGULAR_PARAM_DEF: {
 				parent->remove_branch_constraint(); // parent is one of the nodes above, remove constraints as just used to reach here
 
-				auto def = std::dynamic_pointer_cast<Resource_def>(parent);
+				auto def_parent = std::dynamic_pointer_cast<Resource_def>(parent);
 
-				if(def == nullptr){
+				if(def_parent == nullptr){
 					WARNING("Parent of resource def expected to be of `Resource def` type! Returning dummy");
 					return std::make_shared<Node>("");;
 				} else {
-					return def->clone(SHALLOW);
+					auto def = def_parent->clone(SHALLOW); 
+					def->set_node_kind(kind);
+					return def;
 				}
 			}
 
@@ -200,17 +204,20 @@ std::vector<Term> Ast::resolve_term_expr(const Term& init_child_term, std::optio
 		child_terms = std::vector<Term>(term_constraint_max.value_or(1), init_child_term);
 	
 	} else {
-		auto expr_kind = expr->get_kind();
+		Expr_type expr_eval = expr->eval(context);
 
-		if(expr_kind == Expr_kind::RULE_LIST){
-			auto rules = expr->eval_rule_list(context);
+		if (std::holds_alternative<int>(expr_eval)){
+			child_terms = std::vector<Term>(std::get<int>(expr_eval), init_child_term);
+
+		} else if (std::holds_alternative<std::string>(expr_eval)){
+			child_terms = std::vector<Term>(1, Term(std::get<std::string>(expr_eval), STRING));
+
+		} else if (std::holds_alternative<Rule_list>(expr_eval)){
+			auto rules = std::get<Rule_list>(expr_eval);
 
 			for (std::shared_ptr<Rule> rule : rules){
 				child_terms.push_back(make_term_from_rule(rule));
 			}
-
-		} else if (expr_kind == Expr_kind::INT){
-			child_terms = std::vector<Term>(expr->eval_int(context), init_child_term);
 		
 		} else {
 			ERROR("Expr is expected to have a return type of INT or RULE_LIST");
@@ -219,7 +226,6 @@ std::vector<Term> Ast::resolve_term_expr(const Term& init_child_term, std::optio
 
 	return child_terms;
 }
-
 
 /// The parent node passed here is before it has any children, where the children are expected to come from a branch chosen from the rule inside
 /// `term`. Therefore, `parent` and `term` must be the same "kind" 
@@ -269,15 +275,8 @@ Slot_type Ast::term_branch_to_child_nodes(
 
 					if (it != descendant_node_branch_constraints.end()){
 						// INFO("Adding descendant branch constraint to node " + child_node->get_str());
-
 						// need to add a branch constraint to this child node, then remove it from the map
 						child_node->add_branch_constraint(it->second);
-
-						size_t n_erased = descendant_node_branch_constraints.erase(child_node_kind);
-
-						if (n_erased != 1){
-							ERROR("Failed to remove descendant node branch constraint");
-						}
 					}
 
 					last_built_child = parent->add_child(child_node);

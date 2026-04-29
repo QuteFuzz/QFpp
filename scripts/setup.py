@@ -48,7 +48,7 @@ def clone_repos(dev: bool):
 
 
 def parse():
-    parser = argparse.ArgumentParser(description="QuteFuzz CI/Nightly Pipeline")
+    parser = argparse.ArgumentParser(description="QuteFuzz setup script")
     parser.add_argument(
         "--dev",
         action="store_true",
@@ -220,10 +220,6 @@ if __name__ == "__main__":
     )
 
     run_command(["uv", "sync"], env=env)
-
-    log(">>> Activating virtual environment for script session...", Color.BLUE)
-    venv_bin = Path.cwd() / ".venv" / "bin"
-    os.environ["PATH"] = f"{venv_bin}{os.pathsep}{os.environ.get('PATH', '')}"
 
     if parser.dev:
         check_conan_profile()

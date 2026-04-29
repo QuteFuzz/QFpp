@@ -75,6 +75,9 @@ class Node : public std::enable_shared_from_this<Node> {
             return kind;
         }
 
+        inline void set_node_kind(Token_kind _kind){
+            kind = _kind;
+        }
 
         inline std::vector<std::shared_ptr<Node>>& get_children() {
             return children;

@@ -29,7 +29,7 @@ Slot_type build_ast_children(
     std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints
 );
 
-std::shared_ptr<Gate> gate_from_qubit_op(std::shared_ptr<Node> qubit_op);
+std::shared_ptr<Gate> gate_from_anscestor(std::shared_ptr<Node> anscestor);
 
 void move_qubits(const std::shared_ptr<Node> source_qubit_anscestor, Slot_type dest_qubit_anscestor);
 

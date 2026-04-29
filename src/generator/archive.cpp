@@ -248,17 +248,11 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
         Cell cell = archive[random_index];
         Ast_entry genome = cell.get_genome().clone();
 
-        // genome.ast->print_program(std::cout);
-        // std::cout << "\n=========" << std::endl;
-
         Erase_child(genome, COMPOUND_STMTS, 0.8).apply();
-
         size_t mutation_rule_idx = sel.apply(genome, grammar);
+
         unsigned int n_new_placements = place(genome) ? 1 : 0; // each placement can discover at most one new cell
         sel.record(mutation_rule_idx, n_new_placements);
-
-        // genome.ast->print_program(std::cout);
-        // getchar();
 
         total_new_placements += n_new_placements;
     }

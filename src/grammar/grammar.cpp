@@ -12,7 +12,6 @@ Grammar::Grammar(const fs::path& filename, std::vector<Token>& meta_grammar_toke
     num_tokens = tokens.size();
 
     consume(0); // prepare current token
-    peek(); // prepare next token
 }
 
 [[noreturn]]
@@ -49,6 +48,7 @@ void Grammar::consume(int n){
         grammar_error("Out of tokens! Consumed too much");
     } else {
         curr_token = tokens[token_pointer];
+        peek();
     }
 }
 
@@ -179,32 +179,21 @@ void Grammar::add_branch_to_current_rule(){
 void Grammar::add_expr_to_last_term(){
     assert(curr_expr != nullptr);
 
-    auto expr_kind = curr_expr->get_kind();
+    Branch& current_branch = stack.top().branch;
+    size_t branch_size = current_branch.size();
 
-    if (expr_kind == Expr_kind::INT){
-        Branch& current_branch = stack.top().branch;
-        size_t branch_size = current_branch.size();
-
-        if (branch_size == 0){
-            grammar_error("Current branch should have at least one term to add constraint to");
-        } else {
-            current_branch.at(branch_size - 1).add_expr(curr_expr);
-        }
-
-    } else if (expr_kind == Expr_kind::RULE_LIST){
-        Term term("here", STRING);
+    if (branch_size == 0){
+        Term term("", STRING);
         term.add_expr(curr_expr);
         add_term_to_current_branch(term);
-
     } else {
-        grammar_error("Expr expected to have return type of INT or RULE_LIST, got " + std::to_string((int)expr_kind));
+        current_branch.at(branch_size - 1).add_expr(curr_expr);
     }
 }
 
 template<typename NextFunc>
 std::unique_ptr<Expr> Grammar::parse_binary_op(NextFunc parse_next, std::initializer_list<std::string> valid_ops) {
     auto left = parse_next();
-    peek();
     
     auto match_op = [&]() {
         for (const auto& op : valid_ops) {
@@ -223,9 +212,7 @@ std::unique_ptr<Expr> Grammar::parse_binary_op(NextFunc parse_next, std::initial
         auto right = parse_next();
         
         // fold the tree downward and leftward
-        left = std::make_unique<BinExpr>(op, std::move(left), std::move(right));
-        
-        peek(); // peek ahead again
+        left = std::make_unique<BinExpr>(op, std::move(left), std::move(right));        
     }
     
     return left;
@@ -236,6 +223,11 @@ std::unique_ptr<Expr> Grammar::expr() {
         return for_expr();
     } else if (curr_token.value == "if"){
         return if_expr();
+
+    /// TODO: complete assignment expr 
+    // } else if (curr_token.kind == RULE && next_token.kind == RULE_START) {
+        // build_grammar(RULE_END);
+        // return std::make_unique<Expr>();
     } else {
         return logic_expr();
     }
@@ -269,7 +261,6 @@ std::unique_ptr<Expr> Grammar::if_expr() {
     auto true_expr = expr();
     std::unique_ptr<Expr> false_expr = nullptr;
 
-    peek();
     if (next_token.value == "else"){
         consume(2); // consume true expr and "else"
 
@@ -334,7 +325,6 @@ std::unique_ptr<Expr> Grammar::factor() {
     } else {
         std::string obj_name = curr_token.value;
 
-        peek();
         if(next_token.value == "."){
             consume(2);
 
@@ -461,7 +451,6 @@ Token_kind Grammar::parse_token(){
 
     prev_token = curr_token;
     consume();
-    peek(); // always peek to prepare for next token
 
     return curr_token.kind;
 }
