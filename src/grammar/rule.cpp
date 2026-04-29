@@ -17,13 +17,6 @@ bool Rule::contains_rule(const Token_kind& other_rule){
     return false;
 }
 
-void Rule::eval_branch_exprs(Context& context){
-    for(auto& branch : branches){
-        branch.eval_term_exprs(context);
-    }
-}
-
-
 
 /// @brief Pick a branch from the rule. The parent node here is the node created for this rule, and it contains a constriant which is used to pick
 /// the correct branch to make the child nodes

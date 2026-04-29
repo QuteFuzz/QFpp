@@ -211,9 +211,8 @@ class ForExpr : public Expr {
 class AssignExpr : public Expr {
     
     public:
-        AssignExpr(std::string _actual_name, std::shared_ptr<Rule> _temp_rule) :
-            actual_name(_actual_name),
-            temp_rule(_temp_rule)
+        AssignExpr(std::shared_ptr<Rule> _rule) :
+            rule(_rule)
         {}
 
         Expr_type eval(Context& context) const override;
@@ -222,7 +221,7 @@ class AssignExpr : public Expr {
 
     private:
         std::string actual_name;
-        std::shared_ptr<Rule> temp_rule;
+        std::shared_ptr<Rule> rule;
 
 };
 

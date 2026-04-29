@@ -19,26 +19,19 @@ void VarExpr::print(std::ostream& stream) const {
 };
 
 Expr_type RuleExpr::eval(Context& context) const {
-    auto temp_rule = context.get_value_bound_to<Rule>(rule_name);
-
-    if (temp_rule == nullptr){
-        if (rule == nullptr){
-            return 0;
-        } else {
-            return rule;
-        }
-    } else {
-        auto _clone = std::make_shared<Rule>(*temp_rule);
-
-        _clone->eval_branch_exprs(context);
-        // context.pop_var(rule_name);
-
-        return _clone;
+    if (auto temp_rule = context.get_value_bound_to<Rule>(rule_name)){
+        return temp_rule;
     }
+
+    if (rule != nullptr){
+        return rule;
+    }
+
+    return 0;
 }
 
 void RuleExpr::print(std::ostream& stream) const {
-    stream << rule->get_name();
+    stream << rule_name;
 }
 
 Expr_type BlockExpr::eval(Context& context) const {
@@ -211,16 +204,28 @@ Expr_type ForExpr::eval(Context& context) const {
 }
 
 void ForExpr::print(std::ostream& stream) const {
-    stream << "for " << iter_var << " in " << iterable << ": \n"
+    stream << "for " << iter_var << " in " << iterable << " \n"
     << *body;
 }
 
 
 Expr_type AssignExpr::eval(Context& context) const {
-    context.push_var<Rule>(actual_name, temp_rule);
-    return "";
+    static int id = 0;
+    std::string temp_name = "__temp_assign_" + std::to_string(id++);
+
+    auto dynamic_rule = std::make_shared<Rule>(Token{temp_name, RULE}, Scope::GLOB);
+
+    if (!rule->is_empty()) {
+        for (const auto& branch : rule->get_branches()){
+            dynamic_rule->add(branch.eval_term_exprs(context));
+        }
+    }
+
+    context.push_var<Rule>(actual_name, dynamic_rule);
+
+    return 0;
 }
 
 void AssignExpr::print(std::ostream& stream) const {
-    stream << *temp_rule << std::endl;
+    stream << actual_name << std::endl;
 }

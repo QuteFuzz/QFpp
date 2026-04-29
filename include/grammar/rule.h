@@ -42,8 +42,6 @@ class Rule {
 
         bool contains_rule(const Token_kind& other_rule);
 
-        void eval_branch_exprs(Context& context);
-
         bool operator==(const Rule& other) const {
             return (token == other.get_token()) && scope_matches(scope, other.get_scope());
         }

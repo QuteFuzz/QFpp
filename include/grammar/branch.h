@@ -68,14 +68,17 @@ class Branch {
             return terms.end();
         }
 
-        void eval_term_exprs(Context& context){
+        Branch eval_term_exprs(Context& context) const {
             std::vector<Term> _terms = {};
 
-            for (const auto& term : terms){
+            for (auto& term : terms){
                 _terms = append_vectors<Term>(_terms, term.eval_expr(context, std::nullopt));
             }
 
-            terms = _terms;
+            Branch new_branch(_terms);
+            new_branch.recursive = recursive;
+
+            return new_branch;
         }
 
         inline void clear(){

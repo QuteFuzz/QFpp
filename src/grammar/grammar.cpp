@@ -258,21 +258,20 @@ std::unique_ptr<Expr> Grammar::expr() {
         return if_expr();
 
     } else if (curr_token.kind == RULE && next_token.kind == RULE_START) {
-        static int id = 0;
+        std::string rule_name = curr_token.value;
 
-        std::string actual_name = curr_token.value;
-        std::string temp_name = "__temp_assign_" + std::to_string(id++);
-
-        curr_token.value = temp_name;
-
-        // std::cout << temp_name << std::endl;
+        // consume the `=`, because the logic for pushing to stack is checked at '='
+        // leaving the rule name creates a bug where the builder thinks the rule is on the rhs of the '='
+        consume();
 
         build_grammar(RULE_END);
         back();  // need because parsing the assignment ends by pointing 1 token after `;`
 
-        auto temp_rule = get_rule_pointer_if_exists(temp_name, Scope::GLOB);
+        auto rule = get_rule_pointer_if_exists(rule_name, rule_def_scope);
 
-        return std::make_unique<AssignExpr>(actual_name, temp_rule);
+        assert(rule != nullptr); // rule must exist because build grammar must have built it
+
+        return std::make_unique<AssignExpr>(rule);
     } else {
         return logic_expr();
     }
@@ -393,13 +392,6 @@ Token_kind Grammar::parse_token(){
         add_expr_to_last_term();
         curr_expr = nullptr;
 
-    } else if(is_kind_of_rule(curr_token.kind) || is_meta(curr_token.kind) || curr_token.kind == STRING || curr_token.kind == NUMBER){
-        // rules that are within branches, rules before `RULE_START` and `RULE_APPEND` are handled at `RULE_START` and `RULE_APPEND`
-        if(!stack.empty()){
-            add_term_to_current_branch(curr_token);
-            rule_decl_scope = Scope::GLOB; // reset to GLOB scope as default
-        }
-
     } else if (curr_token.kind == RULE_START) {
         // if (stack.empty()){
             stack.push(Current(get_rule_pointer(prev_token, rule_def_scope)));
@@ -407,6 +399,13 @@ Token_kind Grammar::parse_token(){
         // } else {
             // grammar_error("At RULE_START current stack is expected to be empty");
         // }
+
+    } else if(is_kind_of_rule(curr_token.kind) || is_meta(curr_token.kind) || curr_token.kind == STRING || curr_token.kind == NUMBER){
+        // rules that are within branches, rules before `RULE_START` and `RULE_APPEND` are handled at `RULE_START` and `RULE_APPEND`
+        if(!stack.empty()){
+            add_term_to_current_branch(curr_token);
+            rule_decl_scope = Scope::GLOB; // reset to GLOB scope as default
+        }
 
     } else if (curr_token.kind == RULE_APPEND){
         if (stack.empty()){
