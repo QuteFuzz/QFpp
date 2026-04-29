@@ -42,6 +42,11 @@ class Node_gen {
                 bool operator!=(const Iterator& other) const {
                     return _current_slot != other._current_slot;
                 }
+            
+
+                bool operator==(const Iterator& other) const {
+                    return _current_slot == other._current_slot;
+                }
 
             private:
                 Slot_type _current_slot;

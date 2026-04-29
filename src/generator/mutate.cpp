@@ -128,17 +128,25 @@ void Add_gate_chain::apply_blockwise(Slot_type block) {
 
     size_t chain_size = gate_kinds.size();
 
-    assert(chain_size >= 1);
-
     std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints = branch_constraints_for_gate(gate_kinds[0]);
 
     // need to deref immediately because `build_ast_children` modifies the AST => might lead to child vector reallocs which frees the ptrs in the children vector
     // so derefing later would cause use-after-free error
     std::shared_ptr<Node> last_built_gate_0 = *build_ast_children(block, rule, *entry.context, 0, 1, descendant_node_branch_constraints);
 
+    #if 0
+    std::cout << "gate0 " << std::endl; 
+    last_built_gate_0->print_program(std::cout);
+    #endif
+
     for (size_t i = 1; i < chain_size; i++){
         descendant_node_branch_constraints = branch_constraints_for_gate(gate_kinds[i]);
         Slot_type last_built_gate_1 = build_ast_children(block, rule, *entry.context, 0, 1, descendant_node_branch_constraints);
+
+        # if 0
+        std::cout << "gate1 " << std::endl; 
+        (*last_built_gate_1)->print_program(std::cout);
+        #endif
 
         move_qubits(last_built_gate_0, last_built_gate_1);
     }

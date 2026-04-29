@@ -21,7 +21,7 @@ Info::Info(Slot_type _compilation_unit, std::shared_ptr<Info> info) :
             }
         
             qubit_ops.push_back(qubit_op);
-            gates.push_back(gate_from_qubit_op(qubit_op));
+            gates.push_back(gate_from_anscestor(qubit_op));
         }
 
     } else {

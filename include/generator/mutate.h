@@ -130,7 +130,17 @@ class Add_gate_chain : public Mutation_rule {
         Add_gate_chain(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, float _blockwise_rate, const std::vector<Token_kind>& _gate_kinds):
             Mutation_rule(_entry, _grammar, COMPOUND_STMTS, _blockwise_rate),
             gate_kinds(_gate_kinds)
-        {}
+        {
+            assert(gate_kinds.size() >= 1);
+
+            unsigned int n_qubits = find_gate_info(gate_kinds[0])->n_qubits;
+
+            for (size_t i = 1; i < gate_kinds.size(); i++){
+                if(find_gate_info(gate_kinds[i])->n_qubits != n_qubits){
+                    ERROR("All gates in the chain must expect the same number of qubits");
+                }
+            }
+        }
 
         void apply_blockwise(Slot_type block) override;
 

@@ -50,13 +50,8 @@
 class Context;
 class Rule;
 
-enum class Expr_kind {
-    UNKNOWN,
-    INT,
-    BOOL,
-    RULE,
-    RULE_LIST,
-};
+using Rule_list = std::vector<std::shared_ptr<Rule>>;
+using Expr_type = std::variant<int, bool, std::string, std::shared_ptr<Rule>, Rule_list>;
 
 class Expr {
     public:
@@ -66,18 +61,7 @@ class Expr {
 
         virtual ~Expr() = default;
 
-        virtual Expr_kind get_kind() const { return Expr_kind::UNKNOWN; }
-
-        // evaluating maths
-        virtual int eval_int(Context& /*ctx*/) const { return 0; }
-        
-        // evaluating conditions (e.g., res.is_singular)
-        virtual bool eval_bool(Context& /*ctx*/) const { return false; }
-        
-        virtual std::shared_ptr<Rule> eval_rule(Context& /*ctx*/) const { return nullptr; }
-        
-        // yielding a list of rule names to expand from a loop
-        virtual std::vector<std::shared_ptr<Rule>> eval_rule_list(Context& /*ctx*/) const { return {}; }
+        virtual Expr_type eval(Context&) const { return 0; }
 
         virtual void print(std::ostream& stream) const = 0;
 
@@ -93,9 +77,7 @@ class IntExpr : public Expr {
             value(_value)
         {}
 
-        Expr_kind get_kind() const override { return Expr_kind::INT; }
-
-        int eval_int(Context& /*context*/) const override;
+        Expr_type eval(Context&) const override;
 
         void print(std::ostream& stream) const override;
 
@@ -110,9 +92,7 @@ class VarExpr : public Expr {
             var(_var)
         {}
 
-        Expr_kind get_kind() const override { return Expr_kind::INT; }
-
-        int eval_int(Context& context) const override;
+        Expr_type eval(Context& context) const override;
 
         void print(std::ostream& stream) const override;
 
@@ -126,14 +106,27 @@ class RuleExpr : public Expr {
             rule(_rule)
         {}
 
-        Expr_kind get_kind() const override { return Expr_kind::RULE; }
-
-        std::shared_ptr<Rule> eval_rule(Context& /*ctx*/) const override;
+        Expr_type eval(Context&) const override;
 
         void print(std::ostream& stream) const override;
 
     private:
         std::shared_ptr<Rule> rule;
+};
+
+class BlockExpr : public Expr {
+
+    public:
+        BlockExpr(std::vector<std::unique_ptr<Expr>> exprs): 
+            expressions(std::move(exprs))
+        {}
+
+        Expr_type eval(Context& context) const override;
+
+        void print(std::ostream& stream) const override;
+
+    private:
+        std::vector<std::unique_ptr<Expr>> expressions;
 };
 
 class PropertyAccessExpr : public Expr {
@@ -143,9 +136,7 @@ class PropertyAccessExpr : public Expr {
             prop_name(std::move(prop))
         {}
 
-        Expr_kind get_kind() const override { return Expr_kind::BOOL; }
-
-        bool eval_bool(Context& context) const override;
+        Expr_type eval(Context& context) const override;
 
         void print(std::ostream& stream) const override;
 
@@ -160,15 +151,9 @@ class BinExpr : public Expr {
             op(_op),
             left(std::move(_left)),
             right(std::move(_right))
-        {
-            if (left->get_kind() != Expr_kind::INT || right->get_kind() != Expr_kind::INT){
-                ERROR("Binary expr must have lhs and rhs as integers");
-            }
-        }
+        {}
 
-        Expr_kind get_kind() const override { return Expr_kind::INT; }
-
-        int eval_int(Context& ctx) const override;
+        Expr_type eval(Context& context) const override;
 
         void print(std::ostream& stream) const override;
 
@@ -186,18 +171,9 @@ class IfExpr : public Expr {
             false_branch(std::move(f)) 
         {
             assert((true_branch != nullptr) && (cond != nullptr));
-
-            if (cond->get_kind() != Expr_kind::BOOL ||
-                true_branch->get_kind() != Expr_kind::RULE || 
-                (false_branch != nullptr && false_branch->get_kind() != Expr_kind::RULE))
-            {
-                ERROR("If expr expeceted conditional to return bool, and true and false branches to return string");
-            }
         }
 
-        Expr_kind get_kind() const override { return Expr_kind::RULE; }
-
-        std::shared_ptr<Rule> eval_rule(Context& ctx) const override;
+        Expr_type eval(Context& context) const override;
 
         void print(std::ostream& stream) const override;
 
@@ -214,18 +190,12 @@ class ForExpr : public Expr {
             iterable(iter),
             body(std::move(b)) 
         {
-            if (body->get_kind() != Expr_kind::RULE){
-                ERROR("For expr body must return RULE type");
-            }
-
             if (iter != "ALL_QUBITS" && iter != "ALL_BITS" && iter != "ALL_QUBIT_DEFS" && iter != "ALL_BIT_DEFS"){
                 ERROR("Unknown iterable " + iter);
             }
         }
 
-        Expr_kind get_kind() const override { return Expr_kind::RULE_LIST; }
-
-        std::vector<std::shared_ptr<Rule>> eval_rule_list(Context& context) const override;
+        Expr_type eval(Context& context) const override;
 
         void print(std::ostream& stream) const override;
 

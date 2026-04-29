@@ -43,16 +43,15 @@ INTERNAL {
 
     # TODO: fix discard, maybe we need a loop
 
-    singular_qubit_def_discard =  "measure(" GET_NAME ")" NEWLINE;
-    register_qubit_def_discard =  "measure_array(" GET_NAME ")" NEWLINE;
-
-    qubit_defs_discard = [
-        for def in ALL_QUBIT_DEFS:
-            if def.in_int_scope:
-                if def.is_singular: singular_qubit_def_discard
-                else: register_qubit_def_discard
-        ]
-        NEWLINE;
+    # qubit_defs_discard = [
+    #     for def in ALL_QUBIT_DEFS:
+    #         if def.in_int_scope:
+    #             singular_qubit_def_discard =  "measure(" [def.name] ")" NEWLINE;
+    #             register_qubit_def_discard =  "measure_array(" [def.name] ")" NEWLINE;
+    #             if def.is_singular: singular_qubit_def_discard
+    #             else: register_qubit_def_discard
+    #     ]
+    #     NEWLINE;
 }
 
 EXTERNAL {

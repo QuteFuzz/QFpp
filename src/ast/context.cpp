@@ -152,7 +152,6 @@ std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk, Scope s
 
     auto random_resource = get_random_from_coll<Resource>(filtered_coll, pred);
     random_resource->set_used();
-    // random_resource->extend_flow_path(current.get<Qubit_op>(), current_port++);
 
     current.set<Resource>(random_resource);
     return random_resource;

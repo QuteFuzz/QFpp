@@ -66,15 +66,11 @@ Slot_type build_ast_children(
     return ast_builder->term_branch_to_child_nodes(*root, term, n_children, descendant_node_branch_constraints);
 }
 
-std::shared_ptr<Gate> gate_from_qubit_op(std::shared_ptr<Node> qubit_op) {
+std::shared_ptr<Gate> gate_from_anscestor(std::shared_ptr<Node> anscestor) {
     std::shared_ptr<Gate> gate;
 
-    if (qubit_op->get_node_kind() != QUBIT_OP) {
-        ERROR("Slot must be of kind QUBIT_OP");
-    }
-
-    std::shared_ptr<Node> gate_name_primitive = qubit_op->find(GATE_NAME);
-    std::shared_ptr<Node> gate_subroutine = qubit_op->find(SUBROUTINE);
+    std::shared_ptr<Node> gate_name_primitive = anscestor->find(GATE_NAME);
+    std::shared_ptr<Node> gate_subroutine = anscestor->find(SUBROUTINE);
 
     std::shared_ptr<Gate> primitive_gate = 
         (gate_name_primitive == nullptr) ? 
@@ -85,10 +81,10 @@ std::shared_ptr<Gate> gate_from_qubit_op(std::shared_ptr<Node> qubit_op) {
 
     if (gate == nullptr){
         std::cout << "========================" << std::endl;
-        qubit_op->print_program(std::cout);
+        anscestor->print_program(std::cout);
         std::cout << "========================" << std::endl;
 
-        ERROR("`Gate` node not found anywhere under this qubit op");
+        ERROR("`Gate` node not found anywhere under this anscestor");
     }
 
     return gate;
@@ -99,19 +95,25 @@ void replace_node(Slot_type old_node, std::shared_ptr<Node> new_node) {
     *old_node = new_node;
 }
 
-/// Move qubits from source to dest anscenstor. Limited by whichever anscenstor has the lower number of qubits
+/// Move qubits from source to dest anscenstor. Assumed both have the same number of qubits
 void move_qubits(const std::shared_ptr<Node> source_qubit_anscestor, Slot_type dest_qubit_anscestor) {
-    auto source_qubits = Node_gen(*source_qubit_anscestor, QUBIT);
-    auto dest_qubits = Node_gen(**dest_qubit_anscestor, QUBIT);
+    auto source_gate = gate_from_anscestor(source_qubit_anscestor);
+    auto dest_gate = gate_from_anscestor(*dest_qubit_anscestor);
 
-    auto source_it = source_qubits.begin();
-    auto dest_it = dest_qubits.begin();
+    // only move if both have the same number of qubits
+    if (source_gate->get_num_external_qubits() == dest_gate->get_num_external_qubits()){
+        auto source_qubits = Node_gen(*source_qubit_anscestor, QUBIT);
+        auto dest_qubits = Node_gen(**dest_qubit_anscestor, QUBIT);
 
-    while((source_it != source_qubits.end()) && (dest_it != dest_qubits.end())){
-        *dest_it = *source_it;
+        auto source_it = source_qubits.begin();
+        auto dest_it = dest_qubits.begin();
 
-        dest_it++;
-        source_it++;
+        while((source_it != source_qubits.end()) && (dest_it != dest_qubits.end())){
+            *dest_it = (*source_it)->clone(DEEP);
+
+            dest_it++;
+            source_it++;
+        }
     }
 }
 
