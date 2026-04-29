@@ -12,7 +12,6 @@ Grammar::Grammar(const fs::path& filename, std::vector<Token>& meta_grammar_toke
     num_tokens = tokens.size();
 
     consume(0); // prepare current token
-    // peek(); // prepare next token
 }
 
 [[noreturn]]
@@ -452,7 +451,6 @@ Token_kind Grammar::parse_token(){
 
     prev_token = curr_token;
     consume();
-    // peek(); // always peek to prepare for next token
 
     return curr_token.kind;
 }
