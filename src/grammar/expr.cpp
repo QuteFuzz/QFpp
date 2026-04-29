@@ -221,11 +221,11 @@ Expr_type AssignExpr::eval(Context& context) const {
         }
     }
 
-    context.push_var<Rule>(actual_name, dynamic_rule);
+    context.push_var<Rule>(rule->get_name(), dynamic_rule);
 
     return 0;
 }
 
 void AssignExpr::print(std::ostream& stream) const {
-    stream << actual_name << std::endl;
+    stream << rule->get_name() << std::endl;
 }

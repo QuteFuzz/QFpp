@@ -109,7 +109,7 @@ std::vector<Term> Term::eval_expr(Context& context, std::optional<unsigned int> 
 			auto rules = std::get<Rule_list>(expr_eval);
 
 			for (std::shared_ptr<Rule> rule : rules){
-                std::cout << *rule << std::endl;
+                // std::cout << *rule << std::endl;
 				child_terms.push_back(make_term_from_rule(rule));
 			}
 		

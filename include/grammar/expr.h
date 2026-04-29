@@ -220,7 +220,6 @@ class AssignExpr : public Expr {
         void print(std::ostream& stream) const override;
 
     private:
-        std::string actual_name;
         std::shared_ptr<Rule> rule;
 
 };
