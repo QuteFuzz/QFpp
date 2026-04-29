@@ -30,8 +30,6 @@ class Ast{
 
         ~Ast() = default;
 
-        std::vector<Term> resolve_term_expr(const Term& init_child_term, std::optional<unsigned int> term_constraint_max);
-
         Slot_type term_branch_to_child_nodes(
             std::shared_ptr<Node> parent, 
             const Term& term,
@@ -43,8 +41,6 @@ class Ast{
         std::variant<std::shared_ptr<Node>, Term> make_child(const std::shared_ptr<Node> parent, const Term& term);
 
         std::shared_ptr<Context> get_context() const { return std::make_shared<Context>(context); }
-
-        Term make_term_from_rule(std::shared_ptr<Rule> rule_ptr);
 
         std::shared_ptr<Node> build(std::shared_ptr<Rule> entry, std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints = {});
 

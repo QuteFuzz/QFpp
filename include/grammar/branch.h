@@ -68,6 +68,16 @@ class Branch {
             return terms.end();
         }
 
+        void eval_term_exprs(Context& context){
+            std::vector<Term> _terms = {};
+
+            for (const auto& term : terms){
+                _terms = append_vectors<Term>(_terms, term.eval_expr(context, std::nullopt));
+            }
+
+            terms = _terms;
+        }
+
         inline void clear(){
             terms.clear();
         }

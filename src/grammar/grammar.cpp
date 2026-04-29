@@ -20,13 +20,15 @@ void Grammar::grammar_error(const std::string& msg, std::source_location loc){
     std::cout << "Grammar: " << name << std::endl;
     std::cout << "STACK_SIZE: " << stack.size() << std::endl;
 
-    std::cout << "STACK TOP: ";
-    if (stack.top().rule == nullptr) {
-        std::cout << "null ";
-    } else {
-        std::cout << *stack.top().rule;
+    if (!stack.empty()){
+        std::cout << "STACK TOP: ";
+        if (stack.top().rule == nullptr) {
+            std::cout << "null ";
+        } else {
+            std::cout << *stack.top().rule;
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
 
     std::cout << "Curr token: " << curr_token << std::endl;
     ERROR(msg, loc);
@@ -47,6 +49,7 @@ void Grammar::consume(int n){
     if(token_pointer == num_tokens){
         grammar_error("Out of tokens! Consumed too much");
     } else {
+        prev_token = curr_token;
         curr_token = tokens[token_pointer];
         peek();
     }
@@ -62,6 +65,16 @@ void Grammar::peek(){
         next_token = tokens[token_pointer+1];
     } else if (curr_token.kind != _EOF){
         grammar_error("Cannot peek!");
+    }
+}
+
+void Grammar::back(){
+    if(token_pointer == 0){
+        grammar_error("Cannot back!");
+    } else {
+        curr_token = tokens[--token_pointer];
+        if (token_pointer > 0) prev_token = tokens[token_pointer - 1];
+        peek();
     }
 }
 
@@ -218,16 +231,48 @@ std::unique_ptr<Expr> Grammar::parse_binary_op(NextFunc parse_next, std::initial
     return left;
 }
 
+std::unique_ptr<Expr> Grammar::parse_block(){
+    std::vector<std::unique_ptr<Expr>> block = {};
+
+    consume();
+
+    if (prev_token.value == ":"){
+        // assume single expr
+        block.push_back(expr());
+
+    } else if (prev_token.value == "{"){
+        while(curr_token.value != "}"){
+            block.push_back(expr());
+            consume(); // every expr always ends pointing to the last token in the expr
+        }
+    }
+
+    return std::make_unique<BlockExpr>(std::move(block));
+}
+
 std::unique_ptr<Expr> Grammar::expr() {
     if (curr_token.value == "for"){
         return for_expr();
+    
     } else if (curr_token.value == "if"){
         return if_expr();
 
-    /// TODO: complete assignment expr 
-    // } else if (curr_token.kind == RULE && next_token.kind == RULE_START) {
-        // build_grammar(RULE_END);
-        // return std::make_unique<Expr>();
+    } else if (curr_token.kind == RULE && next_token.kind == RULE_START) {
+        static int id = 0;
+
+        std::string actual_name = curr_token.value;
+        std::string temp_name = "__temp_assign_" + std::to_string(id++);
+
+        curr_token.value = temp_name;
+
+        // std::cout << temp_name << std::endl;
+
+        build_grammar(RULE_END);
+        back();  // need because parsing the assignment ends by pointing 1 token after `;`
+
+        auto temp_rule = get_rule_pointer_if_exists(temp_name, Scope::GLOB);
+
+        return std::make_unique<AssignExpr>(actual_name, temp_rule);
     } else {
         return logic_expr();
     }
@@ -243,9 +288,7 @@ std::unique_ptr<Expr> Grammar::for_expr(){
     std::string iter = curr_token.value;
     consume();
 
-    consume(":");
-
-    auto expr_res = expr();
+    auto expr_res = parse_block();
 
     return std::make_unique<ForExpr>(identifier, iter, std::move(expr_res));
 }
@@ -256,17 +299,15 @@ std::unique_ptr<Expr> Grammar::if_expr() {
     auto logic_expr_res = logic_expr();
     consume();
 
-    consume(":");
+    auto true_expr = parse_block();
     
-    auto true_expr = expr();
     std::unique_ptr<Expr> false_expr = nullptr;
 
     if (next_token.value == "else"){
         consume(2); // consume true expr and "else"
 
-        if (curr_token.value == ":"){
-            consume();
-            false_expr = expr();
+        if (curr_token.value == ":" || curr_token.value == "{"){
+            false_expr = parse_block();
         } else if (curr_token.value == "if"){
             return if_expr();
         } else {
@@ -334,12 +375,7 @@ std::unique_ptr<Expr> Grammar::factor() {
         
         } else {
             auto rule = get_rule_pointer_if_exists(obj_name, rule_def_scope);
-
-            if (rule == nullptr){
-                grammar_error("Rule used in expr must be defined before being used. Got: " + obj_name);
-            }
-
-            return std::make_unique<RuleExpr>(rule);
+            return std::make_unique<RuleExpr>(obj_name, rule);
         } 
     }
 }
@@ -349,7 +385,6 @@ std::unique_ptr<Expr> Grammar::factor() {
 /// of tokens must always exit with `curr_token` pointing at the LAST token in the series. For example in an expression [3 + 5], after building the `Expr` AST,
 /// `curr_token` must point to `5`.
 Token_kind Grammar::parse_token(){
-
     if (curr_token.kind == LBRACK){
         consume();
         curr_expr = std::move(expr());
@@ -366,12 +401,12 @@ Token_kind Grammar::parse_token(){
         }
 
     } else if (curr_token.kind == RULE_START) {
-        if (stack.empty()){
+        // if (stack.empty()){
             stack.push(Current(get_rule_pointer(prev_token, rule_def_scope)));
             stack.top().rule->clear();
-        } else {
-            grammar_error("At RULE_START current stack is expected to be empty");
-        }
+        // } else {
+            // grammar_error("At RULE_START current stack is expected to be empty");
+        // }
 
     } else if (curr_token.kind == RULE_APPEND){
         if (stack.empty()){
@@ -449,10 +484,19 @@ Token_kind Grammar::parse_token(){
         grammar_error("Unknown curr_token: " + curr_token.value);
     }
 
-    prev_token = curr_token;
-    consume();
+    if (curr_token.kind == _EOF){
+        return _EOF;
+    } else {
+    // prev_token = curr_token;
+        consume();
+        return prev_token.kind;  // return kind of token that has just been parsed
+    }
+}
 
-    return curr_token.kind;
+/// complete rule (does stack pop to return to home if needed)
+void Grammar::complete_rule(){
+    add_branch_to_current_rule();
+    stack.pop();
 }
 
 /// @brief Does not include meta-grammar tokens

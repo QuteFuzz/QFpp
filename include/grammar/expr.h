@@ -102,15 +102,17 @@ class VarExpr : public Expr {
 
 class RuleExpr : public Expr {
     public:
-        RuleExpr(std::shared_ptr<Rule> _rule): 
+        RuleExpr(std::string _rule_name, std::shared_ptr<Rule> _rule):
+            rule_name(_rule_name), 
             rule(_rule)
         {}
 
-        Expr_type eval(Context&) const override;
+        Expr_type eval(Context& context) const override;
 
         void print(std::ostream& stream) const override;
 
     private:
+        std::string rule_name;
         std::shared_ptr<Rule> rule;
 };
 
@@ -206,5 +208,22 @@ class ForExpr : public Expr {
 
 };
 
+class AssignExpr : public Expr {
+    
+    public:
+        AssignExpr(std::string _actual_name, std::shared_ptr<Rule> _temp_rule) :
+            actual_name(_actual_name),
+            temp_rule(_temp_rule)
+        {}
+
+        Expr_type eval(Context& context) const override;
+
+        void print(std::ostream& stream) const override;
+
+    private:
+        std::string actual_name;
+        std::shared_ptr<Rule> temp_rule;
+
+};
 
 #endif

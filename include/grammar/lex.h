@@ -442,6 +442,7 @@ inline bool is_meta(const Token_kind& kind){
 
 inline bool is_quiet(const Token_kind& kind){
     return
+        (kind == _EOF) ||
         (kind == RANGLE) ||
         (kind == LANGLE) ||
         (kind == SCOPE_RES) ||

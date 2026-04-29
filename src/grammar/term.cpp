@@ -87,3 +87,40 @@ bool Term::operator==(const Term& other) const {
 
     }
 }
+
+std::vector<Term> Term::eval_expr(Context& context, std::optional<unsigned int> term_constraint_max) const {
+	std::vector<Term> child_terms;
+	
+	if (expr == nullptr){
+		child_terms = std::vector<Term>(term_constraint_max.value_or(1), *this);
+	
+	} else {
+		Expr_type expr_eval = expr->eval(context);
+
+		if (std::holds_alternative<int>(expr_eval)){
+            int size = std::get<int>(expr_eval);
+            assert(size >= 0);
+			child_terms = std::vector<Term>(size, *this);
+
+		} else if (std::holds_alternative<std::string>(expr_eval)){
+			child_terms = std::vector<Term>(1, Term(std::get<std::string>(expr_eval), STRING));
+
+		} else if (std::holds_alternative<Rule_list>(expr_eval)){
+			auto rules = std::get<Rule_list>(expr_eval);
+
+			for (std::shared_ptr<Rule> rule : rules){
+				child_terms.push_back(make_term_from_rule(rule));
+			}
+		
+		} else {
+			ERROR("Expr is expected to have a return type of INT, STR or RULE_LIST");
+		}
+	}
+
+	return child_terms;
+}
+
+Term make_term_from_rule(std::shared_ptr<Rule> rule_ptr){
+	Token_kind kind = rule_ptr->get_token().kind;
+	return Term(rule_ptr, kind, Print_mode::DEFAULT);
+}
