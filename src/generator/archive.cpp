@@ -241,7 +241,7 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
 
     auto start_time = std::chrono::steady_clock::now();
 
-    while(archive_av_quality() < 10.0 * init_quality){
+    while(archive_av_quality() < 4.0 * init_quality){
         unsigned int n_filled_cells = filled_archive_indices.size();
         unsigned int random_index = filled_archive_indices[random_uint(n_filled_cells - 1)];
 
