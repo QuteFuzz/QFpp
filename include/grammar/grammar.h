@@ -41,11 +41,7 @@ class Grammar{
         Token_kind parse_token();
 
         inline void build_grammar(Token_kind until = _EOF){
-            while(true){
-                if(parse_token() == until){
-                    break;
-                }
-            }
+            while(parse_token() != until);
         }
 
         void print_rules() const;
@@ -78,6 +74,8 @@ class Grammar{
 
         void peek();
 
+        void back();
+
         void add_term_to_current_branch(const Term& term);
 
         void add_term_to_current_branch(const Token& token);
@@ -88,6 +86,8 @@ class Grammar{
 
         template<typename NextFunc>
         std::unique_ptr<Expr> parse_binary_op(NextFunc parse_next, std::initializer_list<std::string> valid_ops);
+
+        std::unique_ptr<Expr> parse_block();
 
         std::unique_ptr<Expr> expr();
 
@@ -103,12 +103,8 @@ class Grammar{
 
         std::unique_ptr<Expr> factor();
 
-        /// complete rule (does stack pop to return to home if needed)
-        inline void complete_rule(){
-            add_branch_to_current_rule();
-            stack.pop();
-        }
-
+        void complete_rule();
+        
         /*
             moving through the tokens
         */

@@ -136,13 +136,24 @@ struct Context {
 			else if constexpr (std::is_same_v<T, Resource_def>) {
 				resource_def_var_bindings[var].push_back(item);
 			} 
+			else if constexpr (std::is_same_v<T, Rule>) {
+				rule_bindings[var].push_back(item);
+			} 
 			else {
 				ERROR("Unsupported type passed to push_var");
 			}
 		}
 
-		void pop_var(const std::string& var);
-
+		void pop_var(const std::string& var){
+			if (resource_var_bindings.find(var) != resource_var_bindings.end()){
+				resource_var_bindings[var].pop_back();
+			} else if (resource_def_var_bindings.find(var) != resource_def_var_bindings.end()){
+				resource_def_var_bindings[var].pop_back();
+			} else if (rule_bindings.find(var) != rule_bindings.end()){
+				rule_bindings[var].pop_back();
+			}
+		}
+		
 		template<typename T>
 		std::shared_ptr<T> get_value_bound_to(const std::string& var){
 			typename std::unordered_map<std::string, Ptr_coll<T>>::iterator iter;
@@ -155,6 +166,10 @@ struct Context {
 			else if constexpr (std::is_same_v<T, Resource_def>) {
 				iter = resource_def_var_bindings.find(var);
 				end = resource_def_var_bindings.end();
+			} 
+			else if constexpr (std::is_same_v<T, Rule>) {
+				iter = rule_bindings.find(var);
+				end = rule_bindings.end();
 			} 
 			else {
 				ERROR("Unsupported type passed to push_var");
@@ -191,6 +206,7 @@ struct Context {
 		Current_nodes current;
 		std::unordered_map<std::string, Ptr_coll<Resource>> resource_var_bindings;
 		std::unordered_map<std::string, Ptr_coll<Resource_def>> resource_def_var_bindings;
+		std::unordered_map<std::string, Ptr_coll<Rule>> rule_bindings;
 
 		std::vector<std::shared_ptr<Circuit>> circuits;
 		std::shared_ptr<Circuit> dummy_circuit = std::make_shared<Circuit>();

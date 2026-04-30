@@ -44,6 +44,8 @@ class Term {
         friend std::ostream& operator<<(std::ostream& stream, const Term& term);
 
         bool operator==(const Term& other) const;
+        
+        std::vector<Term> eval_expr(Context& context, std::optional<unsigned int> term_constraint_max) const;
 
         Token_kind get_node_kind() const {return kind;}
 
@@ -53,5 +55,7 @@ class Term {
         Print_mode pm = Print_mode::DEFAULT;
         std::shared_ptr<Expr> expr = nullptr;
 };
+
+Term make_term_from_rule(std::shared_ptr<Rule> rule_ptr);
 
 #endif

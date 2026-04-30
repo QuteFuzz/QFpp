@@ -18,12 +18,20 @@ void VarExpr::print(std::ostream& stream) const {
     stream << var;
 };
 
-Expr_type RuleExpr::eval(Context&) const {
-    return rule;
+Expr_type RuleExpr::eval(Context& context) const {
+    if (auto temp_rule = context.get_value_bound_to<Rule>(rule_name)){
+        return temp_rule;
+    }
+
+    if (rule != nullptr){
+        return rule;
+    }
+
+    return 0;
 }
 
 void RuleExpr::print(std::ostream& stream) const {
-    stream << rule->get_name();
+    stream << rule_name;
 }
 
 Expr_type BlockExpr::eval(Context& context) const {
@@ -94,7 +102,7 @@ Expr_type BinExpr::eval(Context& context) const {
         int left = std::get<int>(left_eval);
 
         if (op == "UNIFORM"){
-            return (int)random_uint(right, left);
+            return (int)random_uint(std::max(right, left), std::min(right, left));
         } else if (op == "+") {
             return left + right;
         } else if (op == "-"){
@@ -137,27 +145,19 @@ void BinExpr::print(std::ostream& stream) const {
 
 Expr_type IfExpr::eval(Context& context) const {
     auto cond_eval = cond->eval(context);
-    auto true_branch_eval = true_branch->eval(context);
 
-    if (std::holds_alternative<bool>(cond_eval) && std::holds_alternative<std::shared_ptr<Rule>>(true_branch_eval)){
-        
-        if (std::get<bool>(cond_eval)){
-            return true_branch_eval;
+    if (std::holds_alternative<bool>(cond_eval)) {        
+        if (std::get<bool>(cond_eval)) {
+            return true_branch->eval(context);
+
         } else if (false_branch != nullptr) {
-            auto false_branch_eval = false_branch->eval(context);
-
-            if (std::holds_alternative<bool>(false_branch_eval)){
-                return false_branch_eval;
-            } else {
-                ERROR("IfExpr expects false branch to return a rule");
-            }
-        } else {
-            return std::make_shared<Rule>();
+            return false_branch->eval(context);
         }
-
-    } else {
-        ERROR("IfExpr expects cond to return bool, and true branch to return a rule");
-    }    
+        
+        return 0; 
+    }
+    
+    ERROR("IfExpr expects cond to return bool");
 }
 
 void IfExpr::print(std::ostream& stream) const {
@@ -175,10 +175,10 @@ Expr_type ForExpr::eval(Context& context) const {
         for (const auto& res : items) {
             context.push_var<T>(iter_var, res);
 
-            auto rule_eval = body->eval(context);
+            auto body_eval = body->eval(context);
 
-            if (std::holds_alternative<std::shared_ptr<Rule>>(rule_eval)){
-                auto rule = std::get<std::shared_ptr<Rule>>(rule_eval);
+            if (std::holds_alternative<std::shared_ptr<Rule>>(body_eval)){
+                auto rule = std::get<std::shared_ptr<Rule>>(body_eval);
                 if (rule != nullptr) yielded_rules.push_back(rule);
             }
 
@@ -204,7 +204,28 @@ Expr_type ForExpr::eval(Context& context) const {
 }
 
 void ForExpr::print(std::ostream& stream) const {
-    stream << "for " << iter_var << " in " << iterable << ": \n"
+    stream << "for " << iter_var << " in " << iterable << " \n"
     << *body;
 }
 
+
+Expr_type AssignExpr::eval(Context& context) const {
+    static int id = 0;
+    std::string temp_name = "__temp_assign_" + std::to_string(id++);
+
+    auto dynamic_rule = std::make_shared<Rule>(Token{temp_name, RULE}, Scope::GLOB);
+
+    if (!rule->is_empty()) {
+        for (const auto& branch : rule->get_branches()){
+            dynamic_rule->add(branch.eval_term_exprs(context));
+        }
+    }
+
+    context.push_var<Rule>(rule->get_name(), dynamic_rule);
+
+    return 0;
+}
+
+void AssignExpr::print(std::ostream& stream) const {
+    stream << rule->get_name() << std::endl;
+}

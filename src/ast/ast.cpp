@@ -195,38 +195,6 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 }
 #pragma GCC diagnostic pop
 
-
-std::vector<Term> Ast::resolve_term_expr(const Term& init_child_term, std::optional<unsigned int> term_constraint_max){
-	std::vector<Term> child_terms;
-	std::shared_ptr<Expr> expr = init_child_term.get_expr();
-	
-	if (expr == nullptr){
-		child_terms = std::vector<Term>(term_constraint_max.value_or(1), init_child_term);
-	
-	} else {
-		Expr_type expr_eval = expr->eval(context);
-
-		if (std::holds_alternative<int>(expr_eval)){
-			child_terms = std::vector<Term>(std::get<int>(expr_eval), init_child_term);
-
-		} else if (std::holds_alternative<std::string>(expr_eval)){
-			child_terms = std::vector<Term>(1, Term(std::get<std::string>(expr_eval), STRING));
-
-		} else if (std::holds_alternative<Rule_list>(expr_eval)){
-			auto rules = std::get<Rule_list>(expr_eval);
-
-			for (std::shared_ptr<Rule> rule : rules){
-				child_terms.push_back(make_term_from_rule(rule));
-			}
-		
-		} else {
-			ERROR("Expr is expected to have a return type of INT or RULE_LIST");
-		}
-	}
-
-	return child_terms;
-}
-
 /// The parent node passed here is before it has any children, where the children are expected to come from a branch chosen from the rule inside
 /// `term`. Therefore, `parent` and `term` must be the same "kind" 
 /// returns the slot ptr of the last added child node of `parent` when fully built
@@ -260,7 +228,7 @@ Slot_type Ast::term_branch_to_child_nodes(
 
 		for(const Term& init_child_term : branch){
 
-			for (const Term& child_term : resolve_term_expr(init_child_term, term_constraint_max)){
+			for (const Term& child_term : init_child_term.eval_expr(context, term_constraint_max)){
 				auto maybe_child = make_child(parent, child_term);
 
 				if(std::holds_alternative<Term>(maybe_child)){
@@ -291,11 +259,6 @@ Slot_type Ast::term_branch_to_child_nodes(
 	parent->transition_to_done();
 
 	return last_built_child;
-}
-
-Term Ast::make_term_from_rule(std::shared_ptr<Rule> rule_ptr){
-	Token_kind kind = rule_ptr->get_token().kind;
-	return Term(rule_ptr, kind, Print_mode::DEFAULT);
 }
 
 std::shared_ptr<Node> Ast::build(std::shared_ptr<Rule> entry, std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints){

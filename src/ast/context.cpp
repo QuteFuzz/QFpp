@@ -152,6 +152,7 @@ std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk, Scope s
 
     auto random_resource = get_random_from_coll<Resource>(filtered_coll, pred);
     random_resource->set_used();
+    // random_resource->extend_flow_path(current.get<Qubit_op>(), current_port++);
 
     current.set<Resource>(random_resource);
     return random_resource;
@@ -261,16 +262,6 @@ std::shared_ptr<Qubit_op> Context::nn_qubit_op(){
     auto qubit_op = std::make_shared<Qubit_op>();
     current.set<Qubit_op>(qubit_op);
     return qubit_op;
-}
-
-void Context::pop_var(const std::string& var){
-    if (resource_var_bindings.find(var) != resource_var_bindings.end()){
-        resource_var_bindings[var].pop_back();
-    }
-
-    if (resource_def_var_bindings.find(var) != resource_def_var_bindings.end()){
-        resource_def_var_bindings[var].pop_back();
-    }
 }
 
 

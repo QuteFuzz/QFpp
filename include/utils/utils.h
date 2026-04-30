@@ -137,25 +137,16 @@ void render(std::function<void(std::ostringstream&)> extend_dot_string, const fs
 std::string random_str(size_t length = 12);
 
 template<typename T>
-inline std::vector<T> append_vectors(std::vector<T> vec1, std::vector<T> vec2){
-    std::vector<T> result = vec1;
-
+inline std::vector<T> append_vectors(const std::vector<T>& vec1, const std::vector<T>& vec2){
+    std::vector<T> result;
+    
+    // pre-allocate memory to prevent expensive reallocations during insert
+    result.reserve(vec1.size() + vec2.size()); 
+    
+    result.insert(result.end(), vec1.begin(), vec1.end());
     result.insert(result.end(), vec2.begin(), vec2.end());
-
+    
     return result;
-}
-
-template<typename T>
-inline std::vector<T> multiply_vector(std::vector<T> vec, int mult){
-    std::vector<T> multiplied_vec;
-
-    multiplied_vec.reserve(vec.size() * mult);
-
-    for(int i = 0; i < mult; ++i){
-        multiplied_vec.insert(multiplied_vec.end(), vec.begin(), vec.end());
-    }
-
-    return multiplied_vec;
 }
 
 #endif

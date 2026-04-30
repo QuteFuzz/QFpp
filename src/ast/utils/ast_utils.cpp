@@ -62,7 +62,7 @@ Slot_type build_ast_children(
     std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints
 ){
     std::shared_ptr<Ast> ast_builder = std::make_shared<Ast>(context, nested_depth);
-    const Term& term = ast_builder->make_term_from_rule(rule);
+    const Term& term = make_term_from_rule(rule);
     return ast_builder->term_branch_to_child_nodes(*root, term, n_children, descendant_node_branch_constraints);
 }
 

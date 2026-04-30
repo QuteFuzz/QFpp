@@ -55,6 +55,8 @@ static void print_banner() {
 }
 
 Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
+    print_banner();
+
     std::vector<Token> meta_grammar_tokens;
 
     fs::create_directory(OUTPUT_DIR);
@@ -81,6 +83,8 @@ Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
             /*
                 parse all other grammars, appending the tokens grammar to each one
             */
+            std::cout << std::endl;
+
             for(auto& file : fs::directory_iterator(grammars_dir)){
 
                 if(file.is_regular_file() && (file.path().extension() == ".qf") && (file.path().stem() != QuteFuzz::META_GRAMMAR_NAME)){
@@ -89,11 +93,14 @@ Run::Run(const std::string& _grammars_dir) : grammars_dir(_grammars_dir) {
                     grammar.build_grammar();
                 
                     std::string name = grammar.get_name();
-                    std::cout << "Built " << name << std::endl;
+                    std::cout << GREEN(BOLD("Built ")) << CYAN(name) << std::endl;
 
                     generators[name] = std::make_shared<Generator>(grammar);
                 }
             }
+
+            std::cout << std::endl;
+
         }
 
     } catch (const fs::filesystem_error& error) {
@@ -217,8 +224,6 @@ void Run::loop(){
     linenoiseHistoryLoad(history_file);
 
     char* line;
-
-    print_banner();
 
     while((line = linenoise("> ")) != NULL){
         current_command = std::string(line);
