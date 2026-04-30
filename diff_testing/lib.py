@@ -99,7 +99,7 @@ class Base(ABC):
         else:
             res = ks_2samp(sorted(sample1), sorted(sample2), method="asymp")
             return float(res.pvalue)  # type: ignore
-    
+
     def _plot_histogram(self, res: Dict[Any, int], title: str, circuit_number: int = 0) -> None:
         plots_dir = self.OUTPUT_DIR / self.qss_name / f"circuit{circuit_number}"
         if not plots_dir.exists():
@@ -122,7 +122,6 @@ class Base(ABC):
         plt.savefig(plots_path)
         plt.close()
 
-        
     def qnexus_login(self) -> None:
         """
         Logs into QNexus using environment variables for running QIR jobs

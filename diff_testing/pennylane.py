@@ -21,4 +21,3 @@ class pennylaneTesting(Base):
 
         counts = self._preprocess_counts(dict(result), n_bits=len(list(result.keys())[0]))
         return counts
-    

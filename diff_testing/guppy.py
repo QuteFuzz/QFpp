@@ -70,8 +70,7 @@ def _reconstruct_counts(raw: Dict) -> Tuple[Dict[str, int], int]:
     n_qubits = len(first_key)
 
     reconstructed: Dict[str, int] = {
-        "".join(str(m[1]) for m in key): count
-        for key, count in raw.items()
+        "".join(str(m[1]) for m in key): count for key, count in raw.items()
     }
     return reconstructed, n_qubits
 
@@ -184,11 +183,8 @@ class guppyTesting(Base):
             counts_i = self._get_counts(hugr, i, circuit_number)
 
             if not counts_i:
-                print(
-                    f"[guppyTesting] opt_level={opt_level} returned empty counts; skipping."
-                )
+                print(f"[guppyTesting] opt_level={opt_level} returned empty counts; skipping.")
                 continue
 
             ks_value = self._ks_test(counts_0, counts_i)
             print(f"Optimisation level {opt_level} ks-test p-value: {ks_value}")
-
