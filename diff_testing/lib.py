@@ -16,7 +16,7 @@ Results:
 
 import argparse
 import os
-from abc import ABC
+from abc import ABC, abstractmethod
 from itertools import zip_longest
 from pathlib import Path
 from typing import Any, Dict, List
@@ -44,36 +44,11 @@ class Base(ABC):
 
         self.num_shots = 100000
 
-    def get_counts(self, circuit, opt_level, circuit_num) -> Dict[Any, int]:
-        return {}
+    @abstractmethod
+    def _get_counts(self, circuit, opt_level, circuit_num) -> Dict[Any, int]:
+        pass
 
-    def qnexus_login(self) -> None:
-        """
-        Logs into QNexus using environment variables for running QIR jobs
-        """
-        user_email = os.getenv("NEXUS_USERNAME")
-        user_password = os.getenv("NEXUS_PWD")
-
-        if not user_email or not user_password:
-            print("Error: NEXUS_USERNAME or NEXUS_PWD environment variables are not set.")
-            return
-
-        try:
-            qnx.client.auth.login_no_interaction(user_email, user_password)  # type: ignore
-        except Exception as e:
-            print("Error logging into Nexus:", e)
-
-    def qnexus_check_login_status(self) -> bool:
-        """
-        Checks if logged into QNexus to prevent trying login multiple times
-        """
-        try:
-            qnx.teams.get_all()
-            return True
-        except Exception:
-            return False
-
-    def preprocess_counts(self, counts: Dict[Any, int], n_bits: int) -> Dict[Any, int]:
+    def _preprocess_counts(self, counts: Dict[Any, int], n_bits: int) -> Dict[Any, int]:
         """
         Given a dict mapping binary values to number of times they appear,
         return a sorted dict with each binary tuple/string converted into a base 10 int.
@@ -100,7 +75,7 @@ class Base(ABC):
 
         return dict(sorted(out.items()))
 
-    def ks_test(self, counts1: Dict[Any, int], counts2: Dict[Any, int]) -> float | None:
+    def _ks_test(self, counts1: Dict[Any, int], counts2: Dict[Any, int]) -> float | None:
         """
         Carries out K-S test on two frequency lists
         """
@@ -124,25 +99,8 @@ class Base(ABC):
         else:
             res = ks_2samp(sorted(sample1), sorted(sample2), method="asymp")
             return float(res.pvalue)  # type: ignore
-
-    def compare_statevectors(
-        self, sv1: NDArray[np.complex128], sv2: NDArray[np.complex128], precision: int = 6
-    ) -> float:
-        return float(np.round(abs(np.vdot(sv1, sv2)), precision))
-
-    def opt_ks_test(self, circuit, circuit_number: int) -> None:
-        """
-        Runs circuit and returns counts
-        """
-
-        counts1 = self.get_counts(circuit=circuit, opt_level=0, circuit_num=circuit_number)
-
-        for i in range(3):
-            counts2 = self.get_counts(circuit=circuit, opt_level=i + 1, circuit_num=circuit_number)
-            ks_value = self.ks_test(counts1, counts2)
-            print(f"Optimisation level {i + 1} ks-test p-value: {ks_value}")
-
-    def plot_histogram(self, res: Dict[Any, int], title: str, circuit_number: int = 0) -> None:
+    
+    def _plot_histogram(self, res: Dict[Any, int], title: str, circuit_number: int = 0) -> None:
         plots_dir = self.OUTPUT_DIR / self.qss_name / f"circuit{circuit_number}"
         if not plots_dir.exists():
             plots_dir.mkdir(parents=True, exist_ok=True)
@@ -163,3 +121,47 @@ class Base(ABC):
         plt.tight_layout()
         plt.savefig(plots_path)
         plt.close()
+
+        
+    def qnexus_login(self) -> None:
+        """
+        Logs into QNexus using environment variables for running QIR jobs
+        """
+        user_email = os.getenv("NEXUS_USERNAME")
+        user_password = os.getenv("NEXUS_PWD")
+
+        if not user_email or not user_password:
+            print("Error: NEXUS_USERNAME or NEXUS_PWD environment variables are not set.")
+            return
+
+        try:
+            qnx.client.auth.login_no_interaction(user_email, user_password)  # type: ignore
+        except Exception as e:
+            print("Error logging into Nexus:", e)
+
+    def qnexus_check_login_status(self) -> bool:
+        """
+        Checks if logged into QNexus to prevent trying login multiple times
+        """
+        try:
+            qnx.teams.get_all()
+            return True
+        except Exception:
+            return False
+
+    def compare_statevectors(
+        self, sv1: NDArray[np.complex128], sv2: NDArray[np.complex128], precision: int = 6
+    ) -> float:
+        return float(np.round(abs(np.vdot(sv1, sv2)), precision))
+
+    def opt_ks_test(self, circuit, circuit_number: int) -> None:
+        """
+        Runs circuit and returns counts
+        """
+
+        counts1 = self._get_counts(circuit=circuit, opt_level=0, circuit_num=circuit_number)
+
+        for i in range(3):
+            counts2 = self._get_counts(circuit=circuit, opt_level=i + 1, circuit_num=circuit_number)
+            ks_value = self._ks_test(counts1, counts2)
+            print(f"Optimisation level {i + 1} ks-test p-value: {ks_value}")

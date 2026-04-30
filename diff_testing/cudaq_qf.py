@@ -45,7 +45,7 @@ class cudaqTesting(Base):
     def __init__(self) -> None:
         super().__init__("cudaq")
 
-    def get_counts(self, kernel, opt_level: int, circuit_num: int) -> Dict[Any, int]:
+    def _get_counts(self, kernel, opt_level: int, circuit_num: int) -> Dict[Any, int]:
         """
         Compile and sample `kernel` at the requested optimisation level.
 
@@ -83,13 +83,13 @@ class cudaqTesting(Base):
             n_bits = max((len(k) for k in raw_counts), default=1)
 
             if self.plot:
-                self.plot_histogram(
-                    res=self.preprocess_counts(raw_counts, n_bits),
+                self._plot_histogram(
+                    res=self._preprocess_counts(raw_counts, n_bits),
                     title=f"cudaq_opt{opt_level}",
                     circuit_number=circuit_num,
                 )
 
-            return self.preprocess_counts(raw_counts, n_bits)
+            return self._preprocess_counts(raw_counts, n_bits)
 
         except Exception:
             print(f"[cudaqTesting] Exception during get_counts (opt_level={opt_level}):")
@@ -104,7 +104,7 @@ class cudaqTesting(Base):
         (the kernel is a callable, not a circuit object).  The logic is
         otherwise identical to the base implementation.
         """
-        counts0 = self.get_counts(kernel, opt_level=0, circuit_num=circuit_number)
+        counts0 = self._get_counts(kernel, opt_level=0, circuit_num=circuit_number)
 
         if not counts0:
             print("[cudaqTesting] Baseline (opt_level=0) returned empty counts; skipping.")
@@ -112,7 +112,7 @@ class cudaqTesting(Base):
 
         for i in range(3):
             opt_level = i + 1
-            counts_i = self.get_counts(kernel, opt_level=opt_level, circuit_num=circuit_number)
+            counts_i = self._get_counts(kernel, opt_level=opt_level, circuit_num=circuit_number)
 
             if not counts_i:
                 print(
@@ -120,5 +120,5 @@ class cudaqTesting(Base):
                 )
                 continue
 
-            ks_value = self.ks_test(counts0, counts_i)
+            ks_value = self._ks_test(counts0, counts_i)
             print(f"Optimisation level {opt_level} ks-test p-value: {ks_value}")

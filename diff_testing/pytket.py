@@ -17,7 +17,7 @@ class pytketTesting(Base):
         super().__init__("pytket")
         self.tket2 = tket2  # only on statevector
 
-    def apply_tket2_opt_level_3(self, circuit: Circuit) -> Circuit:
+    def _apply_tket2_opt_level_3(self, circuit: Circuit) -> Circuit:
         circ = circuit.copy()
         DecomposeBoxes().apply(circ)
 
@@ -56,17 +56,17 @@ class pytketTesting(Base):
 
         return opt_circ
 
-    def get_counts(self, circuit: Circuit, opt_level: int, circuit_num: int):
+    def _get_counts(self, circuit: Circuit, opt_level: int, circuit_num: int):
         backend = AerBackend()
         circ_prime = backend.get_compiled_circuit(circuit, optimisation_level=opt_level)
 
         handle = backend.process_circuit(circ_prime, n_shots=self.num_shots)
         result = backend.get_result(handle)
 
-        counts = self.preprocess_counts(result.get_counts(), circuit.n_bits)
+        counts = self._preprocess_counts(result.get_counts(), circuit.n_bits)
 
         if self.plot:
-            self.plot_histogram(
+            self._plot_histogram(
                 res=counts,
                 title=f"pytket_opt{opt_level}",
                 circuit_number=circuit_num,
@@ -74,11 +74,11 @@ class pytketTesting(Base):
 
         return counts
 
-    def get_statevector(self, circuit, opt_level):
+    def _get_statevector(self, circuit, opt_level):
         backend = AerStateBackend()
 
         if self.tket2 and opt_level == 3:
-            opt_circ = self.apply_tket2_opt_level_3(circuit)
+            opt_circ = self._apply_tket2_opt_level_3(circuit)
             return backend.get_compiled_circuit(opt_circ, optimisation_level=0).get_statevector()
         else:
             return backend.get_compiled_circuit(
@@ -92,10 +92,10 @@ class pytketTesting(Base):
 
         qiskit_circ = tk_to_qiskit(pytket_circ)
 
-        qiskit_counts = qiskitTesting().get_counts(qiskit_circ, 0, circuit_num)
-        pytket_counts = self.get_counts(pytket_circ, 0, circuit_num)
+        qiskit_counts = qiskitTesting()._get_counts(qiskit_circ, 0, circuit_num)
+        pytket_counts = self._get_counts(pytket_circ, 0, circuit_num)
 
-        p_val = self.ks_test(qiskit_counts, pytket_counts)
+        p_val = self._ks_test(qiskit_counts, pytket_counts)
 
         print("Pytket->Qiskit p-value: ", p_val)
 
@@ -104,10 +104,10 @@ class pytketTesting(Base):
         Runs circuit on pytket simulator and returns statevector
         """
         try:
-            no_pass_statevector = self.get_statevector(circuit, 0)
+            no_pass_statevector = self._get_statevector(circuit, 0)
 
             for i in range(3):
-                pass_statevector = self.get_statevector(circuit.copy(), i + 1)
+                pass_statevector = self._get_statevector(circuit.copy(), i + 1)
 
                 dot_prod = self.compare_statevectors(no_pass_statevector, pass_statevector, 6)
                 print("Dot product: ", dot_prod)

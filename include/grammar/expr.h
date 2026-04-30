@@ -5,46 +5,39 @@
 #include <lex.h>
 
 /*
-    # 1. The Entry Point: Can be a comprehension, an if-statement, or a standard math/logic expression
     expr = for_expr 
         | if_expr 
+        | rule_def
         | logic_expr ;
 
-    # 2. List Comprehension: Evaluates to a std::vector<std::string>
-    for_expr = "[" "for" IDENTIFIER "in" iterable_token ":" expr "]" ;
+    rule_def = rule = .....; 
 
-    # 3. If-Else Expression: Evaluates to a string (rule name) or recursively another expression
+    for_expr = "for" IDENTIFIER "in" iterable_token ":" expr;
+
     if_expr = "if" logic_expr ":" expr "else" ":" expr ;
 
-    # 4. Logical Comparisons (==, >, <, etc.)
     logic_expr = logic_expr "==" math_expr 
             | logic_expr ">" math_expr 
             | math_expr ;
 
-    # 5. Math (+, -)
     math_expr = math_expr "+" term 
             | math_expr "-" term
             | UNIFORM(math_expr, term)
             | term ;
 
-    # 6. Math (*, /)
     term = term "*" factor 
         | term "/" factor
         | factor ;
 
-    # 7. Base Values / Atoms
     factor = "(" expr ")" 
         | IDENTIFIER
         | property_access 
         | METAFUNC           # e.g., ALL_QUBITS
         | NUMBER ;
 
-    # 8. Property Access (New)
     property_access = IDENTIFIER "." IDENTIFIER ;
 
-    # (Lexer-defined tokens)
     iterable_token = "ALL_QUBITS" | "INTERNAL_QUBITS" | "EXTERNAL_QUBITS" | ... ;
-
 */
 
 class Context;

@@ -7,7 +7,7 @@ class pennylaneTesting(Base):
     def __init__(self):
         super().__init__("pennylane")
 
-    def get_counts(self, circuit, opt_level: int, circuit_num: int):
+    def _get_counts(self, circuit, opt_level: int, circuit_num: int):
         circuit = qml.set_shots(circuit, self.num_shots)
 
         if opt_level == 0:
@@ -19,5 +19,6 @@ class pennylaneTesting(Base):
         elif opt_level == 3:
             result = qml.compile(circuit)()  # type:ignore
 
-        counts = self.preprocess_counts(dict(result), n_bits=len(list(result.keys())[0]))
+        counts = self._preprocess_counts(dict(result), n_bits=len(list(result.keys())[0]))
         return counts
+    
