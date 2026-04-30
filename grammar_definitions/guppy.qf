@@ -48,7 +48,7 @@ INTERNAL {
                 register_qubit_def_discard =  "measure_array(" ""[def.name] ")" NEWLINE;
                 if (def.is_singular): singular_qubit_def_discard
                 else: register_qubit_def_discard
-            }
+            }   
         }
         ]
         NEWLINE;
