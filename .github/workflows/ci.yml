@@ -24,4 +24,5 @@ jobs:
           uv run pyright
 
       - name: Run CI Pipeline
+        run: export RUN_MODE=CI
         run: uv run -m scripts.run --num-tests 10
