@@ -23,6 +23,8 @@ jobs:
           # Run static type checking
           uv run pyright
 
-      - name: Run CI Pipeline
+      - name: Set CI mode flag in environment
         run: export RUN_MODE=CI
+
+      - name: Run CI Pipeline
         run: uv run -m scripts.run --num-tests 10
