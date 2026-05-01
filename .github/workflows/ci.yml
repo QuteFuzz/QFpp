@@ -6,6 +6,9 @@ jobs:
   test:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      RUN_MODE: CI
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -22,9 +25,6 @@ jobs:
           uv run ruff format --check .
           # Run static type checking
           uv run pyright
-
-      - name: Set CI mode flag in environment
-        run: export RUN_MODE=CI
 
       - name: Run CI Pipeline
         run: uv run -m scripts.run --num-tests 10
