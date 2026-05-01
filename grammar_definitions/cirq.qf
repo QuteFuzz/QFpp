@@ -2,6 +2,8 @@
 
 # TODO: subroutines
 
+MAX_REG_SIZE = 1;
+
 x = "cirq.X";
 y = "cirq.Y";
 z = "cirq.Z";

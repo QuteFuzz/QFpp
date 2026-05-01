@@ -1,7 +1,7 @@
 # cudaq.qf
 
 EXTENSION = ".py";
-MAX_REG_SIZE = 2;
+MAX_REG_SIZE = 1;
 
 # ============================================================================
 # GATE NAMES
@@ -43,7 +43,7 @@ gate_name += s | t | sdg | tdg | swap | ch | crx | cry | crz;
 # ============================================================================
 
 INTERNAL {
-    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 4)];
+    qubit_defs = qubit_def;
 
     singular_qubit_def = GET_NAME " = cudaq.qubit()";
     register_qubit_def = GET_NAME " = cudaq.qvector(" GET_SIZE ")";
@@ -51,7 +51,7 @@ INTERNAL {
 
 EXTERNAL {
     # comma-separated typed args in the def signature — no newlines
-    qubit_defs = qubit_def (", " qubit_def)[UNIFORM(2, 3)];
+    qubit_defs = qubit_def;
 
     qubit_def = singular_qubit_def;
 

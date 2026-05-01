@@ -1,7 +1,7 @@
 # guppy.qf
 
 EXTENSION = ".py";
-MAX_REG_SIZE = 4;
+MAX_REG_SIZE = 1;
 NESTED_MAX_DEPTH = 3;
 
 # ── Gate names ──────────────────────────────────────────────
@@ -31,7 +31,7 @@ crz = "crz";
 
 # ── Resource definitions ─────────────────────────────────────
 INTERNAL {
-    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 5)];
+    qubit_defs = qubit_def;
     singular_qubit_def = GET_NAME " = qubit()";
     register_qubit_def = GET_NAME " = array(qubit() for _ in range(" GET_SIZE "))";
 
@@ -55,7 +55,7 @@ INTERNAL {
 }
 
 EXTERNAL {
-    qubit_defs = qubit_def (", " qubit_def)[UNIFORM(3, 5)];
+    qubit_defs = qubit_def;
     singular_qubit_def = GET_NAME ": qubit";
     register_qubit_def = GET_NAME ": array[qubit, " GET_SIZE "]";
 
