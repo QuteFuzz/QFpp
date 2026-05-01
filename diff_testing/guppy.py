@@ -50,16 +50,7 @@ def _n_qubits_from_hugr(hugr) -> int:
     """Best-effort qubit count from a compiled HUGR object."""
     for attr in ("num_qubits", "n_qubits", "qubit_count"):
         try:
-            val = getattr(hugr, attr)def _n_qubits_from_hugr(hugr) -> int:
-    """Best-effort qubit count from a compiled HUGR object."""
-    for attr in ("num_qubits", "n_qubits", "qubit_count"):
-        try:
             val = getattr(hugr, attr)
-            return int(val() if callable(val) else val)
-        except (AttributeError, TypeError):
-            pass
-    return 0
-
             result = val() if callable(val) else val        
             return int(result)  #type: ignore
         except (AttributeError, TypeError, ValueError):
