@@ -68,7 +68,7 @@ class cirqTesting(Base):
     def __init__(self) -> None:
         super().__init__("cirq")
 
-    def get_counts(self, circuit: cirq.Circuit, opt_level: int, circuit_num: int):
+    def _get_counts(self, circuit, opt_level, circuit_num):
         simulator = cirq.Simulator()
         opt_circ = circuit.copy()
         circ_prime = transpile(opt_circ, opt_level)
@@ -76,10 +76,10 @@ class cirqTesting(Base):
         result = simulator.run(circ_prime, repetitions=self.num_shots)
 
         histogram = result.multi_measurement_histogram(keys=circuit.all_measurement_key_names())
-        counts = self.preprocess_counts(histogram, len(circuit.all_qubits()))
+        counts = self._preprocess_counts(histogram, len(circuit.all_qubits()))
 
         if self.plot:
-            self.plot_histogram(
+            self._plot_histogram(
                 res=counts,
                 title=f"cirq_opt{opt_level}",
                 circuit_number=circuit_num,

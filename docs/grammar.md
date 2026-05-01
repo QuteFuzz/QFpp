@@ -90,46 +90,54 @@ Applied as a suffix to any term or parenthesised group:
 
 ---
 
-## Term constraints `[...]`
+## Expr `[...]`
 
-Control how many times a term is repeated. Applied in square brackets after the term.
+Expressions can be written directly into the grammar to facilitate more complex rule creation.
 
-### Fixed count
+See [`expr.h`](../include/grammar/expr.h) for all possible expressions, and grammar.
 
-```qf
-qubit_defs = (qubit_def NEWLINE)[4];
+With expressions are tied to `Term`, where evaluating them returns a vector of terms.
+
+Terms in the grammar are evaluated differently depending on the return type of the evaluation
+
+### `int`
+
+```c
+qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 5)];
 ```
 
-Repeats exactly 4 times.
-
-### Random range: `UNIFORM(min, max)`
-
-```qf
-compound_stmts = (compound_stmt NEWLINE)[UNIFORM(3, 10)];
+1. `(...)` triggers the creation of a rule, so the above can be seen as
+```c
+qubit_defs = NR_0[UNIFORM(3, 5)];
 ```
 
-Picks a random integer in `[min, max]` each time.
+where `NR_0` is a term which contains the rule pointer.
 
-### Dynamic count tied to circuit state
+2. when evaluated, the expression returns a random number between 3 and 5 (inclusive on both sides), and returns as many terms
 
-These expand to values derived from the current circuit's allocated resources and the gate currently being expanded:
-
-| Constraint | Resolves to |
-|-----------|------------|
-| `GATE_QUBITS` | Number of qubit arguments the current gate requires |
-| `GATE_BITS` | Number of bit arguments the current gate requires |
-| `GATE_FLOATS` | Number of float arguments the current gate requires |
-| `N_QUBITS` | Total qubits allocated in the current circuit |
-| `N_BITS` | Total bits allocated in the current circuit |
-
-Arithmetic is supported:
-
-```qf
-qubit_list = qubit (", " qubit)[GATE_QUBITS - 1];
-float_args = (float_literal ", ")[GATE_FLOATS >= 1];
+### `string`
+```c
+singular_qubit_def_discard =  "measure(" ""[def.name] ")" NEWLINE;
 ```
 
-Supported operators: `+`, `-`, `>=`, `<=`.
+the string replaces whatever term the expr is bound to. The term above contains the string `""`.
+
+### `std::vector<std::shared_ptr<Rule>>`
+```c
+    qubit_defs_discard = [
+        for def in ALL_QUBIT_DEFS {
+            if (def.in_int_scope) {
+                singular_qubit_def_discard =  "measure(" ""[def.name] ")" NEWLINE;
+                register_qubit_def_discard =  "measure_array(" ""[def.name] ")" NEWLINE;
+                if (def.is_singular): singular_qubit_def_discard
+                else: register_qubit_def_discard
+            }
+        }
+        ]
+        NEWLINE;
+```
+
+the for loop returns a vector of rules, which are used to create terms
 
 ---
 
@@ -157,7 +165,7 @@ Meta functions are resolved at AST build time. They emit a node whose content is
 
 ### Indentation
 
-| Meta function | Behaviour |
+| Syntax | Behaviour |
 |--------------|-----------|
 | `ci<rule>` | Printout will print each child node preprended with a tab sized depending on current indentation depth. Increases indentation depth for child nodes. |
 | `si<rule>` | Printout will prepend the node itself with a tab sized depending on current indentation depth. Increases indentation depth for child nodes. |

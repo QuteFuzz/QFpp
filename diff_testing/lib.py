@@ -16,7 +16,7 @@ Results:
 
 import argparse
 import os
-from abc import ABC
+from abc import ABC, abstractmethod
 from itertools import zip_longest
 from pathlib import Path
 from typing import Any, Dict, List
@@ -42,10 +42,85 @@ class Base(ABC):
         self.plot: bool = self.args.plot
         self.qss_name = qss_name
 
-        self.num_shots = 100000
+        self.num_shots = 10 if os.environ.get("RUN_MODE") == "CI" else 1_000_000
 
-    def get_counts(self, circuit, opt_level, circuit_num) -> Dict[Any, int]:
-        return {}
+    @abstractmethod
+    def _get_counts(self, circuit, opt_level, circuit_num) -> Dict[Any, int]:
+        pass
+
+    def _preprocess_counts(self, counts: Dict[Any, int], n_bits: int) -> Dict[Any, int]:
+        """
+        Given a dict mapping binary values to number of times they appear,
+        return a sorted dict with each binary tuple/string converted into a base 10 int.
+        Dict is sorted by key.
+        """
+        out = {}
+        for k, v in counts.items():
+            # k can be a tuple of bits or a string of bits
+            if isinstance(k, tuple):
+                key_str = "".join(str(x) for x in k).replace(" ", "")
+            else:
+                key_str = str(k).replace(" ", "")
+
+            if self.qss_name == "qiskit":
+                key_str = key_str[::-1]  # flip to match <0001| indexed as [0,1,2,3], flip
+
+            if len(key_str) > n_bits:
+                key_str = key_str[:n_bits]
+
+            if all([c in "10" for c in key_str]) and bool(key_str):
+                out[int(key_str, 2)] = v
+            else:
+                out[int(key_str)] = v
+
+        return dict(sorted(out.items()))
+
+    def _ks_test(self, counts1: Dict[Any, int], counts2: Dict[Any, int]) -> float | None:
+        """
+        Carries out K-S test on two frequency lists
+        """
+        sample1: List[int] = []
+        sample2: List[int] = []
+
+        for p1, p2 in zip_longest(counts1.items(), counts2.items(), fillvalue=None):
+            if p1:
+                sample1 += [p1[0]] * p1[1]
+
+            if p2:
+                sample2 += [p2[0]] * p2[1]
+
+        if len(sample1) != self.num_shots or len(sample2) != self.num_shots:
+            print(
+                f"Sample size(sample1: {len(sample1)}, sample2: {len(sample2)})"
+                f" does not match number of shots ({self.num_shots})"
+            )
+            return None
+
+        else:
+            res = ks_2samp(sorted(sample1), sorted(sample2), method="asymp")
+            return float(res.pvalue)  # type: ignore
+
+    def _plot_histogram(self, res: Dict[Any, int], title: str, circuit_number: int = 0) -> None:
+        plots_dir = self.OUTPUT_DIR / self.qss_name / f"circuit{circuit_number}"
+        if not plots_dir.exists():
+            plots_dir.mkdir(parents=True, exist_ok=True)
+
+        plots_path = plots_dir / f"{title}.png"
+
+        # Plot the histogram
+        values = list(res.keys())
+        freqs = list(res.values())
+
+        bar_width = 0.5
+        plt.bar(values, freqs, width=bar_width, edgecolor="black")
+        ax = plt.gca()
+        ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10, integer=True))
+        plt.xlabel("Possible results")
+        plt.ylabel("Number of occurances")
+        plt.title(title)
+        plt.tight_layout()
+        plt.savefig(plots_path)
+        plt.close()
 
     def qnexus_login(self) -> None:
         """
@@ -73,58 +148,6 @@ class Base(ABC):
         except Exception:
             return False
 
-    def preprocess_counts(self, counts: Dict[Any, int], n_bits: int) -> Dict[Any, int]:
-        """
-        Given a dict mapping binary values to number of times they appear,
-        return a sorted dict with each binary tuple/string converted into a base 10 int.
-        Dict is sorted by key.
-        """
-        out = {}
-        for k, v in counts.items():
-            # k can be a tuple of bits or a string of bits
-            if isinstance(k, tuple):
-                key_str = "".join(str(x) for x in k).replace(" ", "")
-            else:
-                key_str = str(k).replace(" ", "")
-
-            if self.qss_name == "qiskit":
-                key_str = key_str[::-1]  # flip to match <0001| indexed as [0,1,2,3], flip
-
-            if len(key_str) > n_bits:
-                key_str = key_str[:n_bits]
-
-            if all([c in "10" for c in key_str]) and bool(key_str):
-                out[int(key_str, 2)] = v
-            else:
-                out[int(key_str)] = v
-
-        return dict(sorted(out.items()))
-
-    def ks_test(self, counts1: Dict[Any, int], counts2: Dict[Any, int]) -> float | None:
-        """
-        Carries out K-S test on two frequency lists
-        """
-        sample1: List[int] = []
-        sample2: List[int] = []
-
-        for p1, p2 in zip_longest(counts1.items(), counts2.items(), fillvalue=None):
-            if p1:
-                sample1 += [p1[0]] * p1[1]
-
-            if p2:
-                sample2 += [p2[0]] * p2[1]
-
-        if len(sample1) != self.num_shots or len(sample2) != self.num_shots:
-            print(
-                f"Sample size(sample1: {len(sample1)}, sample2: {len(sample2)})"
-                f" does not match number of shots ({self.num_shots})"
-            )
-            return None
-
-        else:
-            res = ks_2samp(sorted(sample1), sorted(sample2), method="asymp")
-            return float(res.pvalue)  # type: ignore
-
     def compare_statevectors(
         self, sv1: NDArray[np.complex128], sv2: NDArray[np.complex128], precision: int = 6
     ) -> float:
@@ -135,31 +158,9 @@ class Base(ABC):
         Runs circuit and returns counts
         """
 
-        counts1 = self.get_counts(circuit=circuit, opt_level=0, circuit_num=circuit_number)
+        counts1 = self._get_counts(circuit=circuit, opt_level=0, circuit_num=circuit_number)
 
         for i in range(3):
-            counts2 = self.get_counts(circuit=circuit, opt_level=i + 1, circuit_num=circuit_number)
-            ks_value = self.ks_test(counts1, counts2)
+            counts2 = self._get_counts(circuit=circuit, opt_level=i + 1, circuit_num=circuit_number)
+            ks_value = self._ks_test(counts1, counts2)
             print(f"Optimisation level {i + 1} ks-test p-value: {ks_value}")
-
-    def plot_histogram(self, res: Dict[Any, int], title: str, circuit_number: int = 0) -> None:
-        plots_dir = self.OUTPUT_DIR / self.qss_name / f"circuit{circuit_number}"
-        if not plots_dir.exists():
-            plots_dir.mkdir(parents=True, exist_ok=True)
-
-        plots_path = plots_dir / f"{title}.png"
-
-        # Plot the histogram
-        values = list(res.keys())
-        freqs = list(res.values())
-
-        bar_width = 0.5
-        plt.bar(values, freqs, width=bar_width, edgecolor="black")
-        ax = plt.gca()
-        ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=10, integer=True))
-        plt.xlabel("Possible results")
-        plt.ylabel("Number of occurances")
-        plt.title(title)
-        plt.tight_layout()
-        plt.savefig(plots_path)
-        plt.close()

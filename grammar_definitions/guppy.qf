@@ -1,7 +1,7 @@
 # guppy.qf
 
 EXTENSION = ".py";
-MAX_REG_SIZE = 4;
+MAX_REG_SIZE = 1;
 NESTED_MAX_DEPTH = 3;
 
 # ── Gate names ──────────────────────────────────────────────
@@ -31,7 +31,7 @@ crz = "crz";
 
 # ── Resource definitions ─────────────────────────────────────
 INTERNAL {
-    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 5)];
+    qubit_defs = qubit_def;
     singular_qubit_def = GET_NAME " = qubit()";
     register_qubit_def = GET_NAME " = array(qubit() for _ in range(" GET_SIZE "))";
 
@@ -48,14 +48,14 @@ INTERNAL {
                 register_qubit_def_discard =  "measure_array(" ""[def.name] ")" NEWLINE;
                 if (def.is_singular): singular_qubit_def_discard
                 else: register_qubit_def_discard
-            }
+            }   
         }
         ]
         NEWLINE;
 }
 
 EXTERNAL {
-    qubit_defs = qubit_def (", " qubit_def)[UNIFORM(3, 5)];
+    qubit_defs = qubit_def;
     singular_qubit_def = GET_NAME ": qubit";
     register_qubit_def = GET_NAME ": array[qubit, " GET_SIZE "]";
 
@@ -101,6 +101,10 @@ float_literal = "angle(" MAKE_FLOAT ")";
 
 subroutine_op = subroutine "(" subroutine_op_args ")";
 
+subroutine_op_args = qubit_list ("," bit)[GATE_BITS];
+
+qubit_list = qubit (", " qubit)[GATE_QUBITS - 1];
+
 # ── Imports & Footer ──────────────────────────────────────────
 imports = 
     "from guppylang.decorator import guppy" NEWLINE
@@ -113,4 +117,4 @@ imports =
 program_footer = "gt = guppyTesting()" NEWLINE testing_method;
 
 # Use the meta-function CIRCUIT_ID
-testing_method = "gt.ks_diff_test(main_circuit" COMMA CIRCUIT_ID RPAREN NEWLINE;
+testing_method = "gt.opt_ks_test(main_circuit" COMMA circuit_id RPAREN NEWLINE;

@@ -11,7 +11,7 @@ from enum import Enum
 from pathlib import Path
 from typing import List, Tuple
 
-from .utils import Color, log, pipe_to_process, run_command
+from .utils import Color, log, modify_env, pipe_to_process, run_command
 
 BUILD_DIR = Path("build")
 OUTPUT_DIR = Path("outputs")
@@ -86,7 +86,7 @@ def clean_and_build():
 
 
 def parse():
-    parser = argparse.ArgumentParser(description="QuteFuzz CI/Nightly Pipeline")
+    parser = argparse.ArgumentParser(description="qf++ runner")
     parser.add_argument(
         "--nightly",
         action="store_true",
@@ -192,11 +192,12 @@ class Check_grammar:
         """
 
         cmd = [sys.executable, str(script_path)]
+        env = modify_env({"RUN_MODE": os.environ.get("RUN_MODE", "")})
 
         if self.plot:
             cmd.append("--plot")
 
-        result = run_command(cmd, cwd=None, capture_output=True, timeout=TIMEOUT)
+        result = run_command(cmd, cwd=None, capture_output=True, timeout=TIMEOUT, env=env)
 
         return result
 
@@ -231,7 +232,7 @@ class Check_grammar:
 
             else:
                 raise Exception(
-                    "Result must be ks values or dot product, got None.\nStdout: \n{result.stdout}"
+                    f"Result must be ks values or dot product, got None.\nStdout: \n{result.stdout}"
                 )
 
         else:
