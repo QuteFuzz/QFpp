@@ -51,8 +51,9 @@ def _n_qubits_from_hugr(hugr) -> int:
     for attr in ("num_qubits", "n_qubits", "qubit_count"):
         try:
             val = getattr(hugr, attr)
-            return int(val() if callable(val) else val)
-        except (AttributeError, TypeError):
+            result = val() if callable(val) else val        
+            return int(result)  #type: ignore
+        except (AttributeError, TypeError, ValueError):
             pass
     return 0
 
