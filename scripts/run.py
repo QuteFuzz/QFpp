@@ -192,9 +192,7 @@ class Check_grammar:
         """
 
         cmd = [sys.executable, str(script_path)]
-        env = modify_env({
-            "RUN_MODE":os.environ.get("RUN_MODE", "")
-        })
+        env = modify_env({"RUN_MODE": os.environ.get("RUN_MODE", "")})
 
         if self.plot:
             cmd.append("--plot")
