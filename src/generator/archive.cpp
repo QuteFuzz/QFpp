@@ -7,14 +7,13 @@ void Archive::dump(const fs::path& path){
 
     stream << "{\n" << "\"dims\": " << std::endl;
 
-    dummy_fv.dump(stream);
+    dummy_info.dump_feature_vecs(stream);
 
     stream << ",\n" << "\"cells\" : [\n";
     
     for (size_t i = 0; i < archive.size(); i++){
         const Cell& cell = archive[i];
         float q = cell.get_quality();
-        Features fv = cell.get_fv();
 
         stream << "  {";
         stream << "\"index\": " << i << ", ";
@@ -45,10 +44,10 @@ float Archive::archive_av_quality(){
 };
 
 bool Archive::place(const Ast_entry& genome){
-    Features fv(genome.ast->get_compilation_unit());
-    unsigned int archive_index = fv.get_archive_index();
+    Info info(genome.ast->get_compilation_unit());
+    unsigned int archive_index = info.get_archive_index();
 
-    bool new_placement = archive[archive_index].place(genome, fv);
+    bool new_placement = archive[archive_index].place(genome, info.quality());
 
     if (new_placement){
         filled_archive_indices.push_back(archive_index);
@@ -59,31 +58,6 @@ bool Archive::place(const Ast_entry& genome){
     }
 
     return new_placement;
-}
-
-const Cell& Archive::find_nearest_complement(const Cell& cell) {
-    Features fv = cell.get_fv().complement();
-    
-    float best_dist = std::numeric_limits<float>::max();
-    unsigned int best_idx = filled_archive_indices[0];
-
-    for (unsigned int idx : filled_archive_indices){
-        Features other_fv = archive[idx].get_fv();
-
-        float dist = 0.0;
-
-        for (size_t feature_idx = 0; feature_idx < fv.size(); feature_idx++){
-            float n_bins_sq = std::pow(other_fv[feature_idx].num_bins, 2);
-            dist += (float)std::pow(other_fv[feature_idx].idx() - fv[feature_idx].idx(), 2) / n_bins_sq;
-        }
-
-        if (dist < best_dist){
-            best_dist = dist;
-            best_idx = idx;
-        }
-    }
-
-    return archive[best_idx];
 }
 
 void Archive::init_archive(){
@@ -119,12 +93,6 @@ void Archive::init_archive(){
 
     // dump init archive in JSON
     dump(output_dir / "init_archive.json");
-}
-
-Ast_entry Archive::crossover(Ast_entry& genome_a, Ast_entry& genome_b){
-    /// TODO: perform crossover
-
-    return genome_b;
 }
 
 Mutation_selector Archive::mutation_selector() {

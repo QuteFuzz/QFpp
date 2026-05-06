@@ -37,8 +37,8 @@ phased_x = "PhasedX";
 
 gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
     u1 | u2 | u3 | phased_x | measure |
-    ch;
-    # | s | t | v | ; # TODO: figure out gateset predicate issue
+    ch ;
+    # | s | t | v | ;
 
 
 # ============================================================================
