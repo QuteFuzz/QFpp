@@ -1,6 +1,26 @@
 #include <archive.h>
 #include <mutate.h>
 #include <chrono>
+#include <ast_utils.h>
+
+static void register_family_pairs(Arbiter& arbiter, const std::string& family_name, const std::vector<Token_kind>& family) {
+    for (size_t i = 0; i < family.size(); ++i) {
+        for (size_t j = 0; j < family.size(); ++j) {
+            if (i == j) continue;
+
+            Token_kind a = family[i];
+            Token_kind b = family[j];
+
+            std::string pair_mutation_name = family_name + "_" + std::to_string(a) + "_" + std::to_string(b);
+
+            arbiter.add(pair_mutation_name,
+                [a, b](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+                    return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{a, b});
+                }
+            );
+        }
+    }
+}
 
 void Archive::dump(const fs::path& path){
     std::ofstream stream(path);
@@ -44,17 +64,13 @@ float Archive::archive_av_quality(){
 };
 
 bool Archive::place(const Ast_entry& genome){
-    Info info(genome.ast->get_compilation_unit());
+    Info info(genome);
     unsigned int archive_index = info.get_archive_index();
 
     bool new_placement = archive[archive_index].place(genome, info.quality());
 
     if (new_placement){
         filled_archive_indices.push_back(archive_index);
-
-        std::cout << "Index " << archive_index << std::endl;
-        INFO("fill ratio = " + std::to_string(archive_fill_ratio()));
-        INFO("av quality = " + std::to_string(archive_av_quality()));
     }
 
     return new_placement;
@@ -95,157 +111,96 @@ void Archive::init_archive(){
     dump(output_dir / "init_archive.json");
 }
 
-Mutation_selector Archive::mutation_selector() {
-    Mutation_selector sel;
+void Archive::register_passes_to_arbiter(Arbiter& arbiter) {
 
-    // sel.add("mutate_children", 0.7f,
-        // [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            // return std::make_unique<Add_or_erase_child>(e, g, COMPOUND_STMTS, "compound_stmts", r, 1);
-        // });
-
-    sel.add("add_flat_compound_stmt", 0.1f,
+    arbiter.add("Prune",
         [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            return std::make_unique<Add_child>(e, g, COMPOUND_STMTS, "compound_stmts", r, 0);
+            return std::make_unique<Erase_child>(e, COMPOUND_STMTS, r);
         }
     );
 
-    sel.add("add_nested_compound_stmt", 0.25f,
-        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            unsigned int nested_depth = 2;
-            return std::make_unique<Add_child>(e, g, COMPOUND_STMTS, "compound_stmts", r, nested_depth);
+    // self inverse pairs, create vector with repeated token kind
+    for (const auto& token_kind : SELF_INVERSE_PAIRS){
+        arbiter.add(std::to_string(token_kind) + "_self_inverse",
+            [&](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+                return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>(2, token_kind));
+            }
+        );
+    }
+
+    // other inverse pairs, add pair and its reverse
+    for (size_t i = 0; i < INVERSE_PAIRS.size(); i++){
+        auto pair = INVERSE_PAIRS[i];
+        
+        assert(pair.size() == 2);
+
+        register_family_pairs(arbiter, "INVERSE_PAIR", pair);
+    }
+
+    // commutation bases
+    register_family_pairs(arbiter, "X_FAMILY", X_FAMILY);
+    register_family_pairs(arbiter, "Y_FAMILY", Y_FAMILY);
+    register_family_pairs(arbiter, "Z_FAMILY", Z_FAMILY);
+
+    arbiter.add("remove inverse pairs",
+        [&](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Remove_gate_chain>(e, r, is_inverse_pair);
         }
     );
 
-    // sel.add("erase_compound_stmt", 0.1f,
-        // [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            // return std::make_unique<Erase_child>(e, COMPOUND_STMTS, r);
-        // }
-    // );
-
-    // inverses and roots
-
-    sel.add("CX_self_inverse", 0.2f,
-        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>(2, CX));
+    arbiter.add("remove commutative pairs",
+        [&](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            return std::make_unique<Remove_gate_chain>(e, r, is_commutative_pair);
         }
     );
 
-    sel.add("H_self_inverse", 0.05f,
-        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>(2, H));
-        }
-    );
-
-    sel.add("X_self_inverse", 0.05f,
-        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>(2, X));
-        }
-    );
-
-    /// TODO: removed due to predicate issue with S gates in pytket
-
-    // sel.add("S_phase_root", 0.05f,
-    //     [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-    //         return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>(2, S));
-    //     }
-    // );
-
-    // H transforms
-
-    sel.add("H_sandwitch_X", 0.05f,
-        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{H, X, H});
-        }
-    );
-
-    sel.add("H_sandwitch_Z", 0.05f,
-        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{H, Z, H});
-        }
-    );
-
-    sel.add("H_sandwitch_Y", 0.05f,
-        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{H, Y, H});
-        }
-    );
-
-    // Phase transforms
-    /// TODO: removed due to predicate issue with S gates in pytket
-
-    #if 0
-
-    sel.add("S_Sdg_standwitch_X", 0.05f,
-        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{S, X, SDG});
-        }
-    );
-
-    sel.add("S_Sdg_standwitch_Y", 0.05f,
-        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{S, Y, SDG});
-        }
-    );
-
-    sel.add("S_Sdg_standwitch_Z", 0.05f,
-        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            return std::make_unique<Add_gate_chain>(e, g, r, std::vector<Token_kind>{S, Z, SDG});
-        }
-    );
-
-    #endif
-
-    // CNOT identities
-
-
-
-    return sel;
 }
 
 void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
-    Mutation_selector sel = mutation_selector();
     float init_quality = archive_av_quality();
-    unsigned int total_new_placements = 0;
 
-    auto start_time = std::chrono::steady_clock::now();
+    unsigned int max_evals = 500000;
+    unsigned int total_evals = 0;
 
-    while(archive_av_quality() < 4.0 * init_quality){
+    unsigned int patience = 20000;
+    unsigned int evals_since_discovery = 0;
+
+    Arbiter arbiter;
+    register_passes_to_arbiter(arbiter);
+
+    while((total_evals < max_evals) && (evals_since_discovery < patience)){
         unsigned int n_filled_cells = filled_archive_indices.size();
         unsigned int random_index = filled_archive_indices[random_uint(n_filled_cells - 1)];
 
         Cell cell = archive[random_index];
+
         Ast_entry genome = cell.get_genome().clone();
+        size_t mutation_rule_idx = arbiter.apply(genome, grammar);
 
-        Erase_child(genome, COMPOUND_STMTS, 0.8).apply();
-        size_t mutation_rule_idx = sel.apply(genome, grammar);
+        bool cell_discovered = place(genome);
+        arbiter.record(mutation_rule_idx, cell_discovered);
 
-        unsigned int n_new_placements = place(genome) ? 1 : 0; // each placement can discover at most one new cell
-        sel.record(mutation_rule_idx, n_new_placements);
+        if (cell_discovered){
+            evals_since_discovery = 0;
 
-        total_new_placements += n_new_placements;
+            INFO("fill ratio = " + std::to_string(archive_fill_ratio()));
+            INFO("av quality = " + std::to_string(archive_av_quality()));
+        } else {
+            evals_since_discovery += 1;
+        }
+
+        total_evals += 1;
     }
-
-    auto end_time = std::chrono::steady_clock::now();
-
-    auto duration_mins = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time);
 
     std::cout << std::endl;
 
     INFO("Final archive average quality " + std::to_string(archive_av_quality()));
     INFO("Final archive fill ratio " + std::to_string(archive_fill_ratio()));
 
-    std::cout << std::endl;
-
-    INFO("Execution time (mins): " + std::to_string(duration_mins.count()));
-    INFO("Fill rate (new placements / min): " + std::to_string((float)total_new_placements / (float)duration_mins.count()));
-
-    std::cout << std::endl;
-
     dump(output_dir / "final_archive.json");
 
-    sel.print_stats(std::cout);
+    arbiter.print_stats(std::cout);
 }
-
 
 std::vector<Ast_entry> Archive::get_best_genomes(){
     std::vector<Ast_entry> out;

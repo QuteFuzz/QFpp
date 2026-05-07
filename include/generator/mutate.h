@@ -7,12 +7,11 @@
 
 class Mutation_rule {
     public:
-        Mutation_rule(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind _block_kind, float _blockwise_rate, bool _on_entire_ast = false):
+        Mutation_rule(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind _block_kind, float _blockwise_rate):
             entry(_entry),
             grammar(_grammar),
             block_kind(_block_kind),
-            blockwise_rate(_blockwise_rate),
-            root(_on_entire_ast ? entry.ast : *entry.ast->get_compilation_unit())
+            blockwise_rate(_blockwise_rate)
         {}
 
         void apply();
@@ -29,7 +28,6 @@ class Mutation_rule {
         std::shared_ptr<Grammar> grammar;
         Token_kind block_kind;
         float blockwise_rate;
-        std::shared_ptr<Node> root;
 };
 
 /**
@@ -127,16 +125,16 @@ class Mutate_on_condition : public Mutation_rule {
 
 class Add_gate_chain : public Mutation_rule {
     public:
-        Add_gate_chain(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, float _blockwise_rate, const std::vector<Token_kind>& _gate_kinds):
+        Add_gate_chain(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, float _blockwise_rate, const std::vector<Token_kind>& _chain):
             Mutation_rule(_entry, _grammar, COMPOUND_STMTS, _blockwise_rate),
-            gate_kinds(_gate_kinds)
+            chain(_chain)
         {
-            assert(gate_kinds.size() >= 1);
+            assert(chain.size() >= 1);
 
-            unsigned int n_qubits = find_gate_info(gate_kinds[0])->n_qubits;
+            unsigned int n_qubits = find_gate_info(chain[0])->n_qubits;
 
-            for (size_t i = 1; i < gate_kinds.size(); i++){
-                if(find_gate_info(gate_kinds[i])->n_qubits != n_qubits){
+            for (size_t i = 1; i < chain.size(); i++){
+                if(find_gate_info(chain[i])->n_qubits != n_qubits){
                     ERROR("All gates in the chain must expect the same number of qubits");
                 }
             }
@@ -145,20 +143,21 @@ class Add_gate_chain : public Mutation_rule {
         void apply_blockwise(Slot_type block) override;
 
     private:
-        std::vector<Token_kind> gate_kinds;
+        std::vector<Token_kind> chain;
 
 };
 
-class CCNOT : public Mutation_rule {
-
+class Remove_gate_chain : public Mutation_rule {
     public:
-        CCNOT(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, float _blockwise_rate):
-            Mutation_rule(_entry, _grammar, COMPOUND_STMTS, _blockwise_rate)
+        Remove_gate_chain(Ast_entry& _entry, float _blockwise_rate, std::function<bool(Token_kind, Token_kind)> _func):
+            Mutation_rule(_entry, nullptr, COMPOUND_STMTS, _blockwise_rate),
+            func(_func)
         {}
 
         void apply_blockwise(Slot_type block) override;
 
+    private:
+        std::function<bool(Token_kind, Token_kind)> func;
 };
-
 
 #endif

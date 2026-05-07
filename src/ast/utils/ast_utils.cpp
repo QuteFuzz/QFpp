@@ -3,20 +3,24 @@
 #include <grammar.h>
 #include <ast.h>
 #include <gate.h>
+#include <qubit_op.h>
 
-enum class Commutation_basis {
-    NONE,
-    X_BASIS,
-    Y_BASIS,
-    Z_BASIS,
+const std::vector<Token_kind> SELF_INVERSE_PAIRS = {
+    H, X, Y, Z, CX, CY, CZ, SWAP, CCX, CSWAP, TOFFOLI
 };
 
-
-static const std::unordered_map<Commutation_basis, std::vector<Token_kind>> COMMUTATIVE_GATES = {
-    {Commutation_basis::X_BASIS, {X, RX}},
-    {Commutation_basis::Y_BASIS, {Y, RY}},
-    {Commutation_basis::Z_BASIS, {Z, RZ}},  // S and T removed due to predicate issue in pytket, see grammar
+const std::vector<std::vector<Token_kind>> INVERSE_PAIRS = {
+    {S, SDG},
+    {T, TDG},
+    {V, VDG},
 };
+
+const std::vector<Token_kind> Z_FAMILY = {Z, S, SDG, T, TDG, RZ, U1};
+
+const std::vector<Token_kind> X_FAMILY = {X, RX};  // SX, SXDG
+
+const std::vector<Token_kind> Y_FAMILY = {Y, RY};
+
 
 Slot_type find_slot_for(std::shared_ptr<Node>& search_root, std::shared_ptr<Node>& target) {
     for (auto& child : search_root->get_children()) {
@@ -25,23 +29,6 @@ Slot_type find_slot_for(std::shared_ptr<Node>& search_root, std::shared_ptr<Node
         if (found) return found;
     }
     return nullptr;
-}
-
-Token_kind find_gate_in_same_basis(const Token_kind& gate_kind) {
-    for (const auto&[basis, gates] : COMMUTATIVE_GATES){
-        if (std::find(gates.begin(), gates.end(), gate_kind) != gates.end()) {
-            unsigned int n_gates = gates.size();
-            Token_kind other_gate_kind = gates.at(random_uint(n_gates - 1));
-
-            while(other_gate_kind == gate_kind) {
-                other_gate_kind = gates.at(random_uint(n_gates - 1));
-            }
-
-            return other_gate_kind;
-        }
-    }
-    
-    return gate_kind;
 }
 
 std::shared_ptr<Node> build_ast_from_rule(
@@ -68,6 +55,11 @@ Slot_type build_ast_children(
 
 std::shared_ptr<Gate> gate_from_anscestor(std::shared_ptr<Node> anscestor) {
     std::shared_ptr<Gate> gate;
+
+    if (anscestor->get_node_kind() == QUBIT_OP){
+        // qubit ops store their gates at AST build time
+        return static_pointer_cast<Qubit_op>(anscestor)->get_gate_node();
+    }
 
     std::shared_ptr<Node> gate_name_primitive = anscestor->find(GATE_NAME);
     std::shared_ptr<Node> gate_subroutine = anscestor->find(SUBROUTINE);
@@ -143,4 +135,74 @@ std::vector<std::shared_ptr<Resource>> resources_from_anscestor(Node& anscestor,
     }
 
     return out;
+}
+
+bool qubit_op_is_interesting(
+    std::shared_ptr<Qubit_op> qubit_op, 
+    std::function<bool(Token_kind, Token_kind)> func, 
+    std::unordered_map<std::string, std::shared_ptr<Gate>>& last_gate_map
+){
+    std::shared_ptr<Gate> gate = qubit_op->get_gate_node();
+    Token_kind gate_kind = gate->get_node_kind();
+    auto qubit_names = qubit_op->get_target_qubit_names();
+
+    bool qubits_satisfied = true;
+    std::shared_ptr<Gate> prev_op = nullptr;
+
+    for (const std::string& name : qubit_names){
+        auto it = last_gate_map.find(name);
+
+        if (it == last_gate_map.end()){
+            qubits_satisfied = false; break;
+        }
+
+        if (prev_op == nullptr){
+            prev_op = it->second;
+        } else if (it->second->get_node_kind() == prev_op->get_node_kind()){
+            qubits_satisfied = false; break; // for multi qubit gates, need to make sure that last qubit op of all qubits is the same
+        }
+    }
+
+    bool is_intersting = qubits_satisfied && (prev_op != nullptr) && func(gate_kind, prev_op->get_node_kind());
+
+    if (is_intersting){
+        // remove all qubits from last_qubit_op tracker
+        for (const auto& name : qubit_names) last_gate_map.erase(name);
+    
+    } else {
+        // set last qubit op for all qubits
+        for (const auto& name : qubit_names) last_gate_map[name] = gate;
+    }
+
+    return is_intersting;
+}
+
+static bool gate_in_set(const std::vector<Token_kind>& set, Token_kind gate_kind){
+    return std::find(set.begin(), set.end(), gate_kind) != set.end();
+}
+
+bool is_inverse_pair(Token_kind a, Token_kind b) {
+    if (a == b) {
+        return gate_in_set(SELF_INVERSE_PAIRS, a);
+    } else {
+        for (const auto& pair : INVERSE_PAIRS){
+            if (gate_in_set(pair, a) && gate_in_set(pair, b)){
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
+bool is_commutative_pair(Token_kind a, Token_kind b){
+    if (a == b) return true;
+
+    if (gate_in_set(X_FAMILY, a) && gate_in_set(X_FAMILY, b)) return true;
+
+    if (gate_in_set(Y_FAMILY, a) && gate_in_set(Y_FAMILY, b)) return true;
+    
+    if (gate_in_set(Z_FAMILY, a) && gate_in_set(Z_FAMILY, b)) return true;
+
+    return false;
 }

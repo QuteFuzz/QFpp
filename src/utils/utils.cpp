@@ -88,8 +88,8 @@ int safe_stoi(const std::string& str, int default_value) {
 }
 
 /// @brief Find all possible combinations that can be chosen from numbers in [0, n-1]
-/// Knew the solution had something to do with counting in binary, but I didn't come up with this algorithm myself
-/// https://stackoverflow.com/questions/12991758/creating-all-possible-k-combinations-of-n-items-in-c
+/// Knew the solution had something to do with counting in binary, but I didn't come up with this algorithm myself.
+/// Stack overflow: https://stackoverflow.com/questions/12991758/creating-all-possible-k-combinations-of-n-items-in-c
 /// @param n
 /// @param r
 /// @return

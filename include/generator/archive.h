@@ -4,14 +4,14 @@
 #include <utils.h>
 #include <ast.h>
 #include <info.h>
-#include <mutation_selector.h>
+#include <arbiter.h>
 #include <cell.h>
 
 struct Archive {
 
     public:
         Archive(const std::vector<Ast_entry>& _entries, const fs::path& _output_dir):
-            dummy_info(_entries[0].ast->get_compilation_unit()),
+            dummy_info(_entries[0]),
 
             init_genomes(_entries),
             n_genomes(init_genomes.size()),
@@ -31,9 +31,7 @@ struct Archive {
         
         void init_archive();
 
-        Mutation_selector mutation_selector();
-
-        // void mutation(Ast_entry& genome, std::shared_ptr<Grammar> grammar);
+        void register_passes_to_arbiter(Arbiter& arbiter);
 
         void fill_archive(std::shared_ptr<Grammar> grammar);
 

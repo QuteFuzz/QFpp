@@ -5,6 +5,9 @@
 #include <gate.h>
 #include <qubit_op.h>
 #include <node_gen.h>
+#include <unordered_set>
+#include <ast.h>
+
 
 /*
     quality measures relate to how well the circuit would stress test the compiler. All are static measures, using 
@@ -59,7 +62,7 @@ class Info {
     public:
         Info(){}
 
-        Info(Slot_type _compilation_unit);
+        Info(const Ast_entry& entry);
 
         auto begin(){return feature_vecs.begin();}
 
@@ -85,10 +88,9 @@ class Info {
 
         float quality();
 
-        float self_inverse_pair_density();
+        float interesting_pair_density(std::function<bool(Token_kind, Token_kind)> func);
         
     private:
-        Slot_type compilation_unit = nullptr;
         std::vector<std::shared_ptr<Qubit_op>> qubit_ops;
 
         std::vector<Feature> feature_vecs;

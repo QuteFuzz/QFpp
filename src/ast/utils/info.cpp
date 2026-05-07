@@ -1,43 +1,14 @@
 #include <info.h>
 #include <node_gen.h>
 #include <ast_utils.h>
-#include <unordered_set>
 
-static bool is_inverse_pair(Token_kind a, Token_kind b) {
-    if (a == b) {
-        static const std::unordered_set<Token_kind> self_inverse = {
-            H, X, Y, Z, CX, CY, CZ, SWAP, CCX, CSWAP, TOFFOLI
-        };
-        return self_inverse.count(a);
-    }
-    return (a == S   && b == SDG) || (a == SDG && b == S)   ||
-           (a == T   && b == TDG) || (a == TDG && b == T)   ||
-           (a == V   && b == VDG) || (a == VDG && b == V);
-}
-
-Info::Info(Slot_type _compilation_unit) :
-    compilation_unit(_compilation_unit)
+Info::Info(const Ast_entry& entry) :
+    qubit_ops(std::move(entry.get_qubit_ops()))
 {
-    for (const auto& node : Node_gen(**compilation_unit, QUBIT_OP)){
-        auto qubit_op = std::dynamic_pointer_cast<Qubit_op>(node);
-
-        if (qubit_op == nullptr){
-            node->print_program(std::cout);
-            std::cout << std::endl;
-            
-            node->print_ast("");
-            std::cout << std::endl;
-
-            ERROR("Nodes of kind `QUBIT_OP` must be of `Qubit_op` type");
-        }
-    
-        qubit_ops.push_back(qubit_op);
-    }
-
     # if 0
+    // programs with all barrier ops
     if (qubit_ops.size() == 0) {
 		WARNING("Ciruit has no `QUBIT_OP` nodes");
-		(*compilation_unit)->print_program(std::cout);
 
 	}
     #endif
@@ -49,7 +20,8 @@ Info::Info(Slot_type _compilation_unit) :
         denote the number of bins
     */
     feature_vecs = {
-        Feature("self_inverse_pair_density", self_inverse_pair_density(), 5)
+        Feature("inverse_pair_density", interesting_pair_density(is_inverse_pair), 5),
+        Feature("commuatative_pair_density", interesting_pair_density(is_commutative_pair), 5),
     };
 
     for (auto& f : feature_vecs){
@@ -91,13 +63,7 @@ unsigned int Info::get_archive_index() {
     return index;
 }
 
-float Info::quality(){
-    /// TODO:
-    return 1.0;
-}
-
-float Info::self_inverse_pair_density(){
-
+float Info::interesting_pair_density(std::function<bool(Token_kind, Token_kind)> func){
     int n_sequences = 0;
 
     if (qubit_ops.size() < 2) return 0.0;
@@ -105,41 +71,24 @@ float Info::self_inverse_pair_density(){
     float n_pairs = (float)(qubit_ops.size() * (qubit_ops.size() - 1)) / 2.0;
 
     // qubit name -> last qubit op acting on that qubit
-    std::unordered_map<std::string, std::shared_ptr<Qubit_op>> last_qubit_op;
+    std::unordered_map<std::string, std::shared_ptr<Gate>> last_gate_map;
 
     for (const auto& qubit_op : qubit_ops){
-
         if (qubit_op->is_subroutine_op()) continue;
-        
-        Token_kind gate_kind = qubit_op->get_node_kind();
-        auto qubit_names = qubit_op->get_target_qubit_names();
-
-        bool qubits_satisfied = true;
-        std::shared_ptr<Qubit_op> prev_op = nullptr;
-
-        // find prev op for all qubits. it must be the same for all qubits, otherwise, there's no pair
-        for (const std::string& name : qubit_names){
-            auto it = last_qubit_op.find(name);
-
-            if (it == last_qubit_op.end()){
-                qubits_satisfied = false; break;
-            }
-
-            if (prev_op == nullptr){
-                prev_op = it->second;
-            }
-        }
-
-        if (qubits_satisfied && (prev_op != nullptr) && is_inverse_pair(gate_kind, prev_op->get_node_kind())){
-            n_sequences += 1;
-            // remove all qubits from last_qubit_op tracker
-            for (const auto& name : qubit_names) last_qubit_op.erase(name);
-        
-        } else {
-            // set last qubit op for all qubits
-            for (const auto& name : qubit_names) last_qubit_op[name] = qubit_op;
-        }
+    
+        n_sequences += qubit_op_is_interesting(qubit_op, func, last_gate_map);
     }
 
     return (float)n_sequences / n_pairs;
+}
+
+float Info::quality(){
+    /// maximise multi qubit gates, higher entaglement => more routing stress for compiler and swap insertions
+    int n_multi_qubit_gates = 0;
+
+    for (const auto& qubit_op : qubit_ops){
+        n_multi_qubit_gates += qubit_op->get_gate_node()->get_num_external_qubits();
+    }
+
+    return (float)n_multi_qubit_gates / (float)qubit_ops.size();
 }

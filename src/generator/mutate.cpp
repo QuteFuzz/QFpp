@@ -29,6 +29,7 @@ static std::unordered_map<Token_kind, Branch_constraint> branch_constraints_for_
 void Mutation_rule::apply(){
 
     std::vector<std::shared_ptr<Node>> block_nodes;
+    std::shared_ptr<Node> root = entry.get_root();
 
     for(const auto& node : Node_gen(*root, block_kind)){
         block_nodes.push_back(node);
@@ -62,6 +63,7 @@ void Mutation_rule::apply(){
 /// fresh search to count over live number of blocks
 unsigned int Mutation_rule::n_children_across_blocks(){
     unsigned int out = 0;
+    auto root = entry.get_root();
 
     for(const auto& node : Node_gen(*root, block_kind)){
         out += node->size();
@@ -78,7 +80,7 @@ unsigned int Mutation_rule::n_children_across_blocks(){
 /// @param compound_stmts 
 void Add_child::apply_blockwise(Slot_type block) {
     std::shared_ptr<Rule> rule = rule_from_name(block_rule_name, grammar);
-    build_ast_children(block, rule, *entry.context, nested_depth, 1, descendant_node_branch_constraints);
+    build_ast_children(block, rule, *entry.get_context(), nested_depth, 1, descendant_node_branch_constraints);
 }
 
 /// @brief Remove random child from block
@@ -113,7 +115,7 @@ void Add_or_erase_child::apply_blockwise(Slot_type block) {
 
 void Replace_block::apply_blockwise(Slot_type block) {
     std::shared_ptr<Rule> rule = rule_from_name(repl_rule_name, grammar);
-    std::shared_ptr<Node> new_node = build_ast_from_rule(rule, *entry.context, descendant_node_branch_constraints);
+    std::shared_ptr<Node> new_node = build_ast_from_rule(rule, *entry.get_context(), descendant_node_branch_constraints);
     replace_node(block, new_node);
 }
 
@@ -126,13 +128,13 @@ void Mutate_on_condition::apply_blockwise(Slot_type block) {
 void Add_gate_chain::apply_blockwise(Slot_type block) {
     std::shared_ptr<Rule> rule = rule_from_name("compound_stmts", grammar);
 
-    size_t chain_size = gate_kinds.size();
+    size_t chain_size = chain.size();
 
-    std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints = branch_constraints_for_gate(gate_kinds[0]);
+    std::unordered_map<Token_kind, Branch_constraint> descendant_node_branch_constraints = branch_constraints_for_gate(chain[0]);
 
     // need to deref immediately because `build_ast_children` modifies the AST => might lead to child vector reallocs which frees the ptrs in the children vector
     // so derefing later would cause use-after-free error
-    std::shared_ptr<Node> last_built_gate_0 = *build_ast_children(block, rule, *entry.context, 0, 1, descendant_node_branch_constraints);
+    std::shared_ptr<Node> last_built_gate_0 = *build_ast_children(block, rule, *entry.get_context(), 0, 1, descendant_node_branch_constraints);
 
     #if 0
     std::cout << "gate0 " << std::endl; 
@@ -140,11 +142,11 @@ void Add_gate_chain::apply_blockwise(Slot_type block) {
     #endif
 
     for (size_t i = 1; i < chain_size; i++){
-        descendant_node_branch_constraints = branch_constraints_for_gate(gate_kinds[i]);
-        Slot_type last_built_gate_1 = build_ast_children(block, rule, *entry.context, 0, 1, descendant_node_branch_constraints);
+        descendant_node_branch_constraints = branch_constraints_for_gate(chain[i]);
+        Slot_type last_built_gate_1 = build_ast_children(block, rule, *entry.get_context(), 0, 1, descendant_node_branch_constraints);
 
         # if 0
-        std::cout << "gate1 " << std::endl; 
+        std::cout << "gate1 " << std::endl;
         (*last_built_gate_1)->print_program(std::cout);
         #endif
 
@@ -152,13 +154,27 @@ void Add_gate_chain::apply_blockwise(Slot_type block) {
     }
 }
 
-void CCNOT::apply_blockwise(Slot_type block) {
-    std::shared_ptr<Rule> rule = rule_from_name("compound_stmts", grammar);
-    
-    auto descendant_node_branch_constraints = branch_constraints_for_gate(CX);
+void Remove_gate_chain::apply_blockwise(Slot_type block) {
+    // qubit name -> last qubit op acting on that qubit
+    std::unordered_map<std::string, std::shared_ptr<Gate>> last_gate_map;
 
-    std::shared_ptr<Node> cx_node = build_ast_from_rule(rule, *entry.context, descendant_node_branch_constraints);
+    auto qubit_ops_gen = Node_gen(**block, QUBIT_OP);
 
-    auto resources = resources_from_anscestor(*cx_node, QUBIT);
+    auto qubit_ops_it = qubit_ops_gen.begin();
 
+    while (qubit_ops_it != qubit_ops_gen.end()){
+        auto qubit_op = static_pointer_cast<Qubit_op>(*qubit_ops_it);
+
+        if (qubit_op_is_interesting(qubit_op, func, last_gate_map)){
+            assert(qubit_ops_it != qubit_ops_gen.begin()); // not the first qubit op in sequence
+
+            auto prev_qubit_op = qubit_ops_it.prev_slot();
+
+            // remove current qubit op and previous qubit op
+            *qubit_ops_it = std::make_shared<Node>();
+            *prev_qubit_op = std::make_shared<Node>();
+        }
+
+        qubit_ops_it++;
+    }
 }

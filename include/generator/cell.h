@@ -35,8 +35,8 @@ struct Cell {
         }
 
         inline Ast_entry get_genome() const {
-            if (genome.ast == nullptr){
-                ERROR("Genome AST is nullptr");
+            if (genome.get_ast() == nullptr){
+                ERROR("Genome root is nullptr");
             }
 
             return genome;
