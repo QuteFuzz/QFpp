@@ -136,8 +136,8 @@ void Add_gate_chain::apply_blockwise(Slot_type block) {
     // so derefing later would cause use-after-free error
     std::shared_ptr<Node> last_built_gate_0 = *build_ast_children(block, rule, *entry.get_context(), 0, 1, descendant_node_branch_constraints);
 
-    #if 0
-    std::cout << "gate0 " << std::endl; 
+    #if 1
+    std::cout << "gate0: ";
     last_built_gate_0->print_program(std::cout);
     #endif
 
@@ -145,8 +145,8 @@ void Add_gate_chain::apply_blockwise(Slot_type block) {
         descendant_node_branch_constraints = branch_constraints_for_gate(chain[i]);
         Slot_type last_built_gate_1 = build_ast_children(block, rule, *entry.get_context(), 0, 1, descendant_node_branch_constraints);
 
-        # if 0
-        std::cout << "gate1 " << std::endl;
+        # if 1
+        std::cout << "gate1: ";
         (*last_built_gate_1)->print_program(std::cout);
         #endif
 

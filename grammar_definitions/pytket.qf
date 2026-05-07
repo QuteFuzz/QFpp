@@ -25,7 +25,7 @@ t = "T";
 s = "S";
 measure = "Measure";
 swap = "SWAP";
-# toffoli = "Toffoli";   # TODO: change application syntax depending on gate name?
+toffoli = "CCX";
 cswap = "CSWAP";
 crx = "CRx";
 cry = "CRy";
@@ -36,17 +36,11 @@ u3 = "U3";
 phased_x = "PhasedX";
 
 gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
-    u1 | u2 | u3 | phased_x | measure |
-    ch ;
-    # | s | t | v | ;
-
+    u1 | u2 | u3 | phased_x | measure | ch | s | t | v ;
 
 # ============================================================================
 # CIRCUIT STRUCTURE
 # ============================================================================
-
-# TODO: need to figure out better way of resolving circuit name
-# circuits = (circuit NEWLINE)[UNIFORM(1, 3)];
 
 program = imports NEWLINE NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;
 

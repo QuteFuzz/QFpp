@@ -51,6 +51,8 @@ static void print_banner() {
 
     std::cout << BOLD(CYAN(banner)) << std::endl;
     std::cout << BOLD(CYAN("    Quantum Compiler Fuzzing Engine")) << std::endl;
+    
+    std::cout << std::endl;
     std::cout << "Type 'h' for help.\n";
 }
 
