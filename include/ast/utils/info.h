@@ -84,11 +84,11 @@ class Info {
         
         std::vector<std::shared_ptr<Qubit_op>> get_qubit_ops() const {return qubit_ops;}
 
-        void dump_feature_vecs(std::ofstream& stream);
+        void dump_feature_vecs(std::ostream& stream);
 
         float quality();
 
-        float interesting_pair_density(std::function<bool(Token_kind, Token_kind)> func);
+        unsigned int interesting_pair_count(std::function<bool(Token_kind, Token_kind)> func);
         
     private:
         std::vector<std::shared_ptr<Qubit_op>> qubit_ops;

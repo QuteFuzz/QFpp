@@ -16,10 +16,12 @@ class Mutation_rule {
 
         void apply();
 
-        unsigned int n_children_across_blocks();
+        Token_kind get_block_kind() const { return block_kind; }
+
+        unsigned int n_children_across_blocks() const;
 
         /// function to apply on each block to be mutated by this rule
-        virtual void apply_blockwise(Slot_type block_node) = 0;
+        virtual void apply_blockwise(Slot_type block_node) const = 0;
 
         virtual ~Mutation_rule() = default;
 
@@ -29,10 +31,6 @@ class Mutation_rule {
         Token_kind block_kind;
         float blockwise_rate;
 };
-
-/**
- *          SEMNATICS MODIFYING
- */
 
 class Add_child : public Mutation_rule {
     public:
@@ -48,7 +46,7 @@ class Add_child : public Mutation_rule {
             descendant_node_branch_constraints(_descendant_node_branch_constraints)
         {}
 
-        void apply_blockwise(Slot_type block) override;
+        void apply_blockwise(Slot_type block) const override;
 
     private:
         std::string block_rule_name;
@@ -62,27 +60,10 @@ class Erase_child : public Mutation_rule {
             Mutation_rule(_entry, nullptr, _block_kind, _blockwise_rate)
         {}
 
-        void apply_blockwise(Slot_type compound_stmts) override;
+        void apply_blockwise(Slot_type compound_stmts) const override;
 
     private:
 
-};
-
-
-class Add_or_erase_child : public Mutation_rule {
-    public:
-        Add_or_erase_child(Ast_entry& _entry, std::shared_ptr<Grammar> _grammar, Token_kind block_kind,
-            std::string _block_rule_name,
-            float _blockwise_rate
-        ):
-            Mutation_rule(_entry, _grammar, block_kind, _blockwise_rate),
-            block_rule_name(_block_rule_name)
-        {}
-
-        void apply_blockwise(Slot_type block) override;
-
-    private:
-        std::string block_rule_name;
 };
 
 class Replace_block : public Mutation_rule {
@@ -100,7 +81,7 @@ class Replace_block : public Mutation_rule {
             descendant_node_branch_constraints(_descendant_node_branch_constraints)
         {}
 
-        void apply_blockwise(Slot_type block) override;
+        void apply_blockwise(Slot_type block) const override;
 
     private:
         std::string repl_rule_name;
@@ -116,7 +97,7 @@ class Mutate_on_condition : public Mutation_rule {
             cond(_cond)
         {}
 
-        void apply_blockwise(Slot_type block) override;
+        void apply_blockwise(Slot_type block) const override;
 
     private:
         std::shared_ptr<Mutation_rule> mut_rule;
@@ -140,7 +121,7 @@ class Add_gate_chain : public Mutation_rule {
             }
         }
 
-        void apply_blockwise(Slot_type block) override;
+        void apply_blockwise(Slot_type block) const override;
 
     private:
         std::vector<Token_kind> chain;
@@ -154,10 +135,24 @@ class Remove_gate_chain : public Mutation_rule {
             func(_func)
         {}
 
-        void apply_blockwise(Slot_type block) override;
+        void apply_blockwise(Slot_type block) const override;
 
     private:
         std::function<bool(Token_kind, Token_kind)> func;
+};
+
+class Combine : public Mutation_rule {
+    public:
+        Combine(Ast_entry& _entry, float _blockwise_rate, std::vector<std::unique_ptr<Mutation_rule>> _rules):
+            Mutation_rule(_entry, nullptr, COMPOUND_STMTS, _blockwise_rate),
+            rules(std::move(_rules))
+        {}
+
+        void apply_blockwise(Slot_type type) const override;
+        
+    private:
+        std::vector<std::unique_ptr<Mutation_rule>> rules;
+
 };
 
 #endif

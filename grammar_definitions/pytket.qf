@@ -36,7 +36,7 @@ u3 = "U3";
 phased_x = "PhasedX";
 
 gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
-    u1 | u2 | u3 | phased_x | measure | ch | s | t | v ;
+    u1 | u2 | u3 | phased_x | measure | ch | s | t | v | toffoli;
 
 # ============================================================================
 # CIRCUIT STRUCTURE

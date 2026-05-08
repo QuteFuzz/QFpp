@@ -22,7 +22,7 @@ extern const std::vector<Token_kind> X_FAMILY;
 
 extern const std::vector<Token_kind> Y_FAMILY;
 
-Slot_type find_slot_for(std::shared_ptr<Node>& search_root, std::shared_ptr<Node>& target);
+Slot_type find_slot_for(const std::shared_ptr<Node>& search_root, const std::shared_ptr<Node>& target);
 
 std::shared_ptr<Node> build_ast_from_rule(
     std::shared_ptr<Rule> rule,
@@ -49,10 +49,10 @@ unsigned int max_control_flow_depth_rec(const std::shared_ptr<Node> node, unsign
 
 std::vector<std::shared_ptr<Resource>> resources_from_anscestor(Node& anscestor, Token_kind resource_node_kind);
 
-bool qubit_op_is_interesting(
-    std::shared_ptr<Qubit_op> qubit_op, 
+std::pair<bool, std::shared_ptr<Qubit_op>> qubit_op_is_interesting(
+    std::shared_ptr<Qubit_op> qubit_op,
     std::function<bool(Token_kind, Token_kind)> func, 
-    std::unordered_map<std::string, std::shared_ptr<Gate>>& last_gate_map
+    std::unordered_map<std::string, std::shared_ptr<Qubit_op>>& last_qubit_op_map
 );
 
 bool is_inverse_pair(Token_kind a, Token_kind b);

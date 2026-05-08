@@ -112,6 +112,8 @@ std::mt19937& rng();
 
 unsigned int random_uint(unsigned int max = UINT32_MAX, unsigned int min = 0);
 
+float random_float(float max, float min);
+
 unsigned int safe_stoul(const std::string& str, unsigned int default_value);
 
 int safe_stoi(const std::string& str, int default_value);

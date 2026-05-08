@@ -22,7 +22,7 @@ const std::vector<Token_kind> X_FAMILY = {X, RX};  // SX, SXDG
 const std::vector<Token_kind> Y_FAMILY = {Y, RY};
 
 
-Slot_type find_slot_for(std::shared_ptr<Node>& search_root, std::shared_ptr<Node>& target) {
+Slot_type find_slot_for(const std::shared_ptr<Node>& search_root, const std::shared_ptr<Node>& target) {
     for (auto& child : search_root->get_children()) {
         if (child.get() == target.get()) return &child;
         auto found = find_slot_for(child, target);
@@ -50,7 +50,9 @@ Slot_type build_ast_children(
 ){
     std::shared_ptr<Ast> ast_builder = std::make_shared<Ast>(context, nested_depth);
     const Term& term = make_term_from_rule(rule);
-    return ast_builder->term_branch_to_child_nodes(*root, term, n_children, descendant_node_branch_constraints);
+    auto child_expr = std::make_shared<IntExpr>(1);
+
+    return ast_builder->term_branch_to_child_nodes(*root, term, descendant_node_branch_constraints, child_expr);
 }
 
 std::shared_ptr<Gate> gate_from_anscestor(std::shared_ptr<Node> anscestor) {
@@ -137,44 +139,45 @@ std::vector<std::shared_ptr<Resource>> resources_from_anscestor(Node& anscestor,
     return out;
 }
 
-bool qubit_op_is_interesting(
+std::pair<bool, std::shared_ptr<Qubit_op>> qubit_op_is_interesting(
     std::shared_ptr<Qubit_op> qubit_op, 
     std::function<bool(Token_kind, Token_kind)> func, 
-    std::unordered_map<std::string, std::shared_ptr<Gate>>& last_gate_map
+    std::unordered_map<std::string, std::shared_ptr<Qubit_op>>& last_qubit_op_map
 ){
     std::shared_ptr<Gate> gate = qubit_op->get_gate_node();
     Token_kind gate_kind = gate->get_node_kind();
     auto qubit_names = qubit_op->get_target_qubit_names();
 
     bool qubits_satisfied = true;
-    std::shared_ptr<Gate> prev_op = nullptr;
+    std::shared_ptr<Qubit_op> prev_qubit_op = nullptr;
 
     for (const std::string& name : qubit_names){
-        auto it = last_gate_map.find(name);
+        auto it = last_qubit_op_map.find(name);
 
-        if (it == last_gate_map.end()){
+        if (it == last_qubit_op_map.end()){
             qubits_satisfied = false; break;
         }
 
-        if (prev_op == nullptr){
-            prev_op = it->second;
-        } else if (it->second->get_node_kind() == prev_op->get_node_kind()){
-            qubits_satisfied = false; break; // for multi qubit gates, need to make sure that last qubit op of all qubits is the same
+        if (prev_qubit_op == nullptr){
+            prev_qubit_op = it->second;
+        } else if (it->second != prev_qubit_op){
+            // for multi qubit gates, need to make sure that last qubit op of all qubits is the same in memory
+            qubits_satisfied = false; break;
         }
     }
 
-    bool is_intersting = qubits_satisfied && (prev_op != nullptr) && func(gate_kind, prev_op->get_node_kind());
+    bool is_intersting = qubits_satisfied && (prev_qubit_op != nullptr) && func(gate_kind, prev_qubit_op->get_gate_node()->get_node_kind());
 
     if (is_intersting){
         // remove all qubits from last_qubit_op tracker
-        for (const auto& name : qubit_names) last_gate_map.erase(name);
+        for (const auto& name : qubit_names) last_qubit_op_map.erase(name);
     
     } else {
         // set last qubit op for all qubits
-        for (const auto& name : qubit_names) last_gate_map[name] = gate;
+        for (const auto& name : qubit_names) last_qubit_op_map[name] = qubit_op;
     }
 
-    return is_intersting;
+    return std::make_pair(is_intersting, prev_qubit_op);
 }
 
 static bool gate_in_set(const std::vector<Token_kind>& set, Token_kind gate_kind){

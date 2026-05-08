@@ -13,15 +13,9 @@ Info::Info(const Ast_entry& entry) :
 	}
     #endif
 
-    /*
-        ratios are used to ensure that the archive size is constant for any program generated. For example, `stmt_ratio`
-        is calculated, then multiplied by the chosen number of bins to get the bin index, instead of using the number of statements 
-        in the compilation unit as this is not a constant value. Otherwise, known constants like `NESTED_MAX_DEPTH` can be used to
-        denote the number of bins
-    */
     feature_vecs = {
-        Feature("inverse_pair_density", interesting_pair_density(is_inverse_pair), 5),
-        Feature("commuatative_pair_density", interesting_pair_density(is_commutative_pair), 5),
+        Feature("inverse_pair_density", interesting_pair_count(is_inverse_pair), 20),
+        Feature("commuatative_pair_density", interesting_pair_count(is_commutative_pair), 20),
     };
 
     for (auto& f : feature_vecs){
@@ -34,7 +28,7 @@ unsigned int Info::get_archive_size() const {
     return archive_size;
 }
 
-void Info::dump_feature_vecs(std::ofstream& stream){
+void Info::dump_feature_vecs(std::ostream& stream){
     stream << "[";
 
     for (size_t i = 0; i < feature_vecs.size(); i++){
@@ -63,28 +57,30 @@ unsigned int Info::get_archive_index() {
     return index;
 }
 
-float Info::interesting_pair_density(std::function<bool(Token_kind, Token_kind)> func){
+unsigned int Info::interesting_pair_count(std::function<bool(Token_kind, Token_kind)> func){
     int n_sequences = 0;
 
-    if (qubit_ops.size() < 2) return 0.0;
+    if (qubit_ops.size() < 2) return 0;
 
-    float n_pairs = (float)(qubit_ops.size() * (qubit_ops.size() - 1)) / 2.0;
+    float n_adj_pairs = (float)(qubit_ops.size() - 1);
 
     // qubit name -> last qubit op acting on that qubit
-    std::unordered_map<std::string, std::shared_ptr<Gate>> last_gate_map;
+    std::unordered_map<std::string, std::shared_ptr<Qubit_op>> last_qubit_op_map;
 
     for (const auto& qubit_op : qubit_ops){
         if (qubit_op->is_subroutine_op()) continue;
     
-        n_sequences += qubit_op_is_interesting(qubit_op, func, last_gate_map);
+        n_sequences += qubit_op_is_interesting(qubit_op, func, last_qubit_op_map).first;
     }
 
-    return (float)n_sequences / n_pairs;
+    return n_sequences;
 }
 
 float Info::quality(){
     /// maximise multi qubit gates, higher entaglement => more routing stress for compiler and swap insertions
     int n_multi_qubit_gates = 0;
+
+    if (qubit_ops.size() == 0) return 0.0;
 
     for (const auto& qubit_op : qubit_ops){
         n_multi_qubit_gates += qubit_op->get_gate_node()->get_num_external_qubits();

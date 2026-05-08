@@ -72,7 +72,7 @@ class Branch {
             std::vector<Term> _terms = {};
 
             for (auto& term : terms){
-                _terms = append_vectors<Term>(_terms, term.eval_expr(context, std::nullopt));
+                _terms = append_vectors<Term>(_terms, term.eval_expr(context));
             }
 
             Branch new_branch(_terms);

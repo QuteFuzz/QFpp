@@ -11,7 +11,7 @@ void Generator::ast_parse(const std::vector<Ast_entry>& entries, const fs::path&
     stream.close();
 
     for(size_t i = 0; i < entries.size(); i++){
-        auto ast = std::move(entries[i].get_ast());
+        auto ast = entries[i].get_ast();
 
         fs::path current_circuit_dir = output_dir / ("circuit" + std::to_string(i));
 

@@ -1,8 +1,9 @@
 #include <arbiter.h>
 
-Arm::Arm(std::string _mutation_name, Mutation_factory _factory):
+Arm::Arm(std::string _mutation_name, Mutation_factory _factory, float init_blockwise_ratio):
     mutation_name(_mutation_name),
-    factory(_factory)
+    factory(_factory),
+    blockwise_ratio(init_blockwise_ratio)
 {}
 
 float Arm::success_rate() const {
@@ -15,8 +16,8 @@ float Arm::ucb_score(unsigned int total_trials) const {
     if (total_mutation_trials == 0){
         return std::numeric_limits<float>::max();
     } else {
-        return success_rate()
-        + std::sqrt((2.0f * std::log((float)total_mutation_trials)) / (float)total_trials);
+        return success_rate()  // better success rates should win
+        + std::sqrt((2.0f * std::log((float)total_trials)) / (float)total_mutation_trials);  // favour exploration
     }
 }
 
@@ -26,9 +27,10 @@ void Arm::hill_climb(bool cell_discovered) {
     total_mutation_trials += 1;
 
     float current_sr = success_rate();
-    
-    if (current_sr <= prev_success_rate) {
-        ratio_delta *= -0.5f;
+
+    // if current success rate is worse, move in oppositre direction, otherwise, keep moving in same direction
+    if (current_sr < prev_success_rate) {
+        ratio_delta *= -1.0f;
     }
 
     blockwise_ratio = std::clamp(blockwise_ratio + ratio_delta, 0.1f, 1.0f);
@@ -41,8 +43,8 @@ void Arm::apply(Ast_entry& genome, std::shared_ptr<Grammar> grammar){
 }
 
 
-void Arbiter::add(const std::string& name, Mutation_factory factory) {
-    arms.push_back(Arm(name, std::move(factory)));
+void Arbiter::add(const std::string& name, Mutation_factory factory, float init_blockwise_ratio) {
+    arms.push_back(Arm(name, std::move(factory), init_blockwise_ratio));
 }
 
 // Returns index of arm selected by UCB1
@@ -80,7 +82,7 @@ void Arbiter::print_stats(std::ostream& out) const {
             << CYAN("  trials = ") << arm.get_total_mutation_trials()
             << CYAN("  n_discovered_cells = ") << arm.get_n_discovered_cells()
             << CYAN("  success rate = ") << arm.success_rate()
-            << CYAN("  ratio = ") << arm.get_blockwise_ratio()
+            << CYAN("  final blockwise ratio = ") << arm.get_blockwise_ratio()
             << std::endl;
     }
     out << CYAN("==========================") << std::endl;

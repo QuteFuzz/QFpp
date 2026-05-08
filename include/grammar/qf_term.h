@@ -45,7 +45,7 @@ class Term {
 
         bool operator==(const Term& other) const;
         
-        std::vector<Term> eval_expr(Context& context, std::optional<unsigned int> term_constraint_max) const;
+        std::vector<Term> eval_expr(Context& context) const;
 
         Token_kind get_node_kind() const {return kind;}
 

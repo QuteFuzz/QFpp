@@ -55,6 +55,20 @@ unsigned int random_uint(unsigned int max, unsigned int min){
     }
 }
 
+/// @brief Random float within some range. Uses its own generator to seed based on node counter
+/// @param max value inclusive
+/// @param min value inclusive
+/// @return
+float random_float(float max, float min){
+    if(min < max){
+        std::uniform_real_distribution<float> float_dist(min, max);
+        return float_dist(rng());
+
+    } else {
+        return min;
+    }
+}
+
 std::string random_str(size_t length){
     std::string s;
     s.reserve(length);

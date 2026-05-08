@@ -33,9 +33,9 @@ class Ast{
         Slot_type term_branch_to_child_nodes(
             std::shared_ptr<Node> parent, 
             const Term& term,
-            std::optional<unsigned int> term_constraint_max,
             std::unordered_map<Token_kind, Branch_constraint>& descendant_node_branch_constraints,
-            unsigned int depth = 0
+    	    std::shared_ptr<Expr> term_expr_override = nullptr,
+            unsigned int recurr_depth = 0
         );
 
         std::variant<std::shared_ptr<Node>, Term> make_child(const std::shared_ptr<Node> parent, const Term& term);
@@ -106,7 +106,7 @@ struct Ast_entry {
         }
 
     private:
-        std::shared_ptr<Node> ast;
+        std::shared_ptr<Node> ast = nullptr;
         std::shared_ptr<Context> context;
         bool consider_entire_ast = false; // or just compilation unit
         std::vector<std::shared_ptr<Qubit_op>> qubit_ops;

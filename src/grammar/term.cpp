@@ -88,11 +88,11 @@ bool Term::operator==(const Term& other) const {
     }
 }
 
-std::vector<Term> Term::eval_expr(Context& context, std::optional<unsigned int> term_constraint_max) const {
+std::vector<Term> Term::eval_expr(Context& context) const {
 	std::vector<Term> child_terms;
 	
 	if (expr == nullptr){
-		child_terms = std::vector<Term>(term_constraint_max.value_or(1), *this);
+		child_terms = std::vector<Term>(1, *this);
 	
 	} else {
 		Expr_type expr_eval = expr->eval(context);
