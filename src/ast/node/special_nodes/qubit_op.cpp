@@ -4,28 +4,24 @@
 #include <ast_utils.h>
 
 bool Qubit_op::is_subroutine_op() const{
-    return gate_node.has_value() && *gate_node.value() == SUBROUTINE;
+    return *gate_node == SUBROUTINE;
 }
 
 void Qubit_op::add_gate_if_subroutine(std::vector<std::shared_ptr<Node>>& subroutine_gates){
+    assert(gate_node != nullptr);
 
     if(is_subroutine_op()){
         for(std::shared_ptr<Node>& gate : subroutine_gates){
-            if(gate->get_str() == gate_node.value()->get_str()){return;}
+            if(gate->get_str() == gate_node->get_str()){return;}
         }
 
-        subroutine_gates.push_back(gate_node.value());
+        subroutine_gates.push_back(gate_node);
     }
 }
 
 std::string Qubit_op::resolved_name() const {
-    std::string _string = "UNKNOWN";
-
-    if(gate_node.has_value()){
-        _string = gate_node.value()->get_str();
-    }
-
-    return _string + ", id: " + std::to_string(id);
+    assert(gate_node != nullptr);
+    return gate_node->get_str() + ", id: " + std::to_string(id);
 }
 
 /// Need to check for duplication although I use `Node_gen` because it only differentiates nodes

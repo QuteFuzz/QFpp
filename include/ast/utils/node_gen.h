@@ -34,9 +34,14 @@ class Node_gen {
 
                 Iterator& operator++() {
                     if (_root) {
+                        _prev_slot = _current_slot;
                         _current_slot = _root->find_slot(_kind, *_visited);
                     }
                     return *this;
+                }
+
+                Slot_type prev_slot(){
+                    return _prev_slot;
                 }
 
                 bool operator!=(const Iterator& other) const {
@@ -50,6 +55,7 @@ class Node_gen {
 
             private:
                 Slot_type _current_slot;
+                Slot_type _prev_slot;
                 Node* _root;
                 Token_kind _kind;
                 std::vector<Slot_type>* _visited;

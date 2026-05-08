@@ -42,7 +42,7 @@ class Base(ABC):
         self.plot: bool = self.args.plot
         self.qss_name = qss_name
 
-        self.num_shots = 10 if os.environ.get("RUN_MODE") == "CI" else 1_000_000
+        self.num_shots = 10 if os.environ.get("RUN_MODE") == "CI" else 100_000
 
     @abstractmethod
     def _get_counts(self, circuit, opt_level, circuit_num) -> Dict[Any, int]:

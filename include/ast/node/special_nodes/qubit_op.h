@@ -14,9 +14,13 @@ class Qubit_op : public Cloneable<Qubit_op> {
             Cloneable<Qubit_op>("qubit_op", QUBIT_OP)
         {}
 
-        inline void set_gate_node(std::shared_ptr<Node> node){
-            gate_node = std::make_optional<std::shared_ptr<Node>>(node);
+        inline void set_gate_node(std::shared_ptr<Gate> _gate_node){
+            gate_node = _gate_node;
         }
+
+        std::shared_ptr<Gate> get_gate_node() const {
+            return gate_node;
+        }        
 
         bool is_subroutine_op() const;
 
@@ -27,7 +31,7 @@ class Qubit_op : public Cloneable<Qubit_op> {
         std::vector<std::string> get_target_qubit_names();
 
     private:
-        std::optional<std::shared_ptr<Node>> gate_node = std::nullopt;
+        std::shared_ptr<Gate> gate_node = nullptr;
 
 };
 
