@@ -2,4 +2,7 @@
 
 IMAGE_NAME="qutefuzz:latest"
 
-docker run -it --rm -v "$(pwd):/app" $IMAGE_NAME
+docker run -it --rm \
+    -v "$(pwd):/app" \
+    --tmpfs /app/.venv \
+    $IMAGE_NAME

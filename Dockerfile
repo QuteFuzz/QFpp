@@ -2,7 +2,7 @@
 FROM ubuntu:24.04
 
 # Install needed deps
-RUN apt-get update && apt-get install -y sudo curl vim python3 python3-venv && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y sudo curl vim python3 python3-full python3-venv && rm -rf /var/lib/apt/lists/*
 
 # Prevent interactive prompts during installation
 ENV DEBIAN_FRONTEND=noninteractive

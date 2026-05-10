@@ -65,6 +65,8 @@ gate_op = GET_CIRCUIT_NAME name "(" gate_op_args ")";
 
 subroutine_op = GET_CIRCUIT_NAME ".add_gate(" subroutine ",[" subroutine_op_args "])";
 
+toffoli = ccx;
+
 gate_name = h
     | x
     | y
@@ -75,7 +77,9 @@ gate_name = h
     | cx
     | cy
     | cz
-    | ccx;
+    | ccx
+    | toffoli
+    ;
 
 # # TODO: figure this out
 # gate_op_args = qubit_list
