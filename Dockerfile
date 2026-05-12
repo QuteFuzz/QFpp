@@ -1,5 +1,5 @@
 # QuteFuzz - Dockerfile for quantum compiler fuzzing
-FROM ubuntu:24.04
+FROM docker.io/library/ubuntu:24.04
 
 # Install needed deps
 RUN apt-get update && apt-get install -y sudo curl vim python3 python3-full python3-venv && rm -rf /var/lib/apt/lists/*
