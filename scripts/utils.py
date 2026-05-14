@@ -14,7 +14,7 @@ class Color:
 
 
 def log(msg, color=Color.RESET):
-    print(f"{color} {msg}{Color.RESET}")
+    print(f"{color} >>> {msg}{Color.RESET}")
 
 
 def pipe_to_process(cmd, cwd, cmd_to_process):

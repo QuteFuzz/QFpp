@@ -1,7 +1,7 @@
 # guppy.qf
 
 EXTENSION = ".py";
-MAX_REG_SIZE = 1;
+MAX_REG_SIZE = 3;
 NESTED_MAX_DEPTH = 3;
 
 # ── Gate names ──────────────────────────────────────────────

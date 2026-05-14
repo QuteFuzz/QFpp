@@ -39,7 +39,7 @@ REPOS = [
 
 
 def clone_repos(dev: bool):
-    log(">>> Cloning repos", Color.BLUE)
+    log("Cloning repos", Color.BLUE)
 
     for repo in REPOS:
         if not repo.dest_dir.exists() and (dev or repo.engine_dep):
@@ -61,10 +61,10 @@ def check_conan_profile():
     conan2_profile_path = Path.home() / ".conan2" / "profiles" / "default"
 
     if not conan2_profile_path.exists():
-        log(">>> Generating default Conan profile...", Color.BLUE)
+        log("Generating default Conan profile...", Color.BLUE)
         run_command(["bash", "-c", "conan profile detect"])
 
-        log(">>> Adding Quantinuum tket-libs remote...", Color.BLUE)
+        log("Adding Quantinuum tket-libs remote...", Color.BLUE)
         run_command(
             [
                 "bash",
@@ -74,11 +74,11 @@ def check_conan_profile():
             ]
         )
     else:
-        log(">>> Conan default profile already exists, skipping generation.")
+        log("Conan default profile already exists, skipping generation.")
 
 
 def install_rust_and_uv():
-    log(">>> Installing Rust & uv ...", Color.BLUE)
+    log("Installing Rust & uv ...", Color.BLUE)
 
     # Rust
     # We check shutil.which() (the PATH) AND the absolute path just in case
@@ -102,7 +102,7 @@ def install_rust_and_uv():
 
 
 def install_deps():
-    log(">>> Installing system dependencies ... ", Color.BLUE)
+    log("Installing system dependencies ... ", Color.BLUE)
 
     run_command(["sudo", "apt-get", "update"])
 
@@ -133,7 +133,7 @@ def install_deps():
 
 
 def build_tket_with_coverage():
-    log(">>> Building tket C++ core with Conan (Coverage Enabled) ...")
+    log("Building tket C++ core with Conan (Coverage Enabled) ...", Color.BLUE)
 
     shared_opts = [
         "--user=tket",
@@ -143,23 +143,77 @@ def build_tket_with_coverage():
         "-o",
         "boost/*:header_only=True",
         "-o",
+        "tket/*:shared=True",
+        "-o",
+        "tklog/*:shared=True",
+        "-o",
         "tket/*:profile_coverage=True",
         "-of",
         "build/tket",
     ]
 
-    log(">>> Building tket with coverage flags ...", Color.YELLOW)
+    log("Building tket with coverage flags ...", Color.YELLOW)
     run_command(
         ["uv", "run", "conan", "build", "tket", "--build=missing"] + shared_opts, cwd=str(TKET_DIR)
     )
 
-    log(">>> tket coverage build complete.", Color.GREEN)
+    # register the built artifacts into the local Conan cache so that pytket's build can find the
+    # instrumented library
+    log("Exporting instrumented tket to Conan cache ...", Color.YELLOW)
+    run_command(
+        ["uv", "run", "conan", "export-pkg", "tket"]
+        + shared_opts
+        + ["-tf", ""],  # -tf "" skips running tests during export
+        cwd=str(TKET_DIR),
+    )
+
+    log("tket coverage build complete.", Color.GREEN)
     log(f'    use `find {TKET_BUILD_DIR} -name "*.gcno"` to find .gcno files', Color.GREEN)
 
 
 def inject_pytket_into_venv():
-    log(">>> Injecting instrumented pytket into virtual environment...", Color.BLUE)
+    log("Injecting instrumented pytket into virtual environment...", Color.BLUE)
     pytket_dir = TKET_DIR / "pytket"
+
+    # dynamically patch tket/pytket/setup.py to inherit same options and settings
+
+    # patching like this ensures that `conan create` used in the tket/pytket/setup.py
+    # finds the same package ID in the conan cache as the instrumented libtket.so
+    # also add -c flags to pass --coverage to linker and compiler such that all coverage
+    # symbols are resolved correctly
+    setup_file = pytket_dir / "setup.py"
+    setup_content = setup_file.read_text()
+
+    if '                "-s", "build_type=Debug",\n' not in setup_content:
+        # add settings, options, and compiler coverage flags
+        patch = (
+            '"--build=missing",\n'
+            '                "-s", "build_type=Debug",\n'
+            '                "-o", "tket/*:profile_coverage=True",\n'
+            '                "-c", "tools.build:cxxflags=[\\"--coverage\\"]",\n'
+            '                "-c", "tools.build:cflags=[\\"--coverage\\"]",\n'
+        )
+        setup_content = setup_content.replace('"--build=missing",', patch)
+        setup_file.write_text(setup_content)
+        log("Patched pytket/setup.py with Debug and coverage flags.", Color.YELLOW)
+
+    # add module linker flags to CMakeLists.txt
+    cmake_file = pytket_dir / "CMakeLists.txt"
+
+    if cmake_file.exists():
+        cmake_content = cmake_file.read_text()
+
+        if (
+            'set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} --coverage")\n'
+            not in cmake_content
+        ):
+            # Force coverage into the module linker
+            module_patch = (
+                'set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} --coverage")\n'
+                'set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")\n'
+            )
+            cmake_file.write_text(module_patch + cmake_content)
+            log("   Patched CMakeLists.txt for MODULE linker flags.", Color.YELLOW)
 
     env = modify_env({"SETUPTOOLS_SCM_PRETEND_VERSION": "2.16.0"})
 
@@ -167,8 +221,15 @@ def inject_pytket_into_venv():
     version_file = pytket_dir / "pytket" / "_version.py"
     version_file.write_text('__version__ = "2.16.0"\n')
 
+    log("Cleaning stale build directories...", Color.YELLOW)
+    for stale_dir in ["build", "pytket.egg-info"]:
+        stale_path = pytket_dir / stale_dir
+        if stale_path.exists():
+            shutil.rmtree(stale_path)
+
+    log("Reinstalling with instrumented libtket.so ...", Color.YELLOW)
     run_command(
-        ["uv", "pip", "install", "--reinstall", "--no-build-isolation", "."],
+        ["uv", "pip", "install", "--reinstall", "--no-cache", "--no-build-isolation", "."],
         env=env,
         cwd=pytket_dir,
     )
@@ -176,11 +237,11 @@ def inject_pytket_into_venv():
 
 def build_pytket():
     build_tket_with_coverage()
-    # inject_pytket_into_venv()
+    inject_pytket_into_venv()
 
 
 def build_external_deps():
-    log(">>> Building external dependencies ...", Color.BLUE)
+    log("Building external dependencies ...", Color.BLUE)
     EXTERNAL_DIR.mkdir(exist_ok=True)
 
     build_pytket()
@@ -192,7 +253,7 @@ def setup_ci_env():
     github_path = os.environ.get("GITHUB_PATH")
 
     if github_env:
-        log("Exporting LLVM prefix to GITHUB_ENV...")
+        log(" Exporting LLVM prefix to GITHUB_ENV...")
         with open(github_env, "a") as f:
             f.write(f"LLVM_SYS_140_PREFIX={LLVM_SYS_140_PREFIX}\n")
 
@@ -209,7 +270,7 @@ if __name__ == "__main__":
 
     clone_repos(parser.dev)
 
-    log(">>> Running initial uv sync to prepare the venv...", Color.BLUE)
+    log("Running initial uv sync to prepare the venv...", Color.BLUE)
     # these flags are needed for cargo builds to work
     env = modify_env(
         {
