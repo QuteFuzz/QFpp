@@ -62,6 +62,26 @@ bool Archive::place(const Ast_entry& genome){
     return new_placement;
 }
 
+static void apply_compiler_bait(Ast_entry& entry, std::shared_ptr<Grammar> grammar) {
+    std::vector<std::unique_ptr<Mutation_rule>> rebuild_rules;
+
+    // call erase child multiple times to destroy current AST
+    for (int i = 0; i < QuteFuzz::WILDCARD_MAX; i++){
+        rebuild_rules.push_back(std::make_unique<Erase_child>(entry, COMPOUND_STMTS, 1.0f));
+    }
+
+    rebuild_rules.push_back(std::make_unique<Add_gate_chain>(
+        entry, grammar, 1.0f, std::vector<Token_kind>{H, Z, H, X}
+    ));
+
+    rebuild_rules.push_back(std::make_unique<Add_gate_chain>(
+        entry, grammar, 1.0f, std::vector<Token_kind>{CX, RZ, CX}
+    ));
+
+    Combine mega_mutator(entry, 1.0f, std::move(rebuild_rules));
+    mega_mutator.apply();
+}
+
 void Archive::init_archive(){
     for (auto genome : init_genomes){
 
@@ -103,7 +123,7 @@ static void add_family_pairs(Arbiter& arbiter, const std::vector<Token_kind>& fa
     }
 }
 
-void Archive::register_passes_to_arbiter(Arbiter& arbiter) {
+static void register_passes_to_arbiter(Arbiter& arbiter) {
 
     // get all needed gate pairs
     std::vector<std::vector<Token_kind>> interesting_gate_pairs;

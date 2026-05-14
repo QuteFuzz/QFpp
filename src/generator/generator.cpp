@@ -43,9 +43,9 @@ std::vector<Ast_entry> Generator::generate_n_asts(unsigned int n, const Control&
         unsigned int seed = random_uint(UINT32_MAX);
         rng().seed(seed);
 
-        std::shared_ptr<Ast> ast_builder = std::make_shared<Ast>(control);
-        std::shared_ptr<Node> ast_root = ast_builder->build(entry_rule);
-        std::shared_ptr<Context> context = ast_builder->get_context();
+        Ast ast_builder(control);
+        std::shared_ptr<Node> ast_root = ast_builder.build(entry_rule);
+        std::shared_ptr<Context> context = ast_builder.get_context();
 
         if (control.print_circuit_info){
             context->print_circuit_info();

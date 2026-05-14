@@ -101,7 +101,7 @@ imports =
     ;
 
 # Redefine compound_stmt and related rules
-compound_stmts = (compound_stmt NEWLINE)[UNIFORM(3, 10)];
+compound_stmts = (compound_stmt NEWLINE)[UNIFORM(3,10)];
 
 # Redefine gate_op for Qiskit syntax: circuit.gate(args)
 gate_op = GET_CIRCUIT_NAME "." gate_name "(" gate_op_args ")";

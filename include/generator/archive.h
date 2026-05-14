@@ -31,8 +31,6 @@ struct Archive {
         
         void init_archive();
 
-        void register_passes_to_arbiter(Arbiter& arbiter);
-
         void fill_archive(std::shared_ptr<Grammar> grammar);
 
         std::vector<Ast_entry> get_best_genomes();
