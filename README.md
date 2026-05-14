@@ -63,13 +63,15 @@ Also instruments the `tket` compiler.
 **Note:**
 
 - If `conan` command fails, this is because the run needs to happen within the virtual env. Source first with 
+    
     ```sh
     source .venv/bin./activate
     ```
+
+    then re-run setup command.
+
 - Make sure that any time you use `uv run`, it is with the `--no-sync` flag, or use `python3` directly. This is because the setup script in dev mode "tampers with" the .venv, uv sees that
 and tries to sync everything to match the lockfile. As a result, it reinstalls the release, uninstrumented pytket version from PyPI. 
-
-then re-run setup command.
 
 ## Supported quantum frameworks
 
