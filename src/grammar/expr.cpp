@@ -27,7 +27,7 @@ Expr_type RuleExpr::eval(Context& context) const {
         return rule;
     }
 
-    return 0;
+    ERROR("RuleExpr evaluation failed: '" + rule_name + "' is not bound in context and is not defined in grammar");
 }
 
 void RuleExpr::print(std::ostream& stream) const {
@@ -94,45 +94,51 @@ void PropertyAccessExpr::print(std::ostream& stream) const {
 
 
 Expr_type BinExpr::eval(Context& context) const {
-    auto left_eval = left->eval(context);
-    auto right_eval = right->eval(context);
+    Expr_type left_eval = left->eval(context);
+    Expr_type right_eval = right->eval(context);
 
-    if (std::holds_alternative<int>(left_eval) && std::holds_alternative<int>(right_eval)){
-        int right = std::get<int>(right_eval);
-        int left = std::get<int>(left_eval);
-
-        if (op == "UNIFORM"){
-            return (int)random_uint(std::max(right, left), std::min(right, left));
-        } else if (op == "+") {
-            return left + right;
-        } else if (op == "-"){
-            return left - right;
-        } else if (op == ">="){
-            return left >= right;
-        } else if (op == "<="){
-            return left <= right;
-        } else if (op == "=="){
-            return left == right;
-        } else if (op == "!="){
-            return left != right;
-        } else if (op == "*"){
-            return left * right;
-        } else if (op == "/"){
-            return left / right;
-        } else if (op == ">"){
-            return left > right;
-        } else if (op == "<"){
-            return left < right;
-        } else if (op == "&&"){
-            return left && right;
-        } else if (op == "||"){
-            return left || right;        
+    static auto resolve_operand = [](const Expr_type& eval)->int{
+        if (std::holds_alternative<std::shared_ptr<Rule>>(eval)){
+            return (int)std::get<std::shared_ptr<Rule>>(eval)->get_token().kind;
+        } else if (std::holds_alternative<int>(eval)){
+            return std::get<int>(eval);
         } else {
-            ERROR("Unknown binary op " + op);
+            ERROR("Binop operand expected to be int or token!");
         }
+    };
+
+    int left = resolve_operand(left_eval);
+    int right = resolve_operand(right_eval);
+
+    if (op == "UNIFORM"){
+        return (int)random_uint(std::max(right, left), std::min(right, left));
+    } else if (op == "+") {
+        return left + right;
+    } else if (op == "-"){
+        return left - right;
+    } else if (op == ">="){
+        return left >= right;
+    } else if (op == "<="){
+        return left <= right;
+    } else if (op == "=="){
+        return left == right;
+    } else if (op == "!="){
+        return left != right;
+    } else if (op == "*"){
+        return left * right;
+    } else if (op == "/"){
+        return left / right;
+    } else if (op == ">"){
+        return left > right;
+    } else if (op == "<"){
+        return left < right;
+    } else if (op == "&&"){
+        return left && right;
+    } else if (op == "||"){
+        return left || right;        
     } else {
-        ERROR("Binop must have lhs and rhs as int");
-    }
+        ERROR("Unknown binary op " + op);
+    }        
 }
 
 void BinExpr::print(std::ostream& stream) const {

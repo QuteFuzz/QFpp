@@ -3,8 +3,10 @@
 NESTED_MAX_DEPTH = 3;
 
 
-gate_name += s | sdg | t | tdg | u3 | measure;
+gate_name += s | sdg | t | tdg | u1 | u2 | u3 | measure;
 
+u1 = "p";
+u2 = "u";
 u3 = "u";
 x = "x";
 y = "y";
@@ -93,6 +95,7 @@ EXTERNAL {
 }
 
 imports =
+    "import math" NEWLINE
     "from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister" NEWLINE
     "from qiskit.circuit import Parameter" NEWLINE
     "from qiskit.circuit.classical import expr" NEWLINE
@@ -107,6 +110,21 @@ compound_stmts = (compound_stmt NEWLINE)[UNIFORM(3,10)];
 gate_op = GET_CIRCUIT_NAME "." gate_name "(" gate_op_args ")";
 
 subroutine_op = GET_CIRCUIT_NAME ".append(" subroutine ",[" subroutine_op_args "])";
+
+half_pi = "math.pi/2";
+
+float_list = 
+    ""[
+    if (GATE_FLOATS == 2) {
+        # Qiskit's u() requires exactly 3 floats to simulate u2: (pi/2, phi, lam)
+        u2_override = "math.pi/2, " float_literal ", " float_literal;
+        u2_override
+    } else {
+        # Standard generation for all other gates
+        standard_floats = float_literal (", " float_literal)[GATE_FLOATS - 1];
+        standard_floats
+    }
+];
 
 # Control flow operations
 while_stmt =

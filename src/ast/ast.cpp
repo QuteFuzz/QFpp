@@ -212,7 +212,6 @@ Slot_type Ast::term_branch_to_child_nodes(
 	}
 
 	if (control.step){
-		std::cout << "parent node: " << parent->get_name() << " term: " << term << std::endl;
 		root->print_ast("");
 		getchar();
 	}
