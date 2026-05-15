@@ -158,9 +158,9 @@ class Base(ABC):
         Runs circuit and returns counts
         """
 
-        counts1 = self._get_counts(circuit=circuit, opt_level=0, circuit_num=circuit_number)
+        counts1 = self._get_counts(circuit, opt_level=0, circuit_num=circuit_number)
 
         for i in range(3):
-            counts2 = self._get_counts(circuit=circuit, opt_level=i + 1, circuit_num=circuit_number)
+            counts2 = self._get_counts(circuit, opt_level=i + 1, circuit_num=circuit_number)
             ks_value = self._ks_test(counts1, counts2)
             print(f"Optimisation level {i + 1} ks-test p-value: {ks_value}")

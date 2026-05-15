@@ -4,7 +4,7 @@
 #include <grammar.h>
 #include <ast.h>
 #include <qf_term.h>
-#include <mutate.h>
+#include <pass.h>
 #include <info.h>
 
 struct Generator {

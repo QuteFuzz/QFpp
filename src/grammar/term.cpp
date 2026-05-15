@@ -98,17 +98,21 @@ std::vector<Term> Term::eval_expr(Context& context) const {
 		Expr_type expr_eval = expr->eval(context);
 
 		if (std::holds_alternative<int>(expr_eval)){
+            Term term = *this;
             int size = std::get<int>(expr_eval);
-            
+            term.add_expr(nullptr); // such that term's expr is not evaluated again
+
             if (size >= 0){
-			    child_terms = std::vector<Term>(size, *this);
+			    child_terms = std::vector<Term>(size, term);
             } else {
                 ERROR("IntExpr must evaluate to +ve value!");
             }
 
         } else if (std::holds_alternative<bool>(expr_eval)){
             if (std::get<bool>(expr_eval)){
-			    child_terms.push_back(*this);
+			    Term term = *this;
+                term.add_expr(nullptr);
+                child_terms.push_back(term);
             }
 
 		} else if (std::holds_alternative<std::string>(expr_eval)){

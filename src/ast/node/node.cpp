@@ -205,6 +205,6 @@ Slot_type Node::get_compilation_unit(){
         }
     }
 
-    ERROR("Compilation unit of program must be body or circuit node");
+    ERROR("Could not find compilation unit for program. Make `circuit` or `body` rule as a child of `program`");
 }
 

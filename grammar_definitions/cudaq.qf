@@ -1,0 +1,147 @@
+# cudaq.qf
+
+EXTENSION = ".py";
+MAX_REG_SIZE = 1;
+
+# ============================================================================
+# GATE NAMES
+# CUDA-Q uses lowercase bare function calls — no module prefix, no circuit object
+# ============================================================================
+
+x    = "x";
+y    = "y";
+z    = "z";
+h    = "h";
+s    = "s";
+t    = "t";
+sdg  = "s<cudaq::adj>";
+tdg  = "t<cudaq::adj>";
+rx   = "rx";
+ry   = "ry";
+rz   = "rz";
+cx   = "x<cudaq::ctrl>";
+cy   = "y<cudaq::ctrl>";
+cz   = "z<cudaq::ctrl>";
+ch   = "h<cudaq::ctrl>";
+ccx  = "x<cudaq::ctrl>";
+swap = "swap";
+crx  = "rx<cudaq::ctrl>";
+cry  = "ry<cudaq::ctrl>";
+crz  = "rz<cudaq::ctrl>";
+
+gate_name += s | t | sdg | tdg | swap | ch | crx | cry | crz;
+
+INTERNAL {
+    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 4)];
+
+    singular_qubit_def = "cudaq::qubit " GET_NAME ";";
+    register_qubit_def = "cudaq::qarray<" GET_SIZE ">" GET_NAME ";";
+}
+
+EXTERNAL {
+    qubit_defs = qubit_def COMMA qubit_def COMMA qubit_def COMMA qubit_def; # TODO: resolve param that stores num of defs
+
+    qubit_def = singular_qubit_def;
+
+    singular_qubit_def = "cudaq::qubit& " GET_NAME;
+}
+
+# ============================================================================
+# QUBIT REFERENCES
+# ============================================================================
+
+singular_qubit = GET_NAME;
+register_qubit = GET_NAME "[" GET_INDEX "]";
+
+# ============================================================================
+# GATE OPERATIONS
+# ============================================================================
+
+gate_op      = gate_name "(" gate_op_args ")";
+gate_op_args = (float_literal ", ")[GATE_FLOATS] qubit_list;
+
+three_or_more_qubit_list = "[" (qubit ", ")[GATE_QUBITS - 1] "], "  qubit;
+two_or_less_qubit_list = qubit (", " qubit)[GATE_QUBITS - 1];
+
+qubit_list   = two_or_less_qubit_list;
+float_literal = MAKE_FLOAT;
+
+# ============================================================================
+# SUBROUTINE CALLS
+# ============================================================================
+
+subroutine_op = subroutine "{}(" subroutine_op_args ")";
+
+# ============================================================================
+# COMPOUND STATEMENTS
+# ============================================================================
+
+compound_stmts = (compound_stmt NEWLINE)[UNIFORM(5, 10)];
+compound_stmt  = qubit_op ";";
+qubit_op       = gate_op | subroutine_op;
+
+# ============================================================================
+# PROGRAM STRUCTURE
+# ============================================================================
+
+testing_import = "from diff_testing.cudaq import cudaqTesting";
+
+program = testing_import NEWLINE[2] 
+    "source_code = r'''" NEWLINE imports NEWLINE NEWLINE subroutine_defs NEWLINE circuit NEWLINE[2] print_counts "'''" 
+    NEWLINE[2] program_footer;
+
+make_json = 
+    'std::cout << "{";' NEWLINE
+    "bool first = true;" NEWLINE
+    "for (auto& [bits, count] : counts) {" NEWLINE
+        'if (!first) std::cout << ", ";'         NEWLINE
+        'std::cout << "\"" << bits << "\": " << count;' NEWLINE[2]
+        "first = false;" NEWLINE
+    "}" NEWLINE
+    'std::cout << "}" << std::endl;'
+    ;
+
+print_counts = "int main(int argc, char* argv[]) {" NEWLINE
+    ci<(("auto kernel = " GET_CIRCUIT_NAME "{};") NEWLINE[2]
+    "int num_shots = std::stoi(argv[1]);" NEWLINE
+    "auto counts = cudaq::sample(num_shots, kernel);" NEWLINE
+    make_json NEWLINE
+    "return 0;" NEWLINE)>
+    "}";
+
+get_counts = "counts = cudaq.sample(" GET_CIRCUIT_NAME ")" NEWLINE "print(json.dumps(dict(counts.items())))";
+
+imports = "#include <cudaq.h>" NEWLINE "#include <iostream>";
+
+program_footer = "ct = cudaqTesting()" NEWLINE testing_method;
+
+testing_method = "ct.opt_ks_test(source_code, " circuit_id ")" NEWLINE;
+
+
+subroutine_defs = (subroutine_circuit NEWLINE)*;
+
+subroutine_circuit = "struct " GET_CIRCUIT_NAME " { " NEWLINE
+    "void operator()(" EXTERNAL::qubit_defs ") __qpu__ {" NEWLINE 
+    ci<INTERNAL::qubit_defs NEWLINE
+    ci<subroutine_body> NEWLINE
+    measures NEWLINE "}};"
+    ;
+
+subroutine_body = (qubit_op ";" NEWLINE)[UNIFORM(2, 4)];
+
+circuit = "struct " GET_CIRCUIT_NAME " { " NEWLINE
+    "void operator()() __qpu__ {" NEWLINE 
+    ci<INTERNAL::qubit_defs NEWLINE
+    compound_stmts NEWLINE
+    measures NEWLINE "}};"
+    ;
+
+measures = [
+    for def in ALL_QUBIT_DEFS {
+        if (def.in_int_scope) {
+            measure_op =  "mz(" ""[def.name] ");" NEWLINE;
+            measure_op
+        }   
+    }
+    ]
+    NEWLINE;

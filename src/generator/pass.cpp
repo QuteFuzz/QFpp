@@ -1,4 +1,4 @@
-#include <mutate.h>
+#include <pass.h>
 #include <resource.h>
 #include <float_literal.h>
 #include <node_gen.h>
@@ -26,10 +26,9 @@ static std::unordered_map<Token_kind, Branch_constraint> branch_constraints_for_
     };
 }
 
-void Mutation_rule::apply(){
-
+void Pass::apply(){
     std::vector<std::shared_ptr<Node>> block_nodes;
-    std::shared_ptr<Node> root = entry.get_root();
+    std::shared_ptr<Node> root = entry.get_root(consider_entire_ast);
 
     // precollect all blocks such that we don't collect added blocks due to mutations
     for(const auto& node : Node_gen(*root, block_kind)){
@@ -38,7 +37,7 @@ void Mutation_rule::apply(){
 
     // apply blockwise on collected blocks
     for (auto& block : block_nodes){
-        float mut_prob = random_float(1.0, 0.0) / 1.0;
+        float mut_prob = random_float(1.0, 0.0);
 
         if(mut_prob < blockwise_rate){
             Slot_type slot = find_slot_for(root, block);
@@ -50,19 +49,6 @@ void Mutation_rule::apply(){
         }
     }
 }
-
-/// fresh search to count over live number of blocks
-unsigned int Mutation_rule::n_children_across_blocks() const {
-    unsigned int out = 0;
-    auto root = entry.get_root();
-
-    for(const auto& node : Node_gen(*root, block_kind)){
-        out += node->size();
-    }
-
-    return out;
-}
-
 
 /// @brief Add child to block
 /// @param compound_stmts 
@@ -153,9 +139,22 @@ void Remove_gate_chain::apply_blockwise(Slot_type block) const {
 }
 
 void Combine::apply_blockwise(Slot_type block) const {
-    for (const auto& mut_rule : rules){
-        if (mut_rule->get_block_kind() == (*block)->get_node_kind()){
-            mut_rule->apply_blockwise(block);
+    for (const auto& pass : passes){
+        if (pass->get_block_kind() == (*block)->get_node_kind()){
+            pass->apply_blockwise(block);
         }
     }
+}
+
+void Dead_subs::apply() {
+    // mark pass to calculate reachability of subroutines
+
+
+    // eliminate dead subroutines
+
+}
+
+void Dead_subs::apply_blockwise(){
+
+    
 }
