@@ -24,8 +24,8 @@ class cudaqTesting(Base):
         compiler_flag = f"-O{opt_level}"
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            temp_cpp = os.path.join(tmpdir, "circuit.cpp")
-            temp_exe = os.path.join(tmpdir, "circuit.x")
+            temp_cpp = os.path.join(tmpdir, f"circuit{circuit_num}.cpp")
+            temp_exe = os.path.join(tmpdir, f"circuit{circuit_num}.x")
 
             with open(temp_cpp, "w") as f:
                 f.write(circuit_source_code)

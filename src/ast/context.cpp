@@ -91,7 +91,6 @@ unsigned int Context::resolve_var(Token_kind kind) const {
     } else if (kind == N_BITS) {
         auto bits = get_current_circuit()->get_coll<Resource>(Resource_kind::BIT);
         return bits.size();
-    }
 
     return 0;
 }
