@@ -43,10 +43,10 @@ void Context::reset(Reset_level l){
 /// @param circuit
 /// @return
 bool Context::can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit){
-
     std::shared_ptr<Circuit> current_circuit = get_current_circuit();
+    std::string circuit_name = circuit->get_name();
 
-    if(circuit->owned_by(QuteFuzz::TOP_LEVEL_CIRCUIT_NAME) || circuit->owned_by(get_current_circuit()->get_owner())){
+    if((circuit_name == QuteFuzz::TOP_LEVEL_CIRCUIT_NAME) || (circuit_name == current_circuit->get_name())){
         return false;
     }
 
@@ -55,17 +55,9 @@ bool Context::can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit){
     auto current_circuit_qubits = current_circuit->get_coll<Resource>(Resource_kind::QUBIT);
     auto dest_circuit_qubits = circuit->get_coll<Resource>(Resource_kind::QUBIT);
 
-    // auto current_circuit_bits = current_circuit->get_coll<Resource>(Resource_kind::BIT);
-    // auto dest_circuit_bits = circuit->get_coll<Resource>(Resource_kind::BIT);
-
     unsigned int num_required_qubits = size_pred<Resource>(dest_circuit_qubits, ext_scope_pred);
-    // unsigned int num_required_bits = size_pred<Resource>(dest_circuit_bits, ext_scope_pred);
-
     unsigned int num_qubits_in_circuit = current_circuit_qubits.size();
-    // unsigned int num_bits_in_circuit = current_circuit_bits.size();
-
     bool has_enough_qubits = num_qubits_in_circuit >= 1 && num_qubits_in_circuit >= num_required_qubits;
-    // bool has_enough_bits = num_bits_in_circuit >= 1 && num_bits_in_circuit >= num_required_bits;
 
     return has_enough_qubits;
 }
@@ -230,7 +222,7 @@ std::shared_ptr<Gate> Context::nn_gate_from_subroutine(){
         5. give this gate to the current qubit op
     */
     std::shared_ptr<Circuit> subroutine_circuit = get_random_circuit();
-    auto gate_name = subroutine_circuit->get_owner();
+    auto gate_name = subroutine_circuit->get_name();
 
     auto gate = std::make_shared<Gate>(gate_name, SUBROUTINE, subroutine_circuit->get_coll<Resource_def>());
     gate->add_child(std::make_shared<Variable>(gate_name));
@@ -259,7 +251,7 @@ std::shared_ptr<Qubit_op> Context::nn_qubit_op(){
     reset(RL_QUBITS);
     reset(RL_BITS);
 
-    auto qubit_op = std::make_shared<Qubit_op>();
+    auto qubit_op = std::make_shared<Qubit_op>(get_current_circuit()->get_name());
     current.set<Qubit_op>(qubit_op);
     return qubit_op;
 }

@@ -41,7 +41,7 @@ std::shared_ptr<Node> build_ast_from_rule(
 }
 
 Slot_type build_ast_children(
-    Slot_type root, 
+    std::shared_ptr<Node> root, 
     std::shared_ptr<Rule> rule, 
     const Context& context, 
     unsigned int nested_depth,
@@ -52,7 +52,7 @@ Slot_type build_ast_children(
     const Term& term = make_term_from_rule(rule);
     auto child_expr = std::make_shared<IntExpr>(1);
 
-    return ast_builder->term_branch_to_child_nodes(*root, term, descendant_node_branch_constraints, child_expr);
+    return ast_builder->term_branch_to_child_nodes(root, term, descendant_node_branch_constraints, child_expr);
 }
 
 std::shared_ptr<Gate> gate_from_anscestor(std::shared_ptr<Node> anscestor) {
@@ -82,11 +82,6 @@ std::shared_ptr<Gate> gate_from_anscestor(std::shared_ptr<Node> anscestor) {
     }
 
     return gate;
-}
-
-void replace_node(Slot_type old_node, std::shared_ptr<Node> new_node) {
-    new_node->print_mode = (*old_node)->print_mode;
-    *old_node = new_node;
 }
 
 /// Move qubits from source to dest anscenstor. Assumed both have the same number of qubits

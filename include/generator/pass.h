@@ -11,16 +11,26 @@ class Pass {
             entry(_entry),
             grammar(_grammar),
             block_kind(_block_kind),
-            blockwise_rate(_blockwise_rate),
-            consider_entire_ast(_consider_entire_ast)
-        {}
+            blockwise_rate(_blockwise_rate)
+        {
+            std::shared_ptr<Node> root = entry.get_root(_consider_entire_ast);
+
+            auto block_gen = Node_gen(*root, block_kind);
+            auto it = block_gen.begin();
+
+            // precollect all blocks such that we don't collect added blocks due to mutations
+            while(it != block_gen.end()){
+                block_node_iterators.push_back(it);
+                it++;
+            }
+        }
 
         Token_kind get_block_kind() const { return block_kind; }
 
         virtual void apply();
 
         /// function to apply on each block to be mutated by this rule
-        virtual void apply_blockwise(Slot_type block_node) const = 0;
+        virtual void apply_blockwise(Node_gen::Iterator block_node_it) const = 0;
 
         virtual ~Pass() = default;
 
@@ -29,7 +39,7 @@ class Pass {
         std::shared_ptr<Grammar> grammar;
         Token_kind block_kind;
         float blockwise_rate;
-        bool consider_entire_ast;
+        std::vector<Node_gen::Iterator> block_node_iterators;
 };
 
 class Add_child : public Pass {
@@ -46,7 +56,7 @@ class Add_child : public Pass {
             descendant_node_branch_constraints(_descendant_node_branch_constraints)
         {}
 
-        void apply_blockwise(Slot_type block) const override;
+        void apply_blockwise(Node_gen::Iterator block_node_it) const override;
 
     private:
         std::string block_rule_name;
@@ -60,7 +70,7 @@ class Erase_child : public Pass {
             Pass(_entry, nullptr, _block_kind, _blockwise_rate)
         {}
 
-        void apply_blockwise(Slot_type compound_stmts) const override;
+        void apply_blockwise(Node_gen::Iterator block_node_it) const override;
 
     private:
 
@@ -81,7 +91,7 @@ class Replace_block : public Pass {
             descendant_node_branch_constraints(_descendant_node_branch_constraints)
         {}
 
-        void apply_blockwise(Slot_type block) const override;
+        void apply_blockwise(Node_gen::Iterator block_node_it) const override;
 
     private:
         std::string repl_rule_name;
@@ -91,17 +101,17 @@ class Replace_block : public Pass {
 class Mutate_on_condition : public Pass {
     public:
         // Takes a generic condition based on the block being evaluated
-        Mutate_on_condition(std::shared_ptr<Pass> _mut_rule, std::function<bool(Slot_type)> _cond) :
+        Mutate_on_condition(std::shared_ptr<Pass> _mut_rule, std::function<bool(std::shared_ptr<Node>)> _cond) :
             Pass(*_mut_rule),
             mut_rule(_mut_rule),
             cond(_cond)
         {}
 
-        void apply_blockwise(Slot_type block) const override;
+        void apply_blockwise(Node_gen::Iterator block_node_it) const override;
 
     private:
         std::shared_ptr<Pass> mut_rule;
-        std::function<bool(Slot_type)> cond;
+        std::function<bool(std::shared_ptr<Node>)> cond;
 };
 
 class Add_gate_chain : public Pass {
@@ -121,7 +131,7 @@ class Add_gate_chain : public Pass {
             }
         }
 
-        void apply_blockwise(Slot_type block) const override;
+        void apply_blockwise(Node_gen::Iterator block_node_it) const override;
 
     private:
         std::vector<Token_kind> chain;
@@ -135,7 +145,7 @@ class Remove_gate_chain : public Pass {
             func(_func)
         {}
 
-        void apply_blockwise(Slot_type block) const override;
+        void apply_blockwise(Node_gen::Iterator block_node_it) const override;
 
     private:
         std::function<bool(Token_kind, Token_kind)> func;
@@ -148,7 +158,7 @@ class Combine : public Pass {
             passes(std::move(_passes))
         {}
 
-        void apply_blockwise(Slot_type type) const override;
+        void apply_blockwise(Node_gen::Iterator block_node_it) const override;
         
     private:
         std::vector<std::unique_ptr<Pass>> passes;
@@ -161,12 +171,12 @@ class Dead_subs : public Pass {
             Pass(_entry, nullptr, CIRCUIT, 1.0, true)
         {}
 
-        void apply_blockwise(Slot_type type) const override;
+        void apply_blockwise(Node_gen::Iterator block_node_it) const override;
 
         void apply() override;
 
     private:
-        std::vector<std::string> reachable_subs;
+        std::set<std::string> reachable_subs;
 };
 
 #endif

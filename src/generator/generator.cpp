@@ -52,7 +52,7 @@ std::vector<Ast_entry> Generator::generate_n_asts(unsigned int n, const Control&
         }
 
         Ast_entry entry{ast_root, context};
-        Dead_subs(entry, false).apply();
+        Dead_subs(entry).apply();
 
         entries.push_back(std::move(entry));
     }
