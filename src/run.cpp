@@ -42,11 +42,11 @@ static void completion(const char *buf, linenoiseCompletions *lc) {
 static void print_banner() {
     const char* banner = R"(
    ____  ______             
-  / __ \/ ____/___  ____    
- / / / / /_  / __ \/ __ \   
-/ /_/ / __/ / /_/ / /_/ /   
-\___\_\/_/ / .___/ .___/    
-          /_/   /_/         
+  / __ \/ ____/___  ____ 
+ / / / / /_  / __ \/ __ \
+/ /_/ / __/ / /_/ / /_/ /
+\___\_\/_/ / .___/ .___/ 
+          /_/   /_/      
     )";
 
     std::cout << BOLD(CYAN(banner)) << std::endl;

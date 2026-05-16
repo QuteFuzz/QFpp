@@ -90,8 +90,7 @@ std::shared_ptr<Node> Node::find(Token_kind node_kind) {
 
 
 void Node::print_ast(std::string indent) const {
-    std::cout << indent << str << " " <<  kind << " (" << this << ")" << std::endl;
-    std::cout << indent << "n_children: " << children.size() << std::endl;
+    std::cout << indent << BOLD(YELLOW(str)) << " " <<  GREY(kind_as_str(kind)) << " (" << this << ")" << " n_children: " << children.size() << std::endl;
 
     for(const std::shared_ptr<Node>& child : children){
         child->print_ast(indent + "   ");
@@ -185,7 +184,7 @@ unsigned int Node::get_n_ports() const {
     return 1;
 }
 
-std::shared_ptr<Variable> Node::get_name() const {
+std::shared_ptr<Variable> Node::get_var_name() const {
     return std::make_shared<Variable>();
 }
 
@@ -206,6 +205,6 @@ Slot_type Node::get_compilation_unit(){
         }
     }
 
-    ERROR("Compilation unit of program must be body or circuit node");
+    ERROR("Could not find compilation unit for program. Make `circuit` or `body` rule as a child of `program`");
 }
 

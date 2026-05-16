@@ -1,5 +1,5 @@
 #include <archive.h>
-#include <mutate.h>
+#include <pass.h>
 #include <chrono>
 #include <ast_utils.h>
 
@@ -63,7 +63,7 @@ bool Archive::place(const Ast_entry& genome){
 }
 
 static void apply_compiler_bait(Ast_entry& entry, std::shared_ptr<Grammar> grammar) {
-    std::vector<std::unique_ptr<Mutation_rule>> rebuild_rules;
+    std::vector<std::unique_ptr<Pass>> rebuild_rules;
 
     // call erase child multiple times to destroy current AST
     for (int i = 0; i < QuteFuzz::WILDCARD_MAX; i++){
@@ -179,7 +179,7 @@ static void register_passes_to_arbiter(Arbiter& arbiter) {
 
     arbiter.add("combine some passes",
         [interesting_gate_pairs](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
-            std::vector<std::unique_ptr<Mutation_rule>> rules;
+            std::vector<std::unique_ptr<Pass>> rules;
 
             for (const auto& pair : interesting_gate_pairs){
                 // pick half the pairs randomly for combine pass
@@ -221,7 +221,7 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
             Add_gate_chain(genome, grammar, 1.0, std::vector<Token_kind>{CCX, CCX}).apply();
             Remove_gate_chain(genome, 1.0, is_inverse_pair).apply();
 
-            std::vector<std::unique_ptr<Mutation_rule>> rules;
+            std::vector<std::unique_ptr<Pass>> rules;
 
             rules.push_back(std::make_unique<Add_gate_chain>(genome, grammar, 1.0, std::vector<Token_kind>{CX, CX}));
             rules.push_back(std::make_unique<Add_gate_chain>(genome, grammar, 1.0, std::vector<Token_kind>{CCX, CCX}));
@@ -232,9 +232,9 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
             std::cout << "\n================" << std::endl;
             getchar();
         #else
-            size_t mutation_rule_idx = arbiter.apply(genome, grammar);
+            size_t Pass_idx = arbiter.apply(genome, grammar);
             bool cell_discovered = place(genome);
-            arbiter.record(mutation_rule_idx, cell_discovered);
+            arbiter.record(Pass_idx, cell_discovered);
 
             if (cell_discovered){
                 evals_since_discovery = 0;

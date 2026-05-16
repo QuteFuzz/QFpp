@@ -14,19 +14,17 @@ class Circuit : public Cloneable<Circuit> {
 
         Circuit() :
             Cloneable<Circuit>("circuit", CIRCUIT),
-            owner("dummy_circuit")
+            name("dummy_circuit")
         {}
 
         /// @brief Generating a random circuit from scratch
-        Circuit(std::string owner_name, bool _is_subroutine) :
+        Circuit(std::string _name, bool _is_subroutine) :
             Cloneable<Circuit>("circuit", CIRCUIT),
-            owner(owner_name),
+            name(_name),
             is_subroutine(_is_subroutine)
         {}
 
-        inline bool owned_by(std::string other){return other == owner;}
-
-        inline std::string get_owner(){return owner;}
+        inline std::string get_name(){return name;}
 
         inline bool check_if_subroutine(){return is_subroutine;}
 
@@ -50,7 +48,7 @@ class Circuit : public Cloneable<Circuit> {
         }
 
         void store_resource_def(std::shared_ptr<Resource_def> def){
-            auto name = def->get_name();
+            auto name = def->get_var_name();
             auto scope = def->get_scope();
             auto rk = def->get_resource_kind();
             auto size = def->get_size();
@@ -73,7 +71,7 @@ class Circuit : public Cloneable<Circuit> {
         void print_info() const;
 
     private:
-        std::string owner;
+        std::string name;
         bool is_subroutine = false;
         Ptr_coll<Resource> resources;
         Ptr_coll<Resource_def> resource_defs;

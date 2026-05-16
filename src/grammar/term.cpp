@@ -89,7 +89,7 @@ bool Term::operator==(const Term& other) const {
 }
 
 std::vector<Term> Term::eval_expr(Context& context) const {
-	std::vector<Term> child_terms;
+	std::vector<Term> child_terms = {};
 	
 	if (expr == nullptr){
 		child_terms = std::vector<Term>(1, *this);
@@ -98,12 +98,29 @@ std::vector<Term> Term::eval_expr(Context& context) const {
 		Expr_type expr_eval = expr->eval(context);
 
 		if (std::holds_alternative<int>(expr_eval)){
+            Term term = *this;
             int size = std::get<int>(expr_eval);
-            assert(size >= 0);
-			child_terms = std::vector<Term>(size, *this);
+            term.add_expr(nullptr); // such that term's expr is not evaluated again
+
+            if (size >= 0){
+			    child_terms = std::vector<Term>(size, term);
+            } else {
+                ERROR("IntExpr must evaluate to +ve value!");
+            }
+
+        } else if (std::holds_alternative<bool>(expr_eval)){
+            if (std::get<bool>(expr_eval)){
+			    Term term = *this;
+                term.add_expr(nullptr);
+                child_terms.push_back(term);
+            }
 
 		} else if (std::holds_alternative<std::string>(expr_eval)){
-			child_terms = std::vector<Term>(1, Term(std::get<std::string>(expr_eval), STRING));
+			child_terms.push_back(Term(std::get<std::string>(expr_eval), STRING));
+
+        } else if (std::holds_alternative<std::shared_ptr<Rule>>(expr_eval)){ 
+            auto rule = std::get<std::shared_ptr<Rule>>(expr_eval);
+            child_terms.push_back(make_term_from_rule(rule));
 
 		} else if (std::holds_alternative<Rule_list>(expr_eval)){
 			auto rules = std::get<Rule_list>(expr_eval);
@@ -114,7 +131,7 @@ std::vector<Term> Term::eval_expr(Context& context) const {
 			}
 		
 		} else {
-			ERROR("Expr is expected to have a return type of INT, STR or RULE_LIST");
+			ERROR("Expr is expected to have a return type of INT, STR, RULE or RULE_LIST");
 		}
 	}
 

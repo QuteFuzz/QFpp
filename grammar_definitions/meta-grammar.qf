@@ -46,14 +46,14 @@ EXTERNAL {
 
 program       = imports NEWLINE circuit NEWLINE program_footer;
 
-subroutine_defs = (subroutine_circuit NEWLINE subroutine_def_footer)[UNIFORM(2,6)];
+subroutine_defs = (subroutine_circuit)[UNIFORM(2,6)];
 
 # all subroutines have just qubit ops and no if-else statements
 subroutine_body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE (qubit_op NEWLINE)+;
 
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
 
-subroutine_circuit = circuit_def_header NEWLINE subroutine_body;
+subroutine_circuit = circuit_def_header NEWLINE subroutine_body NEWLINE subroutine_def_footer;
 
 compound_stmts = (compound_stmt NEWLINE)[UNIFORM(10,15)];
 
@@ -81,7 +81,7 @@ gate_name = h
     | toffoli
     ;
 
-gate_op_args = (float_literal ", ")[GATE_FLOATS] qubit_list ("," bit)[GATE_BITS];
+gate_op_args = (float_list ", ")[GATE_FLOATS > 0] qubit_list ("," bit)[GATE_BITS];
 
 subroutine_op_args = qubit_list ("," bit)[GATE_BITS];
 

@@ -55,28 +55,36 @@ struct Ast_entry {
     public:
         Ast_entry(){}
 
-        Ast_entry(std::shared_ptr<Node> _ast, std::shared_ptr<Context> _context, bool _consider_entire_ast = false) :
+        Ast_entry(std::shared_ptr<Node> _ast, std::shared_ptr<Context> _context) :
             ast(_ast),
-            context(_context),
-            consider_entire_ast(_consider_entire_ast)
+            context(_context)
         {
-            assert(ast != nullptr);
-
-            for (const auto& node : Node_gen(*get_root(), QUBIT_OP)){
-                auto qubit_op = std::dynamic_pointer_cast<Qubit_op>(node);
-
-                if (qubit_op == nullptr){
-                    node->print_program(std::cout);
-                    std::cout << std::endl;
-                    
-                    node->print_ast("");
-                    std::cout << std::endl;
-
-                    ERROR("Nodes of kind `QUBIT_OP` must be of `Qubit_op` type");
-                }
-            
-                qubit_ops.push_back(qubit_op);
+            if (ast == nullptr) {
+                ERROR("Cannot pass NULL as AST to entry");
             }
+
+            comp_unit = ast->get_compilation_unit();
+
+            auto find_qubit_ops = [](Node& root, std::vector<std::shared_ptr<Qubit_op>>& out){
+                for (const auto& node : Node_gen(root, QUBIT_OP)){                
+                    auto qubit_op = std::dynamic_pointer_cast<Qubit_op>(node);
+
+                    if (qubit_op == nullptr){
+                        node->print_program(std::cout);
+                        std::cout << std::endl;
+                        
+                        node->print_ast("");
+                        std::cout << std::endl;
+
+                        ERROR("Nodes of kind `QUBIT_OP` must be of `Qubit_op` type");
+                    }
+
+                    out.push_back(qubit_op);
+                }
+            };
+
+            find_qubit_ops(*ast, ast_qubit_ops);
+            find_qubit_ops(**comp_unit, comp_unit_qubit_ops);
         }
 
         /// return a clone of this ast entry, by deep cloning the AST, effectively creating a new one, then getting the new compilation unit ptr from that
@@ -87,18 +95,19 @@ struct Ast_entry {
 
         bool empty() const {return (ast == nullptr);}
 
+        // Get entire AST
         std::shared_ptr<Node> get_ast() const {
             return ast;
         }
 
-        std::shared_ptr<Node> get_root() const {
-            assert(ast != nullptr);
-
-            return consider_entire_ast ? ast : *ast->get_compilation_unit();
+        // Get compilation unit root, or AST root
+        std::shared_ptr<Node> get_root(bool consider_entire_ast) const {
+            return consider_entire_ast ? ast : *comp_unit;
         }
 
-        std::vector<std::shared_ptr<Qubit_op>> get_qubit_ops() const {
-            return qubit_ops;
+        // Qubit ops of entire AST or compilation unit
+        std::vector<std::shared_ptr<Qubit_op>> get_qubit_ops(bool consider_entire_ast) const {
+            return consider_entire_ast ? ast_qubit_ops : comp_unit_qubit_ops;
         }
 
         std::shared_ptr<Context> get_context() const {
@@ -107,9 +116,11 @@ struct Ast_entry {
 
     private:
         std::shared_ptr<Node> ast = nullptr;
+        Slot_type comp_unit;
         std::shared_ptr<Context> context;
-        bool consider_entire_ast = false; // or just compilation unit
-        std::vector<std::shared_ptr<Qubit_op>> qubit_ops;
+
+        std::vector<std::shared_ptr<Qubit_op>> comp_unit_qubit_ops;
+        std::vector<std::shared_ptr<Qubit_op>> ast_qubit_ops;
 
 };
 

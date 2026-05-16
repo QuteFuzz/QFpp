@@ -3,7 +3,7 @@
 #include <ast_utils.h>
 
 Info::Info(const Ast_entry& entry) :
-    qubit_ops(std::move(entry.get_qubit_ops()))
+    qubit_ops(std::move(entry.get_qubit_ops(false)))
 {
     # if 0
     // programs with all barrier ops

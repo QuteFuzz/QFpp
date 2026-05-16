@@ -1,12 +1,12 @@
 #ifndef ARBITER_H
 #define ARBITER_H
 
-#include <mutate.h>
+#include <pass.h>
 #include <functional>
 #include <cmath>
 #include <limits>
 
-using Mutation_factory = std::function<std::unique_ptr<Mutation_rule>(Ast_entry&, std::shared_ptr<Grammar>, float)>;
+using Mutation_factory = std::function<std::unique_ptr<Pass>(Ast_entry&, std::shared_ptr<Grammar>, float)>;
 
 struct Arm {
 

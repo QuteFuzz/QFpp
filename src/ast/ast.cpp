@@ -47,7 +47,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 				return std::make_shared<Node>(str, kind);
 
 			case GET_NAME:
-				return parent->get_name();
+				return parent->get_var_name();
 
 			case GET_SIZE:
 				return parent->get_size();
@@ -70,7 +70,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 				return std::make_shared<Node>(str, kind);
 
 			case GET_CIRCUIT_NAME:
-				return std::make_shared<Variable>(context.get_current_circuit()->get_owner());
+				return std::make_shared<Variable>(context.get_current_circuit()->get_name());
 
 			case CIRCUIT:
 				return context.nn_circuit();
@@ -212,7 +212,6 @@ Slot_type Ast::term_branch_to_child_nodes(
 	}
 
 	if (control.step){
-		std::cout << "parent node: " << parent->get_name() << " term: " << term << std::endl;
 		root->print_ast("");
 		getchar();
 	}

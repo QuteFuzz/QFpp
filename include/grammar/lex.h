@@ -141,8 +141,8 @@ struct Token{
     }
 
     friend std::ostream& operator<<(std::ostream& stream, const Token t){
-        if(t.kind == STRING) std::cout << t.kind << " " << std::quoted(t.value);
-        else std::cout << t.kind << " " << t.value;
+        if(t.kind == STRING) std::cout << kind_as_str(t.kind) << " " << std::quoted(t.value);
+        else std::cout << kind_as_str(t.kind) << " " << t.value;
 
         return stream;
     }
@@ -312,7 +312,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
 };
 
 const std::string FULL_REGEX =
-    R"([a-zA-Z_][a-zA-Z0-9_]*|(\-)?[0-9]+(\.[0-9]+)?|#[^\n]*|\(\*|\*\)|\".*?\"|\'.*?\'|->|::|\+=|>=|<=|&&|\|\||.)";
+    R"([a-zA-Z_][a-zA-Z0-9_]*|(\-)?[0-9]+(\.[0-9]+)?|#[^\n]*|\(\*|\*\)|\".*?\"|\'.*?\'|->|::|\+=|>=|<=|==|!=|&&|\|\||.)";
 
 
 class Lexer{
@@ -450,13 +450,20 @@ inline bool is_quiet(const Token_kind& kind){
 }
 
 inline std::string kind_as_str(const Token_kind& kind) {
+    
+    if (kind == STRING){
+        return "STRING";
+    } else if (kind == NUMBER){
+        return "NUMBER";
+    }
+    
     for (auto tm : TOKEN_RULES){
         if(tm.kind == kind){
             return tm.pattern;
         }
     }
 
-    return "";
+    return std::to_string(kind);
 }
 
 #endif

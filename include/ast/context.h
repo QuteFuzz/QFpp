@@ -30,7 +30,7 @@ struct Current_nodes {
 			resource_def = std::make_shared<Resource_def>();
 			resource = std::make_shared<Resource>();
 			gate = std::make_shared<Gate>();
-			qubit_op = std::make_shared<Qubit_op>();
+			qubit_op = std::make_shared<Qubit_op>("");
 		}
 
 		template<typename T>
@@ -172,6 +172,7 @@ struct Context {
 				end = rule_bindings.end();
 			} 
 			else {
+
 				ERROR("Unsupported type passed to push_var");
 			}
 

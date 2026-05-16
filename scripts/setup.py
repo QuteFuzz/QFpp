@@ -4,7 +4,7 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
-from .utils import Color, log, modify_env, run_command
+from utils import Color, log, modify_env, run_command
 
 HOME = Path.home()
 USR = Path("/usr")
@@ -101,6 +101,41 @@ def install_rust_and_uv():
         run_command(["bash", "-c", "curl -LsSf https://astral.sh/uv/install.sh | sh"])
 
 
+def install_cudaq():
+    log("Installing CUDA-Q (nvq++) ...", Color.BLUE)
+
+    cudaq_dir = HOME / ".cudaq"
+    nvq_bin = cudaq_dir / "bin" / "nvq++"
+
+    if nvq_bin.exists():
+        log("CUDA-Q is already installed, skipping.", Color.GREEN)
+        return
+
+    installer_url = "https://github.com/NVIDIA/cuda-quantum/releases/latest/download/install_cuda_quantum_cu12.x86_64"
+    installer_script = Path("install_cuda_quantum.sh")
+
+    log("Downloading CUDA-Q installer ...", Color.YELLOW)
+    run_command(["curl", "-sL", "-o", str(installer_script), installer_url])
+
+    log("Running silent installer ...", Color.YELLOW)
+    run_command(["bash", str(installer_script), "--accept", "--", "--installpath", str(cudaq_dir)])
+
+    if installer_script.exists():
+        installer_script.unlink()
+
+    bashrc = HOME / ".bashrc"
+    source_line = f"source {cudaq_dir}/set_env.sh"
+
+    if bashrc.exists():
+        content = bashrc.read_text()
+        if source_line not in content:
+            with open(bashrc, "a") as f:
+                f.write("\n# CUDA-Q Environment Setup\n")
+                f.write(f"{source_line}\n")
+
+            log("Added nvq++ to ~/.bashrc", Color.GREEN)
+
+
 def install_deps():
     log("Installing system dependencies ... ", Color.BLUE)
 
@@ -130,6 +165,7 @@ def install_deps():
     run_command(["sudo", "apt-get", "install", "-y"] + packages)
 
     install_rust_and_uv()
+    install_cudaq()
 
 
 def build_tket_with_coverage():
@@ -261,6 +297,12 @@ def setup_ci_env():
         log("Exporting cargo bin to GITHUB_PATH...")
         with open(github_path, "a") as f:
             f.write(f"{CARGO_BIN}\n")
+
+        log("Exporting CUDA-Q bin to GITHUB_PATH...")
+        cudaq_bin = HOME / ".cudaq" / "bin"
+        if cudaq_bin.exists():
+            with open(github_path, "a") as f:
+                f.write(f"{cudaq_bin}\n")
 
 
 if __name__ == "__main__":

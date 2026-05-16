@@ -11,7 +11,7 @@ from enum import Enum
 from pathlib import Path
 from typing import List, Tuple
 
-from .utils import Color, log, modify_env, pipe_to_process, run_command
+from utils import Color, log, modify_env, pipe_to_process, run_command
 
 BUILD_DIR = Path("build")
 OUTPUT_DIR = Path("outputs")
@@ -23,8 +23,7 @@ TIMEOUT = 2000
 DEFAULT_NUM_TESTS = 1
 CPU_COUNT = os.cpu_count()
 
-GRAMMARS = ["pytket", "qiskit", "cirq", "pennylane"]
-SIMULATION_CAP = {"pytket": 64, "qiskit": 64, "cirq": 8, "pennylane": 64}
+SIMULATION_CAP = {"pytket": 64, "qiskit": 64, "cirq": 8, "pennylane": 64, "cudaq": 64}
 
 FUZZER_EXECUTABLE = "./qf"
 
@@ -94,7 +93,10 @@ def parse():
     )
     parser.add_argument("--num-tests", type=int, help="Override number of tests to generate")
     parser.add_argument(
-        "--grammars", nargs="+", default=GRAMMARS, help="Grammars to test (default: all)"
+        "--grammars",
+        nargs="+",
+        default=SIMULATION_CAP.keys(),
+        help="Grammars to test (default: all)",
     )
     parser.add_argument("--map-elites", help="Run with MAP elites algorithm", action="store_true")
     parser.add_argument("--seed", type=int, help="Seed for random number generator", default=None)
@@ -192,7 +194,7 @@ class Check_grammar:
         """
 
         cmd = [sys.executable, str(script_path)]
-        env = modify_env({"RUN_MODE": os.environ.get("RUN_MODE", "")})
+        env = modify_env({"RUN_MODE": os.environ.get("RUN_MODE", ""), "PYTHONPATH": "."})
 
         if self.plot:
             cmd.append("--plot")

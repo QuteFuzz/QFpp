@@ -37,18 +37,18 @@ class Resource_def : public Cloneable<Resource_def> {
 
         Resource_kind get_resource_kind() const { return kind; }
 
-        inline std::shared_ptr<Variable> get_name() const override { return std::make_shared<Variable>(name);}
+        inline std::shared_ptr<Variable> get_var_name() const override { return std::make_shared<Variable>(name);}
 
         inline std::shared_ptr<UInt> get_size() const override {
             return std::make_shared<UInt>(size);
         }
 
         inline bool defines(const Resource& resource) const {
-            return get_name()->get_str() == resource.get_name()->get_str();
+            return get_var_name()->get_str() == resource.get_var_name()->get_str();
         }
 
         inline std::string resolved_name() const override {
-            return get_name()->get_str() + " GET_SIZE(" + get_size()->get_str() + ")";
+            return get_var_name()->get_str() + " GET_SIZE(" + get_size()->get_str() + ")";
         }
 
         void reset(){

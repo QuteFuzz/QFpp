@@ -31,7 +31,7 @@ std::shared_ptr<Node> build_ast_from_rule(
 );
 
 Slot_type build_ast_children(
-    Slot_type root, 
+    std::shared_ptr<Node> root, 
     std::shared_ptr<Rule> rule, 
     const Context& context, 
     unsigned int nested_depth, 
@@ -42,8 +42,6 @@ Slot_type build_ast_children(
 std::shared_ptr<Gate> gate_from_anscestor(std::shared_ptr<Node> anscestor);
 
 void move_qubits(const std::shared_ptr<Node> source_qubit_anscestor, Slot_type dest_qubit_anscestor);
-
-void replace_node(Slot_type old_node, std::shared_ptr<Node> new_node);
 
 unsigned int max_control_flow_depth_rec(const std::shared_ptr<Node> node, unsigned int current_depth);
 

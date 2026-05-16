@@ -58,7 +58,7 @@ class Resource : public Cloneable<Resource> {
             used = true;
         }
 
-        inline std::shared_ptr<Variable> get_name() const override {
+        inline std::shared_ptr<Variable> get_var_name() const override {
             return std::make_shared<Variable>(name);
         }
 
@@ -67,11 +67,11 @@ class Resource : public Cloneable<Resource> {
         }
 
         inline std::string resolved_name() const override {
-            return get_name()->get_str() + "[" + get_index()->get_str() + "]";
+            return name.get_str() + "[" + index.get_str() + "]";
         }
 
         bool operator==(const Resource& other) const {
-            bool name_matches = (*get_name() == *other.get_name());
+            bool name_matches = (*get_var_name() == *other.get_var_name());
             bool index_matches = (*get_index() == *other.get_index());
 
             return name_matches && index_matches;

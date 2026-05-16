@@ -6,7 +6,7 @@ void Circuit::print_info() const {
     std::cout << "=======================================" << std::endl;
     std::cout << "              CIRCUIT INFO               " << std::endl;
     std::cout << "=======================================" << std::endl;
-    std::cout << "Owner: " << owner << std::endl;
+    std::cout << "Name: " << name << std::endl;
     std::cout << "---> " << this << std::endl;
 
     std::cout << "Resource defs" << std::endl;

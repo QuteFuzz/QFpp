@@ -184,9 +184,16 @@ void Grammar::add_term_to_current_branch(const Token& token){
 }
 
 void Grammar::add_branch_to_current_rule(){
+    if (stack.empty()) grammar_error("Stack is empty;");
+    
     Branch& current_branch = stack.top().branch;
-    stack.top().rule->add(current_branch);
-    stack.top().branch.clear();
+
+    if (stack.top().rule != nullptr){
+        stack.top().rule->add(current_branch);
+        stack.top().branch.clear();
+    } else {
+        grammar_error("Rule at stack top is null");
+    }
 }
 
 void Grammar::add_expr_to_last_term(){
@@ -393,16 +400,13 @@ Token_kind Grammar::parse_token(){
         curr_expr = nullptr;
 
     } else if (curr_token.kind == RULE_START) {
-        // if (stack.empty()){
-            stack.push(Current(get_rule_pointer(prev_token, rule_def_scope)));
-            stack.top().rule->clear();
-        // } else {
-            // grammar_error("At RULE_START current stack is expected to be empty");
-        // }
+        stack.push(Current(get_rule_pointer(prev_token, rule_def_scope)));
+        stack.top().rule->clear();
 
     } else if(is_kind_of_rule(curr_token.kind) || is_meta(curr_token.kind) || curr_token.kind == STRING || curr_token.kind == NUMBER){
         // rules that are within branches, rules before `RULE_START` and `RULE_APPEND` are handled at `RULE_START` and `RULE_APPEND`
-        if(!stack.empty()){
+        // only proceed with additions if stack is not empty
+        if (!stack.empty()){
             add_term_to_current_branch(curr_token);
             rule_decl_scope = Scope::GLOB; // reset to GLOB scope as default
         }
@@ -423,6 +427,8 @@ Token_kind Grammar::parse_token(){
         stack.push(Current(get_rule_pointer(new_rule_token, parent_scope)));
 
     } else if (curr_token.kind == RPAREN){
+        if (stack.empty()) grammar_error("Stack is empty");
+        
         std::shared_ptr<Rule> new_rule_ptr = stack.top().rule;
         complete_rule();
 
@@ -453,14 +459,11 @@ Token_kind Grammar::parse_token(){
         rule_def_scope = Scope::GLOB;
 
     } else if (curr_token.kind == SELF_INDENT){
-        // use previous token to set meta function
-        // set_meta_func(prev_token.kind);
-        assert(!stack.empty());
+        if (stack.empty()) grammar_error("Stack is empty;");
         stack.top().print_mode = Print_mode::SELF_INDENT;
 
     } else if (curr_token.kind == CHILD_INDENT){
-        // stack.top().rule_decl_meta_func = Meta_func::NONE; // reset to NONE as default
-        assert(!stack.empty());
+        if (stack.empty()) grammar_error("Stack is empty;");
         stack.top().print_mode = Print_mode::CHILD_INDENT;
 
     } else if (curr_token.kind == EXTERNAL){

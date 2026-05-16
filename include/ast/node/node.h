@@ -145,7 +145,7 @@ class Node : public std::enable_shared_from_this<Node> {
 
         virtual unsigned int get_n_ports() const;
 
-        virtual std::shared_ptr<Variable> get_name() const;
+        virtual std::shared_ptr<Variable> get_var_name() const;
 
         virtual std::shared_ptr<UInt> get_size() const;
 
@@ -184,7 +184,7 @@ class Node : public std::enable_shared_from_this<Node> {
     protected:
         int id = 0;
         std::string str;
-        Token_kind kind;
+        Token_kind kind = H;
 
         std::vector<std::shared_ptr<Node>> children;
         Node_build_state state = NB_BUILD;
