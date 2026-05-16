@@ -16,4 +16,6 @@ nightly_results
 
 local-override.toml
 
+# cudaq runs generate these
 *.tmp
+*.o
