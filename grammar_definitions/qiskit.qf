@@ -184,7 +184,7 @@ classical_expr = bool_expr;
 # Update if_stmt to use classical_expr
 if_stmt =
     'with ' GET_CIRCUIT_NAME '.if_test(' classical_expr ') as else_' GET_INDENT_LEVEL ':' NEWLINE ci<compound_stmts>
-    si<('with else_' GET_INDENT_LEVEL ':' NEWLINE ci<compound_stmts>>?);
+    si<('with else_' GET_INDENT_LEVEL ':' NEWLINE ci<compound_stmts>)>?;
 
 # Update compound_stmt
 compound_stmt =
