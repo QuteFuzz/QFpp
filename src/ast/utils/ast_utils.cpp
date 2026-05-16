@@ -50,8 +50,7 @@ Slot_type build_ast_children(
 ){
     std::shared_ptr<Ast> ast_builder = std::make_shared<Ast>(context, nested_depth);
     const Term& term = make_term_from_rule(rule);
-    auto child_expr = std::make_shared<IntExpr>(1);
-
+    auto child_expr = std::make_shared<IntExpr>(n_children);
     return ast_builder->term_branch_to_child_nodes(root, term, descendant_node_branch_constraints, child_expr);
 }
 

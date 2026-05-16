@@ -48,7 +48,7 @@ class Circuit : public Cloneable<Circuit> {
         }
 
         void store_resource_def(std::shared_ptr<Resource_def> def){
-            auto name = def->get_name();
+            auto name = def->get_var_name();
             auto scope = def->get_scope();
             auto rk = def->get_resource_kind();
             auto size = def->get_size();

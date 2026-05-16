@@ -158,7 +158,9 @@ void Dead_subs::apply() {
 
                 // if caller is reachable, then op is also reachable
                 if (reachable_subs.count(caller)){
-                    new_reachable_found = reachable_subs.insert(sub_name).second;
+                    if (reachable_subs.insert(sub_name).second){
+                        new_reachable_found = true;
+                    }
                 }
             }
         }

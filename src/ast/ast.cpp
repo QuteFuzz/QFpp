@@ -47,7 +47,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 				return std::make_shared<Node>(str, kind);
 
 			case GET_NAME:
-				return parent->get_name();
+				return parent->get_var_name();
 
 			case GET_SIZE:
 				return parent->get_size();

@@ -3,8 +3,9 @@ import os
 import shutil
 import tempfile
 from typing import Any, Dict
+
 from diff_testing.lib import Base
-from utils import Color, run_command, log
+from utils import Color, log, run_command
 
 
 class cudaqTesting(Base):
@@ -14,7 +15,10 @@ class cudaqTesting(Base):
     def _get_counts(self, circuit_source_code, opt_level: int, circuit_num: int) -> Dict[Any, int]:
         nvq_binary = shutil.which("nvq++")
         if not nvq_binary:
-            log("[cudaqTesting] Fatal Error: System nvq++ not found. Did you run setup.py?", Color.RED)
+            log(
+                "[cudaqTesting] Fatal Error: System nvq++ not found. Did you run setup.py?",
+                Color.RED,
+            )
             return {}
 
         compiler_flag = f"-O{opt_level}"
@@ -27,12 +31,12 @@ class cudaqTesting(Base):
                 f.write(circuit_source_code)
 
             compile_cmd = [nvq_binary, compiler_flag, temp_cpp, "-o", temp_exe]
-            
+
             env = os.environ.copy()
             run_command(compile_cmd, capture_output=True, env=env)
 
             result = run_command([temp_exe, str(self.num_shots)], capture_output=True)
-            
+
             # Parse the printed dictionary
             print(result.stdout)
 

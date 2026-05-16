@@ -184,7 +184,7 @@ unsigned int Node::get_n_ports() const {
     return 1;
 }
 
-std::shared_ptr<Variable> Node::get_name() const {
+std::shared_ptr<Variable> Node::get_var_name() const {
     return std::make_shared<Variable>();
 }
 

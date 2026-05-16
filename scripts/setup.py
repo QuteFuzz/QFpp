@@ -3,6 +3,7 @@ import os
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
+
 from utils import Color, log, modify_env, run_command
 
 HOME = Path.home()
@@ -102,7 +103,7 @@ def install_rust_and_uv():
 
 def install_cudaq():
     log("Installing CUDA-Q (nvq++) ...", Color.BLUE)
-    
+
     cudaq_dir = HOME / ".cudaq"
     nvq_bin = cudaq_dir / "bin" / "nvq++"
 
@@ -124,7 +125,7 @@ def install_cudaq():
 
     bashrc = HOME / ".bashrc"
     source_line = f"source {cudaq_dir}/set_env.sh"
-    
+
     if bashrc.exists():
         content = bashrc.read_text()
         if source_line not in content:

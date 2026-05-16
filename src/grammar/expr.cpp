@@ -63,7 +63,7 @@ Expr_type PropertyAccessExpr::eval(Context& context) const {
         } else if (prop_name == "in_int_scope") {
             return resource->get_scope() == Scope::INT;
         } else if (prop_name == "name") {
-            return resource->get_name()->get_str();
+            return resource->get_var_name()->get_str();
         } else {
             ERROR("Unknown resource property " + prop_name);
         }
@@ -78,7 +78,7 @@ Expr_type PropertyAccessExpr::eval(Context& context) const {
         } else if (prop_name == "in_int_scope") {
             return resource_def->get_scope() == Scope::INT;
         } else if (prop_name == "name") {
-            return resource_def->get_name()->get_str();
+            return resource_def->get_var_name()->get_str();
         } else {
             ERROR("Unknown resource def property " + prop_name);
         }
