@@ -81,7 +81,7 @@ gate_name = h
     | toffoli
     ;
 
-gate_op_args = (float_list ", ")[GATE_FLOATS > 0] qubit_list ("," bit)[GATE_BITS];
+gate_op_args = (float_list ", ")[GATE_PARAMS > 0] qubit_list ("," bit)[GATE_BITS];
 
 subroutine_op_args = qubit_list ("," bit)[GATE_BITS];
 
@@ -89,7 +89,7 @@ qubit_list = qubit (", " qubit)[GATE_QUBITS - 1];
 
 float_literal = MAKE_FLOAT;
 
-float_list = float_literal  (", " float_literal)[GATE_FLOATS - 1];
+float_list = float_literal  (", " float_literal)[GATE_PARAMS - 1];
 
 qubit =
     singular_qubit
@@ -101,3 +101,5 @@ bit_list = bit (", " bit)[GATE_BITS - 1];
 bit = singular_bit
     | register_bit
     ;
+
+param = singular_param | register_param;

@@ -15,7 +15,7 @@ class Gate_name : public Cloneable<Gate_name> {
             unsigned int n_bits = current_circuit->get_coll<Resource>(Resource_kind::BIT).size();
 
             for (auto info : SUPPORTED_GATES){
-                if((info.n_qubits > n_qubits) || (info.n_bits > n_bits)){
+                if((info.resource_counts.at(Resource_kind::QUBIT) > n_qubits) || (info.resource_counts.at(Resource_kind::BIT) > n_bits)){
                     add_branch_constraint(info.gate, 0);
                 }
             }

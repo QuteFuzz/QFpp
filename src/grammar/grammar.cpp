@@ -144,8 +144,9 @@ std::shared_ptr<Rule> Grammar::get_rule_pointer(const Token& token, const Scope&
 }
 
 void Grammar::add_term_to_current_branch(const Term& term){
-    Branch& current_branch = stack.top().branch;
-    std::shared_ptr<Rule>& current_rule = stack.top().rule;
+    Current& stack_top = current();
+    Branch& current_branch = stack_top.branch;
+    std::shared_ptr<Rule>& current_rule = stack_top.rule;
 
     assert(current_rule != nullptr);
 
@@ -157,7 +158,7 @@ void Grammar::add_term_to_current_branch(const Term& term){
 }
 
 void Grammar::add_term_to_current_branch(const Token& token){
-    std::shared_ptr<Rule>& current_rule = stack.top().rule;
+    std::shared_ptr<Rule>& current_rule = current().rule;
     Term term;
 
     assert(current_rule != nullptr);
@@ -166,14 +167,9 @@ void Grammar::add_term_to_current_branch(const Token& token){
         term = Term(token.value, token.kind);
 
     } else if (is_kind_of_rule(token.kind) || is_meta(token.kind)){
-        /*
-            each term within the branch of a rule has a scope associated with it
-            if explicitis_kind_of_rulely specified like EXTERNAL::term, then the term takes on that scope, otherwise, it
-            takes on the scope of the current rule (i.e the rule def)
-        */
-        Scope scope = (rule_decl_scope == Scope::GLOB) ? current_rule->get_scope() : rule_decl_scope;
-        Print_mode current_rule_print_mode = token.kind == GET_INDENT_LEVEL ? Print_mode::INDENT_LEVEL : stack.top().print_mode;
-
+        // if scope has been explicitly set, override the current rule's scope
+        Scope scope = (prev_token.kind == SCOPE_RES) ? rule_decl_scope : current_rule->get_scope();
+        Print_mode current_rule_print_mode = token.kind == GET_INDENT_LEVEL ? Print_mode::INDENT_LEVEL : current().print_mode;
         term = Term(get_rule_pointer(token, scope), token.kind, current_rule_print_mode);
 
     } else {
@@ -183,14 +179,13 @@ void Grammar::add_term_to_current_branch(const Token& token){
     add_term_to_current_branch(term);
 }
 
-void Grammar::add_branch_to_current_rule(){
-    if (stack.empty()) grammar_error("Stack is empty;");
-    
-    Branch& current_branch = stack.top().branch;
+void Grammar::add_branch_to_current_rule(){    
+    Current& stack_top = current();
+    Branch& current_branch = stack_top.branch;
 
-    if (stack.top().rule != nullptr){
-        stack.top().rule->add(current_branch);
-        stack.top().branch.clear();
+    if (stack_top.rule != nullptr){
+        stack_top.rule->add(current_branch);
+        stack_top.branch.clear();
     } else {
         grammar_error("Rule at stack top is null");
     }
@@ -199,7 +194,7 @@ void Grammar::add_branch_to_current_rule(){
 void Grammar::add_expr_to_last_term(){
     assert(curr_expr != nullptr);
 
-    Branch& current_branch = stack.top().branch;
+    Branch& current_branch = current().branch;
     size_t branch_size = current_branch.size();
 
     if (branch_size == 0){
@@ -209,6 +204,14 @@ void Grammar::add_expr_to_last_term(){
     } else {
         current_branch.at(branch_size - 1).add_expr(curr_expr);
     }
+}
+
+Current& Grammar::current(){
+    if(stack.empty()){
+        grammar_error("Stack is empty");
+    }
+
+    return stack.top();
 }
 
 template<typename NextFunc>
@@ -401,7 +404,7 @@ Token_kind Grammar::parse_token(){
 
     } else if (curr_token.kind == RULE_START) {
         stack.push(Current(get_rule_pointer(prev_token, rule_def_scope)));
-        stack.top().rule->clear();
+        current().rule->clear();
 
     } else if(is_kind_of_rule(curr_token.kind) || is_meta(curr_token.kind) || curr_token.kind == STRING || curr_token.kind == NUMBER){
         // rules that are within branches, rules before `RULE_START` and `RULE_APPEND` are handled at `RULE_START` and `RULE_APPEND`
@@ -423,13 +426,11 @@ Token_kind Grammar::parse_token(){
 
     } else if (curr_token.kind == LPAREN){
         Token new_rule_token{.value = "NR_" + std::to_string(new_rule_counter++), .kind = RULE};
-        Scope parent_scope = stack.top().rule->get_scope();
+        Scope parent_scope = current().rule->get_scope();
         stack.push(Current(get_rule_pointer(new_rule_token, parent_scope)));
 
-    } else if (curr_token.kind == RPAREN){
-        if (stack.empty()) grammar_error("Stack is empty");
-        
-        std::shared_ptr<Rule> new_rule_ptr = stack.top().rule;
+    } else if (curr_token.kind == RPAREN){        
+        std::shared_ptr<Rule> new_rule_ptr = current().rule;
         complete_rule();
 
         // add new rule term to current branch
@@ -459,12 +460,10 @@ Token_kind Grammar::parse_token(){
         rule_def_scope = Scope::GLOB;
 
     } else if (curr_token.kind == SELF_INDENT){
-        if (stack.empty()) grammar_error("Stack is empty;");
-        stack.top().print_mode = Print_mode::SELF_INDENT;
+        current().print_mode = Print_mode::SELF_INDENT;
 
     } else if (curr_token.kind == CHILD_INDENT){
-        if (stack.empty()) grammar_error("Stack is empty;");
-        stack.top().print_mode = Print_mode::CHILD_INDENT;
+        current().print_mode = Print_mode::CHILD_INDENT;
 
     } else if (curr_token.kind == EXTERNAL){
         if(next_token.kind == SCOPE_RES){
@@ -480,6 +479,13 @@ Token_kind Grammar::parse_token(){
             rule_def_scope = Scope::INT;
         }
 
+    } else if (curr_token.kind == GLOB){
+        if(next_token.kind == SCOPE_RES){
+            rule_decl_scope = Scope::GLOB;
+        } else {
+            rule_def_scope = Scope::GLOB;
+        }
+
     } else if (is_quiet(curr_token.kind)){
 
     } else {
@@ -489,7 +495,6 @@ Token_kind Grammar::parse_token(){
     if (curr_token.kind == _EOF){
         return _EOF;
     } else {
-    // prev_token = curr_token;
         consume();
         return prev_token.kind;  // return kind of token that has just been parsed
     }

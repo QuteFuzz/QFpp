@@ -1,7 +1,11 @@
 # cudaq.qf
 
 EXTENSION = ".py";
-MAX_REG_SIZE = 1;
+MAX_REG_SIZE = 3;
+
+pi = "std::numbers::pi";
+pi_multiples = pi | "(" pi "/2.0)" | "("pi "/4.0)";
+float = MAKE_FLOAT | param | pi_multiples;
 
 x    = "x";
 y    = "y";
@@ -27,48 +31,69 @@ crz  = "rz<cudaq::ctrl>";
 gate_name += s | t | sdg | tdg | swap | ch | crx | cry | crz;
 
 INTERNAL {
-    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 4)];
+    float_no_param = "static_cast<float>(rand()) / RAND_MAX" | GLOB::pi_multiples;
 
-    singular_qubit_def = "cudaq::qubit " GET_NAME ";";
-    register_qubit_def = "cudaq::qarray<" GET_SIZE ">" GET_NAME ";";
+    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 4)];
+    param_defs = (param_def NEWLINE)[UNIFORM(3, 4)];
+
+    singular_qubit_def = "cudaq::qubit " GET_DEF_NAME ";";
+    register_qubit_def = "cudaq::qarray<" GET_SIZE ">" GET_DEF_NAME ";";
+
+    singular_param_def = "float " GET_DEF_NAME " = " float_no_param ";";
+
+    # after initing the array, use a for loop to assign floats to the array
+    # register_param_def = "float " GET_DEF_NAME "[" GET_SIZE "];";
+    register_param_def =
+        "float " GET_DEF_NAME "[" GET_SIZE "];" NEWLINE[2]
+        "for(int i = 0; i < " GET_SIZE "; i++){" NEWLINE
+        GET_DEF_NAME"[i] = " float_no_param";" NEWLINE
+        "}" NEWLINE
+    ;
 }
 
 EXTERNAL {
     qubit_defs = qubit_def COMMA qubit_def COMMA qubit_def COMMA qubit_def; # TODO: resolve param that stores num of defs
+    param_defs = param_def | param_def COMMA param_def;
 
+    singular_qubit_def = "cudaq::qubit& " GET_DEF_NAME;
+
+    singular_param_def = "float " GET_DEF_NAME;
+
+    # some defs restricted to singular to make passing of arguments easier (do not have to check for types and register length to match)    
     qubit_def = singular_qubit_def;
-
-    singular_qubit_def = "cudaq::qubit& " GET_NAME;
+    param_def = singular_param_def;
 }
 
 # ============================================================================
-# QUBIT REFERENCES
+# RESOURCE REFERENCES
 # ============================================================================
 
-singular_qubit = GET_NAME;
-register_qubit = GET_NAME "[" GET_INDEX "]";
+singular_qubit = GET_DECL_NAME;
+register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
+
+singular_bit = GET_DECL_NAME;
+register_bit = GET_DECL_NAME "[" GET_INDEX "]";
+
+singular_param = GET_DECL_NAME;
+register_param = GET_DECL_NAME "[" GET_INDEX "]";
 
 # ============================================================================
-# GATE OPERATIONS
+# GATE OPERATIONS AND SUBROUTINES
 # ============================================================================
 
 gate_op      = gate_name "(" gate_op_args ")";
-gate_op_args = (float_literal ", ")[GATE_FLOATS] qubit_list;
+gate_op_args = (float ", ")[GATE_PARAMS] qubit_list;
 
 qubit_list   = qubit (", " qubit)[GATE_QUBITS - 1];
-float_literal = MAKE_FLOAT;
-
-# ============================================================================
-# SUBROUTINE CALLS
-# ============================================================================
 
 subroutine_op = subroutine "{}(" subroutine_op_args ")";
+subroutine_op_args = qubit_list (", " float)[GATE_PARAMS];
 
 # ============================================================================
 # COMPOUND STATEMENTS
 # ============================================================================
 
-compound_stmts = (compound_stmt NEWLINE)[UNIFORM(5, 10)];
+compound_stmts = (compound_stmt NEWLINE)[UNIFORM(15, 20)];
 compound_stmt  = qubit_op ";";
 qubit_op       = gate_op | subroutine_op;
 
@@ -111,7 +136,7 @@ print_counts = "int main(int argc, char* argv[]) {" NEWLINE
 
 get_counts = "counts = cudaq.sample(" GET_CIRCUIT_NAME ")" NEWLINE "print(json.dumps(dict(counts.items())))";
 
-imports = "#include <cudaq.h>" NEWLINE "#include <iostream>";
+imports = "#include <cudaq.h>" NEWLINE "#include <iostream>" NEWLINE "#include <numbers>";
 
 program_footer = "ct = cudaqTesting()" NEWLINE testing_method;
 
@@ -121,17 +146,18 @@ testing_method = "ct.opt_ks_test(source_code, " circuit_id ")" NEWLINE;
 subroutine_defs = (subroutine_circuit NEWLINE)*;
 
 subroutine_circuit = "struct " GET_CIRCUIT_NAME " { " NEWLINE
-    "void operator()(" EXTERNAL::qubit_defs ") __qpu__ {" NEWLINE 
+    "void operator()(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs ") __qpu__ {" NEWLINE 
     # ci<INTERNAL::qubit_defs> NEWLINE
-    ci<subroutine_body> NEWLINE
+    ci<compound_stmts> NEWLINE
     NEWLINE "}};"
     ;
 
-subroutine_body = (qubit_op ";" NEWLINE)[UNIFORM(2, 4)];
+# subroutine_body = (qubit_op ";" NEWLINE)[UNIFORM(2, 4)];
 
 circuit = "struct " GET_CIRCUIT_NAME " { " NEWLINE
     "void operator()() __qpu__ {" NEWLINE 
     ci<INTERNAL::qubit_defs[2]> NEWLINE
+    ci<INTERNAL::param_defs> NEWLINE
     compound_stmts NEWLINE
     measures NEWLINE "}};"
     ;

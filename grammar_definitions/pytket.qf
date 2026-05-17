@@ -40,7 +40,7 @@ gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
 # CIRCUIT STRUCTURE
 # ============================================================================
 
-program = imports NEWLINE NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;
+program = imports NEWLINE[2] subroutine_defs NEWLINE circuit NEWLINE program_footer;
 
 subroutine_body = EXTERNAL::qubit_defs NEWLINE (qubit_op NEWLINE)+;  # subroutines have no bits to facilitate pytket to qiskit conversion
 
@@ -48,10 +48,6 @@ circuit = circuit_def_header NEWLINE body NEWLINE;
 
 # Body includes both qubits and classical bits (needed for control flow)
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
-
-parameter_defs = (parameter_def NEWLINE)*;
-
-parameter_def = GET_NAME " = fresh_symbol('" GET_NAME "')";
 
 # ============================================================================
 # EXTERNAL SCOPE DEFINITIONS
@@ -63,16 +59,16 @@ EXTERNAL {
     bit_defs = (bit_def NEWLINE)[UNIFORM(3,4)];
 
     singular_qubit_def =
-        GET_NAME ' = Qubit("'  GET_NAME '",0)' NEWLINE GET_CIRCUIT_NAME ".add_qubit(" GET_NAME ")";
+        GET_DEF_NAME ' = Qubit("'  GET_DEF_NAME '",0)' NEWLINE GET_CIRCUIT_NAME ".add_qubit(" GET_DEF_NAME ")";
 
     register_qubit_def =
-        GET_NAME " = " GET_CIRCUIT_NAME '.add_q_register("' GET_NAME '", ' GET_SIZE ")";
+        GET_DEF_NAME " = " GET_CIRCUIT_NAME '.add_q_register("' GET_DEF_NAME '", ' GET_SIZE ")";
 
     singular_bit_def =
-        GET_NAME ' = Bit("' GET_NAME '", 0)' NEWLINE GET_CIRCUIT_NAME ".add_bit(" GET_NAME ")";
+        GET_DEF_NAME ' = Bit("' GET_DEF_NAME '", 0)' NEWLINE GET_CIRCUIT_NAME ".add_bit(" GET_DEF_NAME ")";
 
     register_bit_def =
-        GET_NAME " = " GET_CIRCUIT_NAME '.add_c_register("' GET_NAME '", ' GET_SIZE ")";
+        GET_DEF_NAME " = " GET_CIRCUIT_NAME '.add_c_register("' GET_DEF_NAME '", ' GET_SIZE ")";
 }
 
 # ============================================================================
@@ -153,13 +149,13 @@ reset_op = GET_CIRCUIT_NAME ".Reset(" qubit ")";
 # QUBIT AND BIT REFERENCES
 # ============================================================================
 
-singular_qubit = GET_NAME;
+singular_qubit = GET_DECL_NAME;
 
-register_qubit = GET_NAME "[" GET_INDEX "]";
+register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
 
-singular_bit = GET_NAME;
+singular_bit = GET_DECL_NAME;
 
-register_bit = GET_NAME "[" GET_INDEX "]";
+register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 
 # ============================================================================
 # COMPILER CALL
@@ -178,11 +174,3 @@ opt_ks_test = "pt.opt_ks_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN;
 statevector_test = "pt.run_circ_statevector(" GET_CIRCUIT_NAME RPAREN;
 
 pytket_qiskit_conv_test = "pt.pytket_qiskit_conv_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN;
-
-# ============================================================================
-# NUMBERS
-# ============================================================================
-
-# float_literal = MAKE_FLOAT | GET_NAME;
-
-# TODO: need to figure out how to get some resource and pull its name

@@ -27,23 +27,23 @@ t = "t";
 s = "s";
 measure = "measure";
 
-singular_qubit = GET_NAME "[0]";
+singular_qubit = GET_DECL_NAME "[0]";
 
-register_qubit = GET_NAME "[" GET_INDEX "]";
+register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
 
-singular_bit = GET_NAME "[0]";
+singular_bit = GET_DECL_NAME "[0]";
 
-register_bit = GET_NAME "[" GET_INDEX "]";
+register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 
 parameter_defs = (param_def NEWLINE)+;
 
 param_def = singular_param_def;
 
-singular_param_def = GET_NAME " = Parameter('" GET_NAME "')";
+singular_param_def = GET_DEF_NAME " = Parameter('" GET_NAME "')";
 
 param = singular_param;
 
-singular_param = GET_NAME;
+singular_param = GET_DECL_NAME;
 
 # Redefine base program structure to fit Qiskit
 program = imports NEWLINE NEWLINE parameter_defs NEWLINE subroutine_defs NEWLINE circuit NEWLINE compiler_call;
@@ -78,20 +78,20 @@ EXTERNAL {
 
     # Qiskit registers are defined by size and name, not individually
     singular_qubit_def =
-        GET_NAME " = QuantumRegister(1, '" GET_NAME "')" NEWLINE
-                        GET_CIRCUIT_NAME ".add_register(" GET_NAME ")";
+        GET_DEF_NAME " = QuantumRegister(1, '" GET_DEF_NAME "')" NEWLINE
+                        GET_CIRCUIT_NAME ".add_register(" GET_DEF_NAME ")";
 
     register_qubit_def =
-        GET_NAME " = QuantumRegister(" GET_SIZE ", '" GET_NAME "')" NEWLINE
-                        GET_CIRCUIT_NAME ".add_register(" GET_NAME ")";
+        GET_DEF_NAME " = QuantumRegister(" GET_SIZE ", '" GET_DEF_NAME "')" NEWLINE
+                        GET_CIRCUIT_NAME ".add_register(" GET_DEF_NAME ")";
 
     singular_bit_def =
-        GET_NAME " = ClassicalRegister(1, '" GET_NAME "')" NEWLINE
-                        GET_CIRCUIT_NAME ".add_register(" GET_NAME ")";
+        GET_DEF_NAME " = ClassicalRegister(1, '" GET_DEF_NAME "')" NEWLINE
+                        GET_CIRCUIT_NAME ".add_register(" GET_DEF_NAME ")";
 
     register_bit_def =
-        GET_NAME " = ClassicalRegister(" GET_SIZE ", '" GET_NAME "')" NEWLINE
-                        GET_CIRCUIT_NAME ".add_register(" GET_NAME ")";
+        GET_DEF_NAME " = ClassicalRegister(" GET_SIZE ", '" GET_DEF_NAME "')" NEWLINE
+                        GET_CIRCUIT_NAME ".add_register(" GET_DEF_NAME ")";
 }
 
 imports =
@@ -115,13 +115,13 @@ half_pi = "math.pi/2";
 
 float_list = 
     ""[
-    if (GATE_FLOATS == 2) {
+    if (GATE_PARAMS == 2) {
         # Qiskit's u() requires exactly 3 floats to simulate u2: (pi/2, phi, lam)
         u2_override = "math.pi/2, " float_literal ", " float_literal;
         u2_override
     } else {
         # Standard generation for all other gates
-        standard_floats = float_literal (", " float_literal)[GATE_FLOATS - 1];
+        standard_floats = float_literal (", " float_literal)[GATE_PARAMS - 1];
         standard_floats
     }
 ];
@@ -134,28 +134,10 @@ while_stmt =
 for_stmt = for_range;
 
 for_range =
-    "with " GET_CIRCUIT_NAME ".for_loop(range(" for_bound "), None):"
+    "with " GET_CIRCUIT_NAME ".for_loop(range(" MAKE_INTEGER "), None):"
     NEWLINE ci<compound_stmts>;
 
-for_bound = 2; #MAKE_INTEGER;  # TODO: ranges for some meta functions, currently 1-10 by default
-
-(*
-    TODO: SWITCH STMTS: more complex with switch over registers and case option tracking via some feature
-
-switch_stmt =
-    'with ' GET_CIRCUIT_NAME '.switch(' bit ') as case' GET_INDENT_LEVEL ':' NEWLINE
-    ci<((case_stmts NEWLINE> (default_case)?));
-
-case_stmts = 'with case' GET_INDENT_LEVEL '(' 0 '):' NEWLINE ci<compound_stmts> NEWLINE si<('with case' GET_INDENT_LEVEL '(' 1 '>:' NEWLINE ci<compound_stmts>));
-
-case_stmt =
-    'with case(' case_values '):' NEWLINE ci<compound_stmts>;
-
-case_values = MAKE_INTEGER (', ' MAKE_INTEGER)[UNIFORM(0,2)];
-
-default_case =
-    'with case(case.DEFAULT):' NEWLINE ci<compound_stmts>;
-*)
+# TODO: SWITCH STMTS: more complex with switch over registers and case option tracking via some feature
 
 #TODO: implement `qreg` rule and others stuff needed for register comparison
 # 1. Expressions that return a Number (Uint)

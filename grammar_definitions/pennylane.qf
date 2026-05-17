@@ -38,11 +38,11 @@ gate_name += s | t | swap | ch | crx | cry | crz;
 INTERNAL {
     qubit_defs = (qubit_def COMMA)[UNIFORM(3, 4)];
     qubit_def  = singular_qubit_def;
-    singular_qubit_def = "'"GET_NAME"'";
+    singular_qubit_def = "'"GET_DEF_NAME"'";
 }
 
-singular_qubit = "'"GET_NAME"'";
-register_qubit = "'"GET_NAME"'";  # unused with MAX_REG_SIZE=1, required by meta-grammar
+singular_qubit = "'"GET_DECL_NAME"'";
+register_qubit = "'"GET_DECL_NAME"'";  # unused with MAX_REG_SIZE=1, required by meta-grammar
 
 # No bit_defs: PennyLane has no classical registers
 
@@ -53,7 +53,7 @@ register_qubit = "'"GET_NAME"'";  # unused with MAX_REG_SIZE=1, required by meta
 # ============================================================================
 
 gate_op      = "qml." gate_name "(" gate_op_args ")";
-gate_op_args = (float_literal ", ")[GATE_FLOATS] "wires=[" qubit_list "]";
+gate_op_args = (float_literal ", ")[GATE_PARAMS] "wires=[" qubit_list "]";
 qubit_list   = qubit (", " qubit)[GATE_QUBITS - 1];
 qubit        = singular_qubit;
 float_literal = MAKE_FLOAT;

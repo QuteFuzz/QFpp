@@ -84,6 +84,8 @@ class Grammar{
 
         void add_expr_to_last_term();
 
+        Current& current();
+
         template<typename NextFunc>
         std::unique_ptr<Expr> parse_binary_op(NextFunc parse_next, std::initializer_list<std::string> valid_ops);
 

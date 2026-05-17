@@ -80,11 +80,11 @@ unsigned int Context::resolve_var(Token_kind kind) const {
     if (kind == GATE){
         return gate->get_node_kind();
     } else if (kind == GATE_QUBITS) {
-        return gate->get_num_external_qubits();
+        return gate->get_num_external_resources(Resource_kind::QUBIT);
     } else if (kind == GATE_BITS) {
-        return gate->get_num_external_bits();
-    } else if (kind == GATE_FLOATS) {
-        return gate->get_num_floats();
+        return gate->get_num_external_resources(Resource_kind::BIT);
+    } else if (kind == GATE_PARAMS) {
+        return gate->get_num_external_resources(Resource_kind::PARAM);
     } else if (kind == N_QUBITS) {
         auto qubits = get_current_circuit()->get_coll<Resource>(Resource_kind::QUBIT);
         return qubits.size();
@@ -144,7 +144,6 @@ std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk, Scope s
 
     auto random_resource = get_random_from_coll<Resource>(filtered_coll, pred);
     random_resource->set_used();
-    // random_resource->extend_flow_path(current.get<Qubit_op>(), current_port++);
 
     current.set<Resource>(random_resource);
     return random_resource;
