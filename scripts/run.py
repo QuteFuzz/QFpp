@@ -106,7 +106,7 @@ def parse():
     return parser.parse_args()
 
 
-def print_progress(current: int, total: int, prefix: str = "Progress:", length: int = 40):
+def print_progress(current: int, total: int):
     """
     Call in a loop to create a terminal progress bar.
     """
@@ -114,7 +114,7 @@ def print_progress(current: int, total: int, prefix: str = "Progress:", length: 
 
     # \r returns to the start of the line to overwrite it
     print(
-        f"\r{Color.BLUE}{prefix} {current}/{total} [{percent}%]{Color.RESET}",
+        f"\r{Color.BLUE} Progress {current}/{total} [{percent}%]{Color.RESET}",
         end="",
         flush=True,
     )

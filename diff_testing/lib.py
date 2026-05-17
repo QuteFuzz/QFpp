@@ -17,7 +17,6 @@ Results:
 import argparse
 import os
 from abc import ABC, abstractmethod
-from itertools import zip_longest
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -75,26 +74,26 @@ class Base(ABC):
 
         return dict(sorted(out.items()))
 
-    def _ks_test(self, counts1: Dict[Any, int], counts2: Dict[Any, int]) -> float | None:
+    def _ks_test(self, counts1: Dict[Any, int], counts2: Dict[Any, int]) -> float:
         """
         Carries out K-S test on two frequency lists
         """
         sample1: List[int] = []
         sample2: List[int] = []
 
-        for p1, p2 in zip_longest(counts1.items(), counts2.items(), fillvalue=None):
-            if p1:
-                sample1 += [p1[0]] * p1[1]
+        for val, count in counts1.items():
+            sample1 += [val] * count
 
-            if p2:
-                sample2 += [p2[0]] * p2[1]
+        for val, count in counts2.items():
+            sample2 += [val] * count
 
         if len(sample1) != self.num_shots or len(sample2) != self.num_shots:
+            print(counts1, " ", counts2)
             print(
                 f"Sample size(sample1: {len(sample1)}, sample2: {len(sample2)})"
                 f" does not match number of shots ({self.num_shots})"
             )
-            return None
+            return 1.0
 
         else:
             res = ks_2samp(sorted(sample1), sorted(sample2), method="asymp")

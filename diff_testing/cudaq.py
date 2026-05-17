@@ -11,6 +11,7 @@ from utils import Color, log, run_command
 class cudaqTesting(Base):
     def __init__(self) -> None:
         super().__init__("cudaq")
+        self.num_shots = 100  # dynamic circuits are slow, reduce shots drastically for cudaq
 
     def _get_counts(self, circuit_source_code, opt_level: int, circuit_num: int) -> Dict[Any, int]:
         nvq_binary = shutil.which("nvq++")
@@ -36,9 +37,6 @@ class cudaqTesting(Base):
             run_command(compile_cmd, capture_output=True, env=env)
 
             result = run_command([temp_exe, str(self.num_shots)], capture_output=True)
-
-            # Parse the printed dictionary
-            print(result.stdout)
 
             raw_counts = json.loads(result.stdout)
             n_bits = max((len(k) for k in raw_counts), default=1)
