@@ -46,14 +46,17 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			case STRING: case NUMBER:
 				return std::make_shared<Node>(str, kind);
 
-			case GET_NAME:
-				return parent->get_var_name();
+			case GET_DEF_NAME:
+				return context.get_current_node<Resource_def>()->get_var_name();
+
+			case GET_DECL_NAME:
+				return context.get_current_node<Resource>()->get_var_name();
 
 			case GET_SIZE:
-				return parent->get_size();
+				return context.get_current_node<Resource_def>()->get_size();
 
 			case GET_INDEX:
-				return parent->get_index();
+				return context.get_current_node<Resource>()->get_index();
 
 			case MAKE_FLOAT:
 				return std::make_shared<Float>();
@@ -108,8 +111,8 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 				return context.get_random_resource(Resource_kind::BIT)->clone(SHALLOW);
 
 			case PARAM:
-				context.reset(RL_PARAMS);
-				return context.get_random_resource(Resource_kind::PARAM, scope)->clone(SHALLOW);
+				context.reset(RL_PARAMS);   // params can be reused without restriction
+				return context.get_random_resource(Resource_kind::PARAM)->clone(SHALLOW);
 
 			case REGISTER_QUBIT: case REGISTER_BIT:
 			case SINGULAR_QUBIT: case SINGULAR_BIT:

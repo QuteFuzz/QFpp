@@ -7,6 +7,7 @@
 #include <uint.h>
 #include <resource.h>
 
+enum class Resource_kind;
 class Resource_def : public Cloneable<Resource_def> {
 
     public:
@@ -18,20 +19,7 @@ class Resource_def : public Cloneable<Resource_def> {
             kind(Resource_kind::QUBIT)
         {}
 
-        Resource_def(const Scope& _scope, Resource_kind rk, bool is_reg, unsigned int reg_size) :
-            Cloneable<Resource_def>("resource_def", (rk == (Resource_kind::QUBIT) ? QUBIT_DEF : BIT_DEF)),
-            name(is_reg ? "reg" : "sing", true),
-            size(is_reg ? reg_size : 1),
-            reg(is_reg),
-            scope(_scope),
-            kind(rk)
-        {
-            if (rk == Resource_kind::QUBIT){
-                add_branch_constraint(REGISTER_QUBIT_DEF, is_reg);
-            } else {
-                add_branch_constraint(REGISTER_BIT_DEF, is_reg);
-            }
-        }
+        Resource_def(const Scope& _scope, Resource_kind rk, bool is_reg, unsigned int reg_size);
 
         Scope get_scope() const { return scope; }
 

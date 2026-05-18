@@ -89,7 +89,7 @@ void move_qubits(const std::shared_ptr<Node> source_qubit_anscestor, Slot_type d
     auto dest_gate = gate_from_anscestor(*dest_qubit_anscestor);
 
     // only move if both have the same number of qubits
-    if (source_gate->get_num_external_qubits() == dest_gate->get_num_external_qubits()){
+    if (source_gate->get_num_external_resources(Resource_kind::QUBIT) == dest_gate->get_num_external_resources(Resource_kind::QUBIT)){
         auto source_qubits = Node_gen(*source_qubit_anscestor, QUBIT);
         auto dest_qubits = Node_gen(**dest_qubit_anscestor, QUBIT);
 

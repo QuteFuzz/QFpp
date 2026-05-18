@@ -34,10 +34,10 @@ EXTERNAL {
     qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 4)];
 
     singular_qubit_def =
-        GET_NAME " = cirq.NamedQubit('" GET_NAME "')";
+        GET_DEF_NAME " = cirq.NamedQubit('" GET_DEF_NAME "')";
 
     register_qubit_def =
-        GET_NAME " = cirq.NamedQubit.range(" GET_SIZE ", prefix='" GET_NAME "')";
+        GET_DEF_NAME " = cirq.NamedQubit.range(" GET_SIZE ", prefix='" GET_DEF_NAME "')";
 }
 
 imports =
@@ -50,6 +50,7 @@ imports =
 
 circuit_def_header = GET_CIRCUIT_NAME " = cirq.Circuit()";
 
+# cirq's simulator is very slow, need smaller circuits
 compound_stmts = (compound_stmt NEWLINE)[5];
 
 compound_stmt =
@@ -69,7 +70,7 @@ strategy_kwarg = ", "
 
 gate_op = GET_CIRCUIT_NAME ".append(" gate_name gate_op_args strategy_kwarg ")";
 
-gate_op_args = ("(" (float_literal ", ") ")")[GATE_FLOATS] "(" qubit_list ")"; #  ("," bit)[GATE_BITS];
+gate_op_args = ("(" (float_literal ", ") ")")[GATE_PARAMS] "(" qubit_list ")"; #  ("," bit)[GATE_BITS];
 
 m_key = "m_key = cirq.MeasurementKey('" MAKE_VAR "')";
 apply_measure = GET_CIRCUIT_NAME ".append(cirq.measure(" qubit ", key=m_key))" RESET;
@@ -97,9 +98,9 @@ gate_name = rx
     | zz
     ;
 
-singular_qubit = GET_NAME;
+singular_qubit = GET_DECL_NAME;
 
-register_qubit = GET_NAME "[" GET_INDEX "]";
+register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
 
 compiler_call = "ct = cirqTesting()" NEWLINE testing_method;
 

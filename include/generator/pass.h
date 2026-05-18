@@ -120,10 +120,10 @@ class Add_gate_chain : public Pass {
         {
             assert(chain.size() >= 1);
 
-            unsigned int n_qubits = find_gate_info(chain[0])->n_qubits;
+            unsigned int n_qubits = find_gate_info(chain[0])->resource_counts.at(Resource_kind::QUBIT);
 
             for (size_t i = 1; i < chain.size(); i++){
-                if(find_gate_info(chain[i])->n_qubits != n_qubits){
+                if(find_gate_info(chain[i])->resource_counts.at(Resource_kind::QUBIT) != n_qubits){
                     ERROR("All gates in the chain must expect the same number of qubits");
                 }
             }

@@ -4,9 +4,9 @@ EXTENSION = ".qasm";
 MAX_REG_SIZE = 1;
 
 EXTERNAL {
-    singular_qubit_def = GET_NAME;
+    singular_qubit_def = GET_DEF_NAME;
 
-    singular_bit_def = GET_NAME;
+    singular_bit_def = GET_DEF_NAME;
 
     qubit_defs = qubit_def (COMMA qubit_def)[UNIFORM(3, 4)];
 
@@ -17,9 +17,9 @@ EXTERNAL {
     bit_def = singular_bit_def;
 }
 
-register_qubit_def = "qreg " GET_NAME "[" GET_SIZE "];";
+register_qubit_def = "qreg " GET_DEF_NAME "[" GET_SIZE "];";
 
-register_bit_def = "creg " GET_NAME "[" GET_SIZE "];";
+register_bit_def = "creg " GET_DEF_NAME "[" GET_SIZE "];";
 
 qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 4)];
 
@@ -56,16 +56,16 @@ subroutine_op = subroutine " " qubit_list;
 # --------
 # QASM syntax: name(params) arg1, arg2;
 
-singular_qubit = GET_NAME;
+singular_qubit = GET_DECL_NAME;
 
-register_qubit = GET_NAME "[" GET_INDEX "]";
+register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
 
-singular_bit = GET_NAME;
+singular_bit = GET_DECL_NAME;
 
-register_bit = GET_NAME "[" GET_INDEX "]";
+register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 
 
-gate_op_args = ("(" float_list ") ")[GATE_FLOATS >= 1] qubit_list;
+gate_op_args = ("(" float_list ") ")[GATE_PARAMS >= 1] qubit_list;
 
 gate_op = gate_name " " gate_op_args ";";
 

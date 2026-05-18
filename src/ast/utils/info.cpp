@@ -62,8 +62,6 @@ unsigned int Info::interesting_pair_count(std::function<bool(Token_kind, Token_k
 
     if (qubit_ops.size() < 2) return 0;
 
-    float n_adj_pairs = (float)(qubit_ops.size() - 1);
-
     // qubit name -> last qubit op acting on that qubit
     std::unordered_map<std::string, std::shared_ptr<Qubit_op>> last_qubit_op_map;
 
@@ -83,7 +81,7 @@ float Info::quality(){
     if (qubit_ops.size() == 0) return 0.0;
 
     for (const auto& qubit_op : qubit_ops){
-        n_multi_qubit_gates += qubit_op->get_gate_node()->get_num_external_qubits();
+        n_multi_qubit_gates += qubit_op->get_gate_node()->get_num_external_resources(Resource_kind::QUBIT);
     }
 
     return (float)n_multi_qubit_gates / (float)qubit_ops.size();

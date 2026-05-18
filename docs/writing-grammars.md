@@ -124,8 +124,8 @@ rx = "MyFramework.RX";
 EXTERNAL {
     qubit_defs = (qubit_def NEWLINE)[UNIFORM(2, 4)];
 
-    singular_qubit_def = GET_NAME " = framework.qubit('" GET_NAME "')";
-    register_qubit_def = GET_NAME " = framework.qvec(" GET_SIZE ", '" GET_NAME "')";
+    singular_qubit_def = GET_DEF_NAME " = framework.qubit('" GET_NAME "')";
+    register_qubit_def = GET_DEF_NAME " = framework.qvec(" GET_SIZE ", '" GET_NAME "')";
 
     # If no bit support:
     singular_bit_def = "";
@@ -137,11 +137,11 @@ EXTERNAL {
 }
 
 # ── Resource references ──────────────────────────────────────
-singular_qubit = GET_NAME;
-register_qubit = GET_NAME "[" GET_INDEX "]";
+singular_qubit = GET_DECL_NAME;
+register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
 
-singular_bit = GET_NAME;
-register_bit = GET_NAME "[" GET_INDEX "]";
+singular_bit = GET_DECL_NAME;
+register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 
 # ── Gate operation ────────────────────────────────────────────
 gate_op = gate_name "(" gate_op_args ")";
@@ -241,7 +241,7 @@ uv run scripts/run.py --grammars myframework --num-tests 5
 
 ### Gate applies wrong number of arguments
 
-`GATE_QUBITS`, `GATE_BITS`, and `GATE_FLOATS` resolve to the counts for the *currently selected gate*. These are defined in `include/utils/supported_gates.h`. If you define a gate name like `my_gate = "SomeGate"` and it matches an existing `Token_kind` (e.g. `cx`), the supported count from `supported_gates.h` is used. If it does not match any known gate, the fuzzer assigns a random qubit count and logs a warning.
+`GATE_QUBITS`, `GATE_BITS`, and `GATE_PARAMS` resolve to the counts for the *currently selected gate*. These are defined in `include/utils/supported_gates.h`. If you define a gate name like `my_gate = "SomeGate"` and it matches an existing `Token_kind` (e.g. `cx`), the supported count from `supported_gates.h` is used. If it does not match any known gate, the fuzzer assigns a random qubit count and logs a warning.
 
 ### Subroutines not working
 

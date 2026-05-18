@@ -32,8 +32,8 @@ crz = "crz";
 # ── Resource definitions ─────────────────────────────────────
 INTERNAL {
     qubit_defs = qubit_def;
-    singular_qubit_def = GET_NAME " = qubit()";
-    register_qubit_def = GET_NAME " = array(qubit() for _ in range(" GET_SIZE "))";
+    singular_qubit_def = GET_DEF_NAME " = qubit()";
+    register_qubit_def = GET_DEF_NAME " = array(qubit() for _ in range(" GET_SIZE "))";
 
     # Required: If no bit or param support, define them as empty strings
     singular_bit_def = "";
@@ -56,8 +56,8 @@ INTERNAL {
 
 EXTERNAL {
     qubit_defs = qubit_def;
-    singular_qubit_def = GET_NAME ": qubit";
-    register_qubit_def = GET_NAME ": array[qubit, " GET_SIZE "]";
+    singular_qubit_def = GET_DEF_NAME ": qubit";
+    register_qubit_def = GET_DEF_NAME ": array[qubit, " GET_SIZE "]";
 
     singular_bit_def = "";
     register_bit_def = "";
@@ -66,14 +66,14 @@ EXTERNAL {
 }
 
 # ── Resource references ──────────────────────────────────────
-singular_qubit = GET_NAME;
-register_qubit = GET_NAME "[" GET_INDEX "]";
+singular_qubit = GET_DECL_NAME;
+register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
 
-singular_bit = GET_NAME;
-register_bit = GET_NAME "[" GET_INDEX "]";
+singular_bit = GET_DECL_NAME;
+register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 
-singular_param = GET_NAME;
-register_param = GET_NAME "[" GET_INDEX "]";
+singular_param = GET_DECL_NAME;
+register_param = GET_DECL_NAME "[" GET_INDEX "]";
 
 # ── Program structure ─────────────────────────────────────────
 program = imports NEWLINE NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;

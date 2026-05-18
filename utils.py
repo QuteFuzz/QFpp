@@ -55,7 +55,6 @@ def run_command(command, cwd=None, env=None, capture_output=False, timeout=None)
         )
 
         if result.returncode != 0:
-            print(result.stdout)
             print(result.stderr)
             sys.exit(-1)
 

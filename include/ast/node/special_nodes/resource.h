@@ -4,14 +4,7 @@
 #include <gate.h>
 #include <variable.h>
 #include <uint.h>
-
-enum class Resource_kind {
-    QUBIT,
-    BIT,
-    PARAM,
-};
-
-#define STR_RESOURCE_KIND(rk) (rk == Resource_kind::QUBIT ? " QUBIT " : (rk == Resource_kind::BIT) ? " BIT " : " PARAM ")
+#include <resource_kind.h>
 
 class Resource : public Cloneable<Resource> {
     public:
@@ -24,19 +17,7 @@ class Resource : public Cloneable<Resource> {
             add_branch_constraint(SINGULAR_QUBIT, 1);
         }
 
-        Resource(const Variable& _name, const UInt& _index, const Scope& _scope, Resource_kind rk, bool is_reg) :
-            Cloneable<Resource>("register_resource", (rk == (Resource_kind::QUBIT) ? QUBIT : BIT)),
-            name(_name),
-            index(_index),
-            scope(_scope),
-            resource_kind(rk)
-        {
-            if (rk == Resource_kind::QUBIT){
-                add_branch_constraint(REGISTER_QUBIT, is_reg);
-            } else {
-                add_branch_constraint(REGISTER_BIT, is_reg);
-            }
-        }
+        Resource(const Variable& _name, const UInt& _index, const Scope& _scope, Resource_kind rk, bool is_reg);
 
         Scope get_scope() const {
             return scope;
