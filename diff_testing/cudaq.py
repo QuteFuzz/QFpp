@@ -8,15 +8,19 @@ from typing import Any, Dict
 from diff_testing.lib import Base
 from utils import Color, log, run_command
 
+
 def _has_nvidia_gpu() -> bool:
     """Checks if an NVIDIA GPU is present and accessible on the system."""
     if shutil.which("nvidia-smi") is None:
         return False
     try:
-        subprocess.run(["nvidia-smi"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        subprocess.run(
+            ["nvidia-smi"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True
+        )
         return True
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
+
 
 class cudaqTesting(Base):
     def __init__(self) -> None:
