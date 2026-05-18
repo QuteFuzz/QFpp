@@ -21,6 +21,8 @@ EXTENSION = ".py";
 MAX_REG_SIZE = 2;
 NESTED_MAX_DEPTH = 6;
 
+pi_multiples = pi | "("pi"/2.0)" | "("pi"/4.0)";
+
 qubit_def = singular_qubit_def | register_qubit_def;
 
 bit_def = singular_bit_def | register_bit_def;
@@ -29,6 +31,12 @@ param_def = singular_param_def | register_param_def;
 
 
 INTERNAL {
+    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3,4)];
+
+    bit_defs = (bit_def NEWLINE)[UNIFORM(3,4)];
+    
+    param_defs = (param_def NEWLINE)[UNIFORM(3,4)];
+
     qubit_def = singular_qubit_def | register_qubit_def;
 
     bit_def = singular_bit_def | register_bit_def;
@@ -37,6 +45,12 @@ INTERNAL {
 }
 
 EXTERNAL {
+    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3,4)];
+
+    bit_defs = (bit_def NEWLINE)[UNIFORM(3,4)];
+    
+    param_defs = (param_def NEWLINE)[UNIFORM(3,4)];
+
     qubit_def = singular_qubit_def | register_qubit_def;
 
     bit_def = singular_bit_def | register_bit_def;
@@ -61,7 +75,7 @@ compound_stmt = qubit_op;
 
 qubit_op = gate_op | subroutine_op;
 
-gate_op = GET_CIRCUIT_NAME name "(" gate_op_args ")";
+gate_op = GET_CIRCUIT_NAME "(" gate_op_args ")";
 
 subroutine_op = GET_CIRCUIT_NAME ".add_gate(" subroutine ",[" subroutine_op_args "])";
 
@@ -87,19 +101,14 @@ subroutine_op_args = qubit_list ("," bit)[GATE_BITS];
 
 qubit_list = qubit (", " qubit)[GATE_QUBITS - 1];
 
-float_literal = MAKE_FLOAT;
-
-float_list = float_literal  (", " float_literal)[GATE_PARAMS - 1];
-
-qubit =
-    singular_qubit
-    | register_qubit
-    ;
-
 bit_list = bit (", " bit)[GATE_BITS - 1];
 
-bit = singular_bit
-    | register_bit
-    ;
+float_list = float  (", " float)[GATE_PARAMS - 1];
+
+float = MAKE_FLOAT | param | pi_multiples;
+
+qubit = singular_qubit | register_qubit;
+
+bit = singular_bit | register_bit;
 
 param = singular_param | register_param;

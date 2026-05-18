@@ -53,10 +53,12 @@ register_qubit = "'"GET_DECL_NAME"'";  # unused with MAX_REG_SIZE=1, required by
 # ============================================================================
 
 gate_op      = "qml." gate_name "(" gate_op_args ")";
-gate_op_args = (float_literal ", ")[GATE_PARAMS] "wires=[" qubit_list "]";
+gate_op_args = (float ", ")[GATE_PARAMS] "wires=[" qubit_list "]";
+float = MAKE_FLOAT | pi_multiples;
+pi = "math.pi";
+
 qubit_list   = qubit (", " qubit)[GATE_QUBITS - 1];
 qubit        = singular_qubit;
-float_literal = MAKE_FLOAT;
 
 # ============================================================================
 # COMPOUND STATEMENTS
@@ -94,6 +96,7 @@ return_stmt = "return qml.counts()";
 # ============================================================================
 
 imports =
+    "import math" NEWLINE
     "import pennylane as qml" NEWLINE
     "from diff_testing.pennylane import pennylaneTesting";
 

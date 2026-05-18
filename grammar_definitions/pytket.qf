@@ -1,6 +1,6 @@
 # Pytket grammar with control flow support
 
-MAX_REG_SIZE = 1;
+MAX_REG_SIZE = 3;
 
 x = "X";
 y = "Y";
@@ -34,7 +34,7 @@ u3 = "U3";
 phased_x = "PhasedX";
 
 gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
-    u1 | u2 | u3 | phased_x | measure | ch | s | t | v | toffoli;
+    u1 | u2 | u3 | phased_x | measure | ch | s | t | v;
 
 # ============================================================================
 # CIRCUIT STRUCTURE
@@ -69,6 +69,8 @@ EXTERNAL {
 
     register_bit_def =
         GET_DEF_NAME " = " GET_CIRCUIT_NAME '.add_c_register("' GET_DEF_NAME '", ' GET_SIZE ")";
+
+    param_def = singular_param_def;
 }
 
 # ============================================================================
@@ -76,6 +78,7 @@ EXTERNAL {
 # ============================================================================
 
 imports =
+    "import math" NEWLINE
     "from pytket import Circuit, Qubit, Bit" NEWLINE
     "from pytket.circuit import Op, OpType, MultiplexorBox, CircBox" NEWLINE
     "from pytket._tket.circuit import fresh_symbol" NEWLINE
@@ -115,6 +118,8 @@ elif_stmt =
 else_stmt =
     'else:' NEWLINE ci<compound_stmts>;
 
+compound_stmts = (compound_stmt NEWLINE)[UNIFORM(50, 80)];
+
 compound_stmt =
     qubit_op
     | if_stmt
@@ -129,6 +134,9 @@ gate_op = GET_CIRCUIT_NAME "." gate_name "(" gate_op_args ")";
 
 subroutine_op = GET_CIRCUIT_NAME ".add_gate(" subroutine ",[" subroutine_op_args "])";
 
+float = MAKE_FLOAT | pi_multiples;
+
+pi = "math.pi";
 
 # ============================================================================
 # SPECIAL OPERATIONS

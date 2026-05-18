@@ -1,5 +1,5 @@
 
-gate_name += s | sdg | t | tdg | u1 | u2 | u3 | measure;
+gate_name += s | sdg | t | tdg | u1 | u2 | u3  | measure;
 
 u1 = "p";
 u2 = "u";
@@ -21,6 +21,7 @@ sdg = "sdg";
 h = "h";
 t = "t";
 s = "s";
+toffoli = "ccx";
 measure = "measure";
 
 singular_qubit = GET_DECL_NAME "[0]";
@@ -106,17 +107,19 @@ gate_op = GET_CIRCUIT_NAME "." gate_name "(" gate_op_args ")";
 
 subroutine_op = GET_CIRCUIT_NAME ".append(" subroutine ",[" subroutine_op_args "])";
 
-half_pi = "math.pi/2";
+float = MAKE_FLOAT | pi_multiples;
+
+pi = "math.pi";
 
 float_list = 
     ""[
     if (GATE_PARAMS == 2) {
         # Qiskit's u() requires exactly 3 floats to simulate u2: (pi/2, phi, lam)
-        u2_override = "math.pi/2, " float_literal ", " float_literal;
+        u2_override = "math.pi/2, " float ", " float;
         u2_override
     } else {
         # Standard generation for all other gates
-        standard_floats = float_literal (", " float_literal)[GATE_PARAMS - 1];
+        standard_floats = float (", " float)[GATE_PARAMS - 1];
         standard_floats
     }
 ];

@@ -97,7 +97,7 @@ compound_stmt = qubit_op; # | if_stmt
 # ── Gate operation ────────────────────────────────────────────
 gate_op = gate_name "(" gate_op_args ")";
 
-float_literal = "angle(" MAKE_FLOAT ")";
+float = "angle(" MAKE_FLOAT ")";
 
 subroutine_op = subroutine "(" subroutine_op_args ")";
 
