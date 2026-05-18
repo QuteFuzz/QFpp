@@ -93,6 +93,7 @@ subroutine_op_args = qubit_list (", " float)[GATE_PARAMS];
 # COMPOUND STATEMENTS
 # ============================================================================
 
+# TODO: figure out why bigger circuits are so slow
 # compound_stmts = (compound_stmt NEWLINE)[UNIFORM(15, 20)];
 compound_stmts = (compound_stmt NEWLINE)[UNIFORM(2, 5)];
 compound_stmt  = qubit_op ";" | if_stmt;

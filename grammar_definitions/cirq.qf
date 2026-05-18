@@ -50,6 +50,7 @@ imports =
 
 circuit_def_header = GET_CIRCUIT_NAME " = cirq.Circuit()";
 
+# cirq's simulator is very slow, need smaller circuits
 compound_stmts = (compound_stmt NEWLINE)[5];
 
 compound_stmt =

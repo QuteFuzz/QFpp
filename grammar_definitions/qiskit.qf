@@ -1,7 +1,3 @@
-# qiskit
-
-NESTED_MAX_DEPTH = 3;
-
 
 gate_name += s | sdg | t | tdg | u1 | u2 | u3 | measure;
 
@@ -103,10 +99,9 @@ imports =
     "from diff_testing.qiskit import qiskitTesting" NEWLINE
     ;
 
-# Redefine compound_stmt and related rules
-compound_stmts = (compound_stmt NEWLINE)[UNIFORM(3,10)];
+# qiskit's loop unrolling makes it such that we ought to reduce the number of compound statements
+compound_stmts = (compound_stmt NEWLINE)[UNIFORM(15,25)];
 
-# Redefine gate_op for Qiskit syntax: circuit.gate(args)
 gate_op = GET_CIRCUIT_NAME "." gate_name "(" gate_op_args ")";
 
 subroutine_op = GET_CIRCUIT_NAME ".append(" subroutine ",[" subroutine_op_args "])";

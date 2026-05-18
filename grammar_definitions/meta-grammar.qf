@@ -55,7 +55,7 @@ body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
 
 subroutine_circuit = circuit_def_header NEWLINE subroutine_body NEWLINE subroutine_def_footer;
 
-compound_stmts = (compound_stmt NEWLINE)[UNIFORM(10,15)];
+compound_stmts = (compound_stmt NEWLINE)[UNIFORM(100,150)];
 
 compound_stmt = qubit_op;
 

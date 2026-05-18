@@ -134,11 +134,8 @@ subroutine_op = GET_CIRCUIT_NAME ".add_gate(" subroutine ",[" subroutine_op_args
 # SPECIAL OPERATIONS
 # ============================================================================
 
-# Barrier operation (prevents optimization across this boundary
-
-barrier_op_qubits = qubit ("," qubit)[UNIFORM(0, 2)]; # TODO: if we had in-grammar term constraint resolution, we could replace 2 with MAX_REG_SIZE
-
 # between 1-3 qubits, we could have at least 3 qubit defs, each of which could be singular, so 3 qubits upper bound to prevent errors
+barrier_op_qubits = qubit ("," qubit)[UNIFORM(0, 2)];
 
 barrier_op = GET_CIRCUIT_NAME ".add_barrier([" barrier_op_qubits "])";
 

@@ -15,7 +15,3 @@ nightly_results
 *.egg-info
 
 local-override.toml
-
-# cudaq runs generate these
-*.tmp
-*.o
