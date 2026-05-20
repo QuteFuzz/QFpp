@@ -198,7 +198,7 @@ measures =
 
             } else {
                 register_measure = 
-                    "for (bool b : mz(" ""[def.name] ")){" NEWLINE
+                    "for (auto b : mz(" ""[def.name] ")){" NEWLINE
                     "   if (b) packed_result |= (1ULL << bit_offset);" NEWLINE
                     "   bit_offset++;" NEWLINE
                     "}" NEWLINE;

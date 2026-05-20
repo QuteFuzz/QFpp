@@ -52,15 +52,27 @@ to create the docker image, then
 
 to create a docker container and start a shell inside it. From there, run setup commands as normal.
 
-## Dev mode
+## Install external libs
+
+To install external repos
 
 ```sh
-python3 -m scripts.setup --dev
+python3 -m scripts.setup --libs {EXTERNAL LIBS}
 ```
 
-Also instruments the `tket` compiler.
+To clone and build `cuda-quantum` from source without coverage collection enabled
+```sh
+python3 -m scripts.setup --libs cuda-quantum
+```
+
+To clone and build from source with coverage collection enabled
+```sh
+python3 -m scripts.setup --cov
+```
 
 **Note:**
+
+- Run script is not set up to run fuzzing campaigns on instrumented compilers, due to the large volumes of data that would be dumped, but is not collected and deleted in batches. The coverage flag is more for development testing to see how well the test cases stress test the compiler. Currently, only CUDAQ compiler can be instrumented.
 
 - If `conan` command fails, this is because the run needs to happen within the virtual env. Source first with 
     
@@ -81,14 +93,16 @@ and tries to sync everything to match the lockfile. As a result, it reinstalls t
 | `qiskit.qf` | Qiskit + Aer | KS test across optimisation levels 0–3 |
 | `cirq.qf` | Cirq | KS test across 3 custom transpile levels |
 | `pennylane.qf` | PennyLane Lightning | KS test across 4 transform pipelines |
+| `cudaq.qf` | CUDA-Q | KS test across optimisation levels 0-3 |
 
 
 ## Bugs found
 
 | QSS | Bug in | Status |
 |-----|------|-------|
-| Pytket | [tket compiler](https://github.com/Quantinuum/tket/issues/2109) | fixed |
-| Pytket | [tket2 compiler](https://github.com/Quantinuum/tket2/issues/1417) | ack |
+| Pytket | [tket](https://github.com/Quantinuum/tket/issues/2109) | fixed |
+| Pytket | [tket2](https://github.com/Quantinuum/tket2/issues/1417) | ack |
+| CUDA-Q | [cuda-quantum](https://github.com/NVIDIA/cuda-quantum/issues/4562) | ack |
 
 ## Acknowledgements
 

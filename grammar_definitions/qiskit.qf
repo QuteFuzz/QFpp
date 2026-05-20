@@ -21,7 +21,6 @@ sdg = "sdg";
 h = "h";
 t = "t";
 s = "s";
-toffoli = "ccx";
 measure = "measure";
 
 singular_qubit = GET_DECL_NAME "[0]";

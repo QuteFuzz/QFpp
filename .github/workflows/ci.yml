@@ -15,16 +15,13 @@ jobs:
 
       - name: Run Setup Script
         run: |
-          python3 -m scripts.setup
+          python3 -m scripts.setup --dev
 
       - name: Formatting
         run: |
-          # Check for linting errors
           uv run ruff check .
-          # Check for formatting issues (optional, remove if you don't enforce formatting)
           uv run ruff format --check .
-          # Run static type checking
           uv run pyright
 
       - name: Run CI Pipeline
-        run: uv run -m scripts.run --num-tests 3
+        run: uv run -m scripts.run --num-tests 3 --grammars pytket qiskit pennylane cirq
