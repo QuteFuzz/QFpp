@@ -15,7 +15,7 @@ jobs:
 
       - name: Run Setup Script
         run: |
-          python3 -m scripts.setup --dev
+          python3 -m scripts.setup
 
       - name: Formatting
         run: |
