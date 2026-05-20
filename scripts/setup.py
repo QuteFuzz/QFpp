@@ -93,6 +93,10 @@ def verify_required_tools():
         print("Please install them by running the following command:\n")
 
         apt_cmd = f"sudo apt-get update && sudo apt-get install -y {' '.join(missing_pkgs)}"
+
+        if os.environ.get("GITHUB_PATH"):
+            run_command(apt_cmd)
+
         print(f"    {apt_cmd}\n")
 
         print("After installation, re-run this setup script.")
