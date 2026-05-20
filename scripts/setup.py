@@ -95,7 +95,7 @@ def verify_required_tools():
         apt_cmd = f"sudo apt-get update && sudo apt-get install -y {' '.join(missing_pkgs)}"
 
         if os.environ.get("GITHUB_PATH"):
-            run_command(apt_cmd)
+            run_command(apt_cmd.split())
 
         print(f"    {apt_cmd}\n")
 
