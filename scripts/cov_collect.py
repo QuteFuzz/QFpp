@@ -3,8 +3,9 @@ from utils import run_command
 
 
 def collect():
-    llvm_profdata = \
+    llvm_profdata = (
         EXTERNAL_DIR / "cuda-quantum" / "tpls" / "llvm" / "build" / "bin" / "llvm-profdata"
+    )
     llvm_cov = EXTERNAL_DIR / "cuda-quantum" / "tpls" / "llvm" / "build" / "bin" / "llvm-cov"
 
     cudaq_output_dir = OUTPUT_DIR / "cudaq"
