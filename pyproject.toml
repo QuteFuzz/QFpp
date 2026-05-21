@@ -27,19 +27,17 @@ dependencies = [
     "pyyaml>=6.0.3",
     "typing-extensions>=4.15.0",
     "qwasm>=1.0.1",
+    "nanobind>=2.9",
 ]
 
 [tool.uv]
 required-environments = "sys_platform == 'linux' and platform_machine == 'x86_64'"
 
-[tool.uv.sources]
-qirrunner = { git = "https://github.com/CQCL/qir-runner.git", subdirectory = "pip" }
-hugr-qir = { git = "https://github.com/CQCL/hugr-qir.git" }
-
 [dependency-groups]
 dev = [
     "pyright>=1.1.408",
     "ruff>=0.14.13",
+    "setuptools-rust>=1.12.1",
 ]
 
 [tool.ruff]

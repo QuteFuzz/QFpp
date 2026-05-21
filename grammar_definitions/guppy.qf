@@ -31,7 +31,7 @@ crz = "crz";
 
 # ── Resource definitions ─────────────────────────────────────
 INTERNAL {
-    qubit_defs = qubit_def;
+    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 4)];
     singular_qubit_def = GET_DEF_NAME " = qubit()";
     register_qubit_def = GET_DEF_NAME " = array(qubit() for _ in range(" GET_SIZE "))";
 
@@ -55,7 +55,7 @@ INTERNAL {
 }
 
 EXTERNAL {
-    qubit_defs = qubit_def;
+    qubit_defs = (qubit_def ", ")[UNIFORM(3, 4)];
     singular_qubit_def = GET_DEF_NAME ": qubit";
     register_qubit_def = GET_DEF_NAME ": array[qubit, " GET_SIZE "]";
 
@@ -78,7 +78,7 @@ register_param = GET_DECL_NAME "[" GET_INDEX "]";
 # ── Program structure ─────────────────────────────────────────
 program = imports NEWLINE NEWLINE subroutine_defs NEWLINE circuit NEWLINE program_footer;
 
-subroutine_defs = (subroutine_circuit NEWLINE)*;
+subroutine_defs = (subroutine_circuit NEWLINE)[UNIFORM(2, 6)];
 
 circuit = circuit_def_header NEWLINE body NEWLINE;
 subroutine_circuit = subroutine_def_header NEWLINE subroutine_body NEWLINE;
@@ -89,7 +89,7 @@ subroutine_def_header = "@guppy" NEWLINE "def " GET_CIRCUIT_NAME "(" EXTERNAL::q
 body = ci<INTERNAL::qubit_defs> NEWLINE ci<compound_stmts> ci<INTERNAL::qubit_defs_discard>;
 subroutine_body = ci<INTERNAL::qubit_defs> NEWLINE ci<subroutine_compound_stmts> ci<INTERNAL::qubit_defs_discard>;
 
-compound_stmts = (compound_stmt NEWLINE)[UNIFORM(3, 10)];
+compound_stmts = (compound_stmt NEWLINE)[UNIFORM(10, 15)];
 subroutine_compound_stmts = (compound_stmt NEWLINE)[UNIFORM(3, 10)];
 
 compound_stmt = qubit_op; # | if_stmt
@@ -97,7 +97,7 @@ compound_stmt = qubit_op; # | if_stmt
 # ── Gate operation ────────────────────────────────────────────
 gate_op = gate_name "(" gate_op_args ")";
 
-float_literal = "angle(" MAKE_FLOAT ")";
+float = "angle(" MAKE_FLOAT ")";
 
 subroutine_op = subroutine "(" subroutine_op_args ")";
 
@@ -116,5 +116,4 @@ imports =
 
 program_footer = "gt = guppyTesting()" NEWLINE testing_method;
 
-# Use the meta-function CIRCUIT_ID
 testing_method = "gt.opt_ks_test(main_circuit" COMMA circuit_id RPAREN NEWLINE;

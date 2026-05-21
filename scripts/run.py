@@ -11,10 +11,9 @@ from enum import Enum
 from pathlib import Path
 from typing import List, Tuple
 
+from params import BUILD_DIR, OUTPUT_DIR
 from utils import Color, log, modify_env, pipe_to_process, run_command
 
-BUILD_DIR = Path("build")
-OUTPUT_DIR = Path("outputs")
 NIGHTLY_DIR = Path("nightly_results")
 ENTRY_POINT = "program"
 

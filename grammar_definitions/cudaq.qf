@@ -5,7 +5,7 @@ MAX_REG_SIZE = 2;
 NESTED_MAX_DEPTH = 2;
 
 pi = "M_PI";
-pi_multiples = pi | "(" pi "/2.0)" | "("pi "/4.0)";
+pi_multiples = pi | "("pi"/2.0)" | "("pi"/4.0)";
 float = MAKE_FLOAT | param | pi_multiples;
 
 x    = "x";
@@ -198,7 +198,7 @@ measures =
 
             } else {
                 register_measure = 
-                    "for (bool b : mz(" ""[def.name] ")){" NEWLINE
+                    "for (auto b : mz(" ""[def.name] ")){" NEWLINE
                     "   if (b) packed_result |= (1ULL << bit_offset);" NEWLINE
                     "   bit_offset++;" NEWLINE
                     "}" NEWLINE;

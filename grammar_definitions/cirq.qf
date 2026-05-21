@@ -2,7 +2,7 @@
 
 # TODO: subroutines
 
-MAX_REG_SIZE = 1;
+MAX_REG_SIZE = 3;
 
 x = "cirq.X";
 y = "cirq.Y";
@@ -41,6 +41,7 @@ EXTERNAL {
 }
 
 imports =
+    "import math" NEWLINE
     "import cirq" NEWLINE
     "from diff_testing.cirq import cirqTesting" NEWLINE
     ;
@@ -70,7 +71,11 @@ strategy_kwarg = ", "
 
 gate_op = GET_CIRCUIT_NAME ".append(" gate_name gate_op_args strategy_kwarg ")";
 
-gate_op_args = ("(" (float_literal ", ") ")")[GATE_PARAMS] "(" qubit_list ")"; #  ("," bit)[GATE_BITS];
+gate_op_args = ("(" (float ", ") ")")[GATE_PARAMS] "(" qubit_list ")";
+
+float = MAKE_FLOAT | pi_multiples;
+
+pi = "math.pi";
 
 m_key = "m_key = cirq.MeasurementKey('" MAKE_VAR "')";
 apply_measure = GET_CIRCUIT_NAME ".append(cirq.measure(" qubit ", key=m_key))" RESET;

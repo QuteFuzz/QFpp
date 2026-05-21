@@ -3,8 +3,12 @@
 #include <node_gen.h>
 #include <ast_utils.h>
 
-bool Qubit_op::is_subroutine_op() const{
-    return *gate_node == SUBROUTINE;
+bool Qubit_op::is_subroutine_op() const {
+    if (gate_node == nullptr){
+        return false;
+    } else {
+        return *gate_node == SUBROUTINE; 
+    }
 }
 
 void Qubit_op::add_gate_if_subroutine(std::vector<std::shared_ptr<Node>>& subroutine_gates){

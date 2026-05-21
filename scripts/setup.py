@@ -1,59 +1,124 @@
 import argparse
 import os
 import shutil
+import subprocess
+import sys
+from argparse import Namespace
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import List
 
+from params import CUDAQ_DIR, EXTERNAL_DIR, LINENOISE_DIR, TKET_DIR
 from utils import Color, log, modify_env, run_command
 
 HOME = Path.home()
 USR = Path("/usr")
 
-LLVM_SYS_140_PREFIX = USR / "lib" / "llvm-14"
-LLVM_LIB_DIR = LLVM_SYS_140_PREFIX / "lib"
-LLVM_CONFIG_PATH = USR / "bin" / "llvm-config-14"
 CARGO_BIN = HOME / ".cargo" / "bin"
 LOCAL_BIN = HOME / ".local" / "bin"
 
-EXTERNAL_DIR = Path("external")
-LINENOISE_DIR = EXTERNAL_DIR / "linenoise"
-QISKIT_DIR = EXTERNAL_DIR / "qiskit"
-
-TKET_DIR = EXTERNAL_DIR / "tket"
 TKET_CONAN_OUT = TKET_DIR / "build" / "tket"
 TKET_BUILD_DIR = TKET_CONAN_OUT / "build" / "Debug"
+
+REQUIRED_PACKAGES = [
+    "default-jre",
+    "clang",
+    "cmake",
+    "graphviz",
+    "git",
+    "curl",
+    "build-essential",
+    "python3-venv",
+    "gdb",
+    "lld",
+    "ninja-build",
+    "libopenblas-dev",
+    "libedit-dev",
+    "libcurl4-openssl-dev",
+    "zlib1g-dev",
+    "libxml2-dev",
+    "libncurses-dev",
+    "libffi-dev",
+    "gcovr",
+    "libzstd-dev",  # LLVM 22 relies on Zstandard compression
+    "pkg-config",  # Required for CMake to find FFI and zstd
+]
 
 
 @dataclass
 class Repo:
+    name: str
     url: str
     dest_dir: Path
+    build_func: Callable[[bool], None] | None = None
     engine_dep: bool = False
 
 
 REPOS = [
-    Repo("https://github.com/CQCL/tket.git", TKET_DIR),
-    Repo("https://github.com/Qiskit/qiskit.git", QISKIT_DIR),
-    Repo("https://github.com/antirez/linenoise.git", LINENOISE_DIR, engine_dep=True),
+    Repo(
+        "tket",
+        "https://github.com/CQCL/tket.git",
+        TKET_DIR,
+        lambda with_coverage: build_pytket(with_coverage),
+    ),
+    Repo(
+        "cuda-quantum",
+        "https://github.com/NVIDIA/cuda-quantum.git",
+        CUDAQ_DIR,
+        lambda with_coverage: build_cudaq(with_coverage),
+    ),
+    Repo("linenoise", "https://github.com/antirez/linenoise.git", LINENOISE_DIR, engine_dep=True),
 ]
 
 
-def clone_repos(dev: bool):
+def verify_required_tools():
+    missing_pkgs = set()
+
+    for pkg in REQUIRED_PACKAGES:
+        res = subprocess.run(
+            ["dpkg", "-s", pkg], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+
+        if res.returncode != 0:
+            missing_pkgs.add(pkg)
+
+    if missing_pkgs:
+        log("\nFatal Error: Missing system dependencies.", Color.RED)
+        print("Please install them by running the following command:\n")
+
+        apt_cmd = f"sudo apt-get update && sudo apt-get install -y {' '.join(missing_pkgs)}"
+
+        print(f"    {apt_cmd}\n")
+
+        print("After installation, re-run this setup script.")
+        sys.exit(1)  # Gracefully halt the script
+
+
+def clone_repos(libs: List[str]):
     log("Cloning repos", Color.BLUE)
 
     for repo in REPOS:
-        if not repo.dest_dir.exists() and (dev or repo.engine_dep):
+        if not repo.dest_dir.exists() and ((repo.name in libs) or repo.engine_dep):
             log("Cloning " + repo.url)
-            run_command(["git", "clone", repo.url, str(repo.dest_dir)])
+            cmd = ["git", "clone", repo.url, str(repo.dest_dir)]
+            run_command(cmd)
 
 
 def parse():
     parser = argparse.ArgumentParser(description="QuteFuzz setup script")
     parser.add_argument(
-        "--dev",
-        action="store_true",
-        help="Setup environment in dev mode (Install and build tket from source)",
+        "--libs",
+        nargs="+",
+        required=False,
+        choices=[repo.name for repo in REPOS],
+        default=[],
+        help="List of external libraries to build",
     )
+    parser.add_argument(
+        "--cov", action="store_true", help="Compile cudaq with coverage information"
+    )
+
     return parser.parse_args()
 
 
@@ -101,71 +166,11 @@ def install_rust_and_uv():
         run_command(["bash", "-c", "curl -LsSf https://astral.sh/uv/install.sh | sh"])
 
 
-def install_cudaq():
-    log("Installing CUDA-Q (nvq++) ...", Color.BLUE)
-
-    cudaq_dir = HOME / ".cudaq"
-    nvq_bin = cudaq_dir / "bin" / "nvq++"
-
-    if nvq_bin.exists():
-        log("CUDA-Q is already installed, skipping.", Color.GREEN)
-        return
-
-    installer_url = "https://github.com/NVIDIA/cuda-quantum/releases/latest/download/install_cuda_quantum_cu12.x86_64"
-    installer_script = Path("install_cuda_quantum.sh")
-
-    log("Downloading CUDA-Q installer ...", Color.YELLOW)
-    run_command(["curl", "-sL", "-o", str(installer_script), installer_url])
-
-    log("Running silent installer ...", Color.YELLOW)
-    run_command(["bash", str(installer_script), "--accept", "--", "--installpath", str(cudaq_dir)])
-
-    if installer_script.exists():
-        installer_script.unlink()
-
-    bashrc = HOME / ".bashrc"
-    source_line = f"source {cudaq_dir}/set_env.sh"
-
-    if bashrc.exists():
-        content = bashrc.read_text()
-        if source_line not in content:
-            with open(bashrc, "a") as f:
-                f.write("\n# CUDA-Q Environment Setup\n")
-                f.write(f"{source_line}\n")
-
-            log("Added nvq++ to ~/.bashrc", Color.GREEN)
-
-
 def install_deps():
-    log("Installing system dependencies ... ", Color.BLUE)
+    verify_required_tools()
 
-    run_command(["sudo", "apt-get", "update"])
-
-    packages = [
-        "default-jre",
-        "clang",
-        "cmake",
-        "graphviz",
-        "git",
-        "curl",
-        "build-essential",
-        "python3-venv",
-        "gdb",
-        "llvm-14",
-        "llvm-14-dev",
-        "libllvm14",
-        "libpolly-14-dev",
-        "zlib1g-dev",
-        "libxml2-dev",
-        "libncurses-dev",
-        "libffi-dev",
-        "gcovr",
-    ]
-
-    run_command(["sudo", "apt-get", "install", "-y"] + packages)
-
+    log("Installing Rust and UV dependencies ... ", Color.BLUE)
     install_rust_and_uv()
-    install_cudaq()
 
 
 def build_tket_with_coverage():
@@ -271,27 +276,114 @@ def inject_pytket_into_venv():
     )
 
 
-def build_pytket():
-    build_tket_with_coverage()
-    inject_pytket_into_venv()
+def build_pytket(with_coverage: bool):
+    if with_coverage:
+        check_conan_profile()
+        build_tket_with_coverage()
+        inject_pytket_into_venv()
 
 
-def build_external_deps():
+def build_bundled_llvm():
+    log("Building bundled LLVM/MLIR (this will take a while)...", Color.BLUE)
+    llvm_src = CUDAQ_DIR / "tpls" / "llvm"
+    llvm_build = llvm_src / "build"
+
+    if llvm_build.exists():
+        log("Bundled LLVM already built, skipping.", Color.YELLOW)
+        return
+
+    llvm_build.mkdir(exist_ok=True)
+
+    run_command(
+        [
+            "cmake",
+            str(llvm_src / "llvm"),
+            "-G",
+            "Ninja",
+            f"-DCMAKE_C_COMPILER={USR / 'bin' / 'clang'}",
+            f"-DCMAKE_CXX_COMPILER={USR / 'bin' / 'clang++'}",
+            "-DCMAKE_BUILD_TYPE=Release",
+            "-DLLVM_ENABLE_PROJECTS=clang;mlir",
+            "-DLLVM_TARGETS_TO_BUILD=X86;NVPTX",
+            "-DLLVM_ENABLE_ASSERTIONS=OFF",
+            "-DLLVM_INSTALL_UTILS=ON",
+            "-DLLVM_ENABLE_ZLIB=ON",
+            "-DLLVM_ENABLE_ZSTD=ON",
+            "-DLLVM_ENABLE_TERMINFO=OFF",
+            "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+        ],
+        cwd=str(llvm_build),
+    )
+
+    run_command(["ninja"], cwd=str(llvm_build))
+    log("Bundled LLVM build complete.", Color.GREEN)
+
+
+def build_nvq(with_coverage: bool):
+    log("Building nvq++ with coverage", Color.BLUE)
+    build_dir = CUDAQ_DIR / "build"
+
+    if build_dir.exists():
+        shutil.rmtree(build_dir)
+
+    build_dir.mkdir(exist_ok=True)
+
+    llvm_build = CUDAQ_DIR / "tpls" / "llvm" / "build"
+
+    cmd = [
+        "cmake",
+        "..",
+        "-G",
+        "Ninja",
+        f"-DCMAKE_C_COMPILER={USR / 'bin' / 'clang-22'}",
+        f"-DCMAKE_CXX_COMPILER={USR / 'bin' / 'clang++-22'}",
+        "-DCMAKE_BUILD_TYPE=Release",
+        f"-DLLVM_DIR={llvm_build / 'lib' / 'cmake' / 'llvm'}",
+        f"-DMLIR_DIR={llvm_build / 'lib' / 'cmake' / 'mlir'}",
+        f"-DClang_DIR={llvm_build / 'lib' / 'cmake' / 'clang'}",
+        "-DCUDAQ_BUILD_TESTS=OFF",
+        f"-DZLIB_LIBRARY={USR / 'lib' / 'x86_64-linux-gnu' / 'libz.so'}",
+        "-DZLIB_USE_STATIC_LIBS=OFF",
+        "-DCMAKE_COMPILE_WARNING_AS_ERROR=OFF",
+    ]
+
+    if with_coverage:
+        link_flags = "-fprofile-instr-generate"
+        cmd.extend(
+            [
+                "-DCUDAQ_ENABLE_CC=ON",
+                f"-DCMAKE_EXE_LINKER_FLAGS={link_flags}",
+                f"-DCMAKE_SHARED_LINKER_FLAGS={link_flags}",
+                f"-DCMAKE_MODULE_LINKER_FLAGS_RELEASE={link_flags}",
+            ]
+        )
+
+    run_command(cmd, cwd=str(build_dir))
+
+    run_command(["ninja"], cwd=str(build_dir))
+
+
+def build_cudaq(with_coverage: bool):
+    # init only the llvm submodule — not all of them (too large)
+    log("Initializing tpls/llvm submodule...", Color.BLUE)
+    run_command(["git", "submodule", "update", "--init", "tpls/llvm"], cwd=str(CUDAQ_DIR))
+
+    build_bundled_llvm()
+    build_nvq(with_coverage)
+
+
+def build_external_deps(parser: Namespace):
     log("Building external dependencies ...", Color.BLUE)
     EXTERNAL_DIR.mkdir(exist_ok=True)
 
-    build_pytket()
+    for repo in REPOS:
+        if repo.name in parser.libs and repo.build_func is not None:
+            repo.build_func(parser.cov)
 
 
 def setup_ci_env():
     # In GitHub Actions, you export variables by writing them to specific files
-    github_env = os.environ.get("GITHUB_ENV")
     github_path = os.environ.get("GITHUB_PATH")
-
-    if github_env:
-        log(" Exporting LLVM prefix to GITHUB_ENV...")
-        with open(github_env, "a") as f:
-            f.write(f"LLVM_SYS_140_PREFIX={LLVM_SYS_140_PREFIX}\n")
 
     if github_path:
         log("Exporting cargo bin to GITHUB_PATH...")
@@ -308,25 +400,19 @@ def setup_ci_env():
 if __name__ == "__main__":
     parser = parse()
 
+    if "tket" in parser.libs and parser.cov:
+        log("Cannot run instrumented tket compiler", Color.RED)
+        sys.exit(-1)
+
     install_deps()
 
-    clone_repos(parser.dev)
+    clone_repos(parser.libs)
 
     log("Running initial uv sync to prepare the venv...", Color.BLUE)
-    # these flags are needed for cargo builds to work
-    env = modify_env(
-        {
-            "LLVM_SYS_140_PREFIX": [LLVM_SYS_140_PREFIX],
-            "LLVM_CONFIG_PATH": [LLVM_CONFIG_PATH],
-            "RUSTFLAGS": f"-L native={LLVM_LIB_DIR}",
-        }
-    )
 
-    run_command(["uv", "sync"], env=env)
+    run_command(["uv", "sync"])
 
-    if parser.dev:
-        check_conan_profile()
-        build_external_deps()
+    build_external_deps(parser)
 
     setup_ci_env()
 

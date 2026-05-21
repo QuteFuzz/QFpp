@@ -1,60 +1,76 @@
 # qasm.qf
 
 EXTENSION = ".qasm";
-MAX_REG_SIZE = 1;
+MAX_REG_SIZE = 3;
 
 EXTERNAL {
-    singular_qubit_def = GET_DEF_NAME;
+    qubit_defs = qubit_def (COMMA qubit_def)[UNIFORM(2, 3)];
 
-    singular_bit_def = GET_DEF_NAME;
+    bit_defs = bit_def (COMMA bit_def)[UNIFORM(2, 3)];
 
-    qubit_defs = qubit_def (COMMA qubit_def)[UNIFORM(3, 4)];
+    param_defs = param_def | param_def COMMA param_def;
 
-    bit_defs = bit_def (COMMA bit_def)[UNIFORM(3, 4)];
+    param_def = singular_param_def;
 
     qubit_def = singular_qubit_def;
 
     bit_def = singular_bit_def;
+
+    singular_param_def = "angle[32] " GET_DEF_NAME;
+
+    singular_qubit_def = "qubit " GET_DEF_NAME;
+
+    singular_bit_def = "bit " GET_DEF_NAME;
 }
 
-register_qubit_def = "qreg " GET_DEF_NAME "[" GET_SIZE "];";
+INTERNAL {
+    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 4)];
 
-register_bit_def = "creg " GET_DEF_NAME "[" GET_SIZE "];";
+    bit_defs = (bit_def NEWLINE)[UNIFORM(3, 4)];
 
-qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 4)];
+    param_defs = (param_def NEWLINE)[UNIFORM(3, 4)];
 
-bit_defs = (bit_def NEWLINE)[UNIFORM(3, 4)];
+    qubit_def = register_qubit_def;
 
-qubit_def = register_qubit_def;
+    bit_def = register_bit_def;
 
-bit_def = register_bit_def;
+    param_def = singular_param_def;
 
+    register_qubit_def = "qubit[" GET_SIZE "] "  GET_DEF_NAME ";";
+
+    register_bit_def = "bit[" GET_SIZE "] "  GET_DEF_NAME ";";
+
+    singular_param_def = "angle " GET_DEF_NAME " = " MAKE_FLOAT ";";
+}
 
 # 2. QASM STRUCTURE
 # -----------------
-header = 'OPENQASM 2.0;' NEWLINE 'include "qelib1.inc";';
+header = 'OPENQASM 3.0;' NEWLINE 'include "stdgates.inc";';
 
-program = header NEWLINE NEWLINE registers NEWLINE subroutine_defs NEWLINE body;
-
-registers = qubit_defs NEWLINE bit_defs;
+program = header NEWLINE[2] subroutine_defs NEWLINE circuit;
 
 subroutine_defs = (subroutine_circuit NEWLINE)[UNIFORM(1, 3)];
+
+circuit = INTERNAL::qubit_defs INTERNAL::bit_defs INTERNAL::param_defs NEWLINE[2] body;
 
 body = compound_stmts;
 
 subroutine_body = ci<compound_stmts>;
 
-compound_stmts = (compound_stmt NEWLINE)+;
+# compound_stmts = (compound_stmt NEWLINE)+;
 
 compound_stmt = qubit_op;
 
-subroutine_circuit = "gate " GET_CIRCUIT_NAME " " EXTERNAL::qubit_defs " { " NEWLINE subroutine_body "}";
+subroutine_circuit = 
+    "def " GET_CIRCUIT_NAME "(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs "){" NEWLINE subroutine_body "}";
 
-subroutine_op = subroutine " " qubit_list;
+subroutine_op = subroutine "(" subroutine_op_args ")";
 
-# 3. GATES
-# --------
-# QASM syntax: name(params) arg1, arg2;
+subroutine_op_args = qubit_list ", " float_list;
+
+# float = MAKE_FLOAT | pi_multiples;
+
+pi = "pi";
 
 singular_qubit = GET_DECL_NAME;
 
@@ -64,10 +80,13 @@ singular_bit = GET_DECL_NAME;
 
 register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 
+singular_param = GET_DEF_NAME;
 
-gate_op_args = ("(" float_list ") ")[GATE_PARAMS >= 1] qubit_list;
+register_param = GET_DECL_NAME "[" GET_INDEX "]";
 
 gate_op = gate_name " " gate_op_args ";";
+
+gate_op_args = ("(" float_list ") ")[GATE_PARAMS > 0] qubit_list;
 
 gate_name = h | x | y | z | s | sdg | t | tdg | cx | cy | cz | ch |
     ccx | rx | ry | rz | u1 | u2 | u3;
@@ -92,6 +111,3 @@ u1 = "u1";
 u2 = "u2";
 u3 = "u3";
 
-
-# NOTE: QASM 2.0 does not support if/else blocks in the standard body easily
-# without opaque definitions, so we rely on flattened gate lists here.

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_NAME="qutefuzz:latest"
+IMAGE_NAME="qutefuzz-env:latest"
 
 docker run -it --rm \
     -v "$(pwd):/app" \
