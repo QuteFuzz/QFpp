@@ -6,9 +6,6 @@
 
 qf++ is a grammar-driven fuzzing framework for quantum compilers. It generates structurally valid quantum programs across multiple quantum software stacks, then differentially tests them by comparing circuit simulation outputs across compiler optimisation levels.
 
-[![Unitary Foundation](https://img.shields.io/badge/Supported%20By-UNITARY%20FOUNDATION-brightgreen.svg?style=for-the-badge)](https://unitary.foundation)
-
-
 ## Contents
 
 | Doc | What it covers |
