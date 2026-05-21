@@ -1,5 +1,6 @@
 import argparse
 import os
+from re import S
 import shutil
 import subprocess
 import sys
@@ -335,8 +336,8 @@ def build_nvq(with_coverage: bool):
         "..",
         "-G",
         "Ninja",
-        f"-DCMAKE_C_COMPILER={USR / 'bin' / 'clang-22'}",
-        f"-DCMAKE_CXX_COMPILER={USR / 'bin' / 'clang++-22'}",
+        f"-DCMAKE_C_COMPILER={USR / 'bin' / 'clang'}",
+        f"-DCMAKE_CXX_COMPILER={USR / 'bin' / 'clang++'}",
         "-DCMAKE_BUILD_TYPE=Release",
         f"-DLLVM_DIR={llvm_build / 'lib' / 'cmake' / 'llvm'}",
         f"-DMLIR_DIR={llvm_build / 'lib' / 'cmake' / 'mlir'}",
@@ -344,7 +345,7 @@ def build_nvq(with_coverage: bool):
         "-DCUDAQ_BUILD_TESTS=OFF",
         f"-DZLIB_LIBRARY={USR / 'lib' / 'x86_64-linux-gnu' / 'libz.so'}",
         "-DZLIB_USE_STATIC_LIBS=OFF",
-        "-DCMAKE_COMPILE_WARNING_AS_ERROR=OFF",
+        "-DCMAKE_COMPILE_WARNING_AS_ERROR=OFF"
     ]
 
     if with_coverage:

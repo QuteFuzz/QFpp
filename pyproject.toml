@@ -16,7 +16,6 @@ dependencies = [
     "pytket-qir",
     "qnexus",
     "pennylane",
-    "cuda-quantum-cu12",
     "umap-learn",
     "selene-sim",
     "jinja2",

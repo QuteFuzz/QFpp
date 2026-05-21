@@ -1,26 +1,11 @@
 import json
 import os
-import shutil
-import subprocess
 import tempfile
 from typing import Any, Dict
 
 from diff_testing.lib import Base
 from params import CUDAQ_DIR, OUTPUT_DIR
 from utils import Color, log, modify_env, run_command
-
-
-def _has_nvidia_gpu() -> bool:
-    """Checks if an NVIDIA GPU is present and accessible on the system."""
-    if shutil.which("nvidia-smi") is None:
-        return False
-    try:
-        subprocess.run(
-            ["nvidia-smi"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True
-        )
-        return True
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return False
 
 
 class cudaqTesting(Base):
@@ -41,12 +26,8 @@ class cudaqTesting(Base):
         compile_cmd = [
             str(nvq_binary),
             f"-O{opt_level}",
+            "--target=qpp-cpu"
         ]
-
-        if _has_nvidia_gpu():
-            compile_cmd.append("--target=nvidia")
-        else:
-            compile_cmd.append("--target=qpp-cpu")
 
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_cpp = os.path.join(tmpdir, f"circuit{circuit_num}.cpp")
