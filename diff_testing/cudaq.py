@@ -23,11 +23,7 @@ class cudaqTesting(Base):
             )
             return {}
 
-        compile_cmd = [
-            str(nvq_binary),
-            f"-O{opt_level}",
-            "--target=qpp-cpu"
-        ]
+        compile_cmd = [str(nvq_binary), f"-O{opt_level}", "--target=qpp-cpu"]
 
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_cpp = os.path.join(tmpdir, f"circuit{circuit_num}.cpp")

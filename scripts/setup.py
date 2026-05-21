@@ -1,6 +1,5 @@
 import argparse
 import os
-from re import S
 import shutil
 import subprocess
 import sys
@@ -345,7 +344,7 @@ def build_nvq(with_coverage: bool):
         "-DCUDAQ_BUILD_TESTS=OFF",
         f"-DZLIB_LIBRARY={USR / 'lib' / 'x86_64-linux-gnu' / 'libz.so'}",
         "-DZLIB_USE_STATIC_LIBS=OFF",
-        "-DCMAKE_COMPILE_WARNING_AS_ERROR=OFF"
+        "-DCMAKE_COMPILE_WARNING_AS_ERROR=OFF",
     ]
 
     if with_coverage:
