@@ -9,11 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
-from params import CUDAQ_DIR, EXTERNAL_DIR, LINENOISE_DIR, TKET_DIR
+from params import CUDAQ_DIR, EXTERNAL_DIR, HOME, LINENOISE_DIR, TKET_DIR, USR
 from utils import Color, log, modify_env, run_command
-
-HOME = Path.home()
-USR = Path("/usr")
 
 CARGO_BIN = HOME / ".cargo" / "bin"
 LOCAL_BIN = HOME / ".local" / "bin"
@@ -304,6 +301,7 @@ def build_bundled_llvm():
             f"-DCMAKE_CXX_COMPILER={USR / 'bin' / 'clang++'}",
             "-DCMAKE_BUILD_TYPE=Release",
             "-DLLVM_ENABLE_PROJECTS=clang;mlir",
+            "-DLLVM_ENABLE_RUNTIMES=compiler-rt",
             "-DLLVM_TARGETS_TO_BUILD=X86;NVPTX",
             "-DLLVM_ENABLE_ASSERTIONS=OFF",
             "-DLLVM_INSTALL_UTILS=ON",
@@ -329,14 +327,16 @@ def build_nvq(with_coverage: bool):
     build_dir.mkdir(exist_ok=True)
 
     llvm_build = CUDAQ_DIR / "tpls" / "llvm" / "build"
+    clang = llvm_build / "bin" / "clang"
+    clang_pp = llvm_build / "bin" / "clang++"
 
     cmd = [
         "cmake",
         "..",
         "-G",
         "Ninja",
-        f"-DCMAKE_C_COMPILER={USR / 'bin' / 'clang'}",
-        f"-DCMAKE_CXX_COMPILER={USR / 'bin' / 'clang++'}",
+        f"-DCMAKE_C_COMPILER={clang}",
+        f"-DCMAKE_CXX_COMPILER={clang_pp}",
         "-DCMAKE_BUILD_TYPE=Release",
         f"-DLLVM_DIR={llvm_build / 'lib' / 'cmake' / 'llvm'}",
         f"-DMLIR_DIR={llvm_build / 'lib' / 'cmake' / 'mlir'}",

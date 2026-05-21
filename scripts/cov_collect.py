@@ -7,6 +7,7 @@ def collect():
         EXTERNAL_DIR / "cuda-quantum" / "tpls" / "llvm" / "build" / "bin" / "llvm-profdata"
     )
     llvm_cov = EXTERNAL_DIR / "cuda-quantum" / "tpls" / "llvm" / "build" / "bin" / "llvm-cov"
+
     cudaq_output_dir = OUTPUT_DIR / "cudaq"
     profdata_file = str(cudaq_output_dir / "coverage.profdata")
 
