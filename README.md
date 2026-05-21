@@ -40,12 +40,17 @@ uv run -m scripts.run --nightly --num-tests 1200 --grammars pytket qiskit
 > quit
 ```
 
-A Dockerfile has also been provided. To use it run 
+To run inside a separate environment, pull the docker image using
+```sh
+docker pull ghcr.io/ilaniwumbwe/qutefuzz-env:latest
+```
+ 
+If you prefer to build the image from sratch, run 
 ```sh
 ./scripts/docker/build.sh
 ```
 
-to create the docker image, then
+then
 ```sh
 ./scripts/docker/run.sh
 ```
@@ -72,7 +77,7 @@ python3 -m scripts.setup --cov
 
 **Note:**
 
-- Run script is not set up to run fuzzing campaigns on instrumented compilers, due to the large volumes of data that would be dumped, but is not collected and deleted in batches. The coverage flag is more for development testing to see how well the test cases stress test the compiler. Currently, only CUDAQ compiler can be instrumented.
+- Run script is not set up to run fuzzing campaigns on instrumented compilers, due to the large volumes of data that would be dumped, and is not collected and deleted in batches. The coverage flag is more for development testing to see how well the test cases stress test the compiler. Currently, only CUDAQ compiler can be instrumented.
 
 - If `conan` command fails, this is because the run needs to happen within the virtual env. Source first with 
     
