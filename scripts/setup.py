@@ -23,7 +23,7 @@ TKET_BUILD_DIR = TKET_CONAN_OUT / "build" / "Debug"
 
 REQUIRED_PACKAGES = [
     "default-jre",
-    "clang-22",
+    "clang",
     "cmake",
     "graphviz",
     "git",
@@ -33,14 +33,9 @@ REQUIRED_PACKAGES = [
     "gdb",
     "lld",
     "ninja-build",
-    "llvm-22-dev",
-    "libmlir-22-dev",
-    "mlir-22-tools",
-    "libclang-22-dev",
     "libopenblas-dev",
     "libedit-dev",
     "libcurl4-openssl-dev",
-    "libpolly-14-dev",
     "zlib1g-dev",
     "libxml2-dev",
     "libncurses-dev",
@@ -93,9 +88,6 @@ def verify_required_tools():
         print("Please install them by running the following command:\n")
 
         apt_cmd = f"sudo apt-get update && sudo apt-get install -y {' '.join(missing_pkgs)}"
-
-        if os.environ.get("GITHUB_PATH"):
-            run_command(apt_cmd.split())
 
         print(f"    {apt_cmd}\n")
 
@@ -308,8 +300,8 @@ def build_bundled_llvm():
             str(llvm_src / "llvm"),
             "-G",
             "Ninja",
-            f"-DCMAKE_C_COMPILER={USR / 'bin' / 'clang-22'}",
-            f"-DCMAKE_CXX_COMPILER={USR / 'bin' / 'clang++-22'}",
+            f"-DCMAKE_C_COMPILER={USR / 'bin' / 'clang'}",
+            f"-DCMAKE_CXX_COMPILER={USR / 'bin' / 'clang++'}",
             "-DCMAKE_BUILD_TYPE=Release",
             "-DLLVM_ENABLE_PROJECTS=clang;mlir",
             "-DLLVM_TARGETS_TO_BUILD=X86;NVPTX",

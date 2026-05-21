@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# config filesystem
+mkdir -p ~/config/containers/
+
+# config filesystem for rootless podman
 cat > ~/.config/containers/storage.conf << 'EOF'
 [storage]
 driver = "overlay"
@@ -15,4 +17,4 @@ mkdir -p "/tmp/$USER/containers/{run,storage}"
 
 # create image
 echo "Creating docker image"
-docker build -t qutefuzz:latest .
+docker build -t qutefuzz-env .

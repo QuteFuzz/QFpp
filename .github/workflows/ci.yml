@@ -9,6 +9,9 @@ jobs:
     env:
       RUN_MODE: CI
 
+    container:
+      image: ghcr.io/ilaniwumbwe/qutefuzz-env:latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
