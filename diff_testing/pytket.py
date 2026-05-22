@@ -4,7 +4,12 @@ import traceback
 from pytket._tket.circuit import Circuit, OpType
 from pytket.architecture import Architecture
 from pytket.extensions.qiskit.backends.aer import AerBackend, AerStateBackend
-from pytket.passes import DecomposeBoxes, DefaultMappingPass, RemoveImplicitQubitPermutation
+from pytket.passes import (
+    DecomposeBoxes,
+    DefaultMappingPass,
+    DecomposeMultiQubitsCX,
+    RemoveImplicitQubitPermutation,
+)
 from tket.passes import badger_pass
 
 from .lib import Base
@@ -85,9 +90,10 @@ def _route_circuit(circuit: Circuit):
         arch = Architecture(_make_star_topology(circuit.n_qubits))
     elif val == 1:
         arch = Architecture(_make_hex_topology(circuit.n_qubits))
-    # else:
-    # arch = Architecture(_make_line_topology(circuit.n_qubits))
+    else:
+        arch = Architecture(_make_line_topology(circuit.n_qubits))
 
+    DecomposeMultiQubitsCX().apply(circuit)
     DefaultMappingPass(arch).apply(circuit)
     return circuit
 
