@@ -61,8 +61,8 @@ std::shared_ptr<Gate> gate_from_anscestor(std::shared_ptr<Node> anscestor) {
         return static_pointer_cast<Qubit_op>(anscestor)->get_gate_node();
     }
 
-    std::shared_ptr<Node> gate_name_primitive = anscestor->find(GATE_NAME);
-    std::shared_ptr<Node> gate_subroutine = anscestor->find(SUBROUTINE);
+    std::shared_ptr<Node> gate_name_primitive = anscestor->find(PRIMITIVE_GATE);
+    std::shared_ptr<Node> gate_subroutine = anscestor->find(SUBROUTINE_OP);
 
     std::shared_ptr<Gate> primitive_gate = 
         (gate_name_primitive == nullptr) ? 

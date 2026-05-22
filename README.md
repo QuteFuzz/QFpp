@@ -106,6 +106,8 @@ and tries to sync everything to match the lockfile. As a result, it reinstalls t
 | Pytket | [optimiser](https://github.com/Quantinuum/tket2/issues/1417) | ack |
 | CUDA-Q | [parser](https://github.com/NVIDIA/cuda-quantum/issues/4562) | ack |
 | CUDA-Q | [parser](https://github.com/NVIDIA/cuda-quantum/issues/4600) |  |
+| Qiskit | [basis translator](https://github.com/Qiskit/qiskit/issues/16251) |  |
+
 ## Acknowledgements
 
 - [Linenoise](https://github.com/antirez/linenoise) library for nicities in REPL loop like command history and tab completion.

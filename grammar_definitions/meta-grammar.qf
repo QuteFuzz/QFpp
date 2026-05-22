@@ -2,18 +2,18 @@
 # META-GRAMMAR
 (*
     Rules:
-    - use `subroutines` node to encapsulate subroutine circuits
+    - use `subroutines` node to encapsulate GET_GATE_NAME circuits
     - `qubit_def` rule MUST be defined in at least INTERNAL or EXTERNAL scope (defining in both is fine)
     - (qu)bit def must be defined using at least one of singular (qu)bit or register (qu)bit def
     Notes:
     - all rules have scope GLOBAL by default
     - must define a gate_op
-    - must use `subroutine_compound_stmts` or `compound_stmts` accordingly. This is a requirement because the
+    - must use `sub_circuit_compound_stmts` or `compound_stmts` accordingly. This is a requirement because the
         `compound_stmts` node is needed as a way for the mutation passes to tell statement boundaries, so it doesn't
         mutate across them
 *)
 
-# TODO: extend term constraints to allow passing subroutine op args properly in qiskit
+# TODO: extend term constraints to allow passing GET_GATE_NAME op args properly in qiskit
 # for now i limit all external qubit and bit defs to singular definitions
 
 # default config
@@ -60,16 +60,18 @@ EXTERNAL {
 
 program       = imports NL circuit NL program_footer;
 
-sub_circuit_defs = (sub_circuit)[UNIFORM(2,6)];
+subroutine_defs = subroutine_def[UNIFORM(2,6)];
+
+subroutine_def = sub_circuit;
 
 # all subroutines have just qubit ops and no if-else statements
-subroutine_body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL (qubit_op NL)+;
+sub_circuit_body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL (qubit_op NL)+;
 
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL compound_stmts;
 
-sub_circuit = circuit_def_header NL subroutine_body NL subroutine_def_footer;
+sub_circuit = circuit_def_header NL sub_circuit_body NL sub_circuit_footer;
 
-compound_stmts = (compound_stmt NL)[UNIFORM(100,150)];
+compound_stmts = (compound_stmt NL)[UNIFORM(30,60)];
 
 compound_stmt = qubit_op;
 
@@ -77,11 +79,11 @@ qubit_op = gate_op | subroutine_op;
 
 gate_op = GET_CIRCUIT_NAME "(" gate_op_args ")";
 
-subroutine_op = GET_CIRCUIT_NAME ".add_gate(" subroutine ",[" subroutine_op_args "])";
+subroutine_op = GET_CIRCUIT_NAME ".add_gate(" GET_GATE_NAME ",[" subroutine_op_args "])";
 
 toffoli = ccx;
 
-gate_name = h
+primitive_gate = h
     | x
     | y
     | z
@@ -95,15 +97,15 @@ gate_name = h
     | toffoli
     ;
 
-gate_op_args = (float_list ", ")[GATE_PARAMS > 0] qubit_list ("," bit)[GATE_BITS];
+gate_op_args = (float_list ", ")[GET_GATE_PARAMS > 0] qubit_list ("," bit)[GET_GATE_BITS];
 
-subroutine_op_args = qubit_list ("," bit)[GATE_BITS];
+subroutine_op_args = qubit_list ("," bit)[GET_GATE_BITS];
 
-qubit_list = qubit (", " qubit)[GATE_QUBITS - 1];
+qubit_list = qubit (", " qubit)[GET_GATE_QUBITS - 1];
 
-bit_list = bit (", " bit)[GATE_BITS - 1];
+bit_list = bit (", " bit)[GET_GATE_BITS - 1];
 
-float_list = float  (", " float)[GATE_PARAMS - 1];
+float_list = float  (", " float)[GET_GATE_PARAMS - 1];
 
 float = MAKE_FLOAT | param | pi_multiples;
 

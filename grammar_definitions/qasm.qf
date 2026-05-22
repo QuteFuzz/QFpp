@@ -47,24 +47,22 @@ INTERNAL {
 # -----------------
 header = 'OPENQASM 3.0;' NL 'include "stdgates.inc";';
 
-program = header NL[2] sub_circuit_defs NL circuit;
+program = header NL[2] subroutine_defs NL circuit;
 
-sub_circuit_defs = (sub_circuit NL)[UNIFORM(1, 3)];
+subroutine_defs = (sub_circuit NL)[UNIFORM(1, 3)];
 
 circuit = INTERNAL::qubit_defs INTERNAL::bit_defs INTERNAL::param_defs NL[2] body;
 
 body = compound_stmts;
 
-subroutine_body = ci<compound_stmts>;
-
-# compound_stmts = (compound_stmt NL)+;
+sub_circuit_body = ci<compound_stmts>;
 
 compound_stmt = qubit_op;
 
 sub_circuit = 
-    "def " GET_CIRCUIT_NAME "(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs "){" NL subroutine_body "}";
+    "def " GET_CIRCUIT_NAME "(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs "){" NL sub_circuit_body "}";
 
-subroutine_op = subroutine "(" subroutine_op_args ")";
+subroutine_op = GET_GATE_NAME "(" subroutine_op_args ")";
 
 subroutine_op_args = qubit_list ", " float_list;
 
@@ -84,11 +82,11 @@ singular_param = GET_DEF_NAME;
 
 register_param = GET_DECL_NAME "[" GET_INDEX "]";
 
-gate_op = gate_name " " gate_op_args ";";
+gate_op = primitive_gate " " gate_op_args ";";
 
-gate_op_args = ("(" float_list ") ")[GATE_PARAMS > 0] qubit_list;
+gate_op_args = ("(" float_list ") ")[GET_GATE_PARAMS > 0] qubit_list;
 
-gate_name = h | x | y | z | s | sdg | t | tdg | cx | cy | cz | ch |
+primitive_gate = h | x | y | z | s | sdg | t | tdg | cx | cy | cz | ch |
     ccx | rx | ry | rz | u1 | u2 | u3;
 
 h = "h";

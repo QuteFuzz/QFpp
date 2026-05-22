@@ -1,15 +1,16 @@
-#ifndef GATE_NAME_H
-#define GATE_NAME_H
+#ifndef PRIMITIVE_GATE_H
+#define PRIMITIVE_GATE_H
 
 #include <node.h>
 #include <coll.h>
 #include <clone_mixin.h>
+#include <supported_gates.h>
 
-class Gate_name : public Cloneable<Gate_name> {
+class Primitive_gate : public Cloneable<Primitive_gate> {
 
     public:
-        Gate_name(const std::shared_ptr<Circuit> current_circuit) :
-            Cloneable<Gate_name>("gate_name", GATE_NAME)
+        Primitive_gate(const std::shared_ptr<Circuit> current_circuit) :
+            Cloneable<Primitive_gate>("primitive_gate", PRIMITIVE_GATE)
         {
             unsigned int n_qubits = current_circuit->get_coll<Resource>(Resource_kind::QUBIT).size();
             unsigned int n_bits = current_circuit->get_coll<Resource>(Resource_kind::BIT).size();

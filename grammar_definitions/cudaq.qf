@@ -31,7 +31,7 @@ crz  = "rz<cudaq::ctrl>";
 u1   = "r1";
 u3   = "u3";
 
-gate_name += s | t | sdg | tdg | swap | ch | crx | cry | crz | u1 | u3;
+primitive_gate += s | t | sdg | tdg | swap | ch | crx | cry | crz | u1 | u3;
 
 INTERNAL {
     float_no_param = MAKE_FLOAT | GLOB::pi_multiples;
@@ -83,13 +83,13 @@ register_param = GET_DECL_NAME "[" GET_INDEX "]";
 # GATE OPERATIONS AND SUBROUTINES
 # ============================================================================
 
-gate_op      = gate_name "(" gate_op_args ")";
-gate_op_args = (float ", ")[GATE_PARAMS] qubit_list;
+gate_op      = primitive_gate "(" gate_op_args ")";
+gate_op_args = (float ", ")[GET_GATE_PARAMS] qubit_list;
 
-qubit_list   = qubit (", " qubit)[GATE_QUBITS - 1];
+qubit_list   = qubit (", " qubit)[GET_GATE_QUBITS - 1];
 
-subroutine_op = subroutine "{}"[GATE_KIND == sub_circuit] "(" subroutine_op_args ")";
-subroutine_op_args = qubit_list (", " float)[GATE_PARAMS];
+subroutine_op = GET_GATE_NAME "{}"[GET_GATE_KIND == sub_circuit] "(" subroutine_op_args ")";
+subroutine_op_args = qubit_list (", " float)[GET_GATE_PARAMS];
 
 # ============================================================================
 # COMPOUND STATEMENTS
@@ -108,7 +108,7 @@ else_stmt =
     'else {' NL ci<compound_stmts> "}";
 
 # for_loop = "for (int i = 0; i < " GET_REG_NAME ".size(); ++i) {" NL
-    # ci<(gate_name "(" GET_REG_NAME "[i]);")> NL 
+    # ci<(primitive_gate "(" GET_REG_NAME "[i]);")> NL 
 # "}";
 
 # ============================================================================
@@ -118,7 +118,7 @@ else_stmt =
 testing_import = "from diff_testing.cudaq import cudaqTesting";
 
 program = testing_import NL[2] 
-    "source_code = r'''" NL imports NL namespaces NL sub_circuit_defs NL circuit NL[2] main "'''" 
+    "source_code = r'''" NL imports NL namespaces NL subroutine_defs NL circuit NL[2] main "'''" 
     NL[2] program_footer;
 
 run_and_postprocess = 
@@ -173,7 +173,7 @@ program_footer = "ct = cudaqTesting()" NL testing_method;
 testing_method = "ct.opt_ks_test(source_code, " circuit_id ")" NL;
 
 
-sub_circuit_defs = ((sub_circuit | unitary_1q_def | unitary_2q_def) NL)+;
+subroutine_defs = ((sub_circuit | unitary_1q_def | unitary_2q_def) NL)+;
 
 sub_circuit = "struct " GET_CIRCUIT_NAME " { " NL
     "void operator()(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs ") __qpu__ {" NL 

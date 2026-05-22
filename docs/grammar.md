@@ -269,8 +269,8 @@ The following rule names are recognised by the lexer and given specific `Token_k
 |-----------|-----------|---------------|
 | `program` | `PROGRAM` | Top-level entry point |
 | `circuit` / `sub_circuit` | `CIRCUIT` | Triggers `context.nn_circuit()` — creates a new `Circuit` object |
-| `body` / `subroutine_body` | `BODY` | Marks the circuit body |
-| `sub_circuit_defs` | `SUB_CIRCUIT_DEFS` | Triggers `context.nn_sub_circuit_defs()` — marks that we are under the subroutines node |
+| `body` / `sub_circuit_body` | `BODY` | Marks the circuit body |
+| `subroutine_defs` | `SUBROUTINE_DEFS` | Triggers `context.nn_subroutine_defs()` — marks that we are under the subroutines node |
 | `compound_stmt` | `COMPOUND_STMT` | Triggers `Compound_stmt::from_nested_depth()` with constraint injection |
 | `compound_stmts` / `subroutine_compound_stmts` | `COMPOUND_STMTS` | Used by MAP-Elites mutation to find mutation sites |
 | `qubit_op` | `QUBIT_OP` | Triggers `context.nn_qubit_op()` — resets qubit/bit usage |
@@ -310,7 +310,7 @@ The following rule names are recognised by the lexer and given specific `Token_k
 | `gate_op` | `GATE_OP` | Gate operation node |
 | `gate_name` | `GATE_NAME` | Triggers `Gate_name(current_circuit)` with automatic constraint injection to exclude gates needing more qubits/bits than the circuit has |
 | `subroutine_op` | `SUBROUTINE_OP` | Redirects to `gate_op` if no subroutines are available |
-| `subroutine` | `SUBROUTINE` | Triggers `context.nn_subroutine()` |
+| `subroutine` | `SUBROUTINE` | Triggers `context.nn_subroutine_op()` |
 | `float_literal` | `FLOAT_LITERAL` | Float argument node |
 
 ### Gate name rules

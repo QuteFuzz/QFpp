@@ -5,7 +5,7 @@ MAX_REG_SIZE = 3;
 NESTED_MAX_DEPTH = 3;
 
 # ── Gate names ──────────────────────────────────────────────
-gate_name += phased_x | measure_and_reset | crz | t | s | v | vdg | tdg | sdg;
+primitive_gate += phased_x | measure_and_reset | crz | t | s | v | vdg | tdg | sdg;
 
 x = "x";
 y = "y";
@@ -76,34 +76,34 @@ singular_param = GET_DECL_NAME;
 register_param = GET_DECL_NAME "[" GET_INDEX "]";
 
 # ── Program structure ─────────────────────────────────────────
-program = imports NL NL sub_circuit_defs NL circuit NL program_footer;
+program = imports NL NL subroutine_defs NL circuit NL program_footer;
 
-sub_circuit_defs = (sub_circuit NL)[UNIFORM(2, 6)];
+subroutine_defs = (sub_circuit NL)[UNIFORM(2, 6)];
 
 circuit = circuit_def_header NL body NL;
-sub_circuit = subroutine_def_header NL subroutine_body NL;
+sub_circuit = sub_circuit_header NL sub_circuit_body NL;
 
 circuit_def_header = "@guppy.comptime" NL "def " GET_CIRCUIT_NAME "() -> None:";
-subroutine_def_header = "@guppy" NL "def " GET_CIRCUIT_NAME "(" EXTERNAL::qubit_defs ") -> None:";
+sub_circuit_header = "@guppy" NL "def " GET_CIRCUIT_NAME "(" EXTERNAL::qubit_defs ") -> None:";
 
 body = ci<INTERNAL::qubit_defs> NL ci<compound_stmts> ci<INTERNAL::qubit_defs_discard>;
-subroutine_body = ci<INTERNAL::qubit_defs> NL ci<subroutine_compound_stmts> ci<INTERNAL::qubit_defs_discard>;
+sub_circuit_body = ci<INTERNAL::qubit_defs> NL ci<sub_circuit_compound_stmts> ci<INTERNAL::qubit_defs_discard>;
 
 compound_stmts = (compound_stmt NL)[UNIFORM(10, 15)];
-subroutine_compound_stmts = (compound_stmt NL)[UNIFORM(3, 10)];
+sub_circuit_compound_stmts = (compound_stmt NL)[UNIFORM(3, 10)];
 
 compound_stmt = qubit_op; # | if_stmt
 
 # ── Gate operation ────────────────────────────────────────────
-gate_op = gate_name "(" gate_op_args ")";
+gate_op = primitive_gate "(" gate_op_args ")";
 
 float = "angle(" MAKE_FLOAT ")";
 
-subroutine_op = subroutine "(" subroutine_op_args ")";
+subroutine_op = GET_GATE_NAME "(" subroutine_op_args ")";
 
-subroutine_op_args = qubit_list ("," bit)[GATE_BITS];
+subroutine_op_args = qubit_list ("," bit)[GET_GATE_BITS];
 
-qubit_list = qubit (", " qubit)[GATE_QUBITS - 1];
+qubit_list = qubit (", " qubit)[GET_GATE_QUBITS - 1];
 
 # ── Imports & Footer ──────────────────────────────────────────
 imports = 

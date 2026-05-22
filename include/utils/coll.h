@@ -50,10 +50,10 @@ inline std::shared_ptr<T> get_random_from_coll(const Ptr_coll<T>& collection, Pt
         return std::make_shared<T>();
     }
 
-    std::shared_ptr<T> elem = elem_at(collection, random_uint(collection.size() - 1, 0));
+    std::shared_ptr<T> elem = elem_at(collection, uniform_uint(collection.size() - 1, 0));
 
     while(!pred(elem)){
-        elem = elem_at(collection, random_uint(collection.size() - 1, 0));
+        elem = elem_at(collection, uniform_uint(collection.size() - 1, 0));
     }
 
     return elem;

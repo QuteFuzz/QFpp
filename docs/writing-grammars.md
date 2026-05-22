@@ -52,7 +52,7 @@ Every grammar **must** define or inherit all of the following. Rules inherited f
 |------|------------|-------|
 | `program` | **Y** | Top-level; must eventually produce imports, circuit, footer |
 | `circuit` or `sub_circuit` | **Y** | The `CIRCUIT` token triggers circuit creation |
-| `body` or `subroutine_body` | **Y** | The `BODY` token marks circuit contents |
+| `body` or `sub_circuit_body` | **Y** | The `BODY` token marks circuit contents |
 | `imports` | **Y** | Framework imports; plain string rules |
 | `program_footer` | **Y** | Testing harness call at end of file |
 | `circuit_def_header` | **Y** | Whatever introduces a new circuit object |
@@ -241,14 +241,14 @@ uv run scripts/run.py --grammars myframework --num-tests 5
 
 ### Gate applies wrong number of arguments
 
-`GATE_QUBITS`, `GATE_BITS`, and `GATE_PARAMS` resolve to the counts for the *currently selected gate*. These are defined in `include/utils/supported_gates.h`. If you define a gate name like `my_gate = "SomeGate"` and it matches an existing `Token_kind` (e.g. `cx`), the supported count from `supported_gates.h` is used. If it does not match any known gate, the fuzzer assigns a random qubit count and logs a warning.
+`GET_GATE_QUBITS`, `GET_GATE_BITS`, and `GET_GATE_PARAMS` resolve to the counts for the *currently selected gate*. These are defined in `include/utils/supported_gates.h`. If you define a gate name like `my_gate = "SomeGate"` and it matches an existing `Token_kind` (e.g. `cx`), the supported count from `supported_gates.h` is used. If it does not match any known gate, the fuzzer assigns a random qubit count and logs a warning.
 
 ### Subroutines not working
 
 For subroutine support you need:
-- `sub_circuit_defs = (sub_circuit NL)[UNIFORM(1, 3)];`
+- `subroutine_defs = (sub_circuit NL)[UNIFORM(1, 3)];`
 - `sub_circuit` — a rule that creates a sub-circuit with EXTERNAL qubit parameters
-- `subroutine_def_footer` — any post-circuit wrapping (e.g. `.to_gate()`)
+- `sub_circuit_footer` — any post-circuit wrapping (e.g. `.to_gate()`)
 - `subroutine_op` — how to call the subroutine from the main circuit
 - `subroutine_op_args` — the qubit arguments for the call
 

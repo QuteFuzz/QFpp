@@ -38,7 +38,7 @@ The meta-grammar (`meta-grammar.qf`) defines rules shared by all grammars — ga
 Generating Python that represents a *correct* quantum program is hard. QuteFuzz tracks circuit state in the `Context` object while building the AST:
 
 - Resources (qubits, bits, parameters) are allocated and tracked. Qubit references always refer to a real, allocated qubit in the current circuit.
-- Gate arguments are resolved dynamically: `GATE_QUBITS` expands to the actual number of qubit arguments the chosen gate requires, not a hardcoded constant. All supported gates are preset in the generation engine. See [`supported_gates.h`](../include/utils/supported_gates.h)
+- Gate arguments are resolved dynamically: `GET_GATE_QUBITS` expands to the actual number of qubit arguments the chosen gate requires, not a hardcoded constant. All supported gates are preset in the generation engine. See [`supported_gates.h`](../include/utils/supported_gates.h)
 - Subroutine calls are only inserted when the calling circuit has enough qubits to satisfy the subroutine's external interface.
 - Control flow depth is bounded by `NESTED_MAX_DEPTH` to prevent unbounded recursion.
 

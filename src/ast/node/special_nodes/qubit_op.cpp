@@ -7,7 +7,7 @@ bool Qubit_op::is_subroutine_op() const {
     if (gate_node == nullptr){
         return false;
     } else {
-        return *gate_node == SUBROUTINE; 
+        return *gate_node == SUBROUTINE_OP; 
     }
 }
 

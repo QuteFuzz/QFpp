@@ -23,14 +23,14 @@ static std::unordered_map<Token_kind, Branch_constraint> branch_constraints_for_
     return {
         {COMPOUND_STMT, Branch_constraint(QUBIT_OP, 1)},
         {QUBIT_OP, Branch_constraint(GATE_OP, 1)},
-        {GATE_NAME, Branch_constraint(gate_kind, 1)}
+        {PRIMITIVE_GATE, Branch_constraint(gate_kind, 1)}
     };
 }
 
 void Pass::apply(){
     // apply blockwise on collected blocks
     for (auto& block : block_nodes){
-        float mut_prob = random_float(1.0, 0.0);
+        float mut_prob = uniform_float(1.0, 0.0);
 
         if(mut_prob < blockwise_rate){
             auto slot = find_slot_for(entry.get_root(consider_entire_ast), block);
@@ -57,7 +57,7 @@ void Erase_child::apply_blockwise(Slot_type block) const {
     
     if (n_children > 1){
         // only remove random child if there's at least 2
-        unsigned int idx = random_uint(n_children - 1);
+        unsigned int idx = uniform_uint(n_children - 1);
         (*block)->erase_child(idx);
     }
 }

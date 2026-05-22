@@ -319,7 +319,7 @@ std::unique_ptr<Expr> Grammar::if_expr() {
         if (curr_token.value == ":" || curr_token.value == "{"){
             false_expr = parse_block();
         } else if (curr_token.value == "if"){
-            return if_expr();
+            false_expr = if_expr();
         } else {
             ERROR("Unexpected " + curr_token.value + " after else");
         }

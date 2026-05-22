@@ -9,7 +9,7 @@
 #include <clone_mixin.h>
 #include <complex>
 
-using Cx     = std::complex<float>;
+using Cx     = std::complex<double>;
 using CxMat  = std::vector<std::vector<Cx>>;
 
 class Circuit : public Cloneable<Circuit> {

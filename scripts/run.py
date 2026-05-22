@@ -33,8 +33,8 @@ class Run_mode(Enum):
 
 
 class Result_kind(Enum):
-    DOT_PROD = (0,)
-    KS_TEST = 1
+    DOT_PROD = 0,
+    KS_TEST = 1,
 
 
 @dataclass
@@ -43,9 +43,9 @@ class CircuitRunInfo:
 
     circuit_path: Path
     grammar: str
-    possible_miscompilation_error: bool = False
     values: List[float] = field(default_factory=list)
     logs: str = ""
+    interesting : bool = False
 
 
 def parse_for_testing_values(
@@ -216,17 +216,17 @@ class Check_grammar:
             run_info.values, result_kind = parse_for_testing_values(result)
 
             if result_kind == Result_kind.KS_TEST:
+                run_info.interesting = True
                 min_ks = min(run_info.values)
                 if min_ks < MIN_KS_VALUE:
-                    run_info.possible_miscompilation_error = True
                     run_info.logs = f"Low KS value: {min_ks:.4f} < {MIN_KS_VALUE}; "
 
                     log(f"  INTERESTING: {circuit_path}", Color.YELLOW)
 
             elif result_kind == Result_kind.DOT_PROD:
+                run_info.interesting = True
                 dp = run_info.values[0]
                 if dp != 1:
-                    run_info.possible_miscompilation_error = True
                     run_info.logs = f"Dot product is not 1, got {dp}"
 
                     log(f"  INTERESTING: {circuit_path}", Color.YELLOW)
@@ -236,8 +236,14 @@ class Check_grammar:
                     f"Result must be ks values or dot product, got None.\nStdout: \n{result.stdout}"
                 )
 
-        else:
+        elif self.mode == Run_mode.CI:
+            # probably a fuzzer bug if compiler crashes in CI
             raise Exception(result.stdout + result.stderr)
+
+        elif self.mode == Run_mode.NIGHTLY:
+            # in nightly, assume crashes are because of compiler bugs, log results
+            run_info.interesting = True
+            run_info.logs = "STDOUT: \n" + result.stdout + " STDERR: \n" + result.stderr
 
         return run_info
 
@@ -268,7 +274,7 @@ class Check_grammar:
                 try:
                     run_info: CircuitRunInfo = future.result()
 
-                    if run_info.possible_miscompilation_error:
+                    if run_info.interesting:
                         interesting_results.append(run_info)
 
                     completed_threads += 1

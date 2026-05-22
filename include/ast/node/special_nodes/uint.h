@@ -7,7 +7,7 @@ class UInt : public Node {
 
     public:
         UInt() :
-            Node(random_uint(10, 1))
+            Node(uniform_uint(10, 1))
         {}
 
         UInt(unsigned int i) :

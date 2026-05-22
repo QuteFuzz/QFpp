@@ -119,13 +119,13 @@ struct Context {
 
 		std::shared_ptr<Compound_stmt> nn_compound_stmt();
 
-		std::shared_ptr<Node> nn_sub_circuit_defs();
+		std::shared_ptr<Node> nn_subroutine_defs();
 
 		std::shared_ptr<Qubit_op> nn_qubit_op();
 
 		std::shared_ptr<UInt> nn_circuit_id();
 
-		std::shared_ptr<Gate> nn_subroutine();
+		std::shared_ptr<Gate> nn_subroutine_op();
 
 		template<typename T>
 		Ptr_coll<T> get_current_coll(Resource_kind rk) const {
@@ -195,7 +195,7 @@ struct Context {
 		/// @brief Is the current circuit being generated a subroutine?
 		/// @return
 		inline bool under_subroutines_node() const {
-			return sub_circuit_defs_node.has_value() && (sub_circuit_defs_node.value()->build_state() == NB_BUILD);
+			return subroutine_defs_node.has_value() && (subroutine_defs_node.value()->build_state() == NB_BUILD);
 		}
 
 		inline void print_circuit_info() const {
@@ -220,7 +220,7 @@ struct Context {
 		unsigned int current_port = 0;
 		unsigned int nested_depth;
 
-		std::optional<std::shared_ptr<Node>> sub_circuit_defs_node = std::nullopt;
+		std::optional<std::shared_ptr<Node>> subroutine_defs_node = std::nullopt;
 };
 
 

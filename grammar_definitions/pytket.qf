@@ -33,25 +33,58 @@ u2 = "U2";
 u3 = "U3";
 phased_x = "PhasedX";
 
-gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
+primitive_gate += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
     u1 | u2 | u3 | phased_x | measure | ch | s | t | v;
 
 # ============================================================================
 # CIRCUIT STRUCTURE
 # ============================================================================
 
-program = imports NL[2] sub_circuit_defs NL circuit NL program_footer;
+program = imports NL[2] subroutine_defs NL circuit NL GET_CIRCUIT_NAME ".measure_all()" NL program_footer;
 
-subroutine_body = EXTERNAL::qubit_defs NL (qubit_op NL)+;  # subroutines have no bits to facilitate pytket to qiskit conversion
+subroutine_defs = ((sub_circuit | unitary_1q_def | unitary_2q_def) NL)+;
+
+# subroutine_defs = sub_circuit NL;
+
+sub_circuit_body = EXTERNAL::qubit_defs NL (qubit_op NL)+;  # subroutines have no bits to facilitate pytket to qiskit conversion
 
 circuit = circuit_def_header NL body NL;
 
 # Body includes both qubits and classical bits (needed for control flow)
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL compound_stmts;
 
-# ============================================================================
-# EXTERNAL SCOPE DEFINITIONS
-# ============================================================================
+unitary_1q_def = 
+    "raw = ["  NL
+    "(" ""[GET_MAT_POS(0, 0)] "),(" ""[GET_MAT_POS(0, 1)] ")," NL
+    "(" ""[GET_MAT_POS(1, 0)] "),(" ""[GET_MAT_POS(1, 1)] ")," NL
+    "]"                            NL
+    "U = np.array([complex(r, i) for r, i in raw], dtype=complex).reshape(2, 2)" NL
+    GET_CIRCUIT_NAME " = Unitary1qBox(U)"                                        NL
+;
+
+unitary_2q_def = 
+    "raw = ["  NL
+    "(" ""[GET_MAT_POS(0, 0)] "),(" ""[GET_MAT_POS(0, 1)] "),(" ""[GET_MAT_POS(0, 2)] "),(" ""[GET_MAT_POS(0, 3)] ")," NL
+    "(" ""[GET_MAT_POS(1, 0)] "),(" ""[GET_MAT_POS(1, 1)] "),(" ""[GET_MAT_POS(1, 2)] "),(" ""[GET_MAT_POS(1, 3)] ")," NL
+    "(" ""[GET_MAT_POS(2, 0)] "),(" ""[GET_MAT_POS(2, 1)] "),(" ""[GET_MAT_POS(2, 2)] "),(" ""[GET_MAT_POS(2, 3)] ")," NL
+    "(" ""[GET_MAT_POS(3, 0)] "),(" ""[GET_MAT_POS(3, 1)] "),(" ""[GET_MAT_POS(3, 2)] "),(" ""[GET_MAT_POS(3, 3)] ")," NL
+    "]"                            NL
+    "U = np.array([complex(r, i) for r, i in raw], dtype=complex).reshape(4, 4)" NL
+    GET_CIRCUIT_NAME " = Unitary2qBox(U)"                                        NL
+;
+
+
+INTERNAL {
+    singular_param_def = "double " GET_DEF_NAME " = " float_no_param ";";
+
+    # after initing the array, use a for loop to assign floats to the array
+    register_param_def =
+        "double " GET_DEF_NAME "[" GET_SIZE "];" NL[2]
+        "for(int i = 0; i < " GET_SIZE "; i++){" NL
+        GET_DEF_NAME"[i] = " float_no_param";" NL
+        "}" NL
+    ;
+}
 
 EXTERNAL {
     qubit_defs = (qubit_def NL)[UNIFORM(3,4)];
@@ -80,15 +113,15 @@ EXTERNAL {
 imports =
     "import math" NL
     "from pytket import Circuit, Qubit, Bit" NL
-    "from pytket.circuit import Op, OpType, MultiplexorBox, CircBox" NL
+    "from pytket.circuit import Op, OpType, MultiplexorBox, CircBox, Unitary1qBox, Unitary2qBox" NL
     "from pytket._tket.circuit import fresh_symbol" NL
-    swarm_testing_imports NL
-    "from diff_testing.pytket import pytketTesting"
+    "from diff_testing.pytket import pytketTesting" NL
+    "import numpy as np" NL
     ;
 
 circuit_def_header = GET_CIRCUIT_NAME " = Circuit()";
 
-subroutine_def_footer = GET_CIRCUIT_NAME " = CircBox(" GET_CIRCUIT_NAME ")" NL;
+sub_circuit_footer = GET_CIRCUIT_NAME " = CircBox(" GET_CIRCUIT_NAME ")" NL;
 
 # ============================================================================
 # STATEMENTS - Enable both quantum operations and control flow
@@ -130,9 +163,25 @@ compound_stmt =
 # GATE OPERATIONS
 # ============================================================================
 
-gate_op = GET_CIRCUIT_NAME "." gate_name "(" gate_op_args ")";
+gate_op = GET_CIRCUIT_NAME "." primitive_gate "(" gate_op_args ")";
 
-subroutine_op = GET_CIRCUIT_NAME ".add_gate(" subroutine ",[" subroutine_op_args "])";
+subroutine_op = 
+    [
+        if (GET_GATE_KIND == sub_circuit) {
+            op_1 = GET_CIRCUIT_NAME ".add_gate(" GET_GATE_NAME ",[" subroutine_op_args "])";
+            op_1
+
+        } else if (GET_GATE_KIND == unitary_1q_def) {
+            op_2 = GET_CIRCUIT_NAME ".add_unitary1qbox(" GET_GATE_NAME "," subroutine_op_args ")";
+            op_2
+
+        } else if (GET_GATE_KIND == unitary_2q_def) {
+            op_3 = GET_CIRCUIT_NAME ".add_unitary2qbox(" GET_GATE_NAME "," subroutine_op_args ")";
+            op_3
+
+        }
+    ]
+    ;
 
 float = MAKE_FLOAT | pi_multiples;
 
@@ -168,9 +217,9 @@ register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 
 program_footer = compiler_call;
 
-# compiler_call = GET_CIRCUIT_NAME ".measure_all()" NL "pt = pytketTesting() " NL testing_method | "pt = pytketTesting(tket2=True) " NL statevector_test;
+# compiler_call = "pt = pytketTesting() " NL testing_method | "pt = pytketTesting(tket2=True) " NL statevector_test;
 
-compiler_call = GET_CIRCUIT_NAME ".measure_all()" NL "pt = pytketTesting() " NL testing_method;
+compiler_call = "pt = pytketTesting() " NL testing_method;
 
 testing_method = opt_ks_test | pytket_qiskit_conv_test;
 

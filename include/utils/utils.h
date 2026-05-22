@@ -110,9 +110,9 @@ std::ofstream get_stream(fs::path output_dir, std::string file_name);
 
 std::mt19937& rng();
 
-unsigned int random_uint(unsigned int max = UINT32_MAX, unsigned int min = 0);
+unsigned int uniform_uint(unsigned int max = UINT32_MAX, unsigned int min = 0);
 
-float random_float(float max, float min);
+float uniform_float(float max, float min);
 
 unsigned int safe_stoul(const std::string& str, unsigned int default_value);
 
@@ -136,7 +136,7 @@ std::string escape_string(const std::string& input);
 
 void render(std::function<void(std::ostringstream&)> extend_dot_string, const fs::path& render_path);
 
-std::string random_str(size_t length = 12);
+std::string uniform_str(size_t length = 12);
 
 template<typename T>
 inline std::vector<T> append_vectors(const std::vector<T>& vec1, const std::vector<T>& vec2){

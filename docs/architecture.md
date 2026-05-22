@@ -32,7 +32,7 @@
 **`Lexer`** (`lex.h`) tokenises a `.qf` file using a single regex. Every token is classified into one of three groups:
 
 - **Rule kinds** (`RULE_KINDS_TOP` to `RULE_KINDS_BOTTOM`): terminals that the AST builder knows how to specialise — `GATE_NAME`, `QUBIT_DEF`, `CIRCUIT`, `COMPOUND_STMT`, etc.
-- **Meta functions** (`META_FUNC_TOP` to `META_FUNC_BOTTOM`): dynamic tokens resolved at AST build time — `GET_CIRCUIT_NAME`, `GATE_QUBITS`, `GET_NAME`, `GET_SIZE`, `GET_INDEX`, `MAKE_FLOAT`, etc.
+- **Meta functions** (`META_FUNC_TOP` to `META_FUNC_BOTTOM`): dynamic tokens resolved at AST build time — `GET_CIRCUIT_NAME`, `GET_GATE_QUBITS`, `GET_NAME`, `GET_SIZE`, `GET_INDEX`, `MAKE_FLOAT`, etc.
 - **Grammar syntax**: `=`, `|`, `;`, `(`, `)`, `[`, `]`, `{`, `}`, `*`, `+`, `?`, `<`, `>`, `::`, `+=`.
 
 **`Grammar`** (`grammar.h/cpp`) builds a graph of `Rule` objects from tokens. Each rule has one or more `Branch`es; each branch is a sequence of `Term`s. Terms are either syntax literals or pointers to other rules (allowing recursion). A `Term_constraint` on a term controls how many times it is repeated when the AST builder expands that term.

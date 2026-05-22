@@ -1,10 +1,12 @@
 #include <circuit.h>
 #include <rule.h>
+#include <iomanip>
+#include <sstream>
 
 /// Box-Muller normal sample
-static float random_normal() {
-    float u1 = std::max(random_float(1.0f, 0.0f), 1e-7f);
-    float u2 = random_float(1.0f, 0.0f);
+static double box_muller() {
+    double u1 = std::max(uniform_float(1.0f, 0.0f), 1e-7f);
+    double u2 = uniform_float(1.0f, 0.0f);
     return std::sqrt(-2.0f * std::log(u1)) * std::cos(2.0f * std::numbers::pi * u2);
 }
 
@@ -13,7 +15,7 @@ static CxMat haar_unitary(unsigned int n) {
     CxMat src(n, std::vector<Cx>(n));
     for (auto& row : src)
         for (auto& c : row)
-            c = Cx(random_normal(), random_normal());
+            c = Cx(box_muller(), box_muller());
 
     CxMat q(n, std::vector<Cx>(n));
 
@@ -23,7 +25,7 @@ static CxMat haar_unitary(unsigned int n) {
 
         // subtract projections onto previous orthonormal columns
         for (unsigned int k = 0; k < j; k++) {
-            Cx proj = 0;
+            Cx proj = 0.0;
             for (unsigned int i = 0; i < n; i++)
                 proj += std::conj(q[i][k]) * col[i];
             for (unsigned int i = 0; i < n; i++)
@@ -31,7 +33,7 @@ static CxMat haar_unitary(unsigned int n) {
         }
 
         // normalise
-        float norm = 0;
+        double norm = 0;
         for (unsigned int i = 0; i < n; i++)
             norm += std::norm(col[i]);     // std::norm = |c|^2
         norm = std::sqrt(norm);
@@ -70,9 +72,13 @@ std::string Circuit::get_val_at(int row, int col) const {
     auto u_col = (unsigned int)std::max(col, 0);
 
     if ((u_row < dim) && (u_col < dim)){
-        float re = matrix[u_row][u_col].real();
-        float im = matrix[u_row][u_col].imag();        
-        out = std::to_string(re) + ", " + std::to_string(im);
+        double re = matrix[u_row][u_col].real();
+        double im = matrix[u_row][u_col].imag();       
+        
+        // lossless string conversion, to_string truncates decimals to 6dp
+        std::ostringstream stream;
+        stream << std::setprecision(17) << re << ", " << im;
+        out = stream.str();
     }
 
     return out;

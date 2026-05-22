@@ -16,7 +16,7 @@ void Context::reset(Reset_level l){
 
             circuits.clear();
 
-            sub_circuit_defs_node = std::nullopt;
+            subroutine_defs_node = std::nullopt;
             [[fallthrough]];
         }
 
@@ -81,18 +81,18 @@ bool Context::current_circuit_uses_subroutines(){
 Expr_type Context::resolve_var(const Token_kind name, const std::vector<int>& args) const {
     auto gate = get_current_node<Gate>();
 
-    if (name == GATE_KIND){
+    if (name == GET_GATE_KIND){
         return gate->get_gate_kind();
-    } else if (name == GATE_QUBITS) {
+    } else if (name == GET_GATE_QUBITS) {
         return (int)gate->get_num_external_resources(Resource_kind::QUBIT);
-    } else if (name == GATE_BITS) {
+    } else if (name == GET_GATE_BITS) {
         return (int)gate->get_num_external_resources(Resource_kind::BIT);
-    } else if (name == GATE_PARAMS) {
+    } else if (name == GET_GATE_PARAMS) {
         return (int)gate->get_num_external_resources(Resource_kind::PARAM);
-    } else if (name == N_QUBITS) {
+    } else if (name == GET_TOTAL_QUBITS) {
         auto qubits = get_current_circuit()->get_coll<Resource>(Resource_kind::QUBIT);
         return (int)qubits.size();
-    } else if (name == N_BITS) {
+    } else if (name == GET_TOTAL_BITS) {
         auto bits = get_current_circuit()->get_coll<Resource>(Resource_kind::BIT);
         return (int)bits.size();
     } else if ((name == GET_MAT_POS) && (args.size() == 2)){
@@ -126,10 +126,10 @@ std::shared_ptr<Circuit> Context::get_random_circuit(){
 
     if(circuits.size() && valid_circuit_exists){
 
-        std::shared_ptr<Circuit> circuit = circuits.at(random_uint(circuits.size()-1));
+        std::shared_ptr<Circuit> circuit = circuits.at(uniform_uint(circuits.size()-1));
 
         while(!can_apply_as_subroutine(circuit)){
-            circuit = circuits.at(random_uint(circuits.size()-1));
+            circuit = circuits.at(uniform_uint(circuits.size()-1));
         }
 
         return circuit;
@@ -176,14 +176,14 @@ std::shared_ptr<Resource_def> Context::nn_resource_def(Scope& scope, Resource_ki
     }
 
     if (can_use_reg && can_use_sing){
-        is_reg = random_uint(1, 0);
+        is_reg = uniform_uint(1, 0);
     } else if (can_use_reg){
         is_reg = true;
     } else {
         is_reg = false;
     }
 
-    def = std::make_shared<Resource_def>(scope, rk, is_reg, random_uint(control.get_value("MAX_REG_SIZE"), 1));
+    def = std::make_shared<Resource_def>(scope, rk, is_reg, uniform_uint(control.get_value("MAX_REG_SIZE"), 1));
 
     current.set<Resource_def>(def);
     get_current_circuit()->store_resource_def(def);
@@ -222,7 +222,7 @@ std::shared_ptr<Gate> Context::nn_gate(const std::string& str, const Token_kind&
     return gate;
 }
 
-std::shared_ptr<Gate> Context::nn_subroutine(){
+std::shared_ptr<Gate> Context::nn_subroutine_op(){
     /*
         1. get random circuit to use as subroutine
         2. get qubit defs inside subroutine, create the gate node
@@ -246,7 +246,7 @@ std::shared_ptr<Gate> Context::nn_subroutine(){
         ERROR("Cannot create gate from node of kind " + kind_as_str(circ_kind));
     }
 
-    gate->add_child(std::make_shared<Variable>(gate_name));
+    // gate->add_child(std::make_shared<Variable>(gate_name));
 
     current.set<Gate>(gate);
     current.get<Qubit_op>()->set_gate_node(gate);
@@ -262,9 +262,9 @@ std::shared_ptr<Compound_stmt> Context::nn_compound_stmt(){
     return std::make_shared<Compound_stmt>(nested_depth);
 }
 
-std::shared_ptr<Node> Context::nn_sub_circuit_defs(){
-    std::shared_ptr<Node> node = std::make_shared<Node>("", SUB_CIRCUIT_DEFS);
-    sub_circuit_defs_node = std::make_optional<std::shared_ptr<Node>>(node);
+std::shared_ptr<Node> Context::nn_subroutine_defs(){
+    std::shared_ptr<Node> node = std::make_shared<Node>("", SUBROUTINE_DEFS);
+    subroutine_defs_node = std::make_optional<std::shared_ptr<Node>>(node);
     return node;
 }
 

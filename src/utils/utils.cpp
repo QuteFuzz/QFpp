@@ -45,7 +45,7 @@ std::mt19937& rng(){
 /// @param max value inclusive
 /// @param min value inclusive
 /// @return
-unsigned int random_uint(unsigned int max, unsigned int min){
+unsigned int uniform_uint(unsigned int max, unsigned int min){
     if(min < max){
         std::uniform_int_distribution<unsigned int> uint_dist(min, max);
         return uint_dist(rng());
@@ -59,7 +59,7 @@ unsigned int random_uint(unsigned int max, unsigned int min){
 /// @param max value inclusive
 /// @param min value inclusive
 /// @return
-float random_float(float max, float min){
+float uniform_float(float max, float min){
     if(min < max){
         std::uniform_real_distribution<float> float_dist(min, max);
         return float_dist(rng());
@@ -69,14 +69,14 @@ float random_float(float max, float min){
     }
 }
 
-std::string random_str(size_t length){
+std::string uniform_str(size_t length){
     std::string s;
     s.reserve(length);
 
-    s += QuteFuzz::LETTERS[random_uint(QuteFuzz::LETTERS.size()-1, 0)];
+    s += QuteFuzz::LETTERS[uniform_uint(QuteFuzz::LETTERS.size()-1, 0)];
 
     for (size_t i = 1; i < length; ++i) {
-        s += QuteFuzz::ALPHA[random_uint(QuteFuzz::ALPHA.size()-1, 0)];
+        s += QuteFuzz::ALPHA[uniform_uint(QuteFuzz::ALPHA.size()-1, 0)];
     }
 
     return s;

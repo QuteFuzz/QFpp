@@ -15,7 +15,7 @@
 #include <compound_stmt.h>
 #include <resource.h>
 #include <compare_op_bitwise_or_pair_child.h>
-#include <gate_name.h>
+#include <primitive_gate.h>
 #include <variable.h>
 
 #include <info.h>
@@ -46,6 +46,9 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			case STRING: case NUMBER:
 				return std::make_shared<Node>(str, kind);
 
+			case GET_GATE_NAME:
+				return context.get_current_node<Gate>()->get_var_name();
+
 			case GET_DEF_NAME:
 				return context.get_current_node<Resource_def>()->get_var_name();
 
@@ -62,7 +65,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 				return std::make_shared<Float>();
 
 			case MAKE_VAR:
-				return std::make_shared<Variable>(random_str(5));
+				return std::make_shared<Variable>(uniform_str(5));
 
 			case MAKE_INTEGER:
 				return std::make_shared<UInt>();
@@ -95,8 +98,8 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			case CIRCUIT_ID:
 				return context.nn_circuit_id();
 
-			case SUB_CIRCUIT_DEFS:
-				return context.nn_sub_circuit_defs();
+			case SUBROUTINE_DEFS:
+				return context.nn_subroutine_defs();
 
 			case QUBIT_OP:
 				return context.nn_qubit_op();
@@ -104,7 +107,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			case SUBROUTINE_OP:
 				// redirect AST to gate op if current circuit cannot apply subroutines
 				if(context.current_circuit_uses_subroutines()){
-					return std::make_shared<Node>(str, kind);
+					return context.nn_subroutine_op();
 				} else {
 					return Term(control.get_rule("gate_op"), GATE_OP, Print_mode::DEFAULT);
 				}
@@ -166,14 +169,11 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 				}
 			}
 
-			case GATE_NAME:
-				return std::make_shared<Gate_name>(context.get_current_circuit());
+			case PRIMITIVE_GATE:
+				return std::make_shared<Primitive_gate>(context.get_current_circuit());
 
 			case EXPR:
 				return std::make_shared<Node>(str, kind);
-
-			case SUBROUTINE:
-				return context.nn_subroutine();
 
 			case H: case X: case Y: case Z: case T: case TDG: case S: case SDG: case PROJECT_Z:
 			case V: case VDG: case CX : case CY: case CZ: case CNOT: case XX: case YY: case ZZ:

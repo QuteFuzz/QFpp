@@ -47,7 +47,7 @@ imports =
     ;
 
 
-# subroutine_def_footer = GET_CIRCUIT_NAME " = cirq.CircuitOperation(" GET_CIRCUIT_NAME ".freeze())" NL;
+# sub_circuit_footer = GET_CIRCUIT_NAME " = cirq.CircuitOperation(" GET_CIRCUIT_NAME ".freeze())" NL;
 
 circuit_def_header = GET_CIRCUIT_NAME " = cirq.Circuit()";
 
@@ -69,9 +69,9 @@ insert_strategy = "cirq.InsertStrategy.EARLIEST"
 strategy_kwarg = ", "
     | ", strategy=" insert_strategy;
 
-gate_op = GET_CIRCUIT_NAME ".append(" gate_name gate_op_args strategy_kwarg ")";
+gate_op = GET_CIRCUIT_NAME ".append(" primitive_gate gate_op_args strategy_kwarg ")";
 
-gate_op_args = ("(" (float ", ") ")")[GATE_PARAMS] "(" qubit_list ")";
+gate_op_args = ("(" (float ", ") ")")[GET_GATE_PARAMS] "(" qubit_list ")";
 
 float = MAKE_FLOAT | pi_multiples;
 
@@ -81,9 +81,9 @@ m_key = "m_key = cirq.MeasurementKey('" MAKE_VAR "')";
 apply_measure = GET_CIRCUIT_NAME ".append(cirq.measure(" qubit ", key=m_key))" RESET;
 condition = "cirq.KeyCondition(m_key)";
 
-if_stmt = m_key NL apply_measure NL GET_CIRCUIT_NAME ".append(" gate_name gate_op_args ".with_classical_controls(" condition ")" strategy_kwarg ")";
+if_stmt = m_key NL apply_measure NL GET_CIRCUIT_NAME ".append(" primitive_gate gate_op_args ".with_classical_controls(" condition ")" strategy_kwarg ")";
 
-gate_name = rx
+primitive_gate = rx
     | ry
     | rz
     | h

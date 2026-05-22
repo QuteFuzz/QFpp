@@ -146,10 +146,10 @@ void Node::make_partition(int target, int n_children){
         std::vector<int> cuts;
 
         for(int i = 0; i < n_children-1; i++){
-            int val = random_uint(target-1, 1);
+            int val = uniform_uint(target-1, 1);
 
             while(std::find(cuts.begin(), cuts.end(), val) != cuts.end()){
-                val = random_uint(target-1, 1);
+                val = uniform_uint(target-1, 1);
             }
 
             cuts.push_back(val);

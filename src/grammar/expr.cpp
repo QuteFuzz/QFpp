@@ -119,7 +119,7 @@ Expr_type BinExpr::eval(Context& context) const {
     int right = resolve_operand(right_eval);
 
     if (op == "UNIFORM"){
-        return (int)random_uint(std::max(right, left), std::min(right, left));
+        return (int)uniform_uint(std::max(right, left), std::min(right, left));
     } else if (op == "+") {
         return left + right;
     } else if (op == "-"){
