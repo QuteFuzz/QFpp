@@ -33,8 +33,8 @@ class Run_mode(Enum):
 
 
 class Result_kind(Enum):
-    DOT_PROD = 0,
-    KS_TEST = 1,
+    DOT_PROD = (0,)
+    KS_TEST = (1,)
 
 
 @dataclass
@@ -45,7 +45,7 @@ class CircuitRunInfo:
     grammar: str
     values: List[float] = field(default_factory=list)
     logs: str = ""
-    interesting : bool = False
+    interesting: bool = False
 
 
 def parse_for_testing_values(

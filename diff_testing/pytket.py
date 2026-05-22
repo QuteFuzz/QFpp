@@ -1,13 +1,13 @@
-import traceback
 import random
+import traceback
 
 from pytket._tket.circuit import Circuit, OpType
 from pytket.architecture import Architecture
 from pytket.extensions.qiskit.backends.aer import AerBackend, AerStateBackend
-from pytket.passes import DecomposeBoxes, RemoveImplicitQubitPermutation, DefaultMappingPass
+from pytket.passes import DecomposeBoxes, DefaultMappingPass, RemoveImplicitQubitPermutation
 from tket.passes import badger_pass
-from .lib import Base
 
+from .lib import Base
 
 
 def _apply_tket2_opt_level_3(circuit: Circuit) -> Circuit:
@@ -49,13 +49,16 @@ def _apply_tket2_opt_level_3(circuit: Circuit) -> Circuit:
 
     return opt_circ
 
-def _make_line_topology(n_qubits : int):
-    return [(i, i+1) for i in range(n_qubits)]
 
-def _make_star_topology(n_qubits : int):
+def _make_line_topology(n_qubits: int):
+    return [(i, i + 1) for i in range(n_qubits)]
+
+
+def _make_star_topology(n_qubits: int):
     return [(0, i) for i in range(n_qubits)]
 
-def _make_hex_topology(n_qubits : int):
+
+def _make_hex_topology(n_qubits: int):
 
     if n_qubits >= 4:
         topo = []
@@ -72,7 +75,8 @@ def _make_hex_topology(n_qubits : int):
     else:
         return _make_line_topology(n_qubits)
 
-def _route_circuit(circuit : Circuit):
+
+def _route_circuit(circuit: Circuit):
     val = random.randint(0, 1)
 
     print(val)
@@ -82,7 +86,7 @@ def _route_circuit(circuit : Circuit):
     elif val == 1:
         arch = Architecture(_make_hex_topology(circuit.n_qubits))
     # else:
-        # arch = Architecture(_make_line_topology(circuit.n_qubits))
+    # arch = Architecture(_make_line_topology(circuit.n_qubits))
 
     DefaultMappingPass(arch).apply(circuit)
     return circuit

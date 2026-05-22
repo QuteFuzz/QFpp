@@ -75,15 +75,8 @@ unitary_2q_def =
 
 
 INTERNAL {
-    singular_param_def = "double " GET_DEF_NAME " = " float_no_param ";";
-
-    # after initing the array, use a for loop to assign floats to the array
-    register_param_def =
-        "double " GET_DEF_NAME "[" GET_SIZE "];" NL[2]
-        "for(int i = 0; i < " GET_SIZE "; i++){" NL
-        GET_DEF_NAME"[i] = " float_no_param";" NL
-        "}" NL
-    ;
+    singular_param_def = GET_DEF_NAME " = Symbol('" GET_DEF_NAME "')" NL;
+    register_param_def = GET_DEF_NAME " = [Symbol('" GET_DEF_NAME "_' + str(i)) for i in range(" GET_SIZE ")]" NL;
 }
 
 EXTERNAL {
