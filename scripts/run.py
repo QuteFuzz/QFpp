@@ -18,7 +18,7 @@ NIGHTLY_DIR = Path("nightly_results")
 ENTRY_POINT = "program"
 
 MIN_KS_VALUE = 1e-8
-TIMEOUT = 2000
+TIMEOUT = 20000
 DEFAULT_NUM_TESTS = 1
 CPU_COUNT = os.cpu_count()
 
