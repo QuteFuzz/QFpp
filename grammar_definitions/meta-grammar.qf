@@ -31,11 +31,11 @@ param_def = singular_param_def | register_param_def;
 
 
 INTERNAL {
-    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3,4)];
+    qubit_defs = (qubit_def NL)[UNIFORM(3,4)];
 
-    bit_defs = (bit_def NEWLINE)[UNIFORM(3,4)];
+    bit_defs = (bit_def NL)[UNIFORM(3,4)];
     
-    param_defs = (param_def NEWLINE)[UNIFORM(3,4)];
+    param_defs = (param_def NL)[UNIFORM(3,4)];
 
     qubit_def = singular_qubit_def | register_qubit_def;
 
@@ -45,11 +45,11 @@ INTERNAL {
 }
 
 EXTERNAL {
-    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3,4)];
+    qubit_defs = (qubit_def NL)[UNIFORM(3,4)];
 
-    bit_defs = (bit_def NEWLINE)[UNIFORM(3,4)];
+    bit_defs = (bit_def NL)[UNIFORM(3,4)];
     
-    param_defs = (param_def NEWLINE)[UNIFORM(3,4)];
+    param_defs = (param_def NL)[UNIFORM(3,4)];
 
     qubit_def = singular_qubit_def | register_qubit_def;
 
@@ -58,18 +58,18 @@ EXTERNAL {
     param_def = singular_param_def | register_param_def;
 }
 
-program       = imports NEWLINE circuit NEWLINE program_footer;
+program       = imports NL circuit NL program_footer;
 
 subroutine_defs = (subroutine_circuit)[UNIFORM(2,6)];
 
 # all subroutines have just qubit ops and no if-else statements
-subroutine_body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE (qubit_op NEWLINE)+;
+subroutine_body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL (qubit_op NL)+;
 
-body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
+body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL compound_stmts;
 
-subroutine_circuit = circuit_def_header NEWLINE subroutine_body NEWLINE subroutine_def_footer;
+subroutine_circuit = circuit_def_header NL subroutine_body NL subroutine_def_footer;
 
-compound_stmts = (compound_stmt NEWLINE)[UNIFORM(100,150)];
+compound_stmts = (compound_stmt NL)[UNIFORM(100,150)];
 
 compound_stmt = qubit_op;
 

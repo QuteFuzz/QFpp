@@ -11,11 +11,19 @@ void IntExpr::print(std::ostream& stream) const {
 };
 
 Expr_type VarExpr::eval(Context& context) const {
-    return (int)context.resolve_var(var);
+    return context.resolve_var(name, args);
 }
 
 void VarExpr::print(std::ostream& stream) const {
-    stream << var;
+    stream << name;
+
+    if (args.size()){
+        stream << "{";
+        for (const auto& arg : args){
+            stream << arg << ", ";
+        }
+        stream << "}";
+    }
 };
 
 Expr_type RuleExpr::eval(Context& context) const {

@@ -56,7 +56,7 @@ Every grammar **must** define or inherit all of the following. Rules inherited f
 | `imports` | **Y** | Framework imports; plain string rules |
 | `program_footer` | **Y** | Testing harness call at end of file |
 | `circuit_def_header` | **Y** | Whatever introduces a new circuit object |
-| `compound_stmts` | Y/M | Meta-grammar defines `(compound_stmt NEWLINE)[UNIFORM(3,5)]`; override if needed |
+| `compound_stmts` | Y/M | Meta-grammar defines `(compound_stmt NL)[UNIFORM(3,5)]`; override if needed |
 | `compound_stmt` | Y/M | Meta-grammar has no default; you must define it |
 | `qubit_op` | Y/M | Meta-grammar defines `gate_op \| subroutine_op`; override if needed |
 
@@ -122,7 +122,7 @@ rx = "MyFramework.RX";
 
 # ── Resource definitions ─────────────────────────────────────
 EXTERNAL {
-    qubit_defs = (qubit_def NEWLINE)[UNIFORM(2, 4)];
+    qubit_defs = (qubit_def NL)[UNIFORM(2, 4)];
 
     singular_qubit_def = GET_DEF_NAME " = framework.qubit('" GET_NAME "')";
     register_qubit_def = GET_DEF_NAME " = framework.qvec(" GET_SIZE ", '" GET_NAME "')";
@@ -147,30 +147,30 @@ register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 gate_op = gate_name "(" gate_op_args ")";
 
 # ── Program structure ─────────────────────────────────────────
-program = imports NEWLINE NEWLINE circuit NEWLINE program_footer;
+program = imports NL NL circuit NL program_footer;
 
-circuit = circuit_def_header NEWLINE body NEWLINE;
+circuit = circuit_def_header NL body NL;
 
 circuit_def_header =
-    "@framework.kernel" NEWLINE
+    "@framework.kernel" NL
     "def " GET_CIRCUIT_NAME "():";
 
-body = CHILD_INDENT<EXTERNAL::qubit_defs NEWLINE compound_stmts);
+body = CHILD_INDENT<EXTERNAL::qubit_defs NL compound_stmts);
 
-compound_stmts = (compound_stmt NEWLINE)[UNIFORM(5, 15)];
+compound_stmts = (compound_stmt NL)[UNIFORM(5, 15)];
 
 compound_stmt = qubit_op;
 
 imports =
-    "import myframework as framework" NEWLINE
+    "import myframework as framework" NL
     "from diff_testing.myframework import myframeworkTesting";
 
 # ── Footer ────────────────────────────────────────────────────
-program_footer = "mt = myframeworkTesting()" NEWLINE testing_method;
+program_footer = "mt = myframeworkTesting()" NL testing_method;
 
 testing_method = opt_ks_test;
 
-opt_ks_test = "mt.opt_ks_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN NEWLINE;
+opt_ks_test = "mt.opt_ks_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN NL;
 ```
 
 ---
@@ -246,7 +246,7 @@ uv run scripts/run.py --grammars myframework --num-tests 5
 ### Subroutines not working
 
 For subroutine support you need:
-- `subroutine_defs = (subroutine_circuit NEWLINE)[UNIFORM(1, 3)];`
+- `subroutine_defs = (subroutine_circuit NL)[UNIFORM(1, 3)];`
 - `subroutine_circuit` — a rule that creates a sub-circuit with EXTERNAL qubit parameters
 - `subroutine_def_footer` — any post-circuit wrapping (e.g. `.to_gate()`)
 - `subroutine_op` — how to call the subroutine from the main circuit

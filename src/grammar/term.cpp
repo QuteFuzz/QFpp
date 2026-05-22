@@ -105,6 +105,7 @@ std::vector<Term> Term::eval_expr(Context& context) const {
             if (size >= 0){
 			    child_terms = std::vector<Term>(size, term);
             } else {
+                std::cout << *this << std::endl;
                 ERROR("IntExpr must evaluate to +ve value!");
             }
 

@@ -24,14 +24,14 @@ yy = "cirq.YY";
 zz = "cirq.ZZ";
 
 
-program = imports NEWLINE circuit NEWLINE program_footer;
+program = imports NL circuit NL program_footer;
 
-circuit = circuit_def_header NEWLINE body NEWLINE;
+circuit = circuit_def_header NL body NL;
 
-body = EXTERNAL::qubit_defs NEWLINE compound_stmts;
+body = EXTERNAL::qubit_defs NL compound_stmts;
 
 EXTERNAL {
-    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 4)];
+    qubit_defs = (qubit_def NL)[UNIFORM(3, 4)];
 
     singular_qubit_def =
         GET_DEF_NAME " = cirq.NamedQubit('" GET_DEF_NAME "')";
@@ -41,18 +41,18 @@ EXTERNAL {
 }
 
 imports =
-    "import math" NEWLINE
-    "import cirq" NEWLINE
-    "from diff_testing.cirq import cirqTesting" NEWLINE
+    "import math" NL
+    "import cirq" NL
+    "from diff_testing.cirq import cirqTesting" NL
     ;
 
 
-# subroutine_def_footer = GET_CIRCUIT_NAME " = cirq.CircuitOperation(" GET_CIRCUIT_NAME ".freeze())" NEWLINE;
+# subroutine_def_footer = GET_CIRCUIT_NAME " = cirq.CircuitOperation(" GET_CIRCUIT_NAME ".freeze())" NL;
 
 circuit_def_header = GET_CIRCUIT_NAME " = cirq.Circuit()";
 
 # cirq's simulator is very slow, need smaller circuits
-compound_stmts = (compound_stmt NEWLINE)[5];
+compound_stmts = (compound_stmt NL)[5];
 
 compound_stmt =
       qubit_op
@@ -81,7 +81,7 @@ m_key = "m_key = cirq.MeasurementKey('" MAKE_VAR "')";
 apply_measure = GET_CIRCUIT_NAME ".append(cirq.measure(" qubit ", key=m_key))" RESET;
 condition = "cirq.KeyCondition(m_key)";
 
-if_stmt = m_key NEWLINE apply_measure NEWLINE GET_CIRCUIT_NAME ".append(" gate_name gate_op_args ".with_classical_controls(" condition ")" strategy_kwarg ")";
+if_stmt = m_key NL apply_measure NL GET_CIRCUIT_NAME ".append(" gate_name gate_op_args ".with_classical_controls(" condition ")" strategy_kwarg ")";
 
 gate_name = rx
     | ry
@@ -107,12 +107,12 @@ singular_qubit = GET_DECL_NAME;
 
 register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
 
-compiler_call = "ct = cirqTesting()" NEWLINE testing_method;
+compiler_call = "ct = cirqTesting()" NL testing_method;
 
 testing_method = opt_ks_test;
 
-opt_ks_test = "ct.opt_ks_test(main_circuit" COMMA circuit_id RPAREN NEWLINE;
+opt_ks_test = "ct.opt_ks_test(main_circuit" COMMA circuit_id RPAREN NL;
 
-measurement = GET_CIRCUIT_NAME ".append(cirq.measure(*" GET_CIRCUIT_NAME ".all_qubits(), key='all_measurements'))" NEWLINE;
+measurement = GET_CIRCUIT_NAME ".append(cirq.measure(*" GET_CIRCUIT_NAME ".all_qubits(), key='all_measurements'))" NL;
 
-program_footer = measurement NEWLINE compiler_call;
+program_footer = measurement NL compiler_call;

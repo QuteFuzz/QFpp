@@ -60,7 +60,7 @@ Shorthand keywords that expand to common punctuation (avoids quoting issues):
 
 | Keyword | Expands to |
 |---------|-----------|
-| `NEWLINE` | `\n` |
+| `NL` | `\n` |
 | `COMMA` | `,` |
 | `LPAREN` | `(` |
 | `RPAREN` | `)` |
@@ -103,7 +103,7 @@ Terms in the grammar are evaluated differently depending on the return type of t
 ### `int`
 
 ```c
-qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 5)];
+qubit_defs = (qubit_def NL)[UNIFORM(3, 5)];
 ```
 
 1. `(...)` triggers the creation of a rule, so the above can be seen as
@@ -117,7 +117,7 @@ where `NR_0` is a term which contains the rule pointer.
 
 ### `string`
 ```c
-singular_qubit_def_discard =  "measure(" ""[def.name] ")" NEWLINE;
+singular_qubit_def_discard =  "measure(" ""[def.name] ")" NL;
 ```
 
 the string replaces whatever term the expr is bound to. The term above contains the string `""`.
@@ -127,14 +127,14 @@ the string replaces whatever term the expr is bound to. The term above contains 
     qubit_defs_discard = [
         for def in ALL_QUBIT_DEFS {
             if (def.in_int_scope) {
-                singular_qubit_def_discard =  "measure(" ""[def.name] ")" NEWLINE;
-                register_qubit_def_discard =  "measure_array(" ""[def.name] ")" NEWLINE;
+                singular_qubit_def_discard =  "measure(" ""[def.name] ")" NL;
+                register_qubit_def_discard =  "measure_array(" ""[def.name] ")" NL;
                 if (def.is_singular): singular_qubit_def_discard
                 else: register_qubit_def_discard
             }
         }
         ]
-        NEWLINE;
+        NL;
 ```
 
 the for loop returns a vector of rules, which are used to create terms
@@ -175,9 +175,9 @@ Usage:
 
 ```qf
 if_stmt =
-    'with ' GET_CIRCUIT_NAME '.if_test(' classical_expr ') as else_' GET_INDENT_LEVEL ':' NEWLINE
+    'with ' GET_CIRCUIT_NAME '.if_test(' classical_expr ') as else_' GET_INDENT_LEVEL ':' NL
     ci<compound_stmts>
-    si<('with else_' GET_INDENT_LEVEL ':' NEWLINE ci<compound_stmts>>?);
+    si<('with else_' GET_INDENT_LEVEL ':' NL ci<compound_stmts>>?);
 ```
 
 ### Reset
@@ -201,11 +201,11 @@ EXTERNAL {
     qubit_def = singular_qubit_def | register_qubit_def;
 
     singular_qubit_def =
-        GET_NAME " = QuantumRegister(1, '" GET_NAME "')" NEWLINE
+        GET_NAME " = QuantumRegister(1, '" GET_NAME "')" NL
         GET_CIRCUIT_NAME ".add_register(" GET_NAME ")";
 
     register_qubit_def =
-        GET_NAME " = QuantumRegister(" GET_SIZE ", '" GET_NAME "')" NEWLINE
+        GET_NAME " = QuantumRegister(" GET_SIZE ", '" GET_NAME "')" NL
         GET_CIRCUIT_NAME ".add_register(" GET_NAME ")";
 }
 ```
@@ -215,7 +215,7 @@ Rules defined inside `EXTERNAL { }` or `INTERNAL { }` exist only in that scope.
 ### Referencing a scoped rule from another rule
 
 ```qf
-body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
+body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL compound_stmts;
 ```
 
 `EXTERNAL::rule_name` forces the expansion to use the EXTERNAL-scoped version of that rule, even when the outer rule is in GLOB scope.
@@ -310,7 +310,7 @@ The following rule names are recognised by the lexer and given specific `Token_k
 | `gate_op` | `GATE_OP` | Gate operation node |
 | `gate_name` | `GATE_NAME` | Triggers `Gate_name(current_circuit)` with automatic constraint injection to exclude gates needing more qubits/bits than the circuit has |
 | `subroutine_op` | `SUBROUTINE_OP` | Redirects to `gate_op` if no subroutines are available |
-| `subroutine` | `SUBROUTINE` | Triggers `context.nn_gate_from_subroutine()` |
+| `subroutine` | `SUBROUTINE` | Triggers `context.nn_subroutine()` |
 | `float_literal` | `FLOAT_LITERAL` | Float argument node |
 
 ### Gate name rules

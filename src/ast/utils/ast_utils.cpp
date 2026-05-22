@@ -12,7 +12,6 @@ const std::vector<Token_kind> SELF_INVERSE_PAIRS = {
 const std::vector<std::vector<Token_kind>> INVERSE_PAIRS = {
     {S, SDG},
     {T, TDG},
-    {V, VDG},
 };
 
 const std::vector<Token_kind> Z_FAMILY = {Z, S, SDG, T, TDG, RZ, U1};

@@ -40,32 +40,32 @@ gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
 # CIRCUIT STRUCTURE
 # ============================================================================
 
-program = imports NEWLINE[2] subroutine_defs NEWLINE circuit NEWLINE program_footer;
+program = imports NL[2] subroutine_defs NL circuit NL program_footer;
 
-subroutine_body = EXTERNAL::qubit_defs NEWLINE (qubit_op NEWLINE)+;  # subroutines have no bits to facilitate pytket to qiskit conversion
+subroutine_body = EXTERNAL::qubit_defs NL (qubit_op NL)+;  # subroutines have no bits to facilitate pytket to qiskit conversion
 
-circuit = circuit_def_header NEWLINE body NEWLINE;
+circuit = circuit_def_header NL body NL;
 
 # Body includes both qubits and classical bits (needed for control flow)
-body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
+body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL compound_stmts;
 
 # ============================================================================
 # EXTERNAL SCOPE DEFINITIONS
 # ============================================================================
 
 EXTERNAL {
-    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3,4)];
+    qubit_defs = (qubit_def NL)[UNIFORM(3,4)];
 
-    bit_defs = (bit_def NEWLINE)[UNIFORM(3,4)];
+    bit_defs = (bit_def NL)[UNIFORM(3,4)];
 
     singular_qubit_def =
-        GET_DEF_NAME ' = Qubit("'  GET_DEF_NAME '",0)' NEWLINE GET_CIRCUIT_NAME ".add_qubit(" GET_DEF_NAME ")";
+        GET_DEF_NAME ' = Qubit("'  GET_DEF_NAME '",0)' NL GET_CIRCUIT_NAME ".add_qubit(" GET_DEF_NAME ")";
 
     register_qubit_def =
         GET_DEF_NAME " = " GET_CIRCUIT_NAME '.add_q_register("' GET_DEF_NAME '", ' GET_SIZE ")";
 
     singular_bit_def =
-        GET_DEF_NAME ' = Bit("' GET_DEF_NAME '", 0)' NEWLINE GET_CIRCUIT_NAME ".add_bit(" GET_DEF_NAME ")";
+        GET_DEF_NAME ' = Bit("' GET_DEF_NAME '", 0)' NL GET_CIRCUIT_NAME ".add_bit(" GET_DEF_NAME ")";
 
     register_bit_def =
         GET_DEF_NAME " = " GET_CIRCUIT_NAME '.add_c_register("' GET_DEF_NAME '", ' GET_SIZE ")";
@@ -78,17 +78,17 @@ EXTERNAL {
 # ============================================================================
 
 imports =
-    "import math" NEWLINE
-    "from pytket import Circuit, Qubit, Bit" NEWLINE
-    "from pytket.circuit import Op, OpType, MultiplexorBox, CircBox" NEWLINE
-    "from pytket._tket.circuit import fresh_symbol" NEWLINE
-    swarm_testing_imports NEWLINE
+    "import math" NL
+    "from pytket import Circuit, Qubit, Bit" NL
+    "from pytket.circuit import Op, OpType, MultiplexorBox, CircBox" NL
+    "from pytket._tket.circuit import fresh_symbol" NL
+    swarm_testing_imports NL
     "from diff_testing.pytket import pytketTesting"
     ;
 
 circuit_def_header = GET_CIRCUIT_NAME " = Circuit()";
 
-subroutine_def_footer = GET_CIRCUIT_NAME " = CircBox(" GET_CIRCUIT_NAME ")" NEWLINE;
+subroutine_def_footer = GET_CIRCUIT_NAME " = CircBox(" GET_CIRCUIT_NAME ")" NL;
 
 # ============================================================================
 # STATEMENTS - Enable both quantum operations and control flow
@@ -108,17 +108,17 @@ classical_expr = bit " == " branch_condition;
 branch_condition = 1 | 0;
 
 if_stmt =
-    'if ' classical_expr ':' NEWLINE ci<compound_stmts> si<elif_stmt>
-    | 'if ' classical_expr ':' NEWLINE ci<compound_stmts> si<(else_stmt)?>;
+    'if ' classical_expr ':' NL ci<compound_stmts> si<elif_stmt>
+    | 'if ' classical_expr ':' NL ci<compound_stmts> si<(else_stmt)?>;
 
 elif_stmt =
-    'elif ' classical_expr ':' NEWLINE ci<compound_stmts> si<elif_stmt>
-    | 'elif ' classical_expr ':' NEWLINE ci<compound_stmts> si<(else_stmt)?>;
+    'elif ' classical_expr ':' NL ci<compound_stmts> si<elif_stmt>
+    | 'elif ' classical_expr ':' NL ci<compound_stmts> si<(else_stmt)?>;
 
 else_stmt =
-    'else:' NEWLINE ci<compound_stmts>;
+    'else:' NL ci<compound_stmts>;
 
-compound_stmts = (compound_stmt NEWLINE)[UNIFORM(50, 80)];
+compound_stmts = (compound_stmt NL)[UNIFORM(50, 80)];
 
 compound_stmt =
     qubit_op
@@ -168,9 +168,9 @@ register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 
 program_footer = compiler_call;
 
-# compiler_call = GET_CIRCUIT_NAME ".measure_all()" NEWLINE "pt = pytketTesting() " NEWLINE testing_method | "pt = pytketTesting(tket2=True) " NEWLINE statevector_test;
+# compiler_call = GET_CIRCUIT_NAME ".measure_all()" NL "pt = pytketTesting() " NL testing_method | "pt = pytketTesting(tket2=True) " NL statevector_test;
 
-compiler_call = GET_CIRCUIT_NAME ".measure_all()" NEWLINE "pt = pytketTesting() " NEWLINE testing_method;
+compiler_call = GET_CIRCUIT_NAME ".measure_all()" NL "pt = pytketTesting() " NL testing_method;
 
 testing_method = opt_ks_test | pytket_qiskit_conv_test;
 

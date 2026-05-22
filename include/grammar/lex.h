@@ -52,6 +52,9 @@ enum Token_kind {
     PROGRAM,
     SUBROUTINE_DEFS,
     CIRCUIT,
+    SUB_CIRCUIT,
+    UNITARY_1Q_DEF,
+    UNITARY_2Q_DEF,
     BODY,
     PARAM_DEF,
     QUBIT_DEF,
@@ -88,12 +91,13 @@ enum Token_kind {
 
     META_FUNC_TOP,                                /// ADD META FUNCS BELOW!
     GET_CIRCUIT_NAME,
-    GATE,
+    GATE_KIND,
     GATE_QUBITS,
     GATE_BITS,
     GATE_PARAMS,
     N_QUBITS,
     N_BITS,
+    GET_MAT_POS,
     GET_INDENT_LEVEL,
     MAKE_INTEGER,
     MAKE_FLOAT,
@@ -174,7 +178,9 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("program", PROGRAM),
     Token_matcher("subroutine_defs", SUBROUTINE_DEFS),
     Token_matcher("circuit", CIRCUIT),
-    Token_matcher("subroutine_circuit", CIRCUIT),
+    Token_matcher("subroutine_circuit", SUB_CIRCUIT),
+    Token_matcher("unitary_1q_def", UNITARY_1Q_DEF),
+    Token_matcher("unitary_2q_def", UNITARY_2Q_DEF),
     Token_matcher("body", BODY),
     Token_matcher("subroutine_body", BODY),
     Token_matcher("qubit_def", QUBIT_DEF),
@@ -266,12 +272,13 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("GET_SIZE", GET_SIZE),
     Token_matcher("RESET", RESET),
     Token_matcher("GET_CIRCUIT_NAME", GET_CIRCUIT_NAME),
-    Token_matcher("GATE", GATE),
+    Token_matcher("GATE_KIND", GATE_KIND),
     Token_matcher("GATE_QUBITS", GATE_QUBITS),
     Token_matcher("GATE_BITS", GATE_BITS),
     Token_matcher("GATE_PARAMS", GATE_PARAMS),
     Token_matcher("N_QUBITS", N_QUBITS),
     Token_matcher("N_BITS", N_BITS),
+    Token_matcher("GET_MAT_POS", GET_MAT_POS),
 
     // some tokens get immediately converted into syntax because we know before hand what the replacement should be
     Token_matcher("LPAREN", STRING, "("),
@@ -286,7 +293,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("SINGLE_QUOTE", STRING, "\'"),
     Token_matcher("DOUBLE_QUOTE", STRING, "\""),
     Token_matcher("EQUALS", STRING, "="),
-    Token_matcher("NEWLINE", STRING, "\n"),
+    Token_matcher("NL", STRING, "\n"),
 
     Token_matcher("EXTERNAL", EXTERNAL),
     Token_matcher("INTERNAL", INTERNAL),
@@ -452,20 +459,21 @@ inline bool is_quiet(const Token_kind& kind){
 }
 
 inline std::string kind_as_str(const Token_kind& kind) {
+    std::string str = std::to_string(kind);
     
     if (kind == STRING){
-        return "STRING";
+        str = "STRING";
     } else if (kind == NUMBER){
-        return "NUMBER";
+        str = "NUMBER";
     }
     
     for (auto tm : TOKEN_RULES){
         if(tm.kind == kind){
-            return tm.pattern;
+            str = tm.pattern;
         }
     }
 
-    return std::to_string(kind);
+    return CYAN(str);
 }
 
 #endif

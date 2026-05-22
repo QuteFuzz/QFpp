@@ -78,6 +78,15 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			case CIRCUIT:
 				return context.nn_circuit();
 
+			case SUB_CIRCUIT:
+				return context.nn_sub_circuit();
+
+			case UNITARY_1Q_DEF:
+				return context.nn_unitary(1);
+
+			case UNITARY_2Q_DEF:
+				return context.nn_unitary(2);
+
 			case COMPOUND_STMT:
 				context.reset(RL_QUBITS);
 				context.reset(RL_BITS);
@@ -164,7 +173,7 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 				return std::make_shared<Node>(str, kind);
 
 			case SUBROUTINE:
-				return context.nn_gate_from_subroutine();
+				return context.nn_subroutine();
 
 			case H: case X: case Y: case Z: case T: case TDG: case S: case SDG: case PROJECT_Z:
 			case V: case VDG: case CX : case CY: case CZ: case CNOT: case XX: case YY: case ZZ:

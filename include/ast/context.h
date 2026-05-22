@@ -99,7 +99,7 @@ struct Context {
 
 		const Control& get_control() const { return control; }
 
-		unsigned int resolve_var(Token_kind kind) const;
+		Expr_type resolve_var(const Token_kind name, const std::vector<int>& args) const;
 
 		std::shared_ptr<Circuit> get_current_circuit() const;
 
@@ -111,6 +111,10 @@ struct Context {
 
 		std::shared_ptr<Circuit> nn_circuit();
 
+		std::shared_ptr<Circuit> nn_sub_circuit();
+
+		std::shared_ptr<Circuit> nn_unitary(unsigned int n_qubits);
+
 		std::shared_ptr<Gate> nn_gate(const std::string& str, const Token_kind& kind);
 
 		std::shared_ptr<Compound_stmt> nn_compound_stmt();
@@ -121,7 +125,7 @@ struct Context {
 
 		std::shared_ptr<UInt> nn_circuit_id();
 
-		std::shared_ptr<Gate> nn_gate_from_subroutine();
+		std::shared_ptr<Gate> nn_subroutine();
 
 		template<typename T>
 		Ptr_coll<T> get_current_coll(Resource_kind rk) const {

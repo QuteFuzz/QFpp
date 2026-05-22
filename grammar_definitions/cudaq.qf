@@ -28,26 +28,28 @@ swap = "swap";
 crx  = "rx<cudaq::ctrl>";
 cry  = "ry<cudaq::ctrl>";
 crz  = "rz<cudaq::ctrl>";
+u1   = "r1";
+u3   = "u3";
 
-gate_name += s | t | sdg | tdg | swap | ch | crx | cry | crz;
+gate_name += s | t | sdg | tdg | swap | ch | crx | cry | crz | u1 | u3;
 
 INTERNAL {
     float_no_param = MAKE_FLOAT | GLOB::pi_multiples;
 
-    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3, 4)];
-    param_defs = (param_def NEWLINE)[UNIFORM(3, 4)];
+    qubit_defs = (qubit_def NL)[UNIFORM(3, 4)];
+    param_defs = (param_def NL)[UNIFORM(3, 4)];
 
     singular_qubit_def = "cudaq::qubit " GET_DEF_NAME ";";
     register_qubit_def = "cudaq::qarray<" GET_SIZE ">" GET_DEF_NAME ";";
 
-    singular_param_def = "float " GET_DEF_NAME " = " float_no_param ";";
+    singular_param_def = "double " GET_DEF_NAME " = " float_no_param ";";
 
     # after initing the array, use a for loop to assign floats to the array
     register_param_def =
-        "float " GET_DEF_NAME "[" GET_SIZE "];" NEWLINE[2]
-        "for(int i = 0; i < " GET_SIZE "; i++){" NEWLINE
-        GET_DEF_NAME"[i] = " float_no_param";" NEWLINE
-        "}" NEWLINE
+        "double " GET_DEF_NAME "[" GET_SIZE "];" NL[2]
+        "for(int i = 0; i < " GET_SIZE "; i++){" NL
+        GET_DEF_NAME"[i] = " float_no_param";" NL
+        "}" NL
     ;
 }
 
@@ -57,7 +59,7 @@ EXTERNAL {
 
     singular_qubit_def = "cudaq::qubit& " GET_DEF_NAME;
 
-    singular_param_def = "float " GET_DEF_NAME;
+    singular_param_def = "double " GET_DEF_NAME;
 
     # some defs restricted to singular to make passing of arguments easier (do not have to check for types and register length to match)    
     qubit_def = singular_qubit_def;
@@ -86,7 +88,7 @@ gate_op_args = (float ", ")[GATE_PARAMS] qubit_list;
 
 qubit_list   = qubit (", " qubit)[GATE_QUBITS - 1];
 
-subroutine_op = subroutine "{}(" subroutine_op_args ")";
+subroutine_op = subroutine "{}"[GATE_KIND == subroutine_circuit] "(" subroutine_op_args ")";
 subroutine_op_args = qubit_list (", " float)[GATE_PARAMS];
 
 # ============================================================================
@@ -94,19 +96,19 @@ subroutine_op_args = qubit_list (", " float)[GATE_PARAMS];
 # ============================================================================
 
 # TODO: figure out why bigger circuits are so slow
-# compound_stmts = (compound_stmt NEWLINE)[UNIFORM(15, 20)];
-compound_stmts = (compound_stmt NEWLINE)[UNIFORM(2, 5)];
+# compound_stmts = (compound_stmt NL)[UNIFORM(15, 20)];
+compound_stmts = (compound_stmt NL)[UNIFORM(6, 10)];
 compound_stmt  = qubit_op ";" | if_stmt;
 
 qubit_op       = gate_op | subroutine_op;
 
 if_stmt =
-    'if (mz(' qubit ')){' NEWLINE ci<compound_stmts> "}" si<(else_stmt)?>;
+    'if (' '!'? 'mz(' qubit ')){' NL ci<compound_stmts> "}" si<(else_stmt)?>;
 else_stmt =
-    'else {' NEWLINE ci<compound_stmts> "}";
+    'else {' NL ci<compound_stmts> "}";
 
-# for_loop = "for (int i = 0; i < " GET_REG_NAME ".size(); ++i) {" NEWLINE
-    # ci<(gate_name "(" GET_REG_NAME "[i]);")> NEWLINE 
+# for_loop = "for (int i = 0; i < " GET_REG_NAME ".size(); ++i) {" NL
+    # ci<(gate_name "(" GET_REG_NAME "[i]);")> NL 
 # "}";
 
 # ============================================================================
@@ -115,93 +117,102 @@ else_stmt =
 
 testing_import = "from diff_testing.cudaq import cudaqTesting";
 
-program = testing_import NEWLINE[2] 
-    "source_code = r'''" NEWLINE imports NEWLINE NEWLINE subroutine_defs NEWLINE circuit NEWLINE[2] main "'''" 
-    NEWLINE[2] program_footer;
+program = testing_import NL[2] 
+    "source_code = r'''" NL imports NL[2] subroutine_defs NL unitary_defs NL circuit NL[2] main "'''" 
+    NL[2] program_footer;
 
 run_and_postprocess = 
-    "auto results = cudaq::run(num_shots, kernel);"      NEWLINE
-    "std::map<std::string, std::size_t> counts;"         NEWLINE
+    "auto results = cudaq::run(num_shots, kernel);"      NL
+    "std::map<std::string, std::size_t> counts;"         NL
 
-    "for (const uint64_t &res : results) {"                 NEWLINE
-    # "   std::string bits;"                             NEWLINE
-    # "   for (auto b : shot) bits += b ? '1' : '0';"    NEWLINE
-    "   counts[std::to_string(res)]++;"                               NEWLINE
-    "}"                                                  NEWLINE
+    "for (const uint64_t &res : results) {"                 NL
+    # "   std::string bits;"                             NL
+    # "   for (auto b : shot) bits += b ? '1' : '0';"    NL
+    "   counts[std::to_string(res)]++;"                               NL
+    "}"                                                  NL
 
-    'printf("{");'                                       NEWLINE
-    "bool first = true;"                                 NEWLINE
-    "for (const auto &[val, count] : counts){ "         NEWLINE
-    '     if (!first) std::cout << ", ";'                NEWLINE
-    '     printf("\"%s\" : %zu\n", val.c_str(), count);'    NEWLINE
-    "     first = false;"                                NEWLINE
-    "}"                                                  NEWLINE
+    'printf("{");'                                       NL
+    "bool first = true;"                                 NL
+    "for (const auto &[val, count] : counts){ "         NL
+    '     if (!first) std::cout << ", ";'                NL
+    '     printf("\"%s\" : %zu\n", val.c_str(), count);'    NL
+    "     first = false;"                                NL
+    "}"                                                  NL
     'printf("}");'
     ;
 
 # contains try-catch such that if the program fails, testing script can catch the error and show it
 main = 
-    "int main(int argc, char* argv[]) {" NEWLINE
+    "int main(int argc, char* argv[]) {" NL
     ci<(
-        ("auto kernel = " GET_CIRCUIT_NAME "{};") NEWLINE[2]
+        ("auto kernel = " GET_CIRCUIT_NAME "{};") NL[2]
     
-        "int num_shots = std::stoi(argv[1]);" NEWLINE
-        "try {" NEWLINE
-        ci<run_and_postprocess> NEWLINE
-        "} catch (const std::exception& e) {" NEWLINE
-        '    std::cerr << "[CUDA-Q Exception] " << e.what() << std::endl;' NEWLINE
-        "    return 1;" NEWLINE
-        "}" NEWLINE
-        "return 0;" NEWLINE
+        "int num_shots = std::stoi(argv[1]);" NL
+        "try {" NL
+        ci<run_and_postprocess> NL
+        "} catch (const std::exception& e) {" NL
+        '    std::cerr << "[CUDA-Q Exception] " << e.what() << std::endl;' NL
+        "    return 1;" NL
+        "}" NL
+        "return 0;" NL
     )>
     "}";
 
-imports = "#include <cudaq.h>" NEWLINE "#include <iostream>" NEWLINE "#include <cmath>";
+imports = "#include <cudaq.h>" NL "#include <iostream>" NL "#include <cmath>";
 
-program_footer = "ct = cudaqTesting()" NEWLINE testing_method;
+program_footer = "ct = cudaqTesting()" NL testing_method;
 
-testing_method = "ct.opt_ks_test(source_code, " circuit_id ")" NEWLINE;
+testing_method = "ct.opt_ks_test(source_code, " circuit_id ")" NL;
 
 
-subroutine_defs = (subroutine_circuit NEWLINE)*;
+subroutine_defs = ((subroutine_circuit | unitary_1q_def) NL)*;
 
-subroutine_circuit = "struct " GET_CIRCUIT_NAME " { " NEWLINE
-    "void operator()(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs ") __qpu__ {" NEWLINE 
-    # ci<INTERNAL::qubit_defs> NEWLINE
-    ci<compound_stmts> NEWLINE
-    NEWLINE "}};"
+subroutine_circuit = "struct " GET_CIRCUIT_NAME " { " NL
+    "void operator()(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs ") __qpu__ {" NL 
+    # ci<INTERNAL::qubit_defs> NL
+    ci<compound_stmts> NL
+    NL "}};"
     ;
 
-# subroutine_body = (qubit_op ";" NEWLINE)[UNIFORM(2, 4)];
+unitary_1q_def = 
+    "cudaq_register_operation("                                 NL
+    GET_CIRCUIT_NAME ", "                                       NL
+    "    1,    // Number of qubits"                             NL
+    "    (std::vector<std::vector<std::complex<double>>>{"      NL
+    "          {{" ""[GET_MAT_POS(0,0)] "i," ""[GET_MAT_POS(0,1)] "i},"   NL
+    "          {" ""[GET_MAT_POS(1,0)] "i," ""[GET_MAT_POS(1,1)] "i}}"    NL
+    "    })"                                                    NL
+    ");"                                                        NL
+    ;
 
 # return type is bitpacked results
-circuit = "struct " GET_CIRCUIT_NAME " { " NEWLINE
-    "uint64_t operator()() __qpu__ {" NEWLINE 
-    ci<INTERNAL::qubit_defs> NEWLINE
-    ci<INTERNAL::param_defs> NEWLINE
-    compound_stmts NEWLINE
-    measures NEWLINE "}};"
+circuit = "struct " GET_CIRCUIT_NAME " { " NL
+    "uint64_t operator()() __qpu__ {" NL 
+    ci<INTERNAL::qubit_defs> NL
+    ci<INTERNAL::param_defs> NL
+    compound_stmts NL
+    measures NL "}};"
     ;
 
 measures = 
-    "uint64_t packed_result = 0; int bit_offset = 0;" NEWLINE[2]
+    "uint64_t packed_result = 0; int bit_offset = 0;" NL[2]
 
     ""[
     for def in ALL_QUBIT_DEFS {
         if (def.in_int_scope) {
             if (def.is_singular){
                 singular_measure = 
-                    "if (mz(" ""[def.name] ")){ packed_result |= (1ULL << bit_offset); }" NEWLINE
-                    "   bit_offset += 1;" NEWLINE;
+                    "if (mz(" ""[def.name] ")){ packed_result |= (1ULL << bit_offset); }" NL
+                    "   bit_offset += 1;" NL;
 
                 singular_measure
 
             } else {
                 register_measure = 
-                    "for (auto b : mz(" ""[def.name] ")){" NEWLINE
-                    "   if (b) packed_result |= (1ULL << bit_offset);" NEWLINE
-                    "   bit_offset++;" NEWLINE
-                    "}" NEWLINE;
+                    "for (auto b : mz(" ""[def.name] ")){" NL
+                    "   if (b) packed_result |= (1ULL << bit_offset);" NL
+                    "   bit_offset++;" NL
+                    "}" NL;
                 register_measure
             }
         }

@@ -7,26 +7,25 @@
 #include <params.h>
 #include <run_utils.h>
 #include <clone_mixin.h>
+#include <complex>
+
+using Cx     = std::complex<float>;
+using CxMat  = std::vector<std::vector<Cx>>;
 
 class Circuit : public Cloneable<Circuit> {
-
     public:
 
-        Circuit() :
-            Cloneable<Circuit>("circuit", CIRCUIT),
-            name("dummy_circuit")
-        {}
+        Circuit();
 
         /// @brief Generating a random circuit from scratch
-        Circuit(std::string _name, bool _is_subroutine) :
-            Cloneable<Circuit>("circuit", CIRCUIT),
-            name(_name),
-            is_subroutine(_is_subroutine)
-        {}
+        Circuit(std::string _name, Token_kind kind);
+
+        /// @brief Generating a random unitary from scratch
+        Circuit(std::string _name, unsigned int _n_matrix_qubits);
 
         inline std::string get_name(){return name;}
 
-        inline bool check_if_subroutine(){return is_subroutine;}
+        inline bool check_if_sub_circuit(){return kind == SUB_CIRCUIT;}
 
         template <typename T>
         inline Ptr_coll<T> get_coll() const {
@@ -68,13 +67,19 @@ class Circuit : public Cloneable<Circuit> {
             }
         }
 
+        inline unsigned int get_n_matrix_qubits() const{ return n_matrix_qubits; }
+
+        std::string get_val_at(int row, int col) const;
+
         void print_info() const;
 
     private:
         std::string name;
-        bool is_subroutine = false;
         Ptr_coll<Resource> resources;
         Ptr_coll<Resource_def> resource_defs;
+        unsigned int n_matrix_qubits = 0;
+        unsigned int dim = 0;
+        CxMat        matrix;
 };
 
 
