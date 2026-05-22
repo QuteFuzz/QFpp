@@ -6,8 +6,8 @@ from pytket.architecture import Architecture
 from pytket.extensions.qiskit.backends.aer import AerBackend, AerStateBackend
 from pytket.passes import (
     DecomposeBoxes,
-    DefaultMappingPass,
     DecomposeMultiQubitsCX,
+    DefaultMappingPass,
     RemoveImplicitQubitPermutation,
 )
 from tket.passes import badger_pass
