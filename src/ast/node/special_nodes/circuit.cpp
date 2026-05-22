@@ -9,7 +9,6 @@ static float random_normal() {
 }
 
 /// Gram-Schmidt column orthogonalisation to make unitary matrix
-/// Sufficient for fuzzing; for strict Haar measure apply QR phase correction too.
 static CxMat haar_unitary(unsigned int n) {
     CxMat src(n, std::vector<Cx>(n));
     for (auto& row : src)
@@ -72,15 +71,8 @@ std::string Circuit::get_val_at(int row, int col) const {
 
     if ((u_row < dim) && (u_col < dim)){
         float re = matrix[u_row][u_col].real();
-        float im = matrix[u_row][u_col].imag();
-        
-        out = std::to_string(re);
-
-        if (im >= 0.0f){
-            out += "+";
-        }
-
-        out += std::to_string(im);
+        float im = matrix[u_row][u_col].imag();        
+        out = std::to_string(re) + ", " + std::to_string(im);
     }
 
     return out;

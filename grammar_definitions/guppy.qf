@@ -76,12 +76,12 @@ singular_param = GET_DECL_NAME;
 register_param = GET_DECL_NAME "[" GET_INDEX "]";
 
 # ── Program structure ─────────────────────────────────────────
-program = imports NL NL subroutine_defs NL circuit NL program_footer;
+program = imports NL NL sub_circuit_defs NL circuit NL program_footer;
 
-subroutine_defs = (subroutine_circuit NL)[UNIFORM(2, 6)];
+sub_circuit_defs = (sub_circuit NL)[UNIFORM(2, 6)];
 
 circuit = circuit_def_header NL body NL;
-subroutine_circuit = subroutine_def_header NL subroutine_body NL;
+sub_circuit = subroutine_def_header NL subroutine_body NL;
 
 circuit_def_header = "@guppy.comptime" NL "def " GET_CIRCUIT_NAME "() -> None:";
 subroutine_def_header = "@guppy" NL "def " GET_CIRCUIT_NAME "(" EXTERNAL::qubit_defs ") -> None:";

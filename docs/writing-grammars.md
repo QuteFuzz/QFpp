@@ -51,7 +51,7 @@ Every grammar **must** define or inherit all of the following. Rules inherited f
 | Rule | Who defines | Notes |
 |------|------------|-------|
 | `program` | **Y** | Top-level; must eventually produce imports, circuit, footer |
-| `circuit` or `subroutine_circuit` | **Y** | The `CIRCUIT` token triggers circuit creation |
+| `circuit` or `sub_circuit` | **Y** | The `CIRCUIT` token triggers circuit creation |
 | `body` or `subroutine_body` | **Y** | The `BODY` token marks circuit contents |
 | `imports` | **Y** | Framework imports; plain string rules |
 | `program_footer` | **Y** | Testing harness call at end of file |
@@ -246,8 +246,8 @@ uv run scripts/run.py --grammars myframework --num-tests 5
 ### Subroutines not working
 
 For subroutine support you need:
-- `subroutine_defs = (subroutine_circuit NL)[UNIFORM(1, 3)];`
-- `subroutine_circuit` — a rule that creates a sub-circuit with EXTERNAL qubit parameters
+- `sub_circuit_defs = (sub_circuit NL)[UNIFORM(1, 3)];`
+- `sub_circuit` — a rule that creates a sub-circuit with EXTERNAL qubit parameters
 - `subroutine_def_footer` — any post-circuit wrapping (e.g. `.to_gate()`)
 - `subroutine_op` — how to call the subroutine from the main circuit
 - `subroutine_op_args` — the qubit arguments for the call

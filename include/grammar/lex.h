@@ -50,7 +50,7 @@ enum Token_kind {
     U,
     PHASED_X,
     PROGRAM,
-    SUBROUTINE_DEFS,
+    SUB_CIRCUIT_DEFS,
     CIRCUIT,
     SUB_CIRCUIT,
     UNITARY_1Q_DEF,
@@ -176,9 +176,9 @@ const std::vector<Token_matcher> TOKEN_RULES = {
         special rules
     */
     Token_matcher("program", PROGRAM),
-    Token_matcher("subroutine_defs", SUBROUTINE_DEFS),
+    Token_matcher("sub_circuit_defs", SUB_CIRCUIT_DEFS),
     Token_matcher("circuit", CIRCUIT),
-    Token_matcher("subroutine_circuit", SUB_CIRCUIT),
+    Token_matcher("sub_circuit", SUB_CIRCUIT),
     Token_matcher("unitary_1q_def", UNITARY_1Q_DEF),
     Token_matcher("unitary_2q_def", UNITARY_2Q_DEF),
     Token_matcher("body", BODY),
@@ -458,15 +458,15 @@ inline bool is_quiet(const Token_kind& kind){
         (kind == ARROW) ;
 }
 
-inline std::string kind_as_str(const Token_kind& kind) {
-    std::string str = std::to_string(kind);
-    
+inline std::string kind_as_str(const Token_kind& kind) {    
     if (kind == STRING){
-        str = "STRING";
+        return CYAN("STRING");
     } else if (kind == NUMBER){
-        str = "NUMBER";
+        return CYAN("NUMBER");
     }
     
+    std::string str = std::to_string(kind);
+
     for (auto tm : TOKEN_RULES){
         if(tm.kind == kind){
             str = tm.pattern;

@@ -88,7 +88,7 @@ gate_op_args = (float ", ")[GATE_PARAMS] qubit_list;
 
 qubit_list   = qubit (", " qubit)[GATE_QUBITS - 1];
 
-subroutine_op = subroutine "{}"[GATE_KIND == subroutine_circuit] "(" subroutine_op_args ")";
+subroutine_op = subroutine "{}"[GATE_KIND == sub_circuit] "(" subroutine_op_args ")";
 subroutine_op_args = qubit_list (", " float)[GATE_PARAMS];
 
 # ============================================================================
@@ -118,24 +118,24 @@ else_stmt =
 testing_import = "from diff_testing.cudaq import cudaqTesting";
 
 program = testing_import NL[2] 
-    "source_code = r'''" NL imports NL[2] subroutine_defs NL unitary_defs NL circuit NL[2] main "'''" 
+    "source_code = r'''" NL imports NL namespaces NL sub_circuit_defs NL circuit NL[2] main "'''" 
     NL[2] program_footer;
 
 run_and_postprocess = 
     "auto results = cudaq::run(num_shots, kernel);"      NL
     "std::map<std::string, std::size_t> counts;"         NL
 
-    "for (const uint64_t &res : results) {"                 NL
+    "for (const uint64_t &res : results) {"              NL
     # "   std::string bits;"                             NL
     # "   for (auto b : shot) bits += b ? '1' : '0';"    NL
-    "   counts[std::to_string(res)]++;"                               NL
+    "   counts[std::to_string(res)]++;"                  NL
     "}"                                                  NL
 
     'printf("{");'                                       NL
     "bool first = true;"                                 NL
-    "for (const auto &[val, count] : counts){ "         NL
+    "for (const auto &[val, count] : counts){ "          NL
     '     if (!first) std::cout << ", ";'                NL
-    '     printf("\"%s\" : %zu\n", val.c_str(), count);'    NL
+    '     printf("\"%s\" : %zu\n", val.c_str(), count);' NL
     "     first = false;"                                NL
     "}"                                                  NL
     'printf("}");'
@@ -158,29 +158,68 @@ main =
     )>
     "}";
 
-imports = "#include <cudaq.h>" NL "#include <iostream>" NL "#include <cmath>";
+imports = 
+    "#include <cudaq.h>"  NL 
+    "#include <iostream>" NL 
+    "#include <cmath> "   NL
+    "#include <vector> "  NL
+    "#include <complex> " NL
+    ;
+
+namespaces = "using namespace std::complex_literals;";
 
 program_footer = "ct = cudaqTesting()" NL testing_method;
 
 testing_method = "ct.opt_ks_test(source_code, " circuit_id ")" NL;
 
 
-subroutine_defs = ((subroutine_circuit | unitary_1q_def) NL)*;
+sub_circuit_defs = ((sub_circuit | unitary_1q_def | unitary_2q_def) NL)+;
 
-subroutine_circuit = "struct " GET_CIRCUIT_NAME " { " NL
+sub_circuit = "struct " GET_CIRCUIT_NAME " { " NL
     "void operator()(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs ") __qpu__ {" NL 
     # ci<INTERNAL::qubit_defs> NL
     ci<compound_stmts> NL
     NL "}};"
     ;
 
+(*
+    row major 1-D flat matrices
+
+    Note:
+
+    `GET_MAT_POS` returns a string with the raw real and imaginary values "re, img"
+
+    these are then surrounded with braces to create a C++ initialiser list.
+
+    This is done as opposed to outputting "re+(img)i" or "re-(img)i" because that would
+    require static evaluation of the bin op which cudaq-quake doesn't handle well, causes
+    matrix to be silently dropped.
+
+    Using init list bypasses this problem
+*)
+
 unitary_1q_def = 
-    "cudaq_register_operation("                                 NL
+    "CUDAQ_REGISTER_OPERATION("                                 NL
     GET_CIRCUIT_NAME ", "                                       NL
     "    1,    // Number of qubits"                             NL
-    "    (std::vector<std::vector<std::complex<double>>>{"      NL
-    "          {{" ""[GET_MAT_POS(0,0)] "i," ""[GET_MAT_POS(0,1)] "i},"   NL
-    "          {" ""[GET_MAT_POS(1,0)] "i," ""[GET_MAT_POS(1,1)] "i}}"    NL
+    "    0,    // Number of params"                             NL
+    "    (std::vector<std::complex<double>>{"      NL
+    "           {"""[GET_MAT_POS(0,0)] "},{" ""[GET_MAT_POS(0,1)] "},"   NL
+    "           {"""[GET_MAT_POS(1,0)] "},{" ""[GET_MAT_POS(1,1)] "} "    NL
+    "    })"                                                    NL
+    ");"                                                        NL
+    ;
+
+unitary_2q_def = 
+    "CUDAQ_REGISTER_OPERATION("                                 NL
+    GET_CIRCUIT_NAME ", "                                       NL
+    "    2,    // Number of qubits"                             NL
+    "    0,    // Number of params"                             NL
+    "    (std::vector<std::complex<double>>{"      NL
+    "           {" ""[GET_MAT_POS(0,0)] "},{" ""[GET_MAT_POS(0,1)] "},{ " ""[GET_MAT_POS(0,2)] "},{ " ""[GET_MAT_POS(0,3)] "}" ","   NL
+    "           {" ""[GET_MAT_POS(1,0)] "},{" ""[GET_MAT_POS(1,1)] "},{ " ""[GET_MAT_POS(1,2)] "},{ " ""[GET_MAT_POS(1,3)] "}" ","   NL
+    "           {" ""[GET_MAT_POS(2,0)] "},{" ""[GET_MAT_POS(2,1)] "},{ " ""[GET_MAT_POS(2,2)] "},{ " ""[GET_MAT_POS(2,3)] "}" ","   NL
+    "           {" ""[GET_MAT_POS(3,0)] "},{" ""[GET_MAT_POS(3,1)] "},{ " ""[GET_MAT_POS(3,2)] "},{ " ""[GET_MAT_POS(3,3)] "}" " "   NL
     "    })"                                                    NL
     ");"                                                        NL
     ;

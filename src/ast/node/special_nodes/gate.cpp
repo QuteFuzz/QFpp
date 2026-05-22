@@ -36,7 +36,7 @@ Gate::Gate(const std::string& str, const Ptr_coll<Resource_def>& _resource_defs)
 }
 
 Gate::Gate(const std::string& str, unsigned int n_matrix_qubits) :
-    Cloneable<Gate>(str, SUB_CIRCUIT)
+    Cloneable<Gate>(str, SUBROUTINE)
 {
     info.gate = n_matrix_qubits == 1 ? UNITARY_1Q_DEF : UNITARY_2Q_DEF;
     info.resource_counts[Resource_kind::QUBIT] = n_matrix_qubits;

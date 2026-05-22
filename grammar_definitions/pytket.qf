@@ -40,7 +40,7 @@ gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
 # CIRCUIT STRUCTURE
 # ============================================================================
 
-program = imports NL[2] subroutine_defs NL circuit NL program_footer;
+program = imports NL[2] sub_circuit_defs NL circuit NL program_footer;
 
 subroutine_body = EXTERNAL::qubit_defs NL (qubit_op NL)+;  # subroutines have no bits to facilitate pytket to qiskit conversion
 

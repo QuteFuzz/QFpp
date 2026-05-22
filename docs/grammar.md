@@ -268,9 +268,9 @@ The following rule names are recognised by the lexer and given specific `Token_k
 | Rule name | Token kind | AST behaviour |
 |-----------|-----------|---------------|
 | `program` | `PROGRAM` | Top-level entry point |
-| `circuit` / `subroutine_circuit` | `CIRCUIT` | Triggers `context.nn_circuit()` — creates a new `Circuit` object |
+| `circuit` / `sub_circuit` | `CIRCUIT` | Triggers `context.nn_circuit()` — creates a new `Circuit` object |
 | `body` / `subroutine_body` | `BODY` | Marks the circuit body |
-| `subroutine_defs` | `SUBROUTINE_DEFS` | Triggers `context.nn_subroutines()` — marks that we are under the subroutines node |
+| `sub_circuit_defs` | `SUB_CIRCUIT_DEFS` | Triggers `context.nn_sub_circuit_defs()` — marks that we are under the subroutines node |
 | `compound_stmt` | `COMPOUND_STMT` | Triggers `Compound_stmt::from_nested_depth()` with constraint injection |
 | `compound_stmts` / `subroutine_compound_stmts` | `COMPOUND_STMTS` | Used by MAP-Elites mutation to find mutation sites |
 | `qubit_op` | `QUBIT_OP` | Triggers `context.nn_qubit_op()` — resets qubit/bit usage |

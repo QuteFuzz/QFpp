@@ -47,9 +47,9 @@ INTERNAL {
 # -----------------
 header = 'OPENQASM 3.0;' NL 'include "stdgates.inc";';
 
-program = header NL[2] subroutine_defs NL circuit;
+program = header NL[2] sub_circuit_defs NL circuit;
 
-subroutine_defs = (subroutine_circuit NL)[UNIFORM(1, 3)];
+sub_circuit_defs = (sub_circuit NL)[UNIFORM(1, 3)];
 
 circuit = INTERNAL::qubit_defs INTERNAL::bit_defs INTERNAL::param_defs NL[2] body;
 
@@ -61,7 +61,7 @@ subroutine_body = ci<compound_stmts>;
 
 compound_stmt = qubit_op;
 
-subroutine_circuit = 
+sub_circuit = 
     "def " GET_CIRCUIT_NAME "(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs "){" NL subroutine_body "}";
 
 subroutine_op = subroutine "(" subroutine_op_args ")";

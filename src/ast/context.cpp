@@ -16,7 +16,7 @@ void Context::reset(Reset_level l){
 
             circuits.clear();
 
-            subroutines_node = std::nullopt;
+            sub_circuit_defs_node = std::nullopt;
             [[fallthrough]];
         }
 
@@ -262,9 +262,9 @@ std::shared_ptr<Compound_stmt> Context::nn_compound_stmt(){
     return std::make_shared<Compound_stmt>(nested_depth);
 }
 
-std::shared_ptr<Node> Context::nn_subroutines(){
-    std::shared_ptr<Node> node = std::make_shared<Node>("", SUBROUTINE_DEFS);
-    subroutines_node = std::make_optional<std::shared_ptr<Node>>(node);
+std::shared_ptr<Node> Context::nn_sub_circuit_defs(){
+    std::shared_ptr<Node> node = std::make_shared<Node>("", SUB_CIRCUIT_DEFS);
+    sub_circuit_defs_node = std::make_optional<std::shared_ptr<Node>>(node);
     return node;
 }
 

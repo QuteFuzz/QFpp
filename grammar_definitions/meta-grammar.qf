@@ -60,14 +60,14 @@ EXTERNAL {
 
 program       = imports NL circuit NL program_footer;
 
-subroutine_defs = (subroutine_circuit)[UNIFORM(2,6)];
+sub_circuit_defs = (sub_circuit)[UNIFORM(2,6)];
 
 # all subroutines have just qubit ops and no if-else statements
 subroutine_body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL (qubit_op NL)+;
 
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL compound_stmts;
 
-subroutine_circuit = circuit_def_header NL subroutine_body NL subroutine_def_footer;
+sub_circuit = circuit_def_header NL subroutine_body NL subroutine_def_footer;
 
 compound_stmts = (compound_stmt NL)[UNIFORM(100,150)];
 

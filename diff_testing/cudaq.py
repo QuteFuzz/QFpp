@@ -23,7 +23,10 @@ class cudaqTesting(Base):
             )
             return {}
 
-        compile_cmd = [str(nvq_binary), f"-O{opt_level}", "--target=qci", "--emulate"]
+        compile_cmd = [str(nvq_binary), f"-O{opt_level}"]
+
+        if opt_level > 0:
+            compile_cmd.extend(["--target=qci", "--emulate"])
 
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_cpp = os.path.join(tmpdir, f"circuit{circuit_num}.cpp")

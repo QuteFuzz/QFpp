@@ -95,8 +95,8 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			case CIRCUIT_ID:
 				return context.nn_circuit_id();
 
-			case SUBROUTINE_DEFS:
-				return context.nn_subroutines();
+			case SUB_CIRCUIT_DEFS:
+				return context.nn_sub_circuit_defs();
 
 			case QUBIT_OP:
 				return context.nn_qubit_op();

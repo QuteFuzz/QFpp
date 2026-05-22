@@ -42,7 +42,7 @@ param = singular_param;
 singular_param = GET_DECL_NAME;
 
 # Redefine base program structure to fit Qiskit
-program = imports NL NL parameter_defs NL subroutine_defs NL circuit NL compiler_call;
+program = imports NL NL parameter_defs NL sub_circuit_defs NL circuit NL compiler_call;
 
 circuit = circuit_def_header NL body NL;
 
