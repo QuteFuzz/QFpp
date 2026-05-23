@@ -35,10 +35,10 @@ Branch Rule::pick_branch(std::shared_ptr<Node> rule_as_node){
     }
 
     if(valid_branch_exists){
-        Branch branch = branches[random_uint(size - 1)];
+        Branch branch = branches[uniform_uint(size - 1)];
 
         while(!rule_as_node->branch_satisfies_constraints(branch)){
-            branch = branches[random_uint(size - 1)];
+            branch = branches[uniform_uint(size - 1)];
         }
 
         return branch;

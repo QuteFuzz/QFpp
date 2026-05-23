@@ -7,6 +7,7 @@
 
 class Resource_def;
 enum class Resource_kind;
+class Variable;
 
 class Gate : public Cloneable<Gate> {
 
@@ -21,19 +22,29 @@ class Gate : public Cloneable<Gate> {
         /// @param kind
         Gate(const std::string& str, const Token_kind& kind);
 
-        /// @brief Use for subroutines
+        /// @brief Use for sub circuits
         /// @param str
         /// @param kind
         /// @param qubit_defs
-        Gate(const std::string& str, const Token_kind& kind, const Ptr_coll<Resource_def>& _resource_defs);
+        Gate(const std::string& str, const Ptr_coll<Resource_def>& _resource_defs);
+
+        /// @brief Use for unitaries
+        /// @param str 
+        /// @param kind 
+        /// @param n_matrix_qubits 
+        Gate(const std::string& str, unsigned int n_matrix_qubits);
 
         std::string get_id_as_str(){
             return std::to_string(id);
         }
 
+        std::shared_ptr<Variable> get_var_name() const override;
+
         unsigned int get_num_external_resources(Resource_kind rk) const;
 
         unsigned int get_num_external_resource_defs(Resource_kind kind) const;
+
+        Token_kind get_gate_source() const;
 
     private:
         Ptr_coll<Resource_def> resource_defs;

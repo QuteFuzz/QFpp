@@ -102,9 +102,13 @@ and tries to sync everything to match the lockfile. As a result, it reinstalls t
 
 | QSS | Bug in | Status |
 |-----|------|-------|
-| Pytket | [tket](https://github.com/Quantinuum/tket/issues/2109) | fixed |
-| Pytket | [tket2](https://github.com/Quantinuum/tket2/issues/1417) | ack |
-| CUDA-Q | [cuda-quantum](https://github.com/NVIDIA/cuda-quantum/issues/4562) | ack |
+| Pytket | [optimiser](https://github.com/Quantinuum/tket/issues/2109) | fixed |
+| Pytket | [optimiser](https://github.com/Quantinuum/tket2/issues/1417) | ack |
+| CUDA-Q | [parser](https://github.com/NVIDIA/cuda-quantum/issues/4562) | ack |
+| CUDA-Q | [parser](https://github.com/NVIDIA/cuda-quantum/issues/4600) |  |
+| Qiskit | [basis translator](https://github.com/Qiskit/qiskit/issues/16251) | ack, duplicate |
+| Pytket | [parser](https://github.com/Quantinuum/tket/issues/2179) |  |
+| Pytket | [routing pass](https://github.com/Quantinuum/tket/issues/2180) |  |
 
 ## Acknowledgements
 

@@ -1,11 +1,12 @@
 import json
 import os
+import subprocess
 import tempfile
 from typing import Any, Dict
 
 from diff_testing.lib import Base
 from params import CUDAQ_DIR, OUTPUT_DIR
-from utils import Color, log, modify_env, run_command
+from utils import Color, log, modify_env
 
 
 class cudaqTesting(Base):
@@ -23,7 +24,10 @@ class cudaqTesting(Base):
             )
             return {}
 
-        compile_cmd = [str(nvq_binary), f"-O{opt_level}", "--target=qpp-cpu"]
+        compile_cmd = [str(nvq_binary), f"-O{opt_level}"]
+
+        if opt_level > 0:
+            compile_cmd.extend(["--target=qci", "--emulate"])
 
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_cpp = os.path.join(tmpdir, f"circuit{circuit_num}.cpp")
@@ -43,8 +47,8 @@ class cudaqTesting(Base):
                 }
             )
 
-            run_command(compile_cmd, capture_output=True, env=env, cwd=tmpdir)
-            result = run_command(
+            subprocess.run(compile_cmd, capture_output=True, env=env, cwd=tmpdir)
+            result = subprocess.run(
                 [temp_exe, str(self.num_shots)], capture_output=True, env=env, cwd=tmpdir
             )
 

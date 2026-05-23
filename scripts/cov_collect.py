@@ -1,5 +1,6 @@
+import subprocess
+
 from params import CUDAQ_DIR, EXTERNAL_DIR, OUTPUT_DIR
-from utils import run_command
 
 
 def collect():
@@ -22,7 +23,7 @@ def collect():
 
     cmd += ["-o", profdata_file]
 
-    run_command(cmd)
+    subprocess.run(cmd)
 
     cudaq_bin_dir = CUDAQ_DIR / "build" / "bin"
 
@@ -39,7 +40,7 @@ def collect():
     for obj in objs:
         cmd.append(f"--object={str(cudaq_bin_dir / obj)}")
 
-    run_command(cmd)
+    subprocess.run(cmd)
 
 
 if __name__ == "__main__":

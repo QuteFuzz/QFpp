@@ -52,6 +52,9 @@ enum Token_kind {
     PROGRAM,
     SUBROUTINE_DEFS,
     CIRCUIT,
+    SUB_CIRCUIT,
+    UNITARY_1Q_DEF,
+    UNITARY_2Q_DEF,
     BODY,
     PARAM_DEF,
     QUBIT_DEF,
@@ -76,8 +79,7 @@ enum Token_kind {
     GATE_OP,
     EXPR,
     SUBROUTINE_OP,
-    GATE_NAME,
-    SUBROUTINE,
+    PRIMITIVE_GATE,
     CIRCUIT_ID,
     COMPARE_OP_BITWISE_OR_PAIR,
     COMPOUND_STMT,
@@ -88,12 +90,14 @@ enum Token_kind {
 
     META_FUNC_TOP,                                /// ADD META FUNCS BELOW!
     GET_CIRCUIT_NAME,
-    GATE,
-    GATE_QUBITS,
-    GATE_BITS,
-    GATE_PARAMS,
-    N_QUBITS,
-    N_BITS,
+    GET_GATE_NAME,
+    GET_GATE_SOURCE,
+    GET_GATE_QUBITS,
+    GET_GATE_BITS,
+    GET_GATE_PARAMS,
+    GET_TOTAL_QUBITS,
+    GET_TOTAL_BITS,
+    GET_MAT_POS,
     GET_INDENT_LEVEL,
     MAKE_INTEGER,
     MAKE_FLOAT,
@@ -174,9 +178,11 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("program", PROGRAM),
     Token_matcher("subroutine_defs", SUBROUTINE_DEFS),
     Token_matcher("circuit", CIRCUIT),
-    Token_matcher("subroutine_circuit", CIRCUIT),
+    Token_matcher("sub_circuit", SUB_CIRCUIT),
+    Token_matcher("unitary_1q_def", UNITARY_1Q_DEF),
+    Token_matcher("unitary_2q_def", UNITARY_2Q_DEF),
     Token_matcher("body", BODY),
-    Token_matcher("subroutine_body", BODY),
+    Token_matcher("sub_circuit_body", BODY),
     Token_matcher("qubit_def", QUBIT_DEF),
     Token_matcher("bit_def", BIT_DEF),
     Token_matcher("param_def", PARAM_DEF),
@@ -199,12 +205,11 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("barrier_op", BARRIER_OP),
     Token_matcher("gate_op", GATE_OP),
     Token_matcher("subroutine_op", SUBROUTINE_OP),
-    Token_matcher("gate_name", GATE_NAME),
+    Token_matcher("primitive_gate", PRIMITIVE_GATE),
     Token_matcher("singular_qubit", SINGULAR_QUBIT),
     Token_matcher("register_qubit", REGISTER_QUBIT),
     Token_matcher("singular_bit", SINGULAR_BIT),
     Token_matcher("register_bit", REGISTER_BIT),
-    Token_matcher("subroutine", SUBROUTINE),
     Token_matcher("circuit_id", CIRCUIT_ID),
     Token_matcher("compare_op_bitwise_or_pair", COMPARE_OP_BITWISE_OR_PAIR),
     Token_matcher("compound_stmt", COMPOUND_STMT),
@@ -213,7 +218,6 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("for_stmt", CF_STMT),
     Token_matcher("switch_stmt", CF_STMT),
     Token_matcher("compound_stmts", COMPOUND_STMTS),
-    Token_matcher("subroutine_compound_stmts", COMPOUND_STMTS),
     Token_matcher("classical_expr", EXPR),
     Token_matcher("bool_expr", EXPR),
     Token_matcher("uint_expr", EXPR),
@@ -266,12 +270,14 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("GET_SIZE", GET_SIZE),
     Token_matcher("RESET", RESET),
     Token_matcher("GET_CIRCUIT_NAME", GET_CIRCUIT_NAME),
-    Token_matcher("GATE", GATE),
-    Token_matcher("GATE_QUBITS", GATE_QUBITS),
-    Token_matcher("GATE_BITS", GATE_BITS),
-    Token_matcher("GATE_PARAMS", GATE_PARAMS),
-    Token_matcher("N_QUBITS", N_QUBITS),
-    Token_matcher("N_BITS", N_BITS),
+    Token_matcher("GET_GATE_NAME", GET_GATE_NAME),
+    Token_matcher("GET_GATE_SOURCE", GET_GATE_SOURCE),
+    Token_matcher("GET_GATE_QUBITS", GET_GATE_QUBITS),
+    Token_matcher("GET_GATE_BITS", GET_GATE_BITS),
+    Token_matcher("GET_GATE_PARAMS", GET_GATE_PARAMS),
+    Token_matcher("GET_TOTAL_QUBITS", GET_TOTAL_QUBITS),
+    Token_matcher("GET_TOTAL_BITS", GET_TOTAL_BITS),
+    Token_matcher("GET_MAT_POS", GET_MAT_POS),
 
     // some tokens get immediately converted into syntax because we know before hand what the replacement should be
     Token_matcher("LPAREN", STRING, "("),
@@ -286,7 +292,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("SINGLE_QUOTE", STRING, "\'"),
     Token_matcher("DOUBLE_QUOTE", STRING, "\""),
     Token_matcher("EQUALS", STRING, "="),
-    Token_matcher("NEWLINE", STRING, "\n"),
+    Token_matcher("NL", STRING, "\n"),
 
     Token_matcher("EXTERNAL", EXTERNAL),
     Token_matcher("INTERNAL", INTERNAL),
@@ -451,21 +457,22 @@ inline bool is_quiet(const Token_kind& kind){
         (kind == ARROW) ;
 }
 
-inline std::string kind_as_str(const Token_kind& kind) {
-    
+inline std::string kind_as_str(const Token_kind& kind) {    
     if (kind == STRING){
-        return "STRING";
+        return CYAN("STRING");
     } else if (kind == NUMBER){
-        return "NUMBER";
+        return CYAN("NUMBER");
     }
     
+    std::string str = std::to_string(kind);
+
     for (auto tm : TOKEN_RULES){
         if(tm.kind == kind){
-            return tm.pattern;
+            str = tm.pattern;
         }
     }
 
-    return std::to_string(kind);
+    return CYAN(str);
 }
 
 #endif

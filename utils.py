@@ -1,6 +1,5 @@
 import os
 import subprocess
-import sys
 from pathlib import Path
 from typing import Dict, List
 
@@ -34,42 +33,9 @@ def pipe_to_process(cmd, cwd, cmd_to_process):
             print(stderr)
             raise Exception("Fuzzer exited with errors")
 
-        log("Generation complete.", Color.GREEN)
-
     except Exception as e:
         log(f"Command {cmd} failed", Color.RED)
         raise e
-
-
-def run_command(command, cwd=None, env=None, capture_output=False, timeout=None):
-    """Helper to run shell commands"""
-    try:
-        result = subprocess.run(
-            command,
-            cwd=cwd,
-            env=env,
-            check=True,
-            capture_output=capture_output,
-            text=True,
-            timeout=timeout,
-        )
-
-        if result.returncode != 0:
-            print(result.stderr)
-            sys.exit(-1)
-
-        return result
-
-    except subprocess.CalledProcessError as e:
-        if capture_output:
-            print(e.stdout)
-            print(e.stderr)
-
-        raise e
-
-    except subprocess.TimeoutExpired:
-        print(f"Command {command} timed out after {timeout}s")
-        sys.exit(-1)
 
 
 def modify_env(vars: Dict[str, List[Path] | str]):

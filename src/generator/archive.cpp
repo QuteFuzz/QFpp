@@ -66,7 +66,7 @@ void Archive::init_archive(){
     for (auto genome : init_genomes){
 
         // make the circuit small to varying degrees
-        Erase_child(genome, COMPOUND_STMTS, random_float(1.0, 0.0)).apply();
+        Erase_child(genome, COMPOUND_STMTS, uniform_float(1.0, 0.0)).apply();
 
         place(genome);
     }
@@ -163,7 +163,7 @@ static void register_passes_to_arbiter(Arbiter& arbiter) {
 
             for (const auto& pair : interesting_gate_pairs){
                 // pick half the pairs randomly for combine pass
-                if(random_float(1.0, 0.0) < 0.5){
+                if(uniform_float(1.0, 0.0) < 0.5){
                     rules.push_back(std::make_unique<Add_gate_chain>(e, g, r, pair));
                 }
             }
@@ -184,7 +184,7 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
 
     while((total_evals < max_evals) && (evals_since_discovery < patience)){
         unsigned int n_filled_cells = filled_archive_indices.size();
-        unsigned int random_index = filled_archive_indices[random_uint(n_filled_cells - 1)];
+        unsigned int random_index = filled_archive_indices[uniform_uint(n_filled_cells - 1)];
 
         Cell cell = archive[random_index];
 

@@ -11,11 +11,19 @@ void IntExpr::print(std::ostream& stream) const {
 };
 
 Expr_type VarExpr::eval(Context& context) const {
-    return (int)context.resolve_var(var);
+    return context.resolve_var(name, args);
 }
 
 void VarExpr::print(std::ostream& stream) const {
-    stream << var;
+    stream << name;
+
+    if (args.size()){
+        stream << "{";
+        for (const auto& arg : args){
+            stream << arg << ", ";
+        }
+        stream << "}";
+    }
 };
 
 Expr_type RuleExpr::eval(Context& context) const {
@@ -102,6 +110,8 @@ Expr_type BinExpr::eval(Context& context) const {
             return (int)std::get<std::shared_ptr<Rule>>(eval)->get_token().kind;
         } else if (std::holds_alternative<int>(eval)){
             return std::get<int>(eval);
+        } else if (std::holds_alternative<bool>(eval)){
+            return std::get<bool>(eval) ? 1 : 0;
         } else {
             ERROR("Binop operand expected to be int or token!");
         }
@@ -111,7 +121,7 @@ Expr_type BinExpr::eval(Context& context) const {
     int right = resolve_operand(right_eval);
 
     if (op == "UNIFORM"){
-        return (int)random_uint(std::max(right, left), std::min(right, left));
+        return (int)uniform_uint(std::max(right, left), std::min(right, left));
     } else if (op == "+") {
         return left + right;
     } else if (op == "-"){

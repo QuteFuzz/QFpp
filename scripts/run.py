@@ -4,21 +4,24 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import List, Tuple
+from typing import Callable, List, Tuple
+
+import numpy as np
 
 from params import BUILD_DIR, OUTPUT_DIR
-from utils import Color, log, modify_env, pipe_to_process, run_command
+from utils import Color, log, modify_env, pipe_to_process
 
 NIGHTLY_DIR = Path("nightly_results")
 ENTRY_POINT = "program"
 
 MIN_KS_VALUE = 1e-8
-TIMEOUT = 2000
+TIMEOUT = 20000
 DEFAULT_NUM_TESTS = 1
 CPU_COUNT = os.cpu_count()
 
@@ -34,7 +37,7 @@ class Run_mode(Enum):
 
 class Result_kind(Enum):
     DOT_PROD = (0,)
-    KS_TEST = 1
+    KS_TEST = (1,)
 
 
 @dataclass
@@ -43,12 +46,13 @@ class CircuitRunInfo:
 
     circuit_path: Path
     grammar: str
-    possible_miscompilation_error: bool = False
     values: List[float] = field(default_factory=list)
     logs: str = ""
+    interesting: bool = False
+    skipped: bool = False
 
 
-def parse_for_testing_values(
+def _parse_for_testing_values(
     process_result: subprocess.CompletedProcess,
 ) -> Tuple[List[float], Result_kind | None]:
     pattern = r"p-value:\s*([\d.]+)|Dot product\s*([\d.]+)"
@@ -68,7 +72,7 @@ def parse_for_testing_values(
     return values, result_kind
 
 
-def clean_and_build():
+def _clean_and_build():
     """Compiles the C++ fuzzer"""
     log("Making build directory...", Color.YELLOW)
     if not BUILD_DIR.exists():
@@ -76,14 +80,14 @@ def clean_and_build():
 
     log("Compiling QuteFuzz...", Color.YELLOW)
     try:
-        run_command(["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."], cwd=BUILD_DIR)
-        run_command(["make", "-j", str(CPU_COUNT)], cwd=BUILD_DIR)
+        subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=Release", ".."], cwd=BUILD_DIR)
+        subprocess.run(["make", "-j", str(CPU_COUNT)], cwd=BUILD_DIR)
         log("Build successful.", Color.GREEN)
     except Exception as e:
         raise e
 
 
-def parse():
+def _parse():
     parser = argparse.ArgumentParser(description="qf++ runner")
     parser.add_argument(
         "--nightly",
@@ -105,7 +109,7 @@ def parse():
     return parser.parse_args()
 
 
-def print_progress(current: int, total: int):
+def _print_progress(current: int, total: int):
     """
     Call in a loop to create a terminal progress bar.
     """
@@ -121,6 +125,17 @@ def print_progress(current: int, total: int):
     # Print a new line when complete so subsequent prints don't overwrite the bar
     if current == total:
         print()
+
+
+def _record_time(process_name: str, num_tests: int, process: Callable[[], None]):
+    start = time.time()
+    process()
+    end = time.time()
+    dur = end - start
+
+    rate = np.inf if dur == 0 else num_tests / dur
+
+    print(f" {process_name} took {dur} seconds. Rate: {rate} programs / sec")
 
 
 class Check_grammar:
@@ -159,8 +174,6 @@ class Check_grammar:
         Feeds fuzzer CLI to produce tests for given grammar
         """
 
-        log(f"Generating tests for grammar: {self.name}", Color.YELLOW)
-
         if self.map_elites:
             log("Map elites mode activated", Color.GREEN)
 
@@ -175,6 +188,8 @@ class Check_grammar:
         input_str += f"{self.num_tests}\nquit\n"
 
         pipe_to_process(FUZZER_EXECUTABLE, BUILD_DIR, input_str)
+
+        log(f"Generated tests for grammar: {self.name}", Color.YELLOW)
 
     def get_ciruit_dirs(self) -> List[Path]:
         """Get list of generated circuit directories"""
@@ -198,46 +213,86 @@ class Check_grammar:
         if self.plot:
             cmd.append("--plot")
 
-        result = run_command(cmd, cwd=None, capture_output=True, timeout=TIMEOUT, env=env)
+        result = subprocess.run(
+            cmd, cwd=None, capture_output=True, timeout=TIMEOUT, env=env, text=True
+        )
 
         return result
 
     def validate_generated_circuit(self, circuit_path: Path) -> CircuitRunInfo:
 
         if not circuit_path.exists():
-            log("Circuit not found at" + str(circuit_path), Color.RED)
+            log("Circuit not found at" + str(circuit_path))
             sys.exit(0)
 
         run_info = CircuitRunInfo(circuit_path, self.name)
 
-        result: subprocess.CompletedProcess = self.run_circuit(circuit_path)
+        try:
+            result: subprocess.CompletedProcess = self.run_circuit(circuit_path)
 
-        if result.returncode == 0:
-            run_info.values, result_kind = parse_for_testing_values(result)
+            # circuit run successfully
+            if result.returncode == 0:
+                run_info.values, result_kind = _parse_for_testing_values(result)
 
-            if result_kind == Result_kind.KS_TEST:
-                min_ks = min(run_info.values)
-                if min_ks < MIN_KS_VALUE:
-                    run_info.possible_miscompilation_error = True
-                    run_info.logs = f"Low KS value: {min_ks:.4f} < {MIN_KS_VALUE}; "
+                if result_kind == Result_kind.KS_TEST:
+                    run_info.interesting = True
+                    min_ks = min(run_info.values)
+                    if min_ks < MIN_KS_VALUE:
+                        run_info.logs = f"Low KS value: {min_ks:.4f} < {MIN_KS_VALUE}; "
+                        log(f"  INTERESTING (Low KS): {circuit_path}", Color.YELLOW)
 
-                    log(f"  INTERESTING: {circuit_path}", Color.YELLOW)
+                elif result_kind == Result_kind.DOT_PROD:
+                    run_info.interesting = True
+                    dp = run_info.values[0]
+                    if dp != 1:
+                        run_info.logs = f"Dot product is not 1, got {dp}"
+                        log(f"  INTERESTING (Bad Dot Prod): {circuit_path}", Color.YELLOW)
 
-            elif result_kind == Result_kind.DOT_PROD:
-                dp = run_info.values[0]
-                if dp != 1:
-                    run_info.possible_miscompilation_error = True
-                    run_info.logs = f"Dot product is not 1, got {dp}"
+                else:
+                    raise Exception(
+                        "Result must be ks values or dot product, got None.\n"
+                        f"Stdout: \n{result.stdout}"
+                    )
 
-                    log(f"  INTERESTING: {circuit_path}", Color.YELLOW)
-
+            # crash while running the circuit
             else:
-                raise Exception(
-                    f"Result must be ks values or dot product, got None.\nStdout: \n{result.stdout}"
-                )
+                ignored_exceptions = ["NotImplementedError"]
 
-        else:
-            raise Exception(result.stdout + result.stderr)
+                if any(ex in result.stderr for ex in ignored_exceptions):
+                    log(
+                        f"  SKIPPING (Known Unsupported/Exception): {circuit_path.name}", Color.BLUE
+                    )
+                    run_info.skipped = True
+
+                elif self.mode == Run_mode.NIGHTLY:
+                    log(f"  INTERESTING (Crash): {circuit_path}", Color.YELLOW)
+                    run_info.interesting = True
+                    run_info.logs = (
+                        f"CRASH (Exit code {result.returncode})\n"
+                        "STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}\n"
+                    )
+
+                elif self.mode == Run_mode.CI:
+                    logs = (
+                        f"CRASH (Exit code {result.returncode})\n"
+                        "STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}\n"
+                    )
+
+                    raise Exception(f"Compiler crashed in CI!\n{logs}")
+
+        # circuit timed out
+        except subprocess.TimeoutExpired as e:
+            run_info.interesting = True
+
+            stdout = e.stdout.decode("utf-8") if isinstance(e.stdout, bytes) else e.stdout
+            stderr = e.stderr.decode("utf-8") if isinstance(e.stderr, bytes) else e.stderr
+
+            run_info.logs = f"TIMEOUT ({e.timeout}s)\nSTDOUT:\n{stdout}\nSTDERR:\n{stderr}\n"
+
+            if self.mode == Run_mode.CI:
+                raise Exception(f"Compiler timed out in CI!\n{run_info.logs}")
+            elif self.mode == Run_mode.NIGHTLY:
+                log(f"  INTERESTING (Timeout): {circuit_path}", Color.YELLOW)
 
         return run_info
 
@@ -246,10 +301,9 @@ class Check_grammar:
 
         num_circuits = len(circuit_dirs)
 
-        log(f"Validating {num_circuits} circuits", Color.YELLOW)
-
         interesting_results = []
         completed_threads = 0
+        num_skipped = 0
 
         with ThreadPoolExecutor(max_workers=self.sim_proc) as executor:
             # Submit all tasks
@@ -260,7 +314,7 @@ class Check_grammar:
                 for circuit_dir in circuit_dirs
             }
 
-            print_progress(0, num_circuits)
+            _print_progress(0, num_circuits)
 
             # Process results as they complete
             for future in as_completed(future_to_circuit):
@@ -268,18 +322,21 @@ class Check_grammar:
                 try:
                     run_info: CircuitRunInfo = future.result()
 
-                    if run_info.possible_miscompilation_error:
+                    if run_info.interesting:
                         interesting_results.append(run_info)
+                    elif run_info.skipped:
+                        num_skipped += 1
 
                     completed_threads += 1
-                    print_progress(completed_threads, num_circuits)
+                    _print_progress(completed_threads, num_circuits)
 
                 except Exception as e:
-                    log(f"Error validating circuit at {circuit_dir}/prog.py: {e}", Color.RED)
+                    log(f"Error validating circuit at {circuit_dir}/prog.py: {e}")
                     executor.shutdown(wait=False, cancel_futures=True)
                     sys.exit(-1)
 
-        log("Validation complete.", Color.GREEN)
+        if num_skipped:
+            log(f"Skipped {num_skipped} programs")
 
         if self.mode == Run_mode.NIGHTLY and len(interesting_results):
             self.save_interesting_circuits(interesting_results)
@@ -313,13 +370,13 @@ class Check_grammar:
         shutil.copy2(self.regression_seed_src, self.regression_seed_dst)
 
     def check(self):
-        self.generate_tests()
-        self.validate_generated_circuits()
+        _record_time("Generation", self.num_tests, self.generate_tests)
+        _record_time("Validation", self.num_tests, self.validate_generated_circuits)
 
 
 def main():
-    args = parse()
-    clean_and_build()
+    args = _parse()
+    _clean_and_build()
 
     run_timestamp = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
 

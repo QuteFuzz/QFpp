@@ -1,6 +1,7 @@
 #include <grammar.h>
 #include <qf_term.h>
 #include <params.h>
+#include <supported_gates.h>
 
 Grammar::Grammar(const fs::path& filename, std::vector<Token>& meta_grammar_tokens) : 
     lexer(filename.string()), 
@@ -318,7 +319,7 @@ std::unique_ptr<Expr> Grammar::if_expr() {
         if (curr_token.value == ":" || curr_token.value == "{"){
             false_expr = parse_block();
         } else if (curr_token.value == "if"){
-            return if_expr();
+            false_expr = if_expr();
         } else {
             ERROR("Unexpected " + curr_token.value + " after else");
         }
@@ -328,7 +329,7 @@ std::unique_ptr<Expr> Grammar::if_expr() {
 }
 
 std::unique_ptr<Expr> Grammar::logic_expr() {
-    return parse_binary_op([this](){ return math_expr(); }, {">", "<", ">=", "<=", "==", "&&", "||"});
+    return parse_binary_op([this](){ return math_expr(); }, {">", "<", ">=", "<=", "==", "&&", "||", "!="});
 }
 
 std::unique_ptr<Expr> Grammar::math_expr() {
@@ -356,6 +357,7 @@ std::unique_ptr<Expr> Grammar::term() {
     return parse_binary_op([this](){ return factor(); }, {"/", "*"});
 }
 
+/// Ensure curr token is the last token of the factor once this function exits
 std::unique_ptr<Expr> Grammar::factor() {
     if (curr_token.value == "(") {
         consume(); // advance to the first token inside parens
@@ -369,24 +371,41 @@ std::unique_ptr<Expr> Grammar::factor() {
     } else if (curr_token.kind == NUMBER){
         return std::make_unique<IntExpr>(safe_stoi(curr_token.value, 0));
 
+    } else if (curr_token.kind == GET_MAT_POS){
+        Token_kind var_token = curr_token.kind;
+
+        consume();
+        consume("(");
+        
+        int row = safe_stoi(curr_token.value, 0); consume();
+
+        consume(",");
+
+        int col = safe_stoi(curr_token.value, 0); consume();
+
+        check(")");
+
+        return std::make_unique<VarExpr>(var_token, std::vector<int>{row, col});
+
     } else if (is_meta(curr_token.kind)) {
         return std::make_unique<VarExpr>(curr_token.kind);
-    
-    } else {
+
+    } else if ((curr_token.kind == SUB_CIRCUIT) || (curr_token.kind == UNITARY_1Q_DEF) ||
+            (curr_token.kind == UNITARY_2Q_DEF) || (find_gate_info(curr_token.kind) != nullptr))
+    {
+        return std::make_unique<IntExpr>(curr_token.kind);
+
+    } else if (next_token.value == ".") {
         std::string obj_name = curr_token.value;
+        consume(2);
+        std::string prop = curr_token.value;
+        return std::make_unique<PropertyAccessExpr>(obj_name, prop);
 
-        if(next_token.value == "."){
-            consume(2);
+    } else {
+        auto rule = get_rule_pointer_if_exists(curr_token.value, rule_def_scope);
+        return std::make_unique<RuleExpr>(curr_token.value, rule);
 
-            std::string prop = curr_token.value;
-
-            return std::make_unique<PropertyAccessExpr>(obj_name, prop);
-        
-        } else {
-            auto rule = get_rule_pointer_if_exists(obj_name, rule_def_scope);
-            return std::make_unique<RuleExpr>(obj_name, rule);
-        } 
-    }
+    } 
 }
 
 
@@ -440,15 +459,15 @@ Token_kind Grammar::parse_token(){
         add_branch_to_current_rule();
 
     } else if (curr_token.kind == OPTIONAL){
-        curr_expr = std::make_shared<IntExpr>(random_uint(1, 0));
+        curr_expr = std::make_shared<BinExpr>("UNIFORM", std::make_unique<IntExpr>(0), std::make_unique<IntExpr>(1));
         add_expr_to_last_term();
 
     } else if (curr_token.kind == ONE_OR_MORE){
-        curr_expr = std::make_shared<IntExpr>(random_uint(QuteFuzz::WILDCARD_MAX, 1));
+        curr_expr = std::make_shared<BinExpr>("UNIFORM", std::make_unique<IntExpr>(1), std::make_unique<IntExpr>(QuteFuzz::WILDCARD_MAX));
         add_expr_to_last_term();
 
     } else if (curr_token.kind == ZERO_OR_MORE){
-        curr_expr = std::make_shared<IntExpr>(random_uint(QuteFuzz::WILDCARD_MAX, 0));
+        curr_expr = std::make_shared<BinExpr>("UNIFORM", std::make_unique<IntExpr>(0), std::make_unique<IntExpr>(QuteFuzz::WILDCARD_MAX));
         add_expr_to_last_term();
 
     } else if (curr_token.kind == LBRACE){

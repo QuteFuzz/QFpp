@@ -9,9 +9,9 @@ class Float : public Cloneable<Float> {
     public:
 
         Float() :
-            Cloneable<Float>(std::to_string(random_float(10.0, 0.0)))
+            Cloneable<Float>(std::to_string(uniform_float(10.0, 0.0)))
         {
-            rng().seed(random_uint());
+            rng().seed(uniform_uint());
         }
 
         Float(float n) :

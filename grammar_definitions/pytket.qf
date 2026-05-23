@@ -21,7 +21,6 @@ sdg = "Sdg";
 h = "H";
 t = "T";
 s = "S";
-measure = "Measure";
 swap = "SWAP";
 toffoli = "CCX";
 cswap = "CSWAP";
@@ -33,39 +32,67 @@ u2 = "U2";
 u3 = "U3";
 phased_x = "PhasedX";
 
-gate_name += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
-    u1 | u2 | u3 | phased_x | measure | ch | s | t | v;
+primitive_gate += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
+    u1 | u2 | u3 | phased_x | ch | s | t | v;
 
 # ============================================================================
 # CIRCUIT STRUCTURE
 # ============================================================================
 
-program = imports NEWLINE[2] subroutine_defs NEWLINE circuit NEWLINE program_footer;
+program = imports NL[2] subroutine_defs NL circuit NL GET_CIRCUIT_NAME ".measure_all()" NL program_footer;
 
-subroutine_body = EXTERNAL::qubit_defs NEWLINE (qubit_op NEWLINE)+;  # subroutines have no bits to facilitate pytket to qiskit conversion
+subroutine_defs = ((sub_circuit | unitary_1q_def | unitary_2q_def) NL)+;
+# subroutine_defs = (sub_circuit NL)+;
 
-circuit = circuit_def_header NEWLINE body NEWLINE;
+sub_circuit_body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL compound_stmts;
 
-# Body includes both qubits and classical bits (needed for control flow)
-body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NEWLINE compound_stmts;
+circuit = circuit_def_header NL body NL;
 
-# ============================================================================
-# EXTERNAL SCOPE DEFINITIONS
-# ============================================================================
+circuit_def_header = GET_CIRCUIT_NAME " = Circuit()";
+
+sub_circuit_footer = GET_CIRCUIT_NAME " = CircBox(" GET_CIRCUIT_NAME ")" NL;
+
+body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL compound_stmts;
+
+unitary_1q_def = 
+    "raw = ["  NL
+    "(" ""[GET_MAT_POS(0, 0)] "),(" ""[GET_MAT_POS(0, 1)] ")," NL
+    "(" ""[GET_MAT_POS(1, 0)] "),(" ""[GET_MAT_POS(1, 1)] ")," NL
+    "]"                            NL
+    "U = np.array([complex(r, i) for r, i in raw], dtype=complex).reshape(2, 2)" NL
+    GET_CIRCUIT_NAME " = Unitary1qBox(U)"                                        NL
+;
+
+unitary_2q_def = 
+    "raw = ["  NL
+    "(" ""[GET_MAT_POS(0, 0)] "),(" ""[GET_MAT_POS(0, 1)] "),(" ""[GET_MAT_POS(0, 2)] "),(" ""[GET_MAT_POS(0, 3)] ")," NL
+    "(" ""[GET_MAT_POS(1, 0)] "),(" ""[GET_MAT_POS(1, 1)] "),(" ""[GET_MAT_POS(1, 2)] "),(" ""[GET_MAT_POS(1, 3)] ")," NL
+    "(" ""[GET_MAT_POS(2, 0)] "),(" ""[GET_MAT_POS(2, 1)] "),(" ""[GET_MAT_POS(2, 2)] "),(" ""[GET_MAT_POS(2, 3)] ")," NL
+    "(" ""[GET_MAT_POS(3, 0)] "),(" ""[GET_MAT_POS(3, 1)] "),(" ""[GET_MAT_POS(3, 2)] "),(" ""[GET_MAT_POS(3, 3)] ")," NL
+    "]"                            NL
+    "U = np.array([complex(r, i) for r, i in raw], dtype=complex).reshape(4, 4)" NL
+    GET_CIRCUIT_NAME " = Unitary2qBox(U)"                                        NL
+;
+
+
+INTERNAL {
+    singular_param_def = GET_DEF_NAME " = Symbol('" GET_DEF_NAME "')" NL;
+    register_param_def = GET_DEF_NAME " = [Symbol('" GET_DEF_NAME "_' + str(i)) for i in range(" GET_SIZE ")]" NL;
+}
 
 EXTERNAL {
-    qubit_defs = (qubit_def NEWLINE)[UNIFORM(3,4)];
+    qubit_defs = (qubit_def NL)[UNIFORM(3,4)];
 
-    bit_defs = (bit_def NEWLINE)[UNIFORM(3,4)];
+    bit_defs = (bit_def NL)[UNIFORM(3,4)];
 
     singular_qubit_def =
-        GET_DEF_NAME ' = Qubit("'  GET_DEF_NAME '",0)' NEWLINE GET_CIRCUIT_NAME ".add_qubit(" GET_DEF_NAME ")";
+        GET_DEF_NAME ' = Qubit("'  GET_DEF_NAME '",0)' NL GET_CIRCUIT_NAME ".add_qubit(" GET_DEF_NAME ")";
 
     register_qubit_def =
         GET_DEF_NAME " = " GET_CIRCUIT_NAME '.add_q_register("' GET_DEF_NAME '", ' GET_SIZE ")";
 
     singular_bit_def =
-        GET_DEF_NAME ' = Bit("' GET_DEF_NAME '", 0)' NEWLINE GET_CIRCUIT_NAME ".add_bit(" GET_DEF_NAME ")";
+        GET_DEF_NAME ' = Bit("' GET_DEF_NAME '", 0)' NL GET_CIRCUIT_NAME ".add_bit(" GET_DEF_NAME ")";
 
     register_bit_def =
         GET_DEF_NAME " = " GET_CIRCUIT_NAME '.add_c_register("' GET_DEF_NAME '", ' GET_SIZE ")";
@@ -73,66 +100,77 @@ EXTERNAL {
     param_def = singular_param_def;
 }
 
-# ============================================================================
-# IMPORTS AND HEADERS
-# ============================================================================
-
 imports =
-    "import math" NEWLINE
-    "from pytket import Circuit, Qubit, Bit" NEWLINE
-    "from pytket.circuit import Op, OpType, MultiplexorBox, CircBox" NEWLINE
-    "from pytket._tket.circuit import fresh_symbol" NEWLINE
-    swarm_testing_imports NEWLINE
-    "from diff_testing.pytket import pytketTesting"
+    "import math" NL
+    "from pytket import Circuit, Qubit, Bit" NL
+    "from pytket.circuit import Op, OpType, MultiplexorBox, CircBox, Unitary1qBox, Unitary2qBox, if_bit, if_not_bit" NL
+    "from pytket._tket.circuit import fresh_symbol" NL
+    "from diff_testing.pytket import pytketTesting" NL
+    "import numpy as np" NL
     ;
 
-circuit_def_header = GET_CIRCUIT_NAME " = Circuit()";
-
-subroutine_def_footer = GET_CIRCUIT_NAME " = CircBox(" GET_CIRCUIT_NAME ")" NEWLINE;
-
 # ============================================================================
-# STATEMENTS - Enable both quantum operations and control flow
+# CLASSICAL CONTROL FLOW
 # ============================================================================
 
-# TODO: conditional circbox application
+# Single-bit runtime condition
+classical_condition = "if_bit(" bit ")" | "if_not_bit(" bit ")";
 
-# not supported by AER
-classical_op =
-    | GET_CIRCUIT_NAME ".add_c_and(" bit ", " bit ", " bit ")"
-    | GET_CIRCUIT_NAME ".add_c_or(" bit ", " bit ", " bit ")"
-    | GET_CIRCUIT_NAME ".add_c_xor(" bit ", " bit ", " bit ")"
-    | GET_CIRCUIT_NAME ".add_c_not(" bit ", " bit ")";
+# Compound condition: compute a boolean expression into a target bit first,
+# then the following conditioned op reads from that bit.
+# Pytket is flat — no nested blocks — so compound conditions must be
+# pre-computed into a scratch bit before they can be used.
+bit_expr =
+      GET_CIRCUIT_NAME ".add_clexpr_from_logicexp(" bit " & " bit ", [" bit "])" NL
+    | GET_CIRCUIT_NAME ".add_clexpr_from_logicexp(" bit " | " bit ", [" bit "])" NL
+    | GET_CIRCUIT_NAME ".add_clexpr_from_logicexp(" bit " ^ " bit ", [" bit "])" NL
+    ;
 
-classical_expr = bit " == " branch_condition;
+# mid_circuit_measure = GET_CIRCUIT_NAME ".Measure(" qubit COMMA bit ")";
 
-branch_condition = 1 | 0;
+compound_stmts = (compound_stmt NL)[UNIFORM(10,30)];
 
-if_stmt =
-    'if ' classical_expr ':' NEWLINE ci<compound_stmts> si<elif_stmt>
-    | 'if ' classical_expr ':' NEWLINE ci<compound_stmts> si<(else_stmt)?>;
-
-elif_stmt =
-    'elif ' classical_expr ':' NEWLINE ci<compound_stmts> si<elif_stmt>
-    | 'elif ' classical_expr ':' NEWLINE ci<compound_stmts> si<(else_stmt)?>;
-
-else_stmt =
-    'else:' NEWLINE ci<compound_stmts>;
-
-compound_stmts = (compound_stmt NEWLINE)[UNIFORM(50, 80)];
-
-compound_stmt =
-    qubit_op
-    | if_stmt
-    | barrier_op
-    | reset_op;
+compound_stmt = qubit_op
+    # | barrier_op
+    ;
 
 # ============================================================================
 # GATE OPERATIONS
 # ============================================================================
 
-gate_op = GET_CIRCUIT_NAME "." gate_name "(" gate_op_args ")";
+# forbid conditionals on multi-qubit gates, `DecomposeCX` pass gives up
+cond_application = 
+    [
+        if (GET_GATE_QUBITS == 1){
+            cond = RESET (", condition=" classical_condition)?;
+            cond
+        }
+    ]
+    ;
 
-subroutine_op = GET_CIRCUIT_NAME ".add_gate(" subroutine ",[" subroutine_op_args "])";
+# cond_application = RESET (", condition=" classical_condition)?;
+
+gate_op = GET_CIRCUIT_NAME "." primitive_gate "(" gate_op_args cond_application ")";
+
+subroutine_op = 
+    ""[
+        if (GET_GATE_SOURCE == sub_circuit) {
+            op_1 = GET_CIRCUIT_NAME ".add_gate(" GET_GATE_NAME ",[" subroutine_op_args "]";
+            op_1
+
+        } else if (GET_GATE_SOURCE == unitary_1q_def) {
+            op_2 = GET_CIRCUIT_NAME ".add_unitary1qbox(" GET_GATE_NAME "," subroutine_op_args ;
+            op_2
+
+        } else if (GET_GATE_SOURCE == unitary_2q_def) {
+            op_3 = GET_CIRCUIT_NAME ".add_unitary2qbox(" GET_GATE_NAME "," subroutine_op_args ;
+            op_3
+
+        }
+    ]
+    # cond_application ")" # forbid conditionals on multi-qubit gates, `DecomposeCX` pass gives up
+    ")"
+    ;
 
 float = MAKE_FLOAT | pi_multiples;
 
@@ -168,14 +206,12 @@ register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 
 program_footer = compiler_call;
 
-# compiler_call = GET_CIRCUIT_NAME ".measure_all()" NEWLINE "pt = pytketTesting() " NEWLINE testing_method | "pt = pytketTesting(tket2=True) " NEWLINE statevector_test;
+compiler_call = "pt = pytketTesting() " NL testing_method | "pt = pytketTesting(tket2=True) " NL statevector_test;
 
-compiler_call = GET_CIRCUIT_NAME ".measure_all()" NEWLINE "pt = pytketTesting() " NEWLINE testing_method;
+compiler_call = "pt = pytketTesting() " NL testing_method;
 
-testing_method = opt_ks_test | pytket_qiskit_conv_test;
+testing_method = opt_ks_test;
 
 opt_ks_test = "pt.opt_ks_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN;
 
 statevector_test = "pt.run_circ_statevector(" GET_CIRCUIT_NAME RPAREN;
-
-pytket_qiskit_conv_test = "pt.pytket_qiskit_conv_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN;

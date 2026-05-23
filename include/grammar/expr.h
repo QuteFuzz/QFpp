@@ -81,8 +81,9 @@ class IntExpr : public Expr {
 
 class VarExpr : public Expr {
     public:
-        VarExpr(Token_kind _var): 
-            var(_var)
+        VarExpr(Token_kind _name, std::vector<int> _args = {}):
+            name(_name),
+            args(std::move(_args))
         {}
 
         Expr_type eval(Context& context) const override;
@@ -90,7 +91,8 @@ class VarExpr : public Expr {
         void print(std::ostream& stream) const override;
 
     private:
-        Token_kind var;
+        Token_kind name;
+        std::vector<int> args;
 };
 
 class RuleExpr : public Expr {

@@ -105,6 +105,6 @@ PennyLane circuits are QNodes (decorated functions), not circuit objects. The ge
 2. Add a rule to your grammar's `testing_method`:
    ```qf
    testing_method = opt_ks_test | my_custom_test;
-   my_custom_test = "mt.my_custom_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN NEWLINE;
+   my_custom_test = "mt.my_custom_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN NL;
    ```
 3. `run.py`'s regex already parses any line matching `ks-test p-value:` or `Dot product`.

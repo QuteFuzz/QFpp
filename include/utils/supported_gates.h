@@ -8,7 +8,7 @@
 class Gate;
 
 struct Gate_info {
-    Token_kind gate;
+    Token_kind gate_source;
     std::unordered_map<Resource_kind, unsigned int> resource_counts {
         {Resource_kind::QUBIT, 0},
         {Resource_kind::BIT, 0},

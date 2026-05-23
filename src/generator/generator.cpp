@@ -40,7 +40,7 @@ std::vector<Ast_entry> Generator::generate_n_asts(unsigned int n, const Control&
     }
 
     for(size_t i = 0; i < n; i++){
-        unsigned int seed = random_uint(UINT32_MAX);
+        unsigned int seed = uniform_uint(UINT32_MAX);
         rng().seed(seed);
 
         Ast ast_builder(control);

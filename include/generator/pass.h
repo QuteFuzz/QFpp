@@ -166,7 +166,7 @@ class Combine : public Pass {
 class Dead_subs : public Pass {
     public:
         Dead_subs(Ast_entry& _entry):
-            Pass(_entry, nullptr, CIRCUIT, 1.0, true)
+            Pass(_entry, nullptr, SUB_CIRCUIT, 1.0, true)
         {}
 
         void apply_blockwise(Slot_type block) const override;
