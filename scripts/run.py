@@ -267,12 +267,16 @@ class Check_grammar:
                 elif self.mode == Run_mode.NIGHTLY:
                     log(f"  INTERESTING (Crash): {circuit_path}", Color.YELLOW)
                     run_info.interesting = True
-                    run_info.logs = f"CRASH (Exit code {result.returncode})\n" \
+                    run_info.logs = (
+                        f"CRASH (Exit code {result.returncode})\n"
                         "STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}\n"
+                    )
 
                 elif self.mode == Run_mode.CI:
-                    logs = f"CRASH (Exit code {result.returncode})\n" \
+                    logs = (
+                        f"CRASH (Exit code {result.returncode})\n"
                         "STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}\n"
+                    )
 
                     raise Exception(f"Compiler crashed in CI!\n{logs}")
 
@@ -289,7 +293,6 @@ class Check_grammar:
                 raise Exception(f"Compiler timed out in CI!\n{run_info.logs}")
             elif self.mode == Run_mode.NIGHTLY:
                 log(f"  INTERESTING (Timeout): {circuit_path}", Color.YELLOW)
-
 
         return run_info
 
