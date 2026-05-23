@@ -4,19 +4,7 @@
     <img width="25%" src="etc/qutefuzz.png">
 
 
-qf++ is a grammar-driven fuzzing framework for quantum compilers. It generates structurally valid quantum programs across multiple quantum software stacks, then differentially tests them by comparing circuit simulation outputs across compiler optimisation levels.
-
-## Contents
-
-| Doc | What it covers |
-|-----|----------------|
-| [Ethos](docs/ethos.md) | Why the project exists and its design philosophy |
-| [Architecture](docs/architecture.md) | How the C++ fuzzer, Python tester, and CI pipeline fit together |
-| [Grammar System](docs/grammar.md) | Full reference for the `.qf` grammar language |
-| [Writing a Grammar](docs/writing-grammars.md) | Step-by-step guide to adding a new quantum framework |
-| [MAP-Elites](docs/map-elites.md) | How diversity-driven generation works and where to take it next |
-| [Differential Testing](docs/diff-testing.md) | How circuits are validated and bugs are classified |
-| [Dev](docs/dev.md) | Notes for dev environment |
+qf++ is a framework for quantum compilers. It generates structurally valid quantum programs across multiple quantum software stacks, then differentially tests them by comparing circuit simulation outputs across compiler optimisation levels. 
 
 ## Quick start
 
