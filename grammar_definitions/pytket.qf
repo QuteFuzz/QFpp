@@ -138,16 +138,17 @@ compound_stmt = qubit_op
 # GATE OPERATIONS
 # ============================================================================
 
-# cond_application = 
-#     [
-#         if (GET_GATE_QUBITS == 1){
-#             cond = RESET (", condition=" classical_condition)?;
-#             cond
-#         }
-#     ]
-#     ;
+# forbid conditionals on multi-qubit gates, `DecomposeCX` pass gives up
+cond_application = 
+    [
+        if (GET_GATE_QUBITS == 1){
+            cond = RESET (", condition=" classical_condition)?;
+            cond
+        }
+    ]
+    ;
 
-cond_application = RESET (", condition=" classical_condition)?;
+# cond_application = RESET (", condition=" classical_condition)?;
 
 gate_op = GET_CIRCUIT_NAME "." primitive_gate "(" gate_op_args cond_application ")";
 
@@ -167,8 +168,8 @@ subroutine_op =
 
         }
     ]
-    cond_application ")"
-    # ")"
+    # cond_application ")" # forbid conditionals on multi-qubit gates, `DecomposeCX` pass gives up
+    ")"
     ;
 
 float = MAKE_FLOAT | pi_multiples;

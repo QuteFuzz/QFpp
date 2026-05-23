@@ -88,7 +88,7 @@ def _make_hex_topology(n_qubits: int):
 def _route_circuit(circuit: Circuit, topo: List[Tuple[int, int]]) -> None:
     arch = Architecture(topo)
 
-    DecomposeMultiQubitsCX().apply(circuit) # SWAP gets only well defined for 2 qubit gates
+    DecomposeMultiQubitsCX().apply(circuit)  # SWAP gets only well defined for 2 qubit gates
     DefaultMappingPass(arch).apply(circuit)
 
 

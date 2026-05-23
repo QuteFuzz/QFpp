@@ -33,8 +33,6 @@ def pipe_to_process(cmd, cwd, cmd_to_process):
             print(stderr)
             raise Exception("Fuzzer exited with errors")
 
-        log("Generation complete.", Color.GREEN)
-
     except Exception as e:
         log(f"Command {cmd} failed", Color.RED)
         raise e

@@ -4,12 +4,15 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import List, Tuple
+from typing import Callable, List, Tuple
+
+import numpy as np
 
 from params import BUILD_DIR, OUTPUT_DIR
 from utils import Color, log, modify_env, pipe_to_process
@@ -124,6 +127,17 @@ def _print_progress(current: int, total: int):
         print()
 
 
+def _record_time(process_name: str, num_tests: int, process: Callable[[], None]):
+    start = time.time()
+    process()
+    end = time.time()
+    dur = end - start
+
+    rate = np.inf if dur == 0 else num_tests / dur
+
+    print(f" {process_name} took {dur} seconds. Rate: {rate} programs / sec")
+
+
 class Check_grammar:
     def __init__(
         self,
@@ -160,8 +174,6 @@ class Check_grammar:
         Feeds fuzzer CLI to produce tests for given grammar
         """
 
-        log(f"Generating tests for grammar: {self.name}", Color.YELLOW)
-
         if self.map_elites:
             log("Map elites mode activated", Color.GREEN)
 
@@ -176,6 +188,8 @@ class Check_grammar:
         input_str += f"{self.num_tests}\nquit\n"
 
         pipe_to_process(FUZZER_EXECUTABLE, BUILD_DIR, input_str)
+
+        log(f"Generated tests for grammar: {self.name}", Color.YELLOW)
 
     def get_ciruit_dirs(self) -> List[Path]:
         """Get list of generated circuit directories"""
@@ -199,7 +213,9 @@ class Check_grammar:
         if self.plot:
             cmd.append("--plot")
 
-        result = subprocess.run(cmd, cwd=None, capture_output=True, timeout=TIMEOUT, env=env, text=True)
+        result = subprocess.run(
+            cmd, cwd=None, capture_output=True, timeout=TIMEOUT, env=env, text=True
+        )
 
         return result
 
@@ -243,24 +259,29 @@ class Check_grammar:
                 ignored_exceptions = ["NotImplementedError"]
 
                 if any(ex in result.stderr for ex in ignored_exceptions):
-                    log(f"  SKIPPING (Known Unsupported/Exception): {circuit_path.name}", Color.BLUE)
+                    log(
+                        f"  SKIPPING (Known Unsupported/Exception): {circuit_path.name}", Color.BLUE
+                    )
                     run_info.skipped = True
 
                 elif self.mode == Run_mode.NIGHTLY:
                     log(f"  INTERESTING (Crash): {circuit_path}", Color.YELLOW)
-                    run_info.interesting = True 
-                    run_info.logs = f"CRASH (Exit code {result.returncode})\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}\n"
+                    run_info.interesting = True
+                    run_info.logs = f"CRASH (Exit code {result.returncode})\n" \
+                        "STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}\n"
 
                 elif self.mode == Run_mode.CI:
-                    logs = f"CRASH (Exit code {result.returncode})\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}\n"
+                    logs = f"CRASH (Exit code {result.returncode})\n" \
+                        "STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}\n"
+
                     raise Exception(f"Compiler crashed in CI!\n{logs}")
 
         # circuit timed out
         except subprocess.TimeoutExpired as e:
             run_info.interesting = True
 
-            stdout = e.stdout.decode('utf-8') if isinstance(e.stdout, bytes) else e.stdout
-            stderr = e.stderr.decode('utf-8') if isinstance(e.stderr, bytes) else e.stderr
+            stdout = e.stdout.decode("utf-8") if isinstance(e.stdout, bytes) else e.stdout
+            stderr = e.stderr.decode("utf-8") if isinstance(e.stderr, bytes) else e.stderr
 
             run_info.logs = f"TIMEOUT ({e.timeout}s)\nSTDOUT:\n{stdout}\nSTDERR:\n{stderr}\n"
 
@@ -276,11 +297,9 @@ class Check_grammar:
 
         num_circuits = len(circuit_dirs)
 
-        log(f"Validating {num_circuits} circuits", Color.YELLOW)
-
         interesting_results = []
         completed_threads = 0
-        num_skipped =  0
+        num_skipped = 0
 
         with ThreadPoolExecutor(max_workers=self.sim_proc) as executor:
             # Submit all tasks
@@ -311,8 +330,6 @@ class Check_grammar:
                     log(f"Error validating circuit at {circuit_dir}/prog.py: {e}")
                     executor.shutdown(wait=False, cancel_futures=True)
                     sys.exit(-1)
-
-        log("Validation complete.", Color.GREEN)
 
         if num_skipped:
             log(f"Skipped {num_skipped} programs")
@@ -349,8 +366,8 @@ class Check_grammar:
         shutil.copy2(self.regression_seed_src, self.regression_seed_dst)
 
     def check(self):
-        self.generate_tests()
-        self.validate_generated_circuits()
+        _record_time("Generation", self.num_tests, self.generate_tests)
+        _record_time("Validation", self.num_tests, self.validate_generated_circuits)
 
 
 def main():

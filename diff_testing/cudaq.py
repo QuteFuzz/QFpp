@@ -1,11 +1,12 @@
 import json
 import os
+import subprocess
 import tempfile
 from typing import Any, Dict
 
 from diff_testing.lib import Base
 from params import CUDAQ_DIR, OUTPUT_DIR
-from utils import Color, log, modify_env, run_command
+from utils import Color, log, modify_env
 
 
 class cudaqTesting(Base):
@@ -46,8 +47,8 @@ class cudaqTesting(Base):
                 }
             )
 
-            run_command(compile_cmd, capture_output=True, env=env, cwd=tmpdir)
-            result = run_command(
+            subprocess.run(compile_cmd, capture_output=True, env=env, cwd=tmpdir)
+            result = subprocess.run(
                 [temp_exe, str(self.num_shots)], capture_output=True, env=env, cwd=tmpdir
             )
 
