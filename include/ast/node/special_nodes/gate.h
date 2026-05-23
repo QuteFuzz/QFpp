@@ -44,7 +44,7 @@ class Gate : public Cloneable<Gate> {
 
         unsigned int get_num_external_resource_defs(Resource_kind kind) const;
 
-        Token_kind get_gate_kind() const;
+        Token_kind get_gate_source() const;
 
     private:
         Ptr_coll<Resource_def> resource_defs;

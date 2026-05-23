@@ -91,7 +91,7 @@ enum Token_kind {
     META_FUNC_TOP,                                /// ADD META FUNCS BELOW!
     GET_CIRCUIT_NAME,
     GET_GATE_NAME,
-    GET_GATE_KIND,
+    GET_GATE_SOURCE,
     GET_GATE_QUBITS,
     GET_GATE_BITS,
     GET_GATE_PARAMS,
@@ -271,7 +271,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("RESET", RESET),
     Token_matcher("GET_CIRCUIT_NAME", GET_CIRCUIT_NAME),
     Token_matcher("GET_GATE_NAME", GET_GATE_NAME),
-    Token_matcher("GET_GATE_KIND", GET_GATE_KIND),
+    Token_matcher("GET_GATE_SOURCE", GET_GATE_SOURCE),
     Token_matcher("GET_GATE_QUBITS", GET_GATE_QUBITS),
     Token_matcher("GET_GATE_BITS", GET_GATE_BITS),
     Token_matcher("GET_GATE_PARAMS", GET_GATE_PARAMS),

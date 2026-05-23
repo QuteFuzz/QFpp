@@ -2,7 +2,7 @@
 #include <gate.h>
 
 Gate_info::Gate_info(Token_kind _gate, unsigned int _n_qubits, unsigned int _n_bits, unsigned int _n_params):
-    gate(_gate),
+    gate_source(_gate),
     resource_counts({
         {Resource_kind::QUBIT, _n_qubits},
         {Resource_kind::BIT, _n_bits},
@@ -58,7 +58,7 @@ const std::vector<Gate_info> SUPPORTED_GATES = []{
 
 std::shared_ptr<Gate_info> find_gate_info(const Token_kind& gate_kind) {
     for (const auto& _info : SUPPORTED_GATES){
-        if(_info.gate == gate_kind){
+        if(_info.gate_source == gate_kind){
             return std::make_shared<Gate_info>(_info);
         }
     }
@@ -68,8 +68,8 @@ std::shared_ptr<Gate_info> find_gate_info(const Token_kind& gate_kind) {
 
 Token_kind find_gate_type_with_same_arity(const std::shared_ptr<Gate> gate) {
     for (const auto& _info : SUPPORTED_GATES){
-        if ((_info.gate != gate->get_node_kind()) && (_info.resource_counts.at(Resource_kind::QUBIT) == gate->get_num_external_resources(Resource_kind::QUBIT))) {
-            return _info.gate;
+        if ((_info.gate_source != gate->get_node_kind()) && (_info.resource_counts.at(Resource_kind::QUBIT) == gate->get_num_external_resources(Resource_kind::QUBIT))) {
+            return _info.gate_source;
         }
     }
 

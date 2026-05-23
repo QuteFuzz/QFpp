@@ -110,6 +110,8 @@ Expr_type BinExpr::eval(Context& context) const {
             return (int)std::get<std::shared_ptr<Rule>>(eval)->get_token().kind;
         } else if (std::holds_alternative<int>(eval)){
             return std::get<int>(eval);
+        } else if (std::holds_alternative<bool>(eval)){
+            return std::get<bool>(eval) ? 1 : 0;
         } else {
             ERROR("Binop operand expected to be int or token!");
         }

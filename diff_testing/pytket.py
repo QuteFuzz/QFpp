@@ -1,12 +1,12 @@
 import random
 import traceback
+from typing import List, Tuple
 
 from pytket._tket.circuit import Circuit, OpType
 from pytket.architecture import Architecture
 from pytket.extensions.qiskit.backends.aer import AerBackend, AerStateBackend
 from pytket.passes import (
     DecomposeBoxes,
-    DelayMeasures,
     DecomposeMultiQubitsCX,
     DefaultMappingPass,
     RemoveImplicitQubitPermutation,
@@ -14,6 +14,12 @@ from pytket.passes import (
 from tket.passes import badger_pass
 
 from .lib import Base
+
+TOPO_CHOICE = [
+    lambda n_qubits: _make_line_topology(n_qubits),
+    lambda n_qubits: _make_star_topology(n_qubits),
+    lambda n_qubits: _make_hex_topology(n_qubits),
+]
 
 
 def _apply_tket2_opt_level_3(circuit: Circuit) -> Circuit:
@@ -79,39 +85,29 @@ def _make_hex_topology(n_qubits: int):
         return _make_line_topology(n_qubits)
 
 
-def _route_circuit(circuit: Circuit):
-    val = random.randint(0, 2)
+def _route_circuit(circuit: Circuit, topo: List[Tuple[int, int]]) -> None:
+    arch = Architecture(topo)
 
-    print(val)
-
-    if val == 0:
-        arch = Architecture(_make_star_topology(circuit.n_qubits))
-    elif val == 1:
-        arch = Architecture(_make_hex_topology(circuit.n_qubits))
-    else:
-        arch = Architecture(_make_line_topology(circuit.n_qubits))
-
-    DecomposeBoxes().apply(circuit)
-    DecomposeMultiQubitsCX().apply(circuit)
-    DelayMeasures(allow_partial=True).apply(circuit)
-
+    DecomposeMultiQubitsCX().apply(circuit) # SWAP gets only well defined for 2 qubit gates
     DefaultMappingPass(arch).apply(circuit)
-    return circuit
 
 
 class pytketTesting(Base):
     def __init__(self, tket2: bool = False) -> None:
         super().__init__("pytket")
         self.tket2 = tket2  # only on statevector
+        self.topo_maker = random.choice(TOPO_CHOICE)
 
     def _get_counts(self, circuit: Circuit, opt_level: int, circuit_num: int):
-        backend = AerBackend()
+        circuit_copy = circuit.copy()
 
-        circ_prime = backend.get_compiled_circuit(circuit, optimisation_level=opt_level)
+        DecomposeBoxes().apply(circuit_copy)
 
         if opt_level >= 1:
-            circuit = _route_circuit(circ_prime)
+            _route_circuit(circuit_copy, self.topo_maker(circuit.n_qubits))
 
+        backend = AerBackend()
+        circ_prime = backend.get_compiled_circuit(circuit_copy, optimisation_level=opt_level)
         handle = backend.process_circuit(circ_prime, n_shots=self.num_shots)
         result = backend.get_result(handle)
 

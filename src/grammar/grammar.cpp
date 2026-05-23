@@ -329,7 +329,7 @@ std::unique_ptr<Expr> Grammar::if_expr() {
 }
 
 std::unique_ptr<Expr> Grammar::logic_expr() {
-    return parse_binary_op([this](){ return math_expr(); }, {">", "<", ">=", "<=", "==", "&&", "||"});
+    return parse_binary_op([this](){ return math_expr(); }, {">", "<", ">=", "<=", "==", "&&", "||", "!="});
 }
 
 std::unique_ptr<Expr> Grammar::math_expr() {

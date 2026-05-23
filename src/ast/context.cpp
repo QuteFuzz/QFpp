@@ -93,8 +93,8 @@ bool Context::current_circuit_uses_subroutines(){
 Expr_type Context::resolve_var(const Token_kind name, const std::vector<int>& args) const {
     auto gate = get_current_node<Gate>();
 
-    if (name == GET_GATE_KIND){
-        return gate->get_gate_kind();
+    if (name == GET_GATE_SOURCE){
+        return gate->get_gate_source();
     } else if (name == GET_GATE_QUBITS) {
         return (int)gate->get_num_external_resources(Resource_kind::QUBIT);
     } else if (name == GET_GATE_BITS) {

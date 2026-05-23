@@ -99,11 +99,9 @@ primitive_gate = h
 
 gate_op_args = (float_list ", ")[GET_GATE_PARAMS > 0] qubit_list ("," bit)[GET_GATE_BITS];
 
-subroutine_op_args = qubit_list ", " bit_list;
+subroutine_op_args = qubit_list ("," bit)[GET_GATE_BITS];
 
 qubit_list = qubit (", " qubit)[GET_GATE_QUBITS - 1];
-
-bit_list = bit (", " bit)[GET_GATE_BITS - 1];
 
 float_list = float  (", " float)[GET_GATE_PARAMS - 1];
 

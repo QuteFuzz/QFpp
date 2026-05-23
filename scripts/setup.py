@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import List
 
 from params import CUDAQ_DIR, EXTERNAL_DIR, HOME, LINENOISE_DIR, TKET_DIR, USR
-from utils import Color, log, modify_env, run_command
+from utils import Color, log, modify_env
 
 CARGO_BIN = HOME / ".cargo" / "bin"
 LOCAL_BIN = HOME / ".local" / "bin"
@@ -99,7 +99,7 @@ def clone_repos(libs: List[str]):
         if not repo.dest_dir.exists() and ((repo.name in libs) or repo.engine_dep):
             log("Cloning " + repo.url)
             cmd = ["git", "clone", repo.url, str(repo.dest_dir)]
-            run_command(cmd)
+            subprocess.run(cmd)
 
 
 def parse():
@@ -124,10 +124,10 @@ def check_conan_profile():
 
     if not conan2_profile_path.exists():
         log("Generating default Conan profile...", Color.BLUE)
-        run_command(["bash", "-c", "conan profile detect"])
+        subprocess.run(["bash", "-c", "conan profile detect"])
 
         log("Adding Quantinuum tket-libs remote...", Color.BLUE)
-        run_command(
+        subprocess.run(
             [
                 "bash",
                 "-c",
@@ -146,7 +146,7 @@ def install_rust_and_uv():
     # We check shutil.which() (the PATH) AND the absolute path just in case
     # the environment variables haven't been reloaded in this Python run yet.
     if not shutil.which("cargo") and not (CARGO_BIN / "cargo").exists():
-        run_command(
+        subprocess.run(
             [
                 "bash",
                 "-c",
@@ -160,7 +160,7 @@ def install_rust_and_uv():
         and not (CARGO_BIN / "uv").exists()
         and not (LOCAL_BIN / "uv").exists()
     ):
-        run_command(["bash", "-c", "curl -LsSf https://astral.sh/uv/install.sh | sh"])
+        subprocess.run(["bash", "-c", "curl -LsSf https://astral.sh/uv/install.sh | sh"])
 
 
 def install_deps():
@@ -191,14 +191,14 @@ def build_tket_with_coverage():
     ]
 
     log("Building tket with coverage flags ...", Color.YELLOW)
-    run_command(
+    subprocess.run(
         ["uv", "run", "conan", "build", "tket", "--build=missing"] + shared_opts, cwd=str(TKET_DIR)
     )
 
     # register the built artifacts into the local Conan cache so that pytket's build can find the
     # instrumented library
     log("Exporting instrumented tket to Conan cache ...", Color.YELLOW)
-    run_command(
+    subprocess.run(
         ["uv", "run", "conan", "export-pkg", "tket"]
         + shared_opts
         + ["-tf", ""],  # -tf "" skips running tests during export
@@ -266,7 +266,7 @@ def inject_pytket_into_venv():
             shutil.rmtree(stale_path)
 
     log("Reinstalling with instrumented libtket.so ...", Color.YELLOW)
-    run_command(
+    subprocess.run(
         ["uv", "pip", "install", "--reinstall", "--no-cache", "--no-build-isolation", "."],
         env=env,
         cwd=pytket_dir,
@@ -291,7 +291,7 @@ def build_bundled_llvm():
 
     llvm_build.mkdir(exist_ok=True)
 
-    run_command(
+    subprocess.run(
         [
             "cmake",
             str(llvm_src / "llvm"),
@@ -313,7 +313,7 @@ def build_bundled_llvm():
         cwd=str(llvm_build),
     )
 
-    run_command(["ninja"], cwd=str(llvm_build))
+    subprocess.run(["ninja"], cwd=str(llvm_build))
     log("Bundled LLVM build complete.", Color.GREEN)
 
 
@@ -358,15 +358,15 @@ def build_nvq(with_coverage: bool):
             ]
         )
 
-    run_command(cmd, cwd=str(build_dir))
+    subprocess.run(cmd, cwd=str(build_dir))
 
-    run_command(["ninja"], cwd=str(build_dir))
+    subprocess.run(["ninja"], cwd=str(build_dir))
 
 
 def build_cudaq(with_coverage: bool):
     # init only the llvm submodule — not all of them (too large)
     log("Initializing tpls/llvm submodule...", Color.BLUE)
-    run_command(["git", "submodule", "update", "--init", "tpls/llvm"], cwd=str(CUDAQ_DIR))
+    subprocess.run(["git", "submodule", "update", "--init", "tpls/llvm"], cwd=str(CUDAQ_DIR))
 
     build_bundled_llvm()
     build_nvq(with_coverage)
@@ -410,7 +410,7 @@ if __name__ == "__main__":
 
     log("Running initial uv sync to prepare the venv...", Color.BLUE)
 
-    run_command(["uv", "sync"])
+    subprocess.run(["uv", "sync"])
 
     build_external_deps(parser)
 

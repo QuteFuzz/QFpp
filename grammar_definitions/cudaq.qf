@@ -88,7 +88,7 @@ gate_op_args = (float ", ")[GET_GATE_PARAMS] qubit_list;
 
 qubit_list   = qubit (", " qubit)[GET_GATE_QUBITS - 1];
 
-subroutine_op = GET_GATE_NAME "{}"[GET_GATE_KIND == sub_circuit] "(" subroutine_op_args ")";
+subroutine_op = GET_GATE_NAME "{}"[GET_GATE_SOURCE == sub_circuit] "(" subroutine_op_args ")";
 subroutine_op_args = qubit_list (", " float)[GET_GATE_PARAMS];
 
 # ============================================================================

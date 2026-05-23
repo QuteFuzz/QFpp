@@ -41,10 +41,8 @@ primitive_gate += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
 
 program = imports NL[2] subroutine_defs NL circuit NL GET_CIRCUIT_NAME ".measure_all()" NL program_footer;
 
-# subroutine_defs = ((sub_circuit | unitary_1q_def | unitary_2q_def) NL)+;
-subroutine_defs = (sub_circuit NL)+;
-
-# subroutine_defs = sub_circuit NL;
+subroutine_defs = ((sub_circuit | unitary_1q_def | unitary_2q_def) NL)+;
+# subroutine_defs = (sub_circuit NL)+;
 
 sub_circuit_body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL compound_stmts;
 
@@ -123,15 +121,16 @@ classical_condition = "if_bit(" bit ")" | "if_not_bit(" bit ")";
 # Pytket is flat — no nested blocks — so compound conditions must be
 # pre-computed into a scratch bit before they can be used.
 bit_expr =
-      GET_CIRCUIT_NAME ".add_classicalexpbox_bit(" bit " & " bit ", [" bit "])" NL
-    | GET_CIRCUIT_NAME ".add_classicalexpbox_bit(" bit " | " bit ", [" bit "])" NL
-    | GET_CIRCUIT_NAME ".add_classicalexpbox_bit(" bit " ^ " bit ", [" bit "])" NL
+      GET_CIRCUIT_NAME ".add_clexpr_from_logicexp(" bit " & " bit ", [" bit "])" NL
+    | GET_CIRCUIT_NAME ".add_clexpr_from_logicexp(" bit " | " bit ", [" bit "])" NL
+    | GET_CIRCUIT_NAME ".add_clexpr_from_logicexp(" bit " ^ " bit ", [" bit "])" NL
     ;
 
 # mid_circuit_measure = GET_CIRCUIT_NAME ".Measure(" qubit COMMA bit ")";
 
-compound_stmt =
-    (bit_epxr)? qubit_op
+compound_stmts = (compound_stmt NL)[UNIFORM(10,30)];
+
+compound_stmt = qubit_op
     # | barrier_op
     ;
 
@@ -139,27 +138,37 @@ compound_stmt =
 # GATE OPERATIONS
 # ============================================================================
 
+# cond_application = 
+#     [
+#         if (GET_GATE_QUBITS == 1){
+#             cond = RESET (", condition=" classical_condition)?;
+#             cond
+#         }
+#     ]
+#     ;
+
 cond_application = RESET (", condition=" classical_condition)?;
 
 gate_op = GET_CIRCUIT_NAME "." primitive_gate "(" gate_op_args cond_application ")";
 
 subroutine_op = 
     ""[
-        if (GET_GATE_KIND == sub_circuit) {
+        if (GET_GATE_SOURCE == sub_circuit) {
             op_1 = GET_CIRCUIT_NAME ".add_gate(" GET_GATE_NAME ",[" subroutine_op_args "]";
             op_1
 
-        } else if (GET_GATE_KIND == unitary_1q_def) {
+        } else if (GET_GATE_SOURCE == unitary_1q_def) {
             op_2 = GET_CIRCUIT_NAME ".add_unitary1qbox(" GET_GATE_NAME "," subroutine_op_args ;
             op_2
 
-        } else if (GET_GATE_KIND == unitary_2q_def) {
+        } else if (GET_GATE_SOURCE == unitary_2q_def) {
             op_3 = GET_CIRCUIT_NAME ".add_unitary2qbox(" GET_GATE_NAME "," subroutine_op_args ;
             op_3
 
         }
     ]
     cond_application ")"
+    # ")"
     ;
 
 float = MAKE_FLOAT | pi_multiples;
