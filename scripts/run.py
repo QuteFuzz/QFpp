@@ -235,18 +235,16 @@ class Check_grammar:
                 run_info.values, result_kind = _parse_for_testing_values(result)
 
                 if result_kind == Result_kind.KS_TEST:
-                    run_info.interesting = True
                     min_ks = min(run_info.values)
                     if min_ks < MIN_KS_VALUE:
+                        run_info.interesting = True
                         run_info.logs = f"Low KS value: {min_ks:.4f} < {MIN_KS_VALUE}; "
-                        log(f"  INTERESTING (Low KS): {circuit_path}", Color.YELLOW)
 
                 elif result_kind == Result_kind.DOT_PROD:
-                    run_info.interesting = True
                     dp = run_info.values[0]
                     if dp != 1:
+                        run_info.interesting = True
                         run_info.logs = f"Dot product is not 1, got {dp}"
-                        log(f"  INTERESTING (Bad Dot Prod): {circuit_path}", Color.YELLOW)
 
                 else:
                     raise Exception(
@@ -291,8 +289,6 @@ class Check_grammar:
 
             if self.mode == Run_mode.CI:
                 raise Exception(f"Compiler timed out in CI!\n{run_info.logs}")
-            elif self.mode == Run_mode.NIGHTLY:
-                log(f"  INTERESTING (Timeout): {circuit_path}", Color.YELLOW)
 
         return run_info
 
@@ -345,6 +341,7 @@ class Check_grammar:
         log(f"Found {len(interesting_results)} interesting circuits.", Color.GREEN)
 
         self.nightly_run_dir.mkdir(parents=True, exist_ok=True)
+        report_txt = self.nightly_run_dir / "report.txt"
 
         for run_info in interesting_results:
             src_dir = run_info.circuit_path.parent
@@ -355,13 +352,13 @@ class Check_grammar:
             if src_dir.exists():
                 shutil.copytree(src_dir, dst_dir, dirs_exist_ok=True)
 
-                # Save metadata about why it's interesting
-                metadata_path = dst_dir / "analysis.txt"
-                with open(metadata_path, "w") as f:
-                    f.write(f"Circuit: {run_info.circuit_path.name}\n")
-                    f.write(f"Grammar: {run_info.grammar}\n")
+                with open(report_txt, "a") as f:
+                    f.write("==============================================\n\n")
+                    f.write(f"Circuit: {run_info.circuit_path}\n")
+                    f.write("==============================================\n")
                     f.write(f"Logs: {run_info.logs}\n")
                     f.write(f"Values (KS or dot product): {run_info.values}\n")
+                    f.write("==============================================\n\n")
 
         # copy over regression seed to nightly results directory
         log(f"Saving regression seed {self.regression_seed_src} -> {self.regression_seed_dst}")
