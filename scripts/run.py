@@ -290,6 +290,7 @@ class Check_grammar:
             elif self.mode == Run_mode.NIGHTLY:
                 log(f"  INTERESTING (Timeout): {circuit_path}", Color.YELLOW)
 
+
         return run_info
 
     def validate_generated_circuits(self):
