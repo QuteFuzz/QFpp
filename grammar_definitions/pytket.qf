@@ -21,7 +21,6 @@ sdg = "Sdg";
 h = "H";
 t = "T";
 s = "S";
-measure = "Measure";
 swap = "SWAP";
 toffoli = "CCX";
 cswap = "CSWAP";
@@ -34,7 +33,7 @@ u3 = "U3";
 phased_x = "PhasedX";
 
 primitive_gate += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
-    u1 | u2 | u3 | phased_x | measure | ch | s | t | v;
+    u1 | u2 | u3 | phased_x | ch | s | t | v;
 
 # ============================================================================
 # CIRCUIT STRUCTURE
@@ -42,15 +41,19 @@ primitive_gate += sdg | tdg | vdg | swap | cswap | crx | cry | crz |
 
 program = imports NL[2] subroutine_defs NL circuit NL GET_CIRCUIT_NAME ".measure_all()" NL program_footer;
 
-subroutine_defs = ((sub_circuit | unitary_1q_def | unitary_2q_def) NL)+;
+# subroutine_defs = ((sub_circuit | unitary_1q_def | unitary_2q_def) NL)+;
+subroutine_defs = (sub_circuit NL)+;
 
 # subroutine_defs = sub_circuit NL;
 
-sub_circuit_body = EXTERNAL::qubit_defs NL (qubit_op NL)+;  # subroutines have no bits to facilitate pytket to qiskit conversion
+sub_circuit_body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL compound_stmts;
 
 circuit = circuit_def_header NL body NL;
 
-# Body includes both qubits and classical bits (needed for control flow)
+circuit_def_header = GET_CIRCUIT_NAME " = Circuit()";
+
+sub_circuit_footer = GET_CIRCUIT_NAME " = CircBox(" GET_CIRCUIT_NAME ")" NL;
+
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL compound_stmts;
 
 unitary_1q_def = 
@@ -99,81 +102,64 @@ EXTERNAL {
     param_def = singular_param_def;
 }
 
-# ============================================================================
-# IMPORTS AND HEADERS
-# ============================================================================
-
 imports =
     "import math" NL
     "from pytket import Circuit, Qubit, Bit" NL
-    "from pytket.circuit import Op, OpType, MultiplexorBox, CircBox, Unitary1qBox, Unitary2qBox" NL
+    "from pytket.circuit import Op, OpType, MultiplexorBox, CircBox, Unitary1qBox, Unitary2qBox, if_bit, if_not_bit" NL
     "from pytket._tket.circuit import fresh_symbol" NL
     "from diff_testing.pytket import pytketTesting" NL
     "import numpy as np" NL
     ;
 
-circuit_def_header = GET_CIRCUIT_NAME " = Circuit()";
-
-sub_circuit_footer = GET_CIRCUIT_NAME " = CircBox(" GET_CIRCUIT_NAME ")" NL;
-
 # ============================================================================
-# STATEMENTS - Enable both quantum operations and control flow
+# CLASSICAL CONTROL FLOW
 # ============================================================================
 
-# TODO: conditional circbox application
+# Single-bit runtime condition
+classical_condition = "if_bit(" bit ")" | "if_not_bit(" bit ")";
 
-# not supported by AER
-classical_op =
-    | GET_CIRCUIT_NAME ".add_c_and(" bit ", " bit ", " bit ")"
-    | GET_CIRCUIT_NAME ".add_c_or(" bit ", " bit ", " bit ")"
-    | GET_CIRCUIT_NAME ".add_c_xor(" bit ", " bit ", " bit ")"
-    | GET_CIRCUIT_NAME ".add_c_not(" bit ", " bit ")";
+# Compound condition: compute a boolean expression into a target bit first,
+# then the following conditioned op reads from that bit.
+# Pytket is flat — no nested blocks — so compound conditions must be
+# pre-computed into a scratch bit before they can be used.
+bit_expr =
+      GET_CIRCUIT_NAME ".add_classicalexpbox_bit(" bit " & " bit ", [" bit "])" NL
+    | GET_CIRCUIT_NAME ".add_classicalexpbox_bit(" bit " | " bit ", [" bit "])" NL
+    | GET_CIRCUIT_NAME ".add_classicalexpbox_bit(" bit " ^ " bit ", [" bit "])" NL
+    ;
 
-classical_expr = bit " == " branch_condition;
-
-branch_condition = 1 | 0;
-
-if_stmt =
-    'if ' classical_expr ':' NL ci<compound_stmts> si<elif_stmt>
-    | 'if ' classical_expr ':' NL ci<compound_stmts> si<(else_stmt)?>;
-
-elif_stmt =
-    'elif ' classical_expr ':' NL ci<compound_stmts> si<elif_stmt>
-    | 'elif ' classical_expr ':' NL ci<compound_stmts> si<(else_stmt)?>;
-
-else_stmt =
-    'else:' NL ci<compound_stmts>;
-
-compound_stmts = (compound_stmt NL)[UNIFORM(50, 80)];
+# mid_circuit_measure = GET_CIRCUIT_NAME ".Measure(" qubit COMMA bit ")";
 
 compound_stmt =
-    qubit_op
-    | if_stmt
-    | barrier_op
-    | reset_op;
+    (bit_epxr)? qubit_op
+    # | barrier_op
+    ;
 
 # ============================================================================
 # GATE OPERATIONS
 # ============================================================================
 
-gate_op = GET_CIRCUIT_NAME "." primitive_gate "(" gate_op_args ")";
+cond_application = RESET (", condition=" classical_condition)?;
+
+gate_op = GET_CIRCUIT_NAME "." primitive_gate "(" gate_op_args cond_application ")";
 
 subroutine_op = 
-    [
+    ""[
         if (GET_GATE_KIND == sub_circuit) {
-            op_1 = GET_CIRCUIT_NAME ".add_gate(" GET_GATE_NAME ",[" subroutine_op_args "])";
+            op_1 = GET_CIRCUIT_NAME ".add_gate(" GET_GATE_NAME ",[" subroutine_op_args "]";
             op_1
 
         } else if (GET_GATE_KIND == unitary_1q_def) {
-            op_2 = GET_CIRCUIT_NAME ".add_unitary1qbox(" GET_GATE_NAME "," subroutine_op_args ")";
+            op_2 = GET_CIRCUIT_NAME ".add_unitary1qbox(" GET_GATE_NAME "," subroutine_op_args ;
             op_2
 
         } else if (GET_GATE_KIND == unitary_2q_def) {
-            op_3 = GET_CIRCUIT_NAME ".add_unitary2qbox(" GET_GATE_NAME "," subroutine_op_args ")";
+            op_3 = GET_CIRCUIT_NAME ".add_unitary2qbox(" GET_GATE_NAME "," subroutine_op_args ;
             op_3
 
         }
     ]
+    cond_application ")"
     ;
 
 float = MAKE_FLOAT | pi_multiples;
@@ -210,14 +196,12 @@ register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 
 program_footer = compiler_call;
 
-# compiler_call = "pt = pytketTesting() " NL testing_method | "pt = pytketTesting(tket2=True) " NL statevector_test;
+compiler_call = "pt = pytketTesting() " NL testing_method | "pt = pytketTesting(tket2=True) " NL statevector_test;
 
 compiler_call = "pt = pytketTesting() " NL testing_method;
 
-testing_method = opt_ks_test | pytket_qiskit_conv_test;
+testing_method = opt_ks_test;
 
 opt_ks_test = "pt.opt_ks_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN;
 
 statevector_test = "pt.run_circ_statevector(" GET_CIRCUIT_NAME RPAREN;
-
-pytket_qiskit_conv_test = "pt.pytket_qiskit_conv_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN;

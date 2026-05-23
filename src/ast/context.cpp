@@ -44,8 +44,6 @@ void Context::reset(Reset_level l){
 /// @return
 bool Context::can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit){
     std::shared_ptr<Circuit> current_circuit = get_current_circuit();
-    auto current_circuit_qubits = current_circuit->get_coll<Resource>(Resource_kind::QUBIT);
-    unsigned int num_qubits_in_current_circuit = current_circuit_qubits.size();
 
     std::string circuit_name = circuit->get_name();
 
@@ -53,23 +51,37 @@ bool Context::can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit){
         return false;
     }
 
-    unsigned int num_required_qubits = 0;
+    static std::vector<Resource_kind> hungry_resources = {
+        Resource_kind::QUBIT, Resource_kind::BIT
+    };
 
-    if (circuit->get_node_kind() == SUB_CIRCUIT){
-        auto ext_scope_pred = [](const auto& elem){ return scope_matches(elem->get_scope(), Scope::EXT); };
-        auto dest_circuit_qubits = circuit->get_coll<Resource>(Resource_kind::QUBIT);
-        num_required_qubits = size_pred<Resource>(dest_circuit_qubits, ext_scope_pred);
-    } else {
-        num_required_qubits = circuit->get_n_matrix_qubits();
+    for (auto rk : hungry_resources){
+        auto current_circuit_resources = current_circuit->get_coll<Resource>(rk);
+        unsigned int current_circuit_n_resources = current_circuit_resources.size();
+
+        unsigned int required_n_resources = 0;
+
+        if (circuit->get_node_kind() == SUB_CIRCUIT){
+            auto ext_scope_pred = [](const auto& elem){ return scope_matches(elem->get_scope(), Scope::EXT); };
+            auto circuit_resources = circuit->get_coll<Resource>(rk);
+        
+            required_n_resources = size_pred<Resource>(circuit_resources, ext_scope_pred);
+        
+        } else {
+            required_n_resources = (rk == Resource_kind::QUBIT) ? circuit->get_n_matrix_qubits() : 0;
+        }
+
+        if ((current_circuit_n_resources < 1) || (current_circuit_n_resources < required_n_resources)){
+            return false;
+        }
     }
 
-    return (num_qubits_in_current_circuit >= 1) && (num_qubits_in_current_circuit >= num_required_qubits);
+    return true;
 }
 
 bool Context::current_circuit_uses_subroutines(){
     for(std::shared_ptr<Circuit> circuit : circuits){
-        if (can_apply_as_subroutine(circuit))
-        {
+        if (can_apply_as_subroutine(circuit)){
             return true;
         }
     }

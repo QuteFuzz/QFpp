@@ -6,6 +6,7 @@ from pytket.architecture import Architecture
 from pytket.extensions.qiskit.backends.aer import AerBackend, AerStateBackend
 from pytket.passes import (
     DecomposeBoxes,
+    DelayMeasures,
     DecomposeMultiQubitsCX,
     DefaultMappingPass,
     RemoveImplicitQubitPermutation,
@@ -60,7 +61,7 @@ def _make_line_topology(n_qubits: int):
 
 
 def _make_star_topology(n_qubits: int):
-    return [(0, i) for i in range(n_qubits)]
+    return [(0, i) for i in range(1, n_qubits)]
 
 
 def _make_hex_topology(n_qubits: int):
@@ -70,10 +71,7 @@ def _make_hex_topology(n_qubits: int):
         for i in range(4, n_qubits + 4, 4):
             zeroth = i - 4
             first = i - 3
-            topo.append((zeroth, zeroth + 1))
-            topo.append((first, first + 1))
-            topo.append((first, first + 2))
-
+            topo.extend([(zeroth, zeroth + 1), (first, first + 1), (first, first + 2)])
             if first > 1:
                 topo.append((first - 2, first))
         return topo
@@ -82,7 +80,7 @@ def _make_hex_topology(n_qubits: int):
 
 
 def _route_circuit(circuit: Circuit):
-    val = random.randint(0, 1)
+    val = random.randint(0, 2)
 
     print(val)
 
@@ -93,7 +91,10 @@ def _route_circuit(circuit: Circuit):
     else:
         arch = Architecture(_make_line_topology(circuit.n_qubits))
 
+    DecomposeBoxes().apply(circuit)
     DecomposeMultiQubitsCX().apply(circuit)
+    DelayMeasures(allow_partial=True).apply(circuit)
+
     DefaultMappingPass(arch).apply(circuit)
     return circuit
 
@@ -106,10 +107,10 @@ class pytketTesting(Base):
     def _get_counts(self, circuit: Circuit, opt_level: int, circuit_num: int):
         backend = AerBackend()
 
-        if opt_level >= 1:
-            circuit = _route_circuit(circuit)
-
         circ_prime = backend.get_compiled_circuit(circuit, optimisation_level=opt_level)
+
+        if opt_level >= 1:
+            circuit = _route_circuit(circ_prime)
 
         handle = backend.process_circuit(circ_prime, n_shots=self.num_shots)
         result = backend.get_result(handle)

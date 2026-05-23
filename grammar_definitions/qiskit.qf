@@ -190,7 +190,7 @@ compound_stmt =
     # | while_stmt
     | for_stmt
     # | switch_stmt
-    | barrier_op
+    # | barrier_op
     | reset_op;
 
 
