@@ -45,6 +45,7 @@ class Rule;
 
 using Rule_list = std::vector<std::shared_ptr<Rule>>;
 using Expr_type = std::variant<int, bool, std::string, std::shared_ptr<Rule>, Rule_list>;
+using Arg_type = std::variant<int, Token_kind>;
 
 class Expr {
     public:
@@ -81,7 +82,7 @@ class IntExpr : public Expr {
 
 class VarExpr : public Expr {
     public:
-        VarExpr(Token_kind _name, std::vector<int> _args = {}):
+        VarExpr(Token_kind _name, std::vector<Arg_type> _args = {}):
             name(_name),
             args(std::move(_args))
         {}
@@ -92,7 +93,7 @@ class VarExpr : public Expr {
 
     private:
         Token_kind name;
-        std::vector<int> args;
+        std::vector<Arg_type> args;
 };
 
 class RuleExpr : public Expr {

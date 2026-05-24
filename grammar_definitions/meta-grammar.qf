@@ -83,7 +83,8 @@ subroutine_op = GET_CIRCUIT_NAME ".add_gate(" GET_GATE_NAME ",[" subroutine_op_a
 
 toffoli = ccx;
 
-primitive_gate = h
+primitive_gate = 
+    h
     | x
     | y
     | z

@@ -20,11 +20,15 @@ void VarExpr::print(std::ostream& stream) const {
     if (args.size()){
         stream << "{";
         for (const auto& arg : args){
-            stream << arg << ", ";
+            if (std::holds_alternative<int>(arg)){
+                stream << std::get<int>(arg) << ", ";
+            } else if (std::holds_alternative<Token_kind>(arg)){
+                stream << kind_as_str(std::get<Token_kind>(arg)) << ", ";
+            }
         }
         stream << "}";
     }
-};
+}
 
 Expr_type RuleExpr::eval(Context& context) const {
     if (auto temp_rule = context.get_value_bound_to<Rule>(rule_name)){

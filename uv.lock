@@ -2591,6 +2591,41 @@ wheels = [
 ]
 
 [[package]]
+name = "pytket-cirq"
+version = "0.41.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11'",
+]
+dependencies = [
+    { name = "cirq-core", version = "1.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "cirq-google", version = "1.5.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "protobuf", marker = "python_full_version < '3.11'" },
+    { name = "pytket", marker = "python_full_version < '3.11'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/23/b7/bb5a35a18248cac511d81555cb2229bcfae2eab11ca4f4237a18c655e49b/pytket_cirq-0.41.0-py3-none-any.whl", hash = "sha256:50e75d8107a1c09da08f3584e9ef27dfc4f79f829866d9868aaaaa6ea881eadb", size = 17779, upload-time = "2025-04-15T09:40:15.255Z" },
+]
+
+[[package]]
+name = "pytket-cirq"
+version = "0.43.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
+    "python_full_version == '3.11.*'",
+]
+dependencies = [
+    { name = "cirq-core", version = "1.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "cirq-google", version = "1.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pytket", marker = "python_full_version >= '3.11'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/68/13/fbf0640efd753e9627ec0e4c915cdd92203e3e1a18f543b00c9cb20f9ad7/pytket_cirq-0.43.0-py3-none-any.whl", hash = "sha256:b40f259bd7761908040e53dadad655543bb99dac41836ffeb96f32ac6a6f6b9a", size = 26659, upload-time = "2026-01-07T17:54:42.726Z" },
+]
+
+[[package]]
 name = "pytket-qir"
 version = "0.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2857,6 +2892,8 @@ dependencies = [
     { name = "pennylane", version = "0.42.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "pennylane", version = "0.44.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pytket" },
+    { name = "pytket-cirq", version = "0.41.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "pytket-cirq", version = "0.43.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pytket-qir" },
     { name = "pytket-qiskit" },
     { name = "pyyaml" },
@@ -2890,6 +2927,7 @@ requires-dist = [
     { name = "nanobind", specifier = ">=2.9" },
     { name = "pennylane" },
     { name = "pytket" },
+    { name = "pytket-cirq", specifier = ">=0.41.0" },
     { name = "pytket-qir" },
     { name = "pytket-qiskit" },
     { name = "pyyaml", specifier = ">=6.0.3" },

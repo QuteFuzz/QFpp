@@ -1,7 +1,5 @@
 # Cirq
 
-# TODO: subroutines
-
 MAX_REG_SIZE = 3;
 
 x = "cirq.X";
@@ -24,7 +22,35 @@ yy = "cirq.YY";
 zz = "cirq.ZZ";
 
 
-program = imports NL circuit NL program_footer;
+program = imports NL subroutine_defs NL circuit NL program_footer;
+
+subroutine_defs = ((sub_circuit | unitary_1q_def | unitary_2q_def) NL)[2];
+
+unitary_1q_def = 
+    "raw = ["  NL
+    "(" ""[GET_MAT_POS(0, 0)] "),(" ""[GET_MAT_POS(0, 1)] ")," NL
+    "(" ""[GET_MAT_POS(1, 0)] "),(" ""[GET_MAT_POS(1, 1)] ")," NL
+    "]"                            NL
+    "U = np.array([complex(r, i) for r, i in raw], dtype=complex).reshape(2, 2)" NL
+    GET_CIRCUIT_NAME " = cirq.MatrixGate(U)"           NL
+;
+
+unitary_2q_def = 
+    "raw = ["  NL
+    "(" ""[GET_MAT_POS(0, 0)] "),(" ""[GET_MAT_POS(0, 1)] "),(" ""[GET_MAT_POS(0, 2)] "),(" ""[GET_MAT_POS(0, 3)] ")," NL
+    "(" ""[GET_MAT_POS(1, 0)] "),(" ""[GET_MAT_POS(1, 1)] "),(" ""[GET_MAT_POS(1, 2)] "),(" ""[GET_MAT_POS(1, 3)] ")," NL
+    "(" ""[GET_MAT_POS(2, 0)] "),(" ""[GET_MAT_POS(2, 1)] "),(" ""[GET_MAT_POS(2, 2)] "),(" ""[GET_MAT_POS(2, 3)] ")," NL
+    "(" ""[GET_MAT_POS(3, 0)] "),(" ""[GET_MAT_POS(3, 1)] "),(" ""[GET_MAT_POS(3, 2)] "),(" ""[GET_MAT_POS(3, 3)] ")," NL
+    "]"                            NL
+    "U = np.array([complex(r, i) for r, i in raw], dtype=complex).reshape(4, 4)" NL
+    GET_CIRCUIT_NAME " = cirq.MatrixGate(U)"           NL
+;
+
+sub_circuit = circuit_def_header NL  sub_circuit_body NL sub_circuit_footer;
+
+sub_circuit_body = EXTERNAL::qubit_defs NL compound_stmts;
+
+sub_circuit_footer = GET_CIRCUIT_NAME " = cirq.CircuitOperation(" GET_CIRCUIT_NAME ".freeze())" NL;
 
 circuit = circuit_def_header NL body NL;
 
@@ -43,11 +69,13 @@ EXTERNAL {
 imports =
     "import math" NL
     "import cirq" NL
+    "import numpy as np" NL
     "from diff_testing.cirq import cirqTesting" NL
+    "from diff_testing.pytket import pytketTesting" NL
+    "from pytket.extensions.cirq import cirq_to_tk" NL 
+    "from pytket.passes import FlattenRegisters" NL
     ;
 
-
-# sub_circuit_footer = GET_CIRCUIT_NAME " = cirq.CircuitOperation(" GET_CIRCUIT_NAME ".freeze())" NL;
 
 circuit_def_header = GET_CIRCUIT_NAME " = cirq.Circuit()";
 
@@ -59,7 +87,19 @@ compound_stmt =
     | if_stmt
     ;
 
-qubit_op = gate_op;
+qubit_op = gate_op | subroutine_op;
+
+subroutine_op = 
+    [
+        if (GET_GATE_SOURCE == sub_circuit) {
+            op1 = GET_CIRCUIT_NAME ".append(" GET_GATE_NAME ".with_qubits(" qubit_list ")" strategy_kwarg ")";
+            op1
+        } else if ((GET_GATE_SOURCE == unitary_1q_def) || (GET_GATE_SOURCE == unitary_2q_def)) {
+            op2 = GET_CIRCUIT_NAME ".append(" GET_GATE_NAME "(" qubit_list ")" strategy_kwarg ")";
+            op2
+        }
+    ]
+    ;
 
 insert_strategy = "cirq.InsertStrategy.EARLIEST"
     | "cirq.InsertStrategy.NEW"
@@ -83,21 +123,23 @@ condition = "cirq.KeyCondition(m_key)";
 
 if_stmt = m_key NL apply_measure NL GET_CIRCUIT_NAME ".append(" primitive_gate gate_op_args ".with_classical_controls(" condition ")" strategy_kwarg ")";
 
-primitive_gate = rx
-    | ry
-    | rz
-    | h
+primitive_gate = 
+    h
     | x
     | y
     | z
+    | rz
+    | rx
+    | ry
+    | cx
+    # | cy # REMOVED because cirq_to_tk doesn't support it
+    | cz
+    # | ccx
+    # | toffoli # REMOVED because cirq_to_tk doesn't support it
     | s
     | t
-    | cx
-    | cy
-    | cz
-    | ccx
     | ch
-    | cswap
+    # | cswap  # REMOVED because cirq_to_tk doesn't support it (fredkin)
     | xx
     | yy
     | zz
@@ -107,12 +149,26 @@ singular_qubit = GET_DECL_NAME;
 
 register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
 
-compiler_call = "ct = cirqTesting()" NL testing_method;
+cirq_testing = "ct = cirqTesting()" NL "ct.opt_ks_test(" GET_CIRCUIT_NAME "," circuit_id ")" NL;
 
-testing_method = opt_ks_test;
+pytket_testing = 
+    "tk = cirq_to_tk(" GET_CIRCUIT_NAME ")" NL
+    "FlattenRegisters().apply(tk)" NL    
+    "ct = pytketTesting()" NL 
+    "ct.opt_ks_test(tk," circuit_id ")" NL;
 
-opt_ks_test = "ct.opt_ks_test(main_circuit" COMMA circuit_id RPAREN NL;
+# if unitaries, subroutines and control flow are not supported by the cirq_to_tk function
+compiler_call = 
+    [
+        if (HAS_NODE(unitary_1q_def) || HAS_NODE(unitary_2q_def) || HAS_NODE(sub_circuit) || HAS_NODE(if_stmt)){
+            cirq_testing
+        } else {
+            pytket_testing
+        }
+    ]
+    ;
 
-measurement = GET_CIRCUIT_NAME ".append(cirq.measure(*" GET_CIRCUIT_NAME ".all_qubits(), key='all_measurements'))" NL;
+measurement = GET_CIRCUIT_NAME ".append(cirq.measure_each(*" GET_CIRCUIT_NAME ".all_qubits()))" NL;
 
 program_footer = measurement NL compiler_call;
+

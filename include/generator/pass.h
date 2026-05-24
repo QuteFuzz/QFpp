@@ -22,7 +22,7 @@ class Pass {
             }
         }
 
-        Token_kind get_block_kind() const { return block_kind; }
+        Token_kind get_block_kind() const { return block_kind; } 
 
         virtual void apply();
 

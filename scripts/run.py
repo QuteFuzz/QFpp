@@ -257,23 +257,21 @@ class Check_grammar:
                 ignored_exceptions = ["NotImplementedError"]
 
                 if any(ex in result.stderr for ex in ignored_exceptions):
-                    log(
-                        f"  SKIPPING (Known Unsupported/Exception): {circuit_path.name}", Color.BLUE
-                    )
+                    log(f"  SKIPPING (Known Unsupported/Exception): {circuit_path}", Color.BLUE)
                     run_info.skipped = True
 
-                elif self.mode == Run_mode.NIGHTLY:
+                if self.mode == Run_mode.NIGHTLY:
                     log(f"  INTERESTING (Crash): {circuit_path}", Color.YELLOW)
                     run_info.interesting = True
                     run_info.logs = (
                         f"CRASH (Exit code {result.returncode})\n"
-                        "STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}\n"
+                        f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}\n"
                     )
 
                 elif self.mode == Run_mode.CI:
                     logs = (
                         f"CRASH (Exit code {result.returncode})\n"
-                        "STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}\n"
+                        f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}\n"
                     )
 
                     raise Exception(f"Compiler crashed in CI!\n{logs}")
@@ -320,7 +318,8 @@ class Check_grammar:
 
                     if run_info.interesting:
                         interesting_results.append(run_info)
-                    elif run_info.skipped:
+
+                    if run_info.skipped:
                         num_skipped += 1
 
                     completed_threads += 1

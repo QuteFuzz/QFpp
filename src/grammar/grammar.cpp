@@ -385,7 +385,19 @@ std::unique_ptr<Expr> Grammar::factor() {
 
         check(")");
 
-        return std::make_unique<VarExpr>(var_token, std::vector<int>{row, col});
+        return std::make_unique<VarExpr>(var_token, std::vector<Arg_type>{row, col});
+
+    } else if (curr_token.kind == HAS_NODE){
+        Token_kind var_token = curr_token.kind;
+
+        consume();
+        consume("(");
+        
+        Token_kind node_kind = curr_token.kind; consume();
+
+        check(")");
+
+        return std::make_unique<VarExpr>(var_token, std::vector<Arg_type>{node_kind});
 
     } else if (is_meta(curr_token.kind)) {
         return std::make_unique<VarExpr>(curr_token.kind);

@@ -27,6 +27,7 @@ dependencies = [
     "typing-extensions>=4.15.0",
     "qwasm>=1.0.1",
     "nanobind>=2.9",
+    "pytket-cirq>=0.41.0",
 ]
 
 [tool.uv]

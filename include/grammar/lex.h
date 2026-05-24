@@ -98,6 +98,7 @@ enum Token_kind {
     GET_TOTAL_QUBITS,
     GET_TOTAL_BITS,
     GET_MAT_POS,
+    HAS_NODE,
     GET_INDENT_LEVEL,
     MAKE_INTEGER,
     MAKE_FLOAT,
@@ -278,6 +279,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("GET_TOTAL_QUBITS", GET_TOTAL_QUBITS),
     Token_matcher("GET_TOTAL_BITS", GET_TOTAL_BITS),
     Token_matcher("GET_MAT_POS", GET_MAT_POS),
+    Token_matcher("HAS_NODE", HAS_NODE),
 
     // some tokens get immediately converted into syntax because we know before hand what the replacement should be
     Token_matcher("LPAREN", STRING, "("),

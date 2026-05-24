@@ -99,7 +99,7 @@ struct Context {
 
 		const Control& get_control() const { return control; }
 
-		Expr_type resolve_var(const Token_kind name, const std::vector<int>& args) const;
+		Expr_type resolve_var(const Token_kind name, const std::vector<Arg_type>& args) const;
 
 		std::shared_ptr<Circuit> get_current_circuit() const;
 

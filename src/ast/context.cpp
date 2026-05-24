@@ -61,6 +61,10 @@ bool Context::can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit){
 
         unsigned int required_n_resources = 0;
 
+        if (current_circuit_n_resources == 0){
+            continue;
+        }
+
         if (circuit->get_node_kind() == SUB_CIRCUIT){
             auto ext_scope_pred = [](const auto& elem){ return scope_matches(elem->get_scope(), Scope::EXT); };
             auto circuit_resources = circuit->get_coll<Resource>(rk);
@@ -90,7 +94,7 @@ bool Context::current_circuit_uses_subroutines(){
 }
 
 
-Expr_type Context::resolve_var(const Token_kind name, const std::vector<int>& args) const {
+Expr_type Context::resolve_var(const Token_kind name, const std::vector<Arg_type>& args) const {
     auto gate = get_current_node<Gate>();
 
     if (name == GET_GATE_SOURCE){
@@ -107,8 +111,20 @@ Expr_type Context::resolve_var(const Token_kind name, const std::vector<int>& ar
     } else if (name == GET_TOTAL_BITS) {
         auto bits = get_current_circuit()->get_coll<Resource>(Resource_kind::BIT);
         return (int)bits.size();
-    } else if ((name == GET_MAT_POS) && (args.size() == 2)){
-        return get_current_circuit()->get_val_at(args[0], args[1]);
+    } else if ((name == GET_MAT_POS) && (args.size() == 2) && 
+        std::holds_alternative<int>(args[0]) && std::holds_alternative<int>(args[1])
+    ){
+        return get_current_circuit()->get_val_at(std::get<int>(args[0]), std::get<int>(args[1]));
+    } else if ((name == HAS_NODE) && (args.size() == 1) && std::holds_alternative<Token_kind>(args[0])){
+        Token_kind node_kind = std::get<Token_kind>(args[0]);
+
+        for (const std::shared_ptr<Circuit> circ : circuits){
+            if (circ->find(node_kind) != nullptr){
+                return true;
+            }
+        }
+
+        return false;
     }
 
     return 0;
