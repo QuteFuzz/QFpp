@@ -149,13 +149,17 @@ singular_qubit = GET_DECL_NAME;
 
 register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
 
-cirq_testing = "ct = cirqTesting()" NL "ct.opt_ks_test(" GET_CIRCUIT_NAME "," circuit_id ")" NL;
+cirq_testing = 
+    "ct = cirqTesting()" NL
+    "ct.opt_ks_test(" GET_CIRCUIT_NAME "," circuit_id ")" NL
+    ;
 
 pytket_testing = 
     "tk = cirq_to_tk(" GET_CIRCUIT_NAME ")" NL
     "FlattenRegisters().apply(tk)" NL    
     "ct = pytketTesting()" NL 
-    "ct.opt_ks_test(tk," circuit_id ")" NL;
+    "ct.opt_ks_test(tk," circuit_id ")" NL
+    ;
 
 # if unitaries, subroutines and control flow are not supported by the cirq_to_tk function
 compiler_call = 

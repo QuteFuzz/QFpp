@@ -393,11 +393,11 @@ std::unique_ptr<Expr> Grammar::factor() {
         consume();
         consume("(");
         
-        Token_kind node_kind = curr_token.kind; consume();
+        std::string node_name = curr_token.value; consume();
 
         check(")");
 
-        return std::make_unique<VarExpr>(var_token, std::vector<Arg_type>{node_kind});
+        return std::make_unique<VarExpr>(var_token, std::vector<Arg_type>{node_name});
 
     } else if (is_meta(curr_token.kind)) {
         return std::make_unique<VarExpr>(curr_token.kind);

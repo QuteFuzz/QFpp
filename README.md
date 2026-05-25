@@ -3,6 +3,7 @@
 <p align="center" width="100%">
     <img width="25%" src="etc/qutefuzz.png">
 
+[![Unitary Foundation](https://img.shields.io/badge/Supported%20By-UNITARY%20FOUNDATION-red.svg?style=for-the-badge)](https://unitary.foundation)
 
 qf++ is a framework for quantum compilers. It generates structurally valid quantum programs across multiple quantum software stacks, then differentially tests them by comparing circuit simulation outputs across compiler optimisation levels. 
 

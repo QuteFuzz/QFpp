@@ -1,5 +1,5 @@
 
-# META-GRAMMAR
+# Gets imported by all other templates
 (*
     Rules:
     - use `subroutines` node to encapsulate GET_GATE_NAME circuits

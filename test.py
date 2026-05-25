@@ -1,42 +1,62 @@
-import math
+from diff_testing.qasm import qasmTesting
+qasm_str = '''
+OPENQASM 2.0;
+include "qelib1.inc";
 
-import cirq
-from pytket.extensions.cirq import cirq_to_tk
-from pytket.passes import FlattenRegisters
+gate sub_0(sing_22,sing_28) sing_35,sing_42,sing_49 {
+	tdg sing_42;	
+	cx sing_42, sing_49;	
+	tdg sing_35;	
+	s sing_49;	
+	t sing_35;	
+	sdg sing_35;	
+	cx sing_35, sing_42;	
+	sdg sing_49;	
+	y sing_35;	
+	u3 ((pi/4.0), pi, pi) sing_35;	
+	sdg sing_49;	
+	ry ((pi/4.0)) sing_49;	
+}
 
-from diff_testing.pytket import pytketTesting
-
-main_circuit = cirq.Circuit()
-reg_23 = cirq.NamedQubit.range(2, prefix="reg_23")
-reg_23 = cirq.NamedQubit.range(3, prefix="reg_23")
-reg_37 = cirq.NamedQubit.range(3, prefix="reg_37")
-reg_51 = cirq.NamedQubit.range(3, prefix="reg_51")
-reg_65 = cirq.NamedQubit.range(2, prefix="reg_65")
-
-main_circuit.append(
-    cirq.rz(
-        (math.pi / 2.0),
-    )(reg_51[0]),
-    strategy=cirq.InsertStrategy.NEW_THEN_INLINE,
-)
-main_circuit.append(cirq.X(reg_51[1]), strategy=cirq.InsertStrategy.EARLIEST)
-main_circuit.append(
-    cirq.rx(
-        (math.pi / 4.0),
-    )(reg_23[2]),
-    strategy=cirq.InsertStrategy.INLINE,
-)
-main_circuit.append(
-    cirq.H(reg_23[0]),
-)
-main_circuit.append(
-    cirq.CNOT(reg_23[0], reg_23[1]),
-)
-main_circuit.append(cirq.measure_each(*main_circuit.all_qubits()))
+qreg reg_230[1];
+qreg reg_240[3];
+qreg reg_254[1];
+qreg reg_264[2];
+creg reg_277[2];
+creg reg_289[1];
+creg reg_299[2];
 
 
-tk = cirq_to_tk(main_circuit)
-FlattenRegisters().apply(tk)
+// measure reg_240[0] -> reg_299[0];
+// if(reg_299==1) t reg_230[0];
+// measure reg_230[0] -> reg_277[1];
+// measure reg_264[0] -> reg_289[0];
+cy reg_230[0], reg_264[1];
+sub_0((pi/2.0), 0.960876) reg_264[0], reg_240[0], reg_264[1];
+// measure reg_240[0] -> reg_299[1];
+rz (4.247478) reg_240[2];
+// measure reg_254[0] -> reg_277[1];
+// measure reg_264[0] -> reg_277[0];
+// measure reg_230[0] -> reg_289[0];
+// measure reg_254[0] -> reg_299[0];
+// measure reg_264[0] -> reg_299[1];
+// measure reg_230[0] -> reg_299[0];
+// if(reg_299==1) cz reg_264[0], reg_230[0];
+u2 (6.307099, 6.435542) reg_230[0];
+// measure reg_254[0] -> reg_299[1];
+// if(reg_299==0) sub_0(8.885856, 0.746641) reg_240[0], reg_240[1], reg_230[0];
 
-ct = pytketTesting()
-ct.opt_ks_test(tk, 0)
+creg temp_reg_230[1];
+measure reg_230-> temp_reg_230;
+creg temp_reg_240[3];
+measure reg_240-> temp_reg_240;
+creg temp_reg_254[1];
+measure reg_254-> temp_reg_254;
+creg temp_reg_264[2];
+measure reg_264-> temp_reg_264;
+'''
+
+qt = qasmTesting()
+# qt.counts_agreement_test(qasm_str, 0)
+# qt.opt_ks_test(qasm_str, 0)
+qt._counts_agreement_at_level_test(qasm_str, 0, 0)

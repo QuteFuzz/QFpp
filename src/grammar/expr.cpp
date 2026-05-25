@@ -22,8 +22,8 @@ void VarExpr::print(std::ostream& stream) const {
         for (const auto& arg : args){
             if (std::holds_alternative<int>(arg)){
                 stream << std::get<int>(arg) << ", ";
-            } else if (std::holds_alternative<Token_kind>(arg)){
-                stream << kind_as_str(std::get<Token_kind>(arg)) << ", ";
+            } else if (std::holds_alternative<std::string>(arg)){
+                stream << std::get<std::string>(arg) << ", ";
             }
         }
         stream << "}";
@@ -76,6 +76,8 @@ Expr_type PropertyAccessExpr::eval(Context& context) const {
             return resource->get_scope() == Scope::INT;
         } else if (prop_name == "name") {
             return resource->get_var_name()->get_str();
+        } else if (prop_name == "index") {
+            return resource->get_index()->get_str();
         } else {
             ERROR("Unknown resource property " + prop_name);
         }
@@ -91,6 +93,8 @@ Expr_type PropertyAccessExpr::eval(Context& context) const {
             return resource_def->get_scope() == Scope::INT;
         } else if (prop_name == "name") {
             return resource_def->get_var_name()->get_str();
+        } else if (prop_name == "size") {
+            return resource_def->get_size()->get_str();
         } else {
             ERROR("Unknown resource def property " + prop_name);
         }
@@ -247,5 +251,5 @@ Expr_type AssignExpr::eval(Context& context) const {
 }
 
 void AssignExpr::print(std::ostream& stream) const {
-    stream << rule->get_name() << std::endl;
+    stream << *rule << std::endl;
 }

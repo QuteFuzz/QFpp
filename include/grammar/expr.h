@@ -45,7 +45,7 @@ class Rule;
 
 using Rule_list = std::vector<std::shared_ptr<Rule>>;
 using Expr_type = std::variant<int, bool, std::string, std::shared_ptr<Rule>, Rule_list>;
-using Arg_type = std::variant<int, Token_kind>;
+using Arg_type = std::variant<int, std::string>;
 
 class Expr {
     public:

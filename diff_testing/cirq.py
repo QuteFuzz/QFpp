@@ -1,4 +1,5 @@
 import cirq
+from tunits import C
 
 from .lib import Base
 
@@ -56,7 +57,9 @@ def opt_level_3(
 
 
 def transpile(circuit: cirq.Circuit, opt_level: int):
-    if opt_level == 1:
+    if opt_level == 0:
+        return circuit
+    elif opt_level == 1:
         return opt_level_1(circuit)
     elif opt_level == 2:
         return opt_level_2(circuit)

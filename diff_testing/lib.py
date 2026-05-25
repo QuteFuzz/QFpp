@@ -32,7 +32,7 @@ class Base(ABC):
     OUTPUT_DIR = (Path(__file__).parent.parent / "outputs").resolve()
     TIMEOUT_SECONDS = 30
 
-    def __init__(self, qss_name) -> None:
+    def __init__(self, qss_name, endianess = "little") -> None:
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument(
             "--plot", action="store_true", help="Plot results after running circuit"
@@ -40,12 +40,13 @@ class Base(ABC):
         self.args = self.parser.parse_args()
         self.plot: bool = self.args.plot
         self.qss_name = qss_name
+        self.endianess = endianess
 
         self.num_shots = 10 if os.environ.get("RUN_MODE") == "CI" else 100_000
 
     @abstractmethod
     def _get_counts(self, circuit, opt_level, circuit_num) -> Dict[Any, int]:
-        pass
+        raise NotImplementedError("`_get_counts` func not implemented")
 
     def _preprocess_counts(self, counts: Dict[Any, int], n_bits: int) -> Dict[Any, int]:
         """
@@ -61,8 +62,9 @@ class Base(ABC):
             else:
                 key_str = str(k).replace(" ", "")
 
-            if self.qss_name == "qiskit":
-                key_str = key_str[::-1]  # flip to match <0001| indexed as [0,1,2,3], flip
+            if self.endianess == "big":
+                # flip big endian enjoyers to become little endian
+                key_str = key_str[::-1]
 
             if len(key_str) > n_bits:
                 key_str = key_str[:n_bits]
@@ -88,16 +90,14 @@ class Base(ABC):
             sample2 += [val] * count
 
         if len(sample1) != self.num_shots or len(sample2) != self.num_shots:
-            print(counts1, " ", counts2)
+            # print(counts1, " ", counts2)
             print(
                 f"Sample size(sample1: {len(sample1)}, sample2: {len(sample2)})"
                 f" does not match number of shots ({self.num_shots})"
             )
-            return 1.0
 
-        else:
-            res = ks_2samp(sorted(sample1), sorted(sample2), method="asymp")
-            return float(res.pvalue)  # type: ignore
+        res = ks_2samp(sorted(sample1), sorted(sample2), method="asymp")
+        return float(res.pvalue)  # type: ignore
 
     def _plot_histogram(self, res: Dict[Any, int], title: str, circuit_number: int = 0) -> None:
         plots_dir = self.OUTPUT_DIR / self.qss_name / f"circuit{circuit_number}"

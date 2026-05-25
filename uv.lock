@@ -21,6 +21,15 @@ wheels = [
 ]
 
 [[package]]
+name = "antlr4-python3-runtime"
+version = "4.13.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/33/5f/2cdf6f7aca3b20d3f316e9f505292e1f256a32089bd702034c29ebde6242/antlr4_python3_runtime-4.13.2.tar.gz", hash = "sha256:909b647e1d2fc2b70180ac586df3933e38919c85f98ccc656a96cd3f25ef3916", size = 117467, upload-time = "2024-08-03T19:00:12.757Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/89/03/a851e84fcbb85214dc637b6378121ef9a0dd61b4c65264675d8a5c9b1ae7/antlr4_python3_runtime-4.13.2-py3-none-any.whl", hash = "sha256:fe3835eb8d33daece0e799090eda89719dbccee7aa39ef94eed3818cafa5a7e8", size = 144462, upload-time = "2024-08-03T19:00:11.134Z" },
+]
+
+[[package]]
 name = "anyio"
 version = "4.13.0"
 source = { registry = "https://pypi.org/simple" }
@@ -342,7 +351,7 @@ dependencies = [
     { name = "pandas", marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "sortedcontainers", marker = "python_full_version < '3.11'" },
-    { name = "sympy", marker = "python_full_version < '3.11'" },
+    { name = "sympy", version = "1.12.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "tqdm", marker = "python_full_version < '3.11'" },
     { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
@@ -368,7 +377,7 @@ dependencies = [
     { name = "pandas", marker = "python_full_version >= '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "sortedcontainers", marker = "python_full_version >= '3.11'" },
-    { name = "sympy", marker = "python_full_version >= '3.11'" },
+    { name = "sympy", version = "1.14.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "tqdm", marker = "python_full_version >= '3.11'" },
     { name = "typing-extensions", marker = "python_full_version >= '3.11'" },
 ]
@@ -1252,10 +1261,10 @@ name = "ibm-quantum-schemas"
 version = "0.6.20260414"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pybase64" },
-    { name = "pydantic" },
-    { name = "qiskit" },
-    { name = "samplomatic" },
+    { name = "pybase64", marker = "python_full_version < '3.11'" },
+    { name = "pydantic", marker = "python_full_version < '3.11'" },
+    { name = "qiskit", version = "2.3.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "samplomatic", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/de/21/32ee1aa52a15d883abedf4f74a14976dc9a1ff8e10cd3bc7e23b60a3b5a7/ibm_quantum_schemas-0.6.20260414.tar.gz", hash = "sha256:a994d92ccd3ef7f3ee4358ec13e1ce18a52f1b67c4a0c37528e19e913341f635", size = 94496, upload-time = "2026-04-14T18:35:34.488Z" }
 wheels = [
@@ -1775,6 +1784,20 @@ wheels = [
 ]
 
 [[package]]
+name = "openqasm3"
+version = "1.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/92/a0/678ce1e4efbeb1cf06a7728b4056754e52bfd2c5cad174dae0f2a17b2d03/openqasm3-1.0.1.tar.gz", hash = "sha256:c589dc05d4ced50ca24167d14e0f2c916e717499ba0442e0ff2a3030ef312d0a", size = 536861, upload-time = "2025-02-19T22:51:06.204Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/75/dd/2aa7698341948f3229f7a1cb75e84d9677444d9c730632d1907716574dc5/openqasm3-1.0.1-py3-none-any.whl", hash = "sha256:0d3a1ebe3465e3ea619bcaa369858bba8944cbb0c49604b24f94662d3ec41d41", size = 541545, upload-time = "2025-02-19T22:51:01.852Z" },
+]
+
+[package.optional-dependencies]
+parser = [
+    { name = "antlr4-python3-runtime" },
+]
+
+[[package]]
 name = "orjson"
 version = "3.11.8"
 source = { registry = "https://pypi.org/simple" }
@@ -2027,6 +2050,48 @@ wheels = [
 ]
 
 [[package]]
+name = "pennylane-qiskit"
+version = "0.38.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11'",
+]
+dependencies = [
+    { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", marker = "python_full_version < '3.11'" },
+    { name = "pennylane", version = "0.42.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "qiskit", version = "2.3.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "qiskit-aer", marker = "python_full_version < '3.11'" },
+    { name = "qiskit-ibm-provider", marker = "python_full_version < '3.11'" },
+    { name = "qiskit-ibm-runtime", version = "0.46.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "sympy", version = "1.12.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/15/00/926dfb3ff0b7858b1401f1be6a85cbec698bd34a70a7c9780abf6c0f1218/PennyLane_qiskit-0.38.0-py3-none-any.whl", hash = "sha256:2a97bbd81b935192bfcfb9d0c5292a3d6cf1721f01bf3def838e4707dfce8b85", size = 44353, upload-time = "2024-09-04T00:40:47.909Z" },
+]
+
+[[package]]
+name = "pennylane-qiskit"
+version = "0.45.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
+    "python_full_version == '3.11.*'",
+]
+dependencies = [
+    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pennylane", version = "0.44.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "qiskit", version = "2.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "qiskit-aer", marker = "python_full_version >= '3.11'" },
+    { name = "qiskit-ibm-runtime", version = "0.45.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "sympy", version = "1.14.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/79/68/7cd3d890494fcac29fb72c1e021b7ddc1baed00d3f6a92d276f70bf7bb50/pennylane_qiskit-0.45.0-py3-none-any.whl", hash = "sha256:f2b1a53f16e5aaef7c236c471576e0fdb5153574d86cc760ca78649a930541dc", size = 45205, upload-time = "2026-05-12T20:35:01.176Z" },
+]
+
+[[package]]
 name = "pillow"
 version = "12.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2097,6 +2162,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/c3/28/ec0fc38107fc32536908034e990c47914c57cd7c5a3ece4d8d8f7ffd7e27/pillow-12.2.0-pp311-pypy311_pp73-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:4a6c9fa44005fa37a91ebfc95d081e8079757d2e904b27103f4f5fa6f0bf78c0", size = 5355404, upload-time = "2026-04-01T14:46:06.33Z" },
     { url = "https://files.pythonhosted.org/packages/5e/8b/51b0eddcfa2180d60e41f06bd6d0a62202b20b59c68f5a132e615b75aecf/pillow-12.2.0-pp311-pypy311_pp73-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:25373b66e0dd5905ed63fa3cae13c82fbddf3079f2c8bf15c6fb6a35586324c1", size = 6002215, upload-time = "2026-04-01T14:46:08.83Z" },
     { url = "https://files.pythonhosted.org/packages/bc/60/5382c03e1970de634027cee8e1b7d39776b778b81812aaf45b694dfe9e28/pillow-12.2.0-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:bfa9c230d2fe991bed5318a5f119bd6780cda2915cca595393649fc118ab895e", size = 7080946, upload-time = "2026-04-01T14:46:11.734Z" },
+]
+
+[[package]]
+name = "ply"
+version = "3.11"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e5/69/882ee5c9d017149285cab114ebeab373308ef0f874fcdac9beb90e0ac4da/ply-3.11.tar.gz", hash = "sha256:00c7c1aaa88358b9c765b6d3000c6eec0ba42abca5351b095321aef446081da3", size = 159130, upload-time = "2018-02-15T19:01:31.097Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a3/58/35da89ee790598a0700ea49b2a66594140f44dec458c07e8e3d4979137fc/ply-3.11-py2.py3-none-any.whl", hash = "sha256:096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce", size = 49567, upload-time = "2018-02-15T19:01:27.172Z" },
 ]
 
 [[package]]
@@ -2569,7 +2643,8 @@ dependencies = [
     { name = "qwasm" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "sympy" },
+    { name = "sympy", version = "1.12.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "sympy", version = "1.14.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "typing-extensions" },
 ]
 wheels = [
@@ -2626,6 +2701,40 @@ wheels = [
 ]
 
 [[package]]
+name = "pytket-pennylane"
+version = "0.20.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11'",
+]
+dependencies = [
+    { name = "pennylane", version = "0.42.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "pytket", marker = "python_full_version < '3.11'" },
+    { name = "pytket-qiskit", marker = "python_full_version < '3.11'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/69/49/b4a698178262d176a3e6c10547d934430a7a6a6a8738656a0ea93b840fd3/pytket_pennylane-0.20.0-py3-none-any.whl", hash = "sha256:ea71a43a2cbba67367b2b0091eefb3925b520a3d0dec34cc7469205d89072e3c", size = 12157, upload-time = "2025-01-24T09:43:39.185Z" },
+]
+
+[[package]]
+name = "pytket-pennylane"
+version = "0.21.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
+    "python_full_version == '3.11.*'",
+]
+dependencies = [
+    { name = "pennylane", version = "0.44.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pytket", marker = "python_full_version >= '3.11'" },
+    { name = "pytket-qiskit", marker = "python_full_version >= '3.11'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/09/b9/4d05f11cbcb558045e521cda711d35ba40143d02b98b941d9a676c000303/pytket_pennylane-0.21.0-py3-none-any.whl", hash = "sha256:28e7f00c147385661319af498a7b5217ace2cdd755dc262d8c21a28fec4095f4", size = 18662, upload-time = "2026-01-07T17:57:18.309Z" },
+]
+
+[[package]]
 name = "pytket-qir"
 version = "0.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2644,9 +2753,11 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
     { name = "pytket" },
-    { name = "qiskit" },
+    { name = "qiskit", version = "2.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "qiskit", version = "2.3.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "qiskit-aer" },
-    { name = "qiskit-ibm-runtime" },
+    { name = "qiskit-ibm-runtime", version = "0.45.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "qiskit-ibm-runtime", version = "0.46.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "symengine" },
 ]
 wheels = [
@@ -2734,16 +2845,46 @@ wheels = [
 
 [[package]]
 name = "qiskit"
+version = "2.3.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
+    "python_full_version == '3.11.*'",
+]
+dependencies = [
+    { name = "dill", marker = "python_full_version >= '3.11'" },
+    { name = "numpy", marker = "python_full_version >= '3.11'" },
+    { name = "rustworkx", marker = "python_full_version >= '3.11'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "stevedore", marker = "python_full_version >= '3.11'" },
+    { name = "typing-extensions", marker = "python_full_version >= '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/13/8e/d5279454717d780f32eec4dfa6a7ef256ea7382b2f8fef2c715fc6f1180e/qiskit-2.3.0.tar.gz", hash = "sha256:e0a00c6681b8d04171c5cdb928837d992676f8aa4a07c390d446e54babaf6c1e", size = 3903621, upload-time = "2026-01-08T19:36:33.691Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d6/79/22a6c61a94fef8eac09f968355c15c0d3b0800110152bbcf9cbed5bfc807/qiskit-2.3.0-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:bfeba21f216f64b051f9ac98653e9999d4c1bcb4f328aca06ad059aaef86586b", size = 8791989, upload-time = "2026-01-08T21:32:53.48Z" },
+    { url = "https://files.pythonhosted.org/packages/d7/55/bb8efb2b6e46e5b8c7d147973646fa71677e63ecd2378af4db2829795be6/qiskit-2.3.0-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:5f29f3b6a2b5738463bc667ddb2bcc79a83fb434ab9a8033487b64a399f71bef", size = 7872461, upload-time = "2026-01-08T19:36:26.458Z" },
+    { url = "https://files.pythonhosted.org/packages/d1/c6/d928648d417c5c2e0c50481ef4f197f2ad8ca74d361e163e0c5d73253cbf/qiskit-2.3.0-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:b437262a14ab961703153f79f38de5fde408601b0eda1f9c34b57498c912ef33", size = 8223957, upload-time = "2026-01-08T19:36:28.767Z" },
+    { url = "https://files.pythonhosted.org/packages/54/76/33ee3519c3ff88b6154ccce13d24a33c0dc0fc9b22df8f216f1833cb0981/qiskit-2.3.0-cp310-abi3-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl", hash = "sha256:7c413dace7a9b1d30bbbfeb2f90c4564dfcf6ed3c0744e026d4aca84f8fbd2bb", size = 9042802, upload-time = "2026-01-08T21:32:55.692Z" },
+    { url = "https://files.pythonhosted.org/packages/73/9f/478788b16f653cdf151c7f2f040ba41b97e355d3bf9348ee2f0f685a5ea6/qiskit-2.3.0-cp310-abi3-manylinux2014_s390x.manylinux_2_17_s390x.whl", hash = "sha256:ae0b1ec4c24ff8867599a5e8a46efaaf6d5477d1c4533427b7ae516054f52b2f", size = 8701281, upload-time = "2026-01-08T21:32:57.947Z" },
+    { url = "https://files.pythonhosted.org/packages/de/22/fd8e7d4869641f60d9b7ce6d688b59520c8c8be8c8e4b51d76fb85b59f42/qiskit-2.3.0-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:24fd70ee3ac47fe029096e39b1c39abf3e7f145c723df90f9600468099c12aa4", size = 8888244, upload-time = "2026-01-08T19:36:30.259Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/bb/0fbcf43f9daba43f1eb31ecf7d36afcbcf705457d9df6e8e6f38f07b4851/qiskit-2.3.0-cp310-abi3-win_amd64.whl", hash = "sha256:8679a426725785701629f0af905a7a5b6bc25b0dcd7fe4f4c9f8be63d89e832c", size = 8630467, upload-time = "2026-01-08T19:36:31.958Z" },
+]
+
+[[package]]
+name = "qiskit"
 version = "2.3.1"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11'",
+]
 dependencies = [
-    { name = "dill" },
-    { name = "numpy" },
-    { name = "rustworkx" },
+    { name = "dill", marker = "python_full_version < '3.11'" },
+    { name = "numpy", marker = "python_full_version < '3.11'" },
+    { name = "rustworkx", marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "stevedore" },
-    { name = "typing-extensions" },
+    { name = "stevedore", marker = "python_full_version < '3.11'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f9/9a/a366dd56b6a4520e5b2856e47d573c6813b4c3f62f28969a37205fd845ab/qiskit-2.3.1.tar.gz", hash = "sha256:7b3b7e1c8a50f7f423204143a1bd9f21bf27659c57459d582eaff4035d8d7f75", size = 3909915, upload-time = "2026-03-13T00:43:03.257Z" }
 wheels = [
@@ -2764,7 +2905,8 @@ dependencies = [
     { name = "numpy" },
     { name = "psutil" },
     { name = "python-dateutil" },
-    { name = "qiskit" },
+    { name = "qiskit", version = "2.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "qiskit", version = "2.3.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
@@ -2804,26 +2946,88 @@ wheels = [
 ]
 
 [[package]]
+name = "qiskit-ibm-provider"
+version = "0.11.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", marker = "python_full_version < '3.11'" },
+    { name = "python-dateutil", marker = "python_full_version < '3.11'" },
+    { name = "qiskit", version = "2.3.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "requests", marker = "python_full_version < '3.11'" },
+    { name = "requests-ntlm", marker = "python_full_version < '3.11'" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
+    { name = "urllib3", marker = "python_full_version < '3.11'" },
+    { name = "websocket-client", marker = "python_full_version < '3.11'" },
+    { name = "websockets", marker = "python_full_version < '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3b/75/a3a940de9adbd2c9b85b12e8401a6cbf9b4b6b41d3b65fde64980eaa865e/qiskit_ibm_provider-0.11.0.tar.gz", hash = "sha256:31a29701120dd0b27e1d8e691b4e7262580cda6f85b85610697577920d8c2f0c", size = 244845, upload-time = "2024-04-17T14:49:07.424Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a3/86/2f775a9ce2514da2ad2b0a5e52640536cbd6dcc1b5e0f6a48297ede96dcb/qiskit_ibm_provider-0.11.0-py3-none-any.whl", hash = "sha256:3d84aff2df00d0642a9fcb53cf7f7442e62d65d3bbe13e191bc078b2ee474dc6", size = 249949, upload-time = "2024-04-17T14:49:05.691Z" },
+]
+
+[[package]]
+name = "qiskit-ibm-runtime"
+version = "0.45.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
+    "python_full_version == '3.11.*'",
+]
+dependencies = [
+    { name = "ibm-platform-services", marker = "python_full_version >= '3.11'" },
+    { name = "numpy", marker = "python_full_version >= '3.11'" },
+    { name = "packaging", marker = "python_full_version >= '3.11'" },
+    { name = "pydantic", marker = "python_full_version >= '3.11'" },
+    { name = "python-dateutil", marker = "python_full_version >= '3.11'" },
+    { name = "qiskit", version = "2.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "requests", marker = "python_full_version >= '3.11'" },
+    { name = "requests-ntlm", marker = "python_full_version >= '3.11'" },
+    { name = "urllib3", marker = "python_full_version >= '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cc/50/82917ad29bfeab4f03163de8fe61b8832811c7413baa857300b6cc461619/qiskit_ibm_runtime-0.45.1.tar.gz", hash = "sha256:cc8e9360ba5e76df6c6663bd37644ce3e1252554eb1faba0fa5922fc95cd38c2", size = 1525919, upload-time = "2026-02-12T17:17:55.735Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ee/98/92edc7c34deaf698db5bcaa31e0bbd43d4e317b2526b9fdf2b5a957956e4/qiskit_ibm_runtime-0.45.1-py3-none-any.whl", hash = "sha256:b48a791e414f85d0d835fa8df110ba0e996393b06e2458ad498c7e68fc06e7da", size = 1453522, upload-time = "2026-02-12T17:17:54.023Z" },
+]
+
+[[package]]
 name = "qiskit-ibm-runtime"
 version = "0.46.1"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11'",
+]
 dependencies = [
-    { name = "ibm-platform-services" },
-    { name = "ibm-quantum-schemas" },
-    { name = "numpy" },
-    { name = "packaging" },
-    { name = "pybase64" },
-    { name = "pydantic" },
-    { name = "python-dateutil" },
-    { name = "qiskit" },
-    { name = "requests" },
-    { name = "requests-ntlm" },
-    { name = "samplomatic" },
-    { name = "urllib3" },
+    { name = "ibm-platform-services", marker = "python_full_version < '3.11'" },
+    { name = "ibm-quantum-schemas", marker = "python_full_version < '3.11'" },
+    { name = "numpy", marker = "python_full_version < '3.11'" },
+    { name = "packaging", marker = "python_full_version < '3.11'" },
+    { name = "pybase64", marker = "python_full_version < '3.11'" },
+    { name = "pydantic", marker = "python_full_version < '3.11'" },
+    { name = "python-dateutil", marker = "python_full_version < '3.11'" },
+    { name = "qiskit", version = "2.3.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "requests", marker = "python_full_version < '3.11'" },
+    { name = "requests-ntlm", marker = "python_full_version < '3.11'" },
+    { name = "samplomatic", marker = "python_full_version < '3.11'" },
+    { name = "urllib3", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/c1/fb/fec3db1c1278808d50f7c35bdb14e05e4b3fe0a5bbaeb50a587d9f6e2fa5/qiskit_ibm_runtime-0.46.1.tar.gz", hash = "sha256:22d0fa71ccffd9db03f19e3d05fc5da6bacdf54bb5a8347b25a275623de82645", size = 1565577, upload-time = "2026-03-23T21:05:42.403Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6b/3a/135cbeb2de66b43b6a31fab309912c4fbee0be525f392eb1e4baf6d2e55c/qiskit_ibm_runtime-0.46.1-py3-none-any.whl", hash = "sha256:da5f1d4e7876722a345c61d3fb6416b3d3df726a7a760e70f6388e1339fd7f49", size = 1490117, upload-time = "2026-03-23T21:05:40.807Z" },
+]
+
+[[package]]
+name = "qiskit-qasm3-import"
+version = "0.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "openqasm3", extra = ["parser"] },
+    { name = "qiskit", version = "2.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "qiskit", version = "2.3.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ea/e4/0229893ae295763a9273e47a7b1a8f10599ee49c2963750440d56a4b0023/qiskit_qasm3_import-0.6.0.tar.gz", hash = "sha256:6b763ee58538b33eaf5aaa8126b687f3c03f26c4d28e6a4f04f9be24a6b184ff", size = 37141, upload-time = "2025-06-10T16:34:11.287Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3e/7e/b8bbfbf1acfe0b40872727ef4741b54794beb65da34c4c327dc31a73d35d/qiskit_qasm3_import-0.6.0-py3-none-any.whl", hash = "sha256:2109b65a6859bec4a51e7b61bd525365f298f67f19b3952bf602423c6d21d697", size = 29490, upload-time = "2025-06-10T16:34:10.035Z" },
 ]
 
 [[package]]
@@ -2891,18 +3095,26 @@ dependencies = [
     { name = "nanobind" },
     { name = "pennylane", version = "0.42.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "pennylane", version = "0.44.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pennylane-qiskit", version = "0.38.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "pennylane-qiskit", version = "0.45.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "ply" },
     { name = "pytket" },
     { name = "pytket-cirq", version = "0.41.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "pytket-cirq", version = "0.43.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pytket-pennylane", version = "0.20.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "pytket-pennylane", version = "0.21.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pytket-qir" },
     { name = "pytket-qiskit" },
     { name = "pyyaml" },
     { name = "qirrunner" },
-    { name = "qiskit" },
+    { name = "qiskit", version = "2.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "qiskit", version = "2.3.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "qiskit-qasm3-import" },
     { name = "qnexus" },
     { name = "qwasm" },
     { name = "selene-sim" },
-    { name = "sympy" },
+    { name = "sympy", version = "1.12.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "sympy", version = "1.14.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "typing-extensions" },
     { name = "umap-learn" },
     { name = "z3-solver" },
@@ -2926,13 +3138,17 @@ requires-dist = [
     { name = "matplotlib" },
     { name = "nanobind", specifier = ">=2.9" },
     { name = "pennylane" },
+    { name = "pennylane-qiskit", specifier = ">=0.38.0" },
+    { name = "ply", specifier = ">=3.11" },
     { name = "pytket" },
     { name = "pytket-cirq", specifier = ">=0.41.0" },
+    { name = "pytket-pennylane", specifier = ">=0.20.0" },
     { name = "pytket-qir" },
     { name = "pytket-qiskit" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "qirrunner" },
     { name = "qiskit" },
+    { name = "qiskit-qasm3-import", specifier = ">=0.6.0" },
     { name = "qnexus" },
     { name = "qwasm", specifier = ">=1.0.1" },
     { name = "selene-sim" },
@@ -3056,11 +3272,11 @@ name = "samplomatic"
 version = "0.18.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy" },
-    { name = "orjson" },
-    { name = "pybase64" },
-    { name = "qiskit" },
-    { name = "rustworkx" },
+    { name = "numpy", marker = "python_full_version < '3.11'" },
+    { name = "orjson", marker = "python_full_version < '3.11'" },
+    { name = "pybase64", marker = "python_full_version < '3.11'" },
+    { name = "qiskit", version = "2.3.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "rustworkx", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/67/11/a65e8b1c88536021830149c504736257beaba21559cdff48fdc97db90841/samplomatic-0.18.0.tar.gz", hash = "sha256:a7185c063bc0da1da21ae1d92218957e56963239cc2d9190789673c6b9acb02e", size = 1287158, upload-time = "2026-04-09T19:33:38.157Z" }
 wheels = [
@@ -3463,10 +3679,30 @@ wheels = [
 
 [[package]]
 name = "sympy"
+version = "1.12.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11'",
+]
+dependencies = [
+    { name = "mpmath", marker = "python_full_version < '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/41/8a/0d1bbd33cd3091c913d298746e56f40586fa954788f51b816c6336424675/sympy-1.12.1.tar.gz", hash = "sha256:2877b03f998cd8c08f07cd0de5b767119cd3ef40d09f41c30d722f6686b0fb88", size = 6722359, upload-time = "2024-05-29T17:56:07.991Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/61/53/e18c8c97d0b2724d85c9830477e3ebea3acf1dcdc6deb344d5d9c93a9946/sympy-1.12.1-py3-none-any.whl", hash = "sha256:9b2cbc7f1a640289430e13d2a56f02f867a1da0190f2f99d8968c2f74da0e515", size = 5743129, upload-time = "2024-05-29T17:56:05.445Z" },
+]
+
+[[package]]
+name = "sympy"
 version = "1.14.0"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.13'",
+    "python_full_version == '3.12.*'",
+    "python_full_version == '3.11.*'",
+]
 dependencies = [
-    { name = "mpmath" },
+    { name = "mpmath", marker = "python_full_version >= '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/83/d3/803453b36afefb7c2bb238361cd4ae6125a569b4db67cd9e79846ba2d68c/sympy-1.14.0.tar.gz", hash = "sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517", size = 7793921, upload-time = "2025-04-27T18:05:01.611Z" }
 wheels = [
@@ -3685,6 +3921,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/46/68/5c129389f67219a90c3ba0dcf85555249bde9797760f2d715bec03bc198a/wasmtime-42.0.0-py3-none-musllinux_1_2_x86_64.whl", hash = "sha256:e9ef6dbd1a2cff21694ba64f27b90a7ab0af61a54d911a59682005830683dc8a", size = 7779984, upload-time = "2026-02-24T19:12:48.642Z" },
     { url = "https://files.pythonhosted.org/packages/9a/e5/6650c9e7ad904c9a6730c4b762b1dfed4f7d7b0e981e3624a6ecd7abb7ed/wasmtime-42.0.0-py3-none-win_amd64.whl", hash = "sha256:3a360a1285457021efe24369490cd719996596f2cbe1aa62dae6ad68179cf0f9", size = 6403647, upload-time = "2026-02-24T19:12:50.373Z" },
     { url = "https://files.pythonhosted.org/packages/44/b2/e93046661deef4d8fee2f40080a28e5ff201cc98d4fb1929a46367c34778/wasmtime-42.0.0-py3-none-win_arm64.whl", hash = "sha256:8caa13a6ee264969449c008da1dcb8f9f6c954800853527714e7fcddbdda9166", size = 5397896, upload-time = "2026-02-24T19:12:51.639Z" },
+]
+
+[[package]]
+name = "websocket-client"
+version = "1.9.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2c/41/aa4bf9664e4cda14c3b39865b12251e8e7d239f4cd0e3cc1b6c2ccde25c1/websocket_client-1.9.0.tar.gz", hash = "sha256:9e813624b6eb619999a97dc7958469217c3176312b3a16a4bd1bc7e08a46ec98", size = 70576, upload-time = "2025-10-07T21:16:36.495Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/34/db/b10e48aa8fff7407e67470363eac595018441cf32d5e1001567a7aeba5d2/websocket_client-1.9.0-py3-none-any.whl", hash = "sha256:af248a825037ef591efbf6ed20cc5faa03d3b47b9e5a2230a529eeee1c1fc3ef", size = 82616, upload-time = "2025-10-07T21:16:34.951Z" },
 ]
 
 [[package]]

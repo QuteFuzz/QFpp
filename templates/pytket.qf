@@ -206,11 +206,18 @@ register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 
 program_footer = compiler_call;
 
-compiler_call = "pt = pytketTesting() " NL testing_method | "pt = pytketTesting(tket2=True) " NL statevector_test;
+compiler_call =
+    [
+        if (HAS_NODE(cond_application)){
+            call1 = "pt = pytketTesting() " NL opt_ks_test;
+            call1
 
-compiler_call = "pt = pytketTesting() " NL testing_method;
-
-testing_method = opt_ks_test;
+        } else {
+            call2 = "pt = pytketTesting() " NL opt_ks_test | "pt = pytketTesting(tket2=True) " NL statevector_test;
+            call2
+        }
+    ]
+    ;
 
 opt_ks_test = "pt.opt_ks_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN;
 

@@ -1,0 +1,144 @@
+# qasm2.qf
+
+EXTENSION = ".py";
+MAX_REG_SIZE = 3;
+NESTED_MAX_DEPTH = 3;
+
+EXTERNAL {
+    qubit_defs = qubit_def (COMMA qubit_def)[UNIFORM(2, 3)];
+
+    bit_defs = bit_def (COMMA bit_def)[UNIFORM(2, 3)];
+
+    param_defs = param_def | param_def COMMA param_def;
+
+    param_def = singular_param_def;
+
+    qubit_def = singular_qubit_def;
+
+    bit_def = singular_bit_def;
+
+    singular_qubit_def = GET_DEF_NAME;
+
+    singular_bit_def = GET_DEF_NAME;
+
+    singular_param_def = GET_DEF_NAME;
+}
+
+INTERNAL {
+    qubit_defs = (qubit_def NL)[UNIFORM(3, 4)];
+
+    bit_defs = (bit_def NL)[UNIFORM(3, 4)];
+
+    qubit_def = register_qubit_def;
+
+    bit_def = register_bit_def;
+
+    register_qubit_def = "qreg " GET_DEF_NAME "[" GET_SIZE "];";
+
+    register_bit_def = "creg " GET_DEF_NAME "[" GET_SIZE "];";
+}
+
+imports = "from diff_testing.qasm import qasmTesting";
+
+header = 'OPENQASM 2.0;' NL 'include "qelib1.inc";';
+
+program = imports NL "qasm_str = '''" NL header NL[2] subroutine_defs NL circuit NL measures "'''" NL[2] testing;
+
+measures = 
+    [
+        for def in ALL_QUBIT_DEFS {
+            # all defs in the main circuit are registers
+            creg_and_measure = 
+                "creg creg_" ""[def.name] "[" ""[def.size] "];" NL
+                "measure " ""[def.name] " -> creg_" ""[def.name] ";" NL
+                ;
+            
+            creg_and_measure
+        }
+    ]
+    ;
+
+subroutine_defs = (sub_circuit NL)[UNIFORM(1, 3)];
+
+circuit = INTERNAL::qubit_defs INTERNAL::bit_defs NL[2] body;
+
+body = compound_stmts;
+
+compound_stmts = (compound_stmt NL)[UNIFORM(10, 15)];
+
+# compound_stmt = qubit_op | if_stmt;
+
+compound_stmt = qubit_op;
+
+# QASM 2: measure qubit -> bit[index];
+measurement_stmt = "measure " qubit " -> " bit ";";
+
+if_cond = "0" | "1";
+
+# QASM 2 if: no block body, single gate only; condition is on whole creg (GET_DECL_NAME
+# gives register name without index, which is set by the preceding `bit` in measurement_stmt)
+if_stmt = measurement_stmt NL "if(" GET_DECL_NAME "==" if_cond ") " qubit_op;
+
+sub_circuit = gate_sub_circ;
+
+# QASM 2 gate definition: params and qubits are plain identifiers, body is primitive gates only
+gate_sub_circ = "gate " GET_CIRCUIT_NAME "(" EXTERNAL::param_defs ") " EXTERNAL::qubit_defs " {" NL (ci<(gate_op NL)>)[UNIFORM(5, 12)] "}";
+
+subroutine_op = GET_GATE_NAME subroutine_op_args ";";
+
+subroutine_op_args = ("(" float_list ") ")[GET_GATE_PARAMS > 0] qubit_list;
+
+pi = "pi";
+
+singular_qubit = GET_DECL_NAME;
+
+register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
+
+singular_bit = GET_DECL_NAME;
+
+register_bit = GET_DECL_NAME "[" GET_INDEX "]";
+
+singular_param = GET_DECL_NAME;
+
+register_param = GET_DECL_NAME "[" GET_INDEX "]";
+
+gate_op = primitive_gate " " gate_op_args ";";
+
+gate_op_args = ("(" float_list ") ")[GET_GATE_PARAMS > 0] qubit_list;
+
+float = MAKE_FLOAT | pi_multiples;
+
+primitive_gate = h | x | y | z | s | sdg | t | tdg | cx | cy | cz | ch |
+    ccx | rx | ry | rz | u1 | u2 | u3;
+
+h = "h";
+x = "x";
+y = "y";
+z = "z";
+s = "s";
+sdg = "sdg";
+t = "t";
+tdg = "tdg";
+cx = "cx";
+cy = "cy";
+cz = "cz";
+ch = "ch";
+ccx = "ccx";
+rx = "rx";
+ry = "ry";
+rz = "rz";
+u1 = "u1";
+u2 = "u2";
+u3 = "u3";
+
+counts_agreement_test =
+    "qt = qasmTesting()" NL
+    "qt.counts_agreement_test(qasm_str, " circuit_id ")" NL
+    ;
+
+opt_ks_test =
+    "qt = qasmTesting()" NL
+    "qt.opt_ks_test(qasm_str, " circuit_id ")" NL
+    ;
+
+testing = counts_agreement_test | opt_ks_test;

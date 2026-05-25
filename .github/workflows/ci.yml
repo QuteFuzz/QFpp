@@ -27,4 +27,4 @@ jobs:
           uv run pyright
 
       - name: Run CI Pipeline
-        run: uv run -m scripts.run --num-tests 3 --grammars pytket qiskit pennylane cirq
+        run: uv run -m scripts.run --num-tests 3 --grammars pytket qiskit pennylane cirq qasm

@@ -88,6 +88,33 @@ std::shared_ptr<Node> Node::find(Token_kind node_kind) {
     return (maybe_find == nullptr) ? nullptr : *maybe_find;
 }
 
+Slot_type Node::find_slot(std::string node_name, std::vector<Slot_type>& visited_slots, bool track_visited) {
+    Slot_type maybe_find;
+
+    for(std::shared_ptr<Node>& child : children){
+        if((child->get_str() == node_name) && !visited(visited_slots, &child, track_visited)){
+            return &child;
+        }
+
+        maybe_find = child->find_slot(node_name, visited_slots, track_visited);
+        if(maybe_find != nullptr) return maybe_find;
+    }
+
+    return nullptr;
+}
+
+/// Find first occurance of node of node_name. Therefore, does NOT mark visited nodes
+std::shared_ptr<Node> Node::find(std::string node_name) {
+    if(str == node_name){
+        return shared_from_this();
+    }
+
+    std::vector<Slot_type> visited_slots = {};
+    Slot_type maybe_find = find_slot(node_name, visited_slots, false);
+
+    return (maybe_find == nullptr) ? nullptr : *maybe_find;
+}
+
 
 void Node::print_ast(std::string indent) const {
     std::cout << indent << BOLD(YELLOW(str)) << " " <<  GREY(kind_as_str(kind)) << " (" << this << ")" << " n_children: " << children.size() << std::endl;

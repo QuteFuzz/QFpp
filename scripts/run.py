@@ -10,7 +10,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Callable, List, Tuple
+from typing import List, Tuple
+from collections.abc import Callable
 
 import numpy as np
 
@@ -25,7 +26,7 @@ TIMEOUT = 20000
 DEFAULT_NUM_TESTS = 1
 CPU_COUNT = os.cpu_count()
 
-SIMULATION_CAP = {"pytket": 64, "qiskit": 64, "cirq": 8, "pennylane": 64, "cudaq": 64}
+SIMULATION_CAP = {"pytket": 64, "qiskit": 64, "cirq": 8, "pennylane": 64, "cudaq": 64, "qasm2" : 64}
 
 FUZZER_EXECUTABLE = "./qf"
 

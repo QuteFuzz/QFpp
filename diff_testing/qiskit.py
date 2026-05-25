@@ -6,7 +6,7 @@ from .lib import Base
 
 class qiskitTesting(Base):
     def __init__(self) -> None:
-        super().__init__("qiskit")
+        super().__init__("qiskit", endianess="big")
 
     def _get_counts(self, circuit: QuantumCircuit, opt_level: int, circuit_num: int):
         backend = AerSimulator()
