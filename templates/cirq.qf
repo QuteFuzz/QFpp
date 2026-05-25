@@ -172,7 +172,10 @@ compiler_call =
     ]
     ;
 
-measurement = GET_CIRCUIT_NAME ".append(cirq.measure_each(*" GET_CIRCUIT_NAME ".all_qubits()))" NL;
+measurement = 
+    "all_qubits = sorted(" GET_CIRCUIT_NAME ".all_qubits())" NL
+    GET_CIRCUIT_NAME ".append(cirq.measure_each(*all_qubits))" NL
+    ;
 
 program_footer = measurement NL compiler_call;
 

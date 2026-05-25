@@ -2,10 +2,13 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
+import numpy as np
 import pennylane as qml
 import pytket.qasm.qasm
 import qiskit.qasm2
+from cirq.contrib.qasm_import import circuit_from_qasm
 
+from diff_testing.cirq import cirqTesting
 from diff_testing.lib import Base
 from diff_testing.pytket import pytketTesting
 from diff_testing.qiskit import qiskitTesting
@@ -35,7 +38,7 @@ class qasmTesting(Base):
             Backend(qiskitTesting(), qiskit.qasm2.loads),
             Backend(pytketTesting(), pytket.qasm.qasm.circuit_from_qasm_str),
             # TODO:  need to figure out classical result bit packing mismatches
-            # Backend(cirqTesting(), circuit_from_qasm),
+            Backend(cirqTesting(), circuit_from_qasm),
             # Backend(pennylaneTesting(), _pennylane_conv), # TODO: hangs
         ]
 
@@ -43,6 +46,9 @@ class qasmTesting(Base):
         raise NotImplementedError(
             "`_get_counts` not implemented for qasm testing. Use `cross_frontend_ks_test` instead."
         )
+
+    def _get_statevector(self, circuit, opt_level) -> np.ndarray:
+        raise NotImplementedError("`_get_statevector` not implemented for qasm testing.")
 
     @staticmethod
     def _majority_vote(per_backend_counts: List[Dict[Any, int]]) -> Dict[Any, int]:
@@ -121,6 +127,9 @@ class qasmTesting(Base):
 
                 p_val = self._ks_test(counts_a, counts_b)
                 print(f"{name_a} vs {name_b} p-value: {p_val}")
+
+                if self.plot:
+                    self._plot_ecdf(counts_a, counts_b, f"{name_a}_{name_b}", circuit_num)
 
     def counts_agreement_test(self, qasm_str: str, circuit_num: int) -> None:
         """

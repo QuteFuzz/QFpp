@@ -1,7 +1,7 @@
 # qasm2.qf
 
 EXTENSION = ".py";
-MAX_REG_SIZE = 3;
+MAX_REG_SIZE = 4;
 NESTED_MAX_DEPTH = 3;
 
 EXTERNAL {
@@ -23,6 +23,19 @@ EXTERNAL {
 
     singular_param_def = GET_DEF_NAME;
 }
+
+(*
+    Ordering (relevant for QASM conversion tests):
+    - pytket orders classical bits alphanumerically
+    - qiskit orders classical bits in the order in which they're defined in the file
+    - cirq returns a frozenset of measurement keys, which means the ordering is random
+
+    in order to be consistent, the insertion order in the files is naturally alphabetical,
+    so pytket and qiskit counts are comparable. For cirq, we sort the results, making them
+    also comparable.
+
+    an alternative is to just use a single qreg and creg to skip over all these ordering quirks! 
+*)
 
 INTERNAL {
     qubit_defs = (qubit_def NL)[UNIFORM(3, 4)];
@@ -66,6 +79,11 @@ body = compound_stmts;
 
 compound_stmts = (compound_stmt NL)[UNIFORM(10, 15)];
 
+(*
+    if stmt removed because of `RuntimeError: Predicate requirements are not satisfied: CommutableMeasuresPredicate`
+    when performing routing pass in pytket. also, it's possible that we measure on the same bit twice, which cirq 
+    doesn't like
+*)
 # compound_stmt = qubit_op | if_stmt;
 
 compound_stmt = qubit_op;

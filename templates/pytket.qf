@@ -213,7 +213,7 @@ compiler_call =
             call1
 
         } else {
-            call2 = "pt = pytketTesting() " NL opt_ks_test | "pt = pytketTesting(tket2=True) " NL statevector_test;
+            call2 = "pt = pytketTesting() " NL opt_statevector_test | "pt = pytketTesting(tket2=True) " NL opt_statevector_test;
             call2
         }
     ]
@@ -221,4 +221,4 @@ compiler_call =
 
 opt_ks_test = "pt.opt_ks_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN;
 
-statevector_test = "pt.run_circ_statevector(" GET_CIRCUIT_NAME RPAREN;
+opt_statevector_test = "pt.opt_statevector_test(" GET_CIRCUIT_NAME RPAREN;

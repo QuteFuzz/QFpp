@@ -1,7 +1,7 @@
 import random
-import traceback
 from typing import List, Tuple
 
+import numpy as np
 from pytket._tket.circuit import Circuit, OpType
 from pytket.architecture import Architecture
 from pytket.extensions.qiskit.backends.aer import AerBackend, AerStateBackend
@@ -111,7 +111,7 @@ class pytketTesting(Base):
         handle = backend.process_circuit(circ_prime, n_shots=self.num_shots)
         result = backend.get_result(handle)
 
-        counts = self._preprocess_counts(result.get_counts(), circuit.n_bits)
+        counts = self._preprocess_counts(result.get_counts())
 
         if self.plot:
             self._plot_histogram(
@@ -122,7 +122,7 @@ class pytketTesting(Base):
 
         return counts
 
-    def _get_statevector(self, circuit, opt_level):
+    def _get_statevector(self, circuit, opt_level) -> np.ndarray:
         backend = AerStateBackend()
 
         if self.tket2 and opt_level == 3:
@@ -145,19 +145,3 @@ class pytketTesting(Base):
         p_val = self._ks_test(qiskit_counts, pytket_counts)
 
         print("Pytket->Qiskit p-value: ", p_val)
-
-    def run_circ_statevector(self, circuit: Circuit) -> None:
-        """
-        Runs circuit on pytket simulator and returns statevector
-        """
-        try:
-            no_pass_statevector = self._get_statevector(circuit, 0)
-
-            for i in range(3):
-                pass_statevector = self._get_statevector(circuit.copy(), i + 1)
-
-                dot_prod = self.compare_statevectors(no_pass_statevector, pass_statevector, 6)
-                print("Dot product: ", dot_prod)
-
-        except Exception:
-            print("Exception :", traceback.format_exc())

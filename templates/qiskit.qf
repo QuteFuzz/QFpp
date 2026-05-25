@@ -1,5 +1,5 @@
 
-primitive_gate += s | sdg | t | tdg | u1 | u2 | u3  | measure;
+primitive_gate += s | sdg | t | tdg | u1 | u2 | u3;
 
 u1 = "p";
 u2 = "u";
@@ -21,7 +21,6 @@ sdg = "sdg";
 h = "h";
 t = "t";
 s = "s";
-measure = "measure";
 
 singular_qubit = GET_DECL_NAME "[0]";
 
