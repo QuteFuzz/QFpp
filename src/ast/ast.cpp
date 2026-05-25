@@ -90,21 +90,37 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 			case UNITARY_2Q_DEF:
 				return context.nn_unitary(2);
 
-			case COMPOUND_STMT:
-				context.reset(RL_QUBITS);
-				context.reset(RL_BITS);
-				return context.nn_compound_stmt();
-
 			case CIRCUIT_ID:
 				return context.nn_circuit_id();
 
 			case SUBROUTINE_DEFS:
 				return context.nn_subroutine_defs();
+			
+			/*
+				compound_stmt = qubit_op;
+				qubit_op = gate_op | subroutine_op;
+
+				resets done at each level such that each terminal rule can be used on its own without necessarily being a 
+				child of `compound_stmt`
+			*/
+			case COMPOUND_STMT:
+				context.reset(RL_QUBITS);
+				context.reset(RL_BITS);
+				return context.nn_compound_stmt();
 
 			case QUBIT_OP:
+				context.reset(RL_QUBITS);
+				context.reset(RL_BITS);
 				return context.nn_qubit_op();
 
+			case GATE_OP:
+				context.reset(RL_QUBITS);
+				context.reset(RL_BITS);
+				return std::make_shared<Node>(str, kind);
+
 			case SUBROUTINE_OP:
+				context.reset(RL_QUBITS);
+				context.reset(RL_BITS);
 				// redirect AST to gate op if current circuit cannot apply subroutines
 				if(context.current_circuit_uses_subroutines()){
 					return context.nn_subroutine_op();

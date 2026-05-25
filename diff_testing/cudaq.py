@@ -12,7 +12,9 @@ from utils import Color, log, modify_env
 class cudaqTesting(Base):
     def __init__(self) -> None:
         super().__init__("cudaq")
-        self.num_shots = 1000  # dynamic circuits are slow, reduce shots drastically for cudaq
+
+    def _get_statevector(self, circuit, opt_level):
+        raise NotImplementedError("`_get_statevector` not implemented for cudaq")
 
     def _get_counts(self, circuit_source_code, opt_level: int, circuit_num: int) -> Dict[Any, int]:
         nvq_binary = CUDAQ_DIR / "build" / "bin" / "nvq++"
@@ -53,13 +55,12 @@ class cudaqTesting(Base):
             )
 
             raw_counts = json.loads(result.stdout)
-            n_bits = max((len(k) for k in raw_counts), default=1)
 
             if self.plot:
                 self._plot_histogram(
-                    res=self._preprocess_counts(raw_counts, n_bits),
+                    res=self._preprocess_counts(raw_counts),
                     title=f"cudaq_opt{opt_level}",
                     circuit_number=circuit_num,
                 )
 
-            return self._preprocess_counts(raw_counts, n_bits)
+            return self._preprocess_counts(raw_counts)

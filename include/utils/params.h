@@ -11,7 +11,7 @@ constexpr std::string_view ALPHA = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQR
 */
 constexpr char TOP_LEVEL_CIRCUIT_NAME[] = "main_circuit";
 constexpr char OUTPUTS_FOLDER_NAME[] = "outputs";
-constexpr char META_GRAMMAR_NAME[] = "meta-grammar";
+constexpr char META_GRAMMAR_NAME[] = "common";
 
 /*
     parameters - maximums set to reasonable values to prevent excessive resource usage

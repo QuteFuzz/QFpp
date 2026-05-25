@@ -1,7 +1,7 @@
 # qasm.qf
 
-EXTENSION = ".qasm";
 MAX_REG_SIZE = 3;
+NESTED_MAX_DEPTH = 3;
 
 EXTERNAL {
     qubit_defs = qubit_def (COMMA qubit_def)[UNIFORM(2, 3)];
@@ -16,38 +16,42 @@ EXTERNAL {
 
     bit_def = singular_bit_def;
 
-    singular_param_def = "angle[32] " GET_DEF_NAME;
+    singular_param_def = GET_DEF_NAME;
 
-    singular_qubit_def = "qubit " GET_DEF_NAME;
+    singular_qubit_def = GET_DEF_NAME;
 
-    singular_bit_def = "bit " GET_DEF_NAME;
+    singular_bit_def = GET_DEF_NAME;
 }
 
+# param defs removed because qiskit doesn't support them, all floats inlined
 INTERNAL {
     qubit_defs = (qubit_def NL)[UNIFORM(3, 4)];
 
     bit_defs = (bit_def NL)[UNIFORM(3, 4)];
 
-    param_defs = (param_def NL)[UNIFORM(3, 4)];
+    # param_defs = (param_def NL)[UNIFORM(3, 4)];
 
     qubit_def = register_qubit_def;
 
     bit_def = register_bit_def;
 
-    param_def = singular_param_def;
+    # param_def = singular_param_def;
 
     register_qubit_def = "qubit[" GET_SIZE "] "  GET_DEF_NAME ";";
 
     register_bit_def = "bit[" GET_SIZE "] "  GET_DEF_NAME ";";
 
-    singular_param_def = "angle " GET_DEF_NAME " = " MAKE_FLOAT ";";
+    # singular_param_def = "angle " GET_DEF_NAME " = " MAKE_FLOAT ";";
 }
 
-# 2. QASM STRUCTURE
-# -----------------
+
+imports = 
+    "from diff_testing.qasm import qasmTesting" NL
+    ;
+
 header = 'OPENQASM 3.0;' NL 'include "stdgates.inc";';
 
-program = header NL[2] subroutine_defs NL circuit;
+program = imports NL "qasm_str = '''" NL header NL[2] subroutine_defs NL circuit "'''" NL[2] testing;
 
 subroutine_defs = (sub_circuit NL)[UNIFORM(1, 3)];
 
@@ -55,18 +59,27 @@ circuit = INTERNAL::qubit_defs INTERNAL::bit_defs INTERNAL::param_defs NL[2] bod
 
 body = compound_stmts;
 
-sub_circuit_body = ci<compound_stmts>;
+compound_stmts = (compound_stmt NL)[UNIFORM(10, 15)];
 
-compound_stmt = qubit_op;
+compound_stmt = qubit_op | if_stmt;
 
-sub_circuit = 
-    "def " GET_CIRCUIT_NAME "(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs "){" NL sub_circuit_body "}";
+measurement_stmt = bit " = measure " qubit ";";
 
-subroutine_op = GET_GATE_NAME "(" subroutine_op_args ")";
+if_cond = "true" | "false";
 
-subroutine_op_args = qubit_list ", " float_list;
+if_stmt = measurement_stmt NL "if (" bit " == " if_cond ") {" NL ci<compound_stmts> NL "}";
 
-# float = MAKE_FLOAT | pi_multiples;
+sub_circuit = gate_sub_circ;
+
+gate_sub_circ = "gate " GET_CIRCUIT_NAME "(" EXTERNAL::param_defs ") " EXTERNAL::qubit_defs " {" NL (ci<(qubit_op NL)>)[UNIFORM(5, 12)] "}";
+
+# def_sub_circ = "def " GET_CIRCUIT_NAME "(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs "){" NL sub_circuit_body "}";
+
+sub_circuit_body = ci<INTERNAL::bit_defs> NL (ci<(compound_stmt)> NL)[UNIFORM(4, 5)];
+
+subroutine_op = GET_GATE_NAME subroutine_op_args ";";
+
+subroutine_op_args = ("(" float_list ") ")[GET_GATE_PARAMS > 0] qubit_list;
 
 pi = "pi";
 
@@ -78,13 +91,15 @@ singular_bit = GET_DECL_NAME;
 
 register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 
-singular_param = GET_DEF_NAME;
+singular_param = GET_DECL_NAME;
 
 register_param = GET_DECL_NAME "[" GET_INDEX "]";
 
 gate_op = primitive_gate " " gate_op_args ";";
 
 gate_op_args = ("(" float_list ") ")[GET_GATE_PARAMS > 0] qubit_list;
+
+float = MAKE_FLOAT | pi_multiples;
 
 primitive_gate = h | x | y | z | s | sdg | t | tdg | cx | cy | cz | ch |
     ccx | rx | ry | rz | u1 | u2 | u3;
@@ -108,4 +123,7 @@ rz = "rz";
 u1 = "u1";
 u2 = "u2";
 u3 = "u3";
+
+
+
 

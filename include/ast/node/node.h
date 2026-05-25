@@ -161,6 +161,10 @@ class Node : public std::enable_shared_from_this<Node> {
 
         std::shared_ptr<Node> find(Token_kind node_kind);
 
+        Slot_type find_slot(std::string node_name, std::vector<Slot_type>& visited_slots, bool track_visited = true);
+
+        std::shared_ptr<Node> find(std::string node_name);
+
         void print_ast(std::string indent) const;
 
         void extend_dot_string(std::ostringstream& ss) const;

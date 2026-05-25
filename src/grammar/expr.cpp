@@ -20,11 +20,15 @@ void VarExpr::print(std::ostream& stream) const {
     if (args.size()){
         stream << "{";
         for (const auto& arg : args){
-            stream << arg << ", ";
+            if (std::holds_alternative<int>(arg)){
+                stream << std::get<int>(arg) << ", ";
+            } else if (std::holds_alternative<std::string>(arg)){
+                stream << std::get<std::string>(arg) << ", ";
+            }
         }
         stream << "}";
     }
-};
+}
 
 Expr_type RuleExpr::eval(Context& context) const {
     if (auto temp_rule = context.get_value_bound_to<Rule>(rule_name)){
@@ -66,12 +70,18 @@ void BlockExpr::print(std::ostream& stream) const {
 Expr_type PropertyAccessExpr::eval(Context& context) const {
 
     if (auto resource = context.get_value_bound_to<Resource>(obj_name)){
-        if (prop_name == "in_ext_scope") {
+        if (prop_name == "from_reg") {
+            return resource->from_reg();
+        } else if (prop_name == "from_sing"){
+            return !resource->from_reg();
+        } else if (prop_name == "in_ext_scope") {
             return resource->get_scope() == Scope::EXT;
         } else if (prop_name == "in_int_scope") {
             return resource->get_scope() == Scope::INT;
         } else if (prop_name == "name") {
             return resource->get_var_name()->get_str();
+        } else if (prop_name == "index") {
+            return resource->get_index()->get_str();
         } else {
             ERROR("Unknown resource property " + prop_name);
         }
@@ -87,6 +97,8 @@ Expr_type PropertyAccessExpr::eval(Context& context) const {
             return resource_def->get_scope() == Scope::INT;
         } else if (prop_name == "name") {
             return resource_def->get_var_name()->get_str();
+        } else if (prop_name == "size") {
+            return resource_def->get_size()->get_str();
         } else {
             ERROR("Unknown resource def property " + prop_name);
         }
@@ -162,18 +174,23 @@ void BinExpr::print(std::ostream& stream) const {
 Expr_type IfExpr::eval(Context& context) const {
     auto cond_eval = cond->eval(context);
 
-    if (std::holds_alternative<bool>(cond_eval)) {        
-        if (std::get<bool>(cond_eval)) {
-            return true_branch->eval(context);
+    bool eval;
 
-        } else if (false_branch != nullptr) {
-            return false_branch->eval(context);
-        }
-        
-        return 0; 
+    if (std::holds_alternative<bool>(cond_eval)){
+        eval = std::get<bool>(cond_eval);
+    } else if (std::holds_alternative<int>(cond_eval)){
+        eval = std::get<int>(cond_eval) > 0;
+    } else {
+        ERROR("IfExpr expects cond to return bool or int");
     }
-    
-    ERROR("IfExpr expects cond to return bool");
+
+    if (eval) {
+        return true_branch->eval(context);
+    } else if (false_branch != nullptr) {
+        return false_branch->eval(context);
+    } else {
+        return 0;
+    }        
 }
 
 void IfExpr::print(std::ostream& stream) const {
@@ -243,5 +260,5 @@ Expr_type AssignExpr::eval(Context& context) const {
 }
 
 void AssignExpr::print(std::ostream& stream) const {
-    stream << rule->get_name() << std::endl;
+    stream << *rule << std::endl;
 }

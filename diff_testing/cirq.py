@@ -1,4 +1,5 @@
 import cirq
+import numpy as np
 
 from .lib import Base
 
@@ -56,7 +57,9 @@ def opt_level_3(
 
 
 def transpile(circuit: cirq.Circuit, opt_level: int):
-    if opt_level == 1:
+    if opt_level == 0:
+        return circuit
+    elif opt_level == 1:
         return opt_level_1(circuit)
     elif opt_level == 2:
         return opt_level_2(circuit)
@@ -65,8 +68,21 @@ def transpile(circuit: cirq.Circuit, opt_level: int):
 
 
 class cirqTesting(Base):
-    def __init__(self) -> None:
+    def __init__(self, from_qasm: bool = False) -> None:
         super().__init__("cirq")
+        self.from_qasm = from_qasm
+
+    def _get_statevector(self, circuit, opt_level: int) -> np.ndarray:
+        simulator = cirq.Simulator()
+        opt_circ = circuit.copy()
+        circ_prime = transpile(opt_circ, opt_level)
+
+        ordered_qubits = sorted(circ_prime.all_qubits())
+
+        result = simulator.simulate(circ_prime, qubit_order=ordered_qubits)
+
+        sv = result.final_state_vector
+        return np.asarray(sv)
 
     def _get_counts(self, circuit, opt_level, circuit_num):
         simulator = cirq.Simulator()
@@ -75,8 +91,16 @@ class cirqTesting(Base):
 
         result = simulator.run(circ_prime, repetitions=self.num_shots)
 
-        histogram = result.multi_measurement_histogram(keys=circuit.all_measurement_key_names())
-        counts = self._preprocess_counts(histogram, len(circuit.all_qubits()))
+        if self.from_qasm:
+            # `all_measurement_key_names` returns frozenset which is ordered randomly
+            # pass to sorted to ensure measurement order is alphabetical, which means it's ordered
+            # as defined
+            ordered_keys = sorted(circ_prime.all_measurement_key_names())
+            histogram = result.multi_measurement_histogram(keys=ordered_keys)
+        else:
+            histogram = result.histogram(key="GLOBAL_TERMINAL_MEASURE")
+
+        counts = self._preprocess_counts(histogram)
 
         if self.plot:
             self._plot_histogram(

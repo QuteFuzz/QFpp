@@ -27,6 +27,11 @@ dependencies = [
     "typing-extensions>=4.15.0",
     "qwasm>=1.0.1",
     "nanobind>=2.9",
+    "pytket-cirq>=0.41.0",
+    "qiskit-qasm3-import>=0.6.0",
+    "ply>=3.11",
+    "pytket-pennylane>=0.20.0",
+    "pennylane-qiskit>=0.38.0",
 ]
 
 [tool.uv]

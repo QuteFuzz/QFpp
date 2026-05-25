@@ -5,7 +5,7 @@
 
 bool Qubit_op::is_subroutine_op() const {
     if (gate_node == nullptr){
-        return false;
+        ERROR("Qubit op must have a gate node attached to it");
     } else {
         return *gate_node == SUBROUTINE_OP; 
     }

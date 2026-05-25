@@ -16,7 +16,7 @@ void Context::reset(Reset_level l){
 
             circuits.clear();
 
-            subroutine_defs_node = std::nullopt;
+            subroutine_defs_node = nullptr;
             [[fallthrough]];
         }
 
@@ -61,6 +61,10 @@ bool Context::can_apply_as_subroutine(const std::shared_ptr<Circuit> circuit){
 
         unsigned int required_n_resources = 0;
 
+        if (current_circuit_n_resources == 0){
+            continue;
+        }
+
         if (circuit->get_node_kind() == SUB_CIRCUIT){
             auto ext_scope_pred = [](const auto& elem){ return scope_matches(elem->get_scope(), Scope::EXT); };
             auto circuit_resources = circuit->get_coll<Resource>(rk);
@@ -90,7 +94,7 @@ bool Context::current_circuit_uses_subroutines(){
 }
 
 
-Expr_type Context::resolve_var(const Token_kind name, const std::vector<int>& args) const {
+Expr_type Context::resolve_var(const Token_kind name, const std::vector<Arg_type>& args) const {
     auto gate = get_current_node<Gate>();
 
     if (name == GET_GATE_SOURCE){
@@ -107,8 +111,20 @@ Expr_type Context::resolve_var(const Token_kind name, const std::vector<int>& ar
     } else if (name == GET_TOTAL_BITS) {
         auto bits = get_current_circuit()->get_coll<Resource>(Resource_kind::BIT);
         return (int)bits.size();
-    } else if ((name == GET_MAT_POS) && (args.size() == 2)){
-        return get_current_circuit()->get_val_at(args[0], args[1]);
+    } else if ((name == GET_MAT_POS) && (args.size() == 2) && 
+        std::holds_alternative<int>(args[0]) && std::holds_alternative<int>(args[1])
+    ){
+        return get_current_circuit()->get_val_at(std::get<int>(args[0]), std::get<int>(args[1]));
+    } else if ((name == HAS_NODE) && (args.size() == 1) && std::holds_alternative<std::string>(args[0])){
+        std::string node_name = std::get<std::string>(args[0]);
+
+        for (const std::shared_ptr<Circuit> circ : circuits){
+            if (circ->find(node_name) != nullptr){
+                return true;
+            }
+        }
+
+        return false;
     }
 
     return 0;
@@ -119,7 +135,7 @@ Expr_type Context::resolve_var(const Token_kind name, const std::vector<int>& ar
 /// node in the AST, but the last added circuit is a subroutine. This implies that after the `subroutines` node, there's no `circuit` node to generate
 /// a new, main circuit. As such, qubit and bit definitions, qubits and bits may have been made globally, and therefore stored in the dummy circuit, so we return that
 std::shared_ptr<Circuit> Context::get_current_circuit() const {
-    if((circuits.size() == 0) || (!under_subroutines_node() && circuits.back()->check_if_sub_circuit())){
+    if((circuits.size() == 0) || (!under_subroutine_defs_node() && circuits.back()->check_if_sub_circuit())){
         return dummy_circuit;
     } else {
         return circuits.back();
@@ -275,9 +291,8 @@ std::shared_ptr<Compound_stmt> Context::nn_compound_stmt(){
 }
 
 std::shared_ptr<Node> Context::nn_subroutine_defs(){
-    std::shared_ptr<Node> node = std::make_shared<Node>("", SUBROUTINE_DEFS);
-    subroutine_defs_node = std::make_optional<std::shared_ptr<Node>>(node);
-    return node;
+    subroutine_defs_node = std::make_shared<Node>("", SUBROUTINE_DEFS);
+    return subroutine_defs_node;
 }
 
 std::shared_ptr<Qubit_op> Context::nn_qubit_op(){
