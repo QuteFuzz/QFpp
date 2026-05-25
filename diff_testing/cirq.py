@@ -68,7 +68,7 @@ def transpile(circuit: cirq.Circuit, opt_level: int):
 
 
 class cirqTesting(Base):
-    def __init__(self, from_qasm : bool = False) -> None:
+    def __init__(self, from_qasm: bool = False) -> None:
         super().__init__("cirq")
         self.from_qasm = from_qasm
 
