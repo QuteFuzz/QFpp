@@ -37,8 +37,7 @@ class qasmTesting(Base):
         self._backends: List[Backend] = [
             Backend(qiskitTesting(), qiskit.qasm2.loads),
             Backend(pytketTesting(), pytket.qasm.qasm.circuit_from_qasm_str),
-            # TODO:  need to figure out classical result bit packing mismatches
-            Backend(cirqTesting(), circuit_from_qasm),
+            Backend(cirqTesting(from_qasm=True), circuit_from_qasm),
             # Backend(pennylaneTesting(), _pennylane_conv), # TODO: hangs
         ]
 

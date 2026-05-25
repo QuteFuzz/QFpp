@@ -68,8 +68,9 @@ def transpile(circuit: cirq.Circuit, opt_level: int):
 
 
 class cirqTesting(Base):
-    def __init__(self) -> None:
+    def __init__(self, from_qasm : bool = False) -> None:
         super().__init__("cirq")
+        self.from_qasm = from_qasm
 
     def _get_statevector(self, circuit, opt_level: int) -> np.ndarray:
         simulator = cirq.Simulator()
@@ -88,15 +89,17 @@ class cirqTesting(Base):
         opt_circ = circuit.copy()
         circ_prime = transpile(opt_circ, opt_level)
 
-        # `all_measurement_key_names` returns frozenset which is ordered randomly
-        # pass to sorted to ensure measurement order is alphabetical, which means it's ordered
-        # as defined
-        # ordered_keys = sorted(circ_prime.all_measurement_key_names())
-
         result = simulator.run(circ_prime, repetitions=self.num_shots)
 
-        # histogram = result.multi_measurement_histogram(keys=ordered_keys)
-        histogram = result.histogram(key="GLOBAL_TERMINAL_MEASURE")
+        if self.from_qasm:
+            # `all_measurement_key_names` returns frozenset which is ordered randomly
+            # pass to sorted to ensure measurement order is alphabetical, which means it's ordered
+            # as defined
+            ordered_keys = sorted(circ_prime.all_measurement_key_names())
+            histogram = result.multi_measurement_histogram(keys=ordered_keys)
+        else:
+            histogram = result.histogram(key="GLOBAL_TERMINAL_MEASURE")
+
         counts = self._preprocess_counts(histogram)
 
         if self.plot:
