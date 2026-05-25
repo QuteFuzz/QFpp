@@ -1,21 +1,22 @@
 from diff_testing.qasm import qasmTesting
-qasm_str = '''
+
+qasm_str = """
 OPENQASM 2.0;
 include "qelib1.inc";
 
 gate sub_0(sing_22,sing_28) sing_35,sing_42,sing_49 {
-	tdg sing_42;	
-	cx sing_42, sing_49;	
-	tdg sing_35;	
-	s sing_49;	
-	t sing_35;	
-	sdg sing_35;	
-	cx sing_35, sing_42;	
-	sdg sing_49;	
-	y sing_35;	
-	u3 ((pi/4.0), pi, pi) sing_35;	
-	sdg sing_49;	
-	ry ((pi/4.0)) sing_49;	
+	tdg sing_42;
+	cx sing_42, sing_49;
+	tdg sing_35;
+	s sing_49;
+	t sing_35;
+	sdg sing_35;
+	cx sing_35, sing_42;
+	sdg sing_49;
+	y sing_35;
+	u3 ((pi/4.0), pi, pi) sing_35;
+	sdg sing_49;
+	ry ((pi/4.0)) sing_49;
 }
 
 qreg reg_230[1];
@@ -54,7 +55,7 @@ creg temp_reg_254[1];
 measure reg_254-> temp_reg_254;
 creg temp_reg_264[2];
 measure reg_264-> temp_reg_264;
-'''
+"""
 
 qt = qasmTesting()
 # qt.counts_agreement_test(qasm_str, 0)

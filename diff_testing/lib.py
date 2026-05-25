@@ -32,7 +32,7 @@ class Base(ABC):
     OUTPUT_DIR = (Path(__file__).parent.parent / "outputs").resolve()
     TIMEOUT_SECONDS = 30
 
-    def __init__(self, qss_name, endianess = "little") -> None:
+    def __init__(self, qss_name, endianess="little") -> None:
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument(
             "--plot", action="store_true", help="Plot results after running circuit"

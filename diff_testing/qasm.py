@@ -1,31 +1,23 @@
-from ast import Call
-import json
-import os
-import subprocess
-import tempfile
-import qiskit.qasm2
-import pytket.qasm.qasm
-from cirq.contrib.qasm_import import circuit_from_qasm
-import pennylane as qml
-
-from typing import Any, Dict, List
-from dataclasses import dataclass
 from collections.abc import Callable
-from diff_testing.lib import Base
-from diff_testing.qiskit import qiskitTesting
-from diff_testing.pytket import pytketTesting
-from diff_testing.cirq import cirqTesting
-from diff_testing.pennylane import pennylaneTesting
+from dataclasses import dataclass
+from typing import Any, Dict, List
 
+import pennylane as qml
+import pytket.qasm.qasm
+import qiskit.qasm2
+
+from diff_testing.lib import Base
+from diff_testing.pytket import pytketTesting
+from diff_testing.qiskit import qiskitTesting
 
 
 @dataclass
-class Backend():
-    testing_obj : Base
-    qasm_convertor : Callable
+class Backend:
+    testing_obj: Base
+    qasm_convertor: Callable
 
 
-def _pennylane_conv(qasm_str : str):
+def _pennylane_conv(qasm_str: str):
     template = qml.from_qasm(qasm_str)
     dev = qml.device("default.qubit", wires=20)
 
@@ -42,22 +34,24 @@ class qasmTesting(Base):
         self._backends: List[Backend] = [
             Backend(qiskitTesting(), qiskit.qasm2.loads),
             Backend(pytketTesting(), pytket.qasm.qasm.circuit_from_qasm_str),
-            # Backend(cirqTesting(), circuit_from_qasm),   # TODO:  need to figure out classical result bit packing mismatches
+            # TODO:  need to figure out classical result bit packing mismatches
+            # Backend(cirqTesting(), circuit_from_qasm),
             # Backend(pennylaneTesting(), _pennylane_conv), # TODO: hangs
         ]
 
     def _get_counts(self, circuit, opt_level, circuit_num) -> Dict[Any, int]:
-        raise NotImplementedError("`_get_counts` not implemented for qasm testing. " \
-        "Use `cross_frontend_ks_test` instead.")
+        raise NotImplementedError(
+            "`_get_counts` not implemented for qasm testing. Use `cross_frontend_ks_test` instead."
+        )
 
     @staticmethod
     def _majority_vote(per_backend_counts: List[Dict[Any, int]]) -> Dict[Any, int]:
         """
-            Majority vote.
+        Majority vote.
 
-            Give a list of counts data for all backends being tested, return a new
-            dict where for each key, the value chosen is the median of all values at that
-            key in `per_backend_counts`. If key does not exist in a counts dict, value is 0
+        Give a list of counts data for all backends being tested, return a new
+        dict where for each key, the value chosen is the median of all values at that
+        key in `per_backend_counts`. If key does not exist in a counts dict, value is 0
         """
         all_keys = {k for backend_counts in per_backend_counts for k in backend_counts}
         result = {}
@@ -68,12 +62,12 @@ class qasmTesting(Base):
 
     def opt_ks_test(self, qasm_str: str, circuit_num: int) -> None:
         """
-            Optimisation level KS test reimplementation.
+        Optimisation level KS test reimplementation.
 
-            For each opt level, collect counts data for all backends being tested on.
-            At that opt level get majority vote, and store in `voted`.
-            Opt0 is the baseline majority vote. Perform ks test between majority vote at
-            other opt levels vs the baseline
+        For each opt level, collect counts data for all backends being tested on.
+        At that opt level get majority vote, and store in `voted`.
+        Opt0 is the baseline majority vote. Perform ks test between majority vote at
+        other opt levels vs the baseline
         """
         # build majority-voted counts per opt level
         voted: List[Dict[Any, int]] = []
@@ -102,9 +96,11 @@ class qasmTesting(Base):
             p_val = self._ks_test(baseline, counts)
             print(f"Optimisation level {i} ks-test p-value: {p_val}")
 
-    def _counts_agreement_at_level_test(self, qasm_str: str, circuit_num: int, opt_level : int) -> None:
+    def _counts_agreement_at_level_test(
+        self, qasm_str: str, circuit_num: int, opt_level: int
+    ) -> None:
         """
-            Check how well the counts data generated at a particular opt level aligns
+        Check how well the counts data generated at a particular opt level aligns
         """
         results = []
         for backend in self._backends:
@@ -128,7 +124,7 @@ class qasmTesting(Base):
 
     def counts_agreement_test(self, qasm_str: str, circuit_num: int) -> None:
         """
-            Check how well the counts data agrees at all levels
+        Check how well the counts data agrees at all levels
         """
 
         for level in range(4):

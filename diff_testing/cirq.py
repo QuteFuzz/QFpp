@@ -1,5 +1,4 @@
 import cirq
-from tunits import C
 
 from .lib import Base
 
