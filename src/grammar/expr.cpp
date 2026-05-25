@@ -70,7 +70,11 @@ void BlockExpr::print(std::ostream& stream) const {
 Expr_type PropertyAccessExpr::eval(Context& context) const {
 
     if (auto resource = context.get_value_bound_to<Resource>(obj_name)){
-        if (prop_name == "in_ext_scope") {
+        if (prop_name == "from_reg") {
+            return resource->from_reg();
+        } else if (prop_name == "from_sing"){
+            return !resource->from_reg();
+        } else if (prop_name == "in_ext_scope") {
             return resource->get_scope() == Scope::EXT;
         } else if (prop_name == "in_int_scope") {
             return resource->get_scope() == Scope::INT;
@@ -170,18 +174,23 @@ void BinExpr::print(std::ostream& stream) const {
 Expr_type IfExpr::eval(Context& context) const {
     auto cond_eval = cond->eval(context);
 
-    if (std::holds_alternative<bool>(cond_eval)) {        
-        if (std::get<bool>(cond_eval)) {
-            return true_branch->eval(context);
+    bool eval;
 
-        } else if (false_branch != nullptr) {
-            return false_branch->eval(context);
-        }
-        
-        return 0; 
+    if (std::holds_alternative<bool>(cond_eval)){
+        eval = std::get<bool>(cond_eval);
+    } else if (std::holds_alternative<int>(cond_eval)){
+        eval = std::get<int>(cond_eval) > 0;
+    } else {
+        ERROR("IfExpr expects cond to return bool or int");
     }
-    
-    ERROR("IfExpr expects cond to return bool");
+
+    if (eval) {
+        return true_branch->eval(context);
+    } else if (false_branch != nullptr) {
+        return false_branch->eval(context);
+    } else {
+        return 0;
+    }        
 }
 
 void IfExpr::print(std::ostream& stream) const {

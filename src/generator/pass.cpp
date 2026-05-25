@@ -143,7 +143,9 @@ void Combine::apply_blockwise(Slot_type block) const {
 
 void Dead_subs::apply() {
     reachable_subs.clear();
-    reachable_subs.emplace(QuteFuzz::TOP_LEVEL_CIRCUIT_NAME); // top level circuit is always reachable
+    // here i add the names of any possible top level cirucit, which could include dummy circuit
+    reachable_subs.emplace(QuteFuzz::TOP_LEVEL_CIRCUIT_NAME);
+    reachable_subs.emplace("dummy_circuit");
 
     bool new_reachable_found = true;
 
@@ -152,13 +154,20 @@ void Dead_subs::apply() {
 
         // check all qubit ops in the AST
         for (auto& qubit_op : entry.get_qubit_ops(true)){
-            if (qubit_op->is_subroutine_op()){
+            auto gate_node = qubit_op->get_gate_node();
+
+            if (gate_node == nullptr){
+                ERROR("Qubit op must have a gate node attached to it");
+            }
+
+            if (gate_node->get_node_kind() == SUBROUTINE_OP){
                 std::string caller = qubit_op->get_caller_name();
-                std::string sub_name = qubit_op->get_gate_node()->get_str();
+                std::string sub_name = gate_node->get_str();
 
                 // if caller is reachable, then op is also reachable
                 if (reachable_subs.count(caller)){
                     if (reachable_subs.insert(sub_name).second){
+                        // std::cout << "Caller " << caller << " calls " << sub_name << std::endl;
                         new_reachable_found = true;
                     }
                 }

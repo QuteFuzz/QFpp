@@ -39,6 +39,10 @@ class Resource : public Cloneable<Resource> {
             used = true;
         }
 
+        bool from_reg(){
+            return _from_reg;
+        }
+
         inline std::shared_ptr<Variable> get_var_name() const override {
             return std::make_shared<Variable>(name);
         }
@@ -65,9 +69,11 @@ class Resource : public Cloneable<Resource> {
     private:
         Variable name;
         UInt index;
-        bool used = false;
         Scope scope = Scope::GLOB;
         Resource_kind resource_kind;
+        bool _from_reg;
+        bool used = false;
+
 };
 
 

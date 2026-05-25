@@ -48,7 +48,45 @@ unitary_2q_def =
 
 sub_circuit = circuit_def_header NL  sub_circuit_body NL sub_circuit_footer;
 
-sub_circuit_body = EXTERNAL::qubit_defs NL compound_stmts;
+sub_circuit_body = EXTERNAL::qubit_defs NL compound_stmts NL identities;
+
+(*
+    not supported because expr evaluations in rule assignments are shallow
+*)
+# identities = 
+#     [
+#         for qb in ALL_QUBITS {
+#             id = 
+#                 GET_CIRCUIT_NAME ".append([" NL
+#                 "cirq.I(" ""[qb.name] ("[" ""[qb.index] "]")[qb.from_reg] ")," NL
+#                 "])" NL
+#                 ;
+#             id
+#         }
+#     ]
+#     ;
+
+identities = 
+    [
+        for qb in ALL_QUBITS {
+            if (qb.from_reg){
+                id1 = 
+                    GET_CIRCUIT_NAME ".append([" NL
+                    "cirq.I(" ""[qb.name] "[" ""[qb.index] "]" ")," NL
+                    "])" NL
+                    ;
+                id1
+            } else {
+                id2 = 
+                    GET_CIRCUIT_NAME ".append([" NL
+                    "cirq.I(" ""[qb.name] ")," NL
+                    "])" NL
+                    ;
+                id2
+            }
+        }
+    ]
+    ;
 
 sub_circuit_footer = GET_CIRCUIT_NAME " = cirq.CircuitOperation(" GET_CIRCUIT_NAME ".freeze())" NL;
 
@@ -79,13 +117,9 @@ imports =
 
 circuit_def_header = GET_CIRCUIT_NAME " = cirq.Circuit()";
 
-# cirq's simulator is very slow, need smaller circuits
-compound_stmts = (compound_stmt NL)[5];
+compound_stmts = (compound_stmt NL)[15];
 
-compound_stmt =
-      qubit_op
-    | if_stmt
-    ;
+compound_stmt = qubit_op;
 
 qubit_op = gate_op | subroutine_op;
 
@@ -109,19 +143,33 @@ insert_strategy = "cirq.InsertStrategy.EARLIEST"
 strategy_kwarg = ", "
     | ", strategy=" insert_strategy;
 
-gate_op = GET_CIRCUIT_NAME ".append(" primitive_gate gate_op_args strategy_kwarg ")";
+
+m_key = "m_key = cirq.MeasurementKey('" MAKE_VAR "')";
+
+apply_measure = GET_CIRCUIT_NAME ".append(cirq.measure(" qubit ", key=m_key))" RESET;
+
+cond_application = ".with_classical_controls(cirq.KeyCondition(m_key))";
+
+gate_op = 
+    [
+        if (UNIFORM(0, 1)){
+            op1 =
+                m_key NL apply_measure NL
+                GET_CIRCUIT_NAME ".append(" primitive_gate gate_op_args cond_application strategy_kwarg ")"
+            ;
+            op1
+        } else {
+            op2 = GET_CIRCUIT_NAME ".append(" primitive_gate gate_op_args strategy_kwarg ")";
+            op2
+        }
+    ]
+    ;    
 
 gate_op_args = ("(" (float ", ") ")")[GET_GATE_PARAMS] "(" qubit_list ")";
 
 float = MAKE_FLOAT | pi_multiples;
 
 pi = "math.pi";
-
-m_key = "m_key = cirq.MeasurementKey('" MAKE_VAR "')";
-apply_measure = GET_CIRCUIT_NAME ".append(cirq.measure(" qubit ", key=m_key))" RESET;
-condition = "cirq.KeyCondition(m_key)";
-
-if_stmt = m_key NL apply_measure NL GET_CIRCUIT_NAME ".append(" primitive_gate gate_op_args ".with_classical_controls(" condition ")" strategy_kwarg ")";
 
 primitive_gate = 
     h
@@ -164,7 +212,7 @@ pytket_testing =
 # if unitaries, subroutines and control flow are not supported by the cirq_to_tk function
 compiler_call = 
     [
-        if (HAS_NODE(unitary_1q_def) || HAS_NODE(unitary_2q_def) || HAS_NODE(sub_circuit) || HAS_NODE(if_stmt)){
+        if (HAS_NODE(unitary_1q_def) || HAS_NODE(unitary_2q_def) || HAS_NODE(sub_circuit) || HAS_NODE(cond_application)){
             cirq_testing
         } else {
             pytket_testing
@@ -174,7 +222,7 @@ compiler_call =
 
 measurement = 
     "all_qubits = sorted(" GET_CIRCUIT_NAME ".all_qubits())" NL
-    GET_CIRCUIT_NAME ".append(cirq.measure_each(*all_qubits))" NL
+    GET_CIRCUIT_NAME ".append(cirq.measure(*all_qubits, key='GLOBAL_TERMINAL_MEASURE'))" NL
     ;
 
 program_footer = measurement NL compiler_call;

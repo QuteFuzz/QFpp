@@ -194,8 +194,8 @@ struct Context {
 
 		/// @brief Is the current circuit being generated a subroutine?
 		/// @return
-		inline bool under_subroutines_node() const {
-			return subroutine_defs_node.has_value() && (subroutine_defs_node.value()->build_state() == NB_BUILD);
+		inline bool under_subroutine_defs_node() const {
+			return (subroutine_defs_node != nullptr) && (subroutine_defs_node->build_state() == NB_BUILD);
 		}
 
 		inline void print_circuit_info() const {
@@ -220,7 +220,7 @@ struct Context {
 		unsigned int current_port = 0;
 		unsigned int nested_depth;
 
-		std::optional<std::shared_ptr<Node>> subroutine_defs_node = std::nullopt;
+		std::shared_ptr<Node> subroutine_defs_node = nullptr;
 };
 
 

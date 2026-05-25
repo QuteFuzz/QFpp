@@ -16,7 +16,7 @@ void Context::reset(Reset_level l){
 
             circuits.clear();
 
-            subroutine_defs_node = std::nullopt;
+            subroutine_defs_node = nullptr;
             [[fallthrough]];
         }
 
@@ -135,7 +135,7 @@ Expr_type Context::resolve_var(const Token_kind name, const std::vector<Arg_type
 /// node in the AST, but the last added circuit is a subroutine. This implies that after the `subroutines` node, there's no `circuit` node to generate
 /// a new, main circuit. As such, qubit and bit definitions, qubits and bits may have been made globally, and therefore stored in the dummy circuit, so we return that
 std::shared_ptr<Circuit> Context::get_current_circuit() const {
-    if((circuits.size() == 0) || (!under_subroutines_node() && circuits.back()->check_if_sub_circuit())){
+    if((circuits.size() == 0) || (!under_subroutine_defs_node() && circuits.back()->check_if_sub_circuit())){
         return dummy_circuit;
     } else {
         return circuits.back();
@@ -291,9 +291,8 @@ std::shared_ptr<Compound_stmt> Context::nn_compound_stmt(){
 }
 
 std::shared_ptr<Node> Context::nn_subroutine_defs(){
-    std::shared_ptr<Node> node = std::make_shared<Node>("", SUBROUTINE_DEFS);
-    subroutine_defs_node = std::make_optional<std::shared_ptr<Node>>(node);
-    return node;
+    subroutine_defs_node = std::make_shared<Node>("", SUBROUTINE_DEFS);
+    return subroutine_defs_node;
 }
 
 std::shared_ptr<Qubit_op> Context::nn_qubit_op(){

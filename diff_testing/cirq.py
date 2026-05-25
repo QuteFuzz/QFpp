@@ -91,11 +91,12 @@ class cirqTesting(Base):
         # `all_measurement_key_names` returns frozenset which is ordered randomly
         # pass to sorted to ensure measurement order is alphabetical, which means it's ordered
         # as defined
-        ordered_keys = sorted(circ_prime.all_measurement_key_names())
+        # ordered_keys = sorted(circ_prime.all_measurement_key_names())
 
         result = simulator.run(circ_prime, repetitions=self.num_shots)
 
-        histogram = result.multi_measurement_histogram(keys=ordered_keys)
+        # histogram = result.multi_measurement_histogram(keys=ordered_keys)
+        histogram = result.histogram(key="GLOBAL_TERMINAL_MEASURE")
         counts = self._preprocess_counts(histogram)
 
         if self.plot:

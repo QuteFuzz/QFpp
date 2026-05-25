@@ -71,6 +71,8 @@ class Base(ABC):
         """
         out = {}
         for k, v in counts.items():
+            int_key = k
+
             if isinstance(k, str):
                 str_key = k.replace(" ", "")
 
