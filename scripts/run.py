@@ -248,10 +248,10 @@ class Check_grammar:
                         run_info.logs = f"Dot product is not 1, got {dp}"
 
                 else:
-                    raise Exception(
-                        "Result must be ks values or dot product, got None.\n"
-                        f"Stdout: \n{result.stdout}"
-                    )
+                    run_info.interesting = True
+                    run_info.logs =
+                        "Result must be ks values or dot product, got None.\n" \
+                        f"STDOUT: \n{result.stdout} \nSTDERR:\n {result.stderr}"
 
             # crash while running the circuit
             else:
