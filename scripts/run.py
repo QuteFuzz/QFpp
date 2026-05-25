@@ -249,9 +249,10 @@ class Check_grammar:
 
                 else:
                     run_info.interesting = True
-                    run_info.logs =
-                        "Result must be ks values or dot product, got None.\n" \
+                    run_info.logs = (
+                        "Result must be ks values or dot product, got None.\n"
                         f"STDOUT: \n{result.stdout} \nSTDERR:\n {result.stderr}"
+                    )
 
             # crash while running the circuit
             else:
