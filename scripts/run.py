@@ -21,7 +21,7 @@ from utils import Color, log, modify_env, pipe_to_process
 NIGHTLY_DIR = Path("nightly_results")
 ENTRY_POINT = "program"
 
-MIN_KS_VALUE = 1e-8
+ALPHA = 0.01
 TIMEOUT = 20000
 DEFAULT_NUM_TESTS = 1
 CPU_COUNT = os.cpu_count()
@@ -237,9 +237,9 @@ class Check_grammar:
 
                 if result_kind == Result_kind.KS_TEST:
                     min_ks = min(run_info.values)
-                    if min_ks < MIN_KS_VALUE:
+                    if min_ks < ALPHA:
                         run_info.interesting = True
-                        run_info.logs = f"Low KS value: {min_ks:.4f} < {MIN_KS_VALUE}; "
+                        run_info.logs = f"Low KS value: {min_ks:.4f} < {ALPHA}; "
 
                 elif result_kind == Result_kind.DOT_PROD:
                     dp = run_info.values[0]

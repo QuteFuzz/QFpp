@@ -1,4 +1,3 @@
-import random
 from typing import List, Tuple
 
 import numpy as np
@@ -14,12 +13,6 @@ from pytket.passes import (
 from tket.passes import badger_pass
 
 from .lib import Base
-
-TOPO_CHOICE = [
-    lambda n_qubits: _make_line_topology(n_qubits),
-    lambda n_qubits: _make_star_topology(n_qubits),
-    lambda n_qubits: _make_hex_topology(n_qubits),
-]
 
 
 def _apply_tket2_opt_level_3(circuit: Circuit) -> Circuit:
@@ -62,30 +55,10 @@ def _apply_tket2_opt_level_3(circuit: Circuit) -> Circuit:
     return opt_circ
 
 
-def _make_line_topology(n_qubits: int):
-    return [(i, i + 1) for i in range(n_qubits)]
-
-
-def _make_star_topology(n_qubits: int):
-    return [(0, i) for i in range(1, n_qubits)]
-
-
-def _make_hex_topology(n_qubits: int):
-
-    if n_qubits >= 4:
-        topo = []
-        for i in range(4, n_qubits + 4, 4):
-            zeroth = i - 4
-            first = i - 3
-            topo.extend([(zeroth, zeroth + 1), (first, first + 1), (first, first + 2)])
-            if first > 1:
-                topo.append((first - 2, first))
-        return topo
-    else:
-        return _make_line_topology(n_qubits)
-
-
 def _route_circuit(circuit: Circuit, topo: List[Tuple[int, int]]) -> None:
+    if circuit.n_qubits < 2:
+        return
+
     arch = Architecture(topo)
 
     DecomposeMultiQubitsCX().apply(circuit)  # SWAP gets only well defined for 2 qubit gates
@@ -96,7 +69,25 @@ class pytketTesting(Base):
     def __init__(self, tket2: bool = False) -> None:
         super().__init__("pytket")
         self.tket2 = tket2  # only on statevector
-        self.topo_maker = random.choice(TOPO_CHOICE)
+
+    def _make_line_topology(self, n_qubits: int):
+        return [(i, i + 1) for i in range(n_qubits - 1)]
+
+    def _make_star_topology(self, n_qubits: int):
+        return [(0, i) for i in range(1, n_qubits)]
+
+    def _make_hex_topology(self, n_qubits: int):
+        if n_qubits >= 4:
+            topo = []
+            for i in range(4, n_qubits + 4, 4):
+                zeroth = i - 4
+                first = i - 3
+                topo.extend([(zeroth, zeroth + 1), (first, first + 1), (first, first + 2)])
+                if first > 1:
+                    topo.append((first - 2, first))
+            return topo
+        else:
+            return self._make_line_topology(n_qubits)
 
     def _get_counts(self, circuit: Circuit, opt_level: int, circuit_num: int):
         circuit_copy = circuit.copy()

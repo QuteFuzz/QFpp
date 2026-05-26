@@ -27,6 +27,7 @@ an alternative is to just use a single qreg and creg to skip over all these orde
 
 import argparse
 import os
+import random
 import traceback
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -54,6 +55,13 @@ class Base(ABC):
         self.endianess = endianess
 
         self.num_shots = 10 if os.environ.get("RUN_MODE") == "CI" else 1000
+        self.topo_maker = random.choice(
+            [
+                lambda n_qubits: self._make_line_topology(n_qubits),
+                lambda n_qubits: self._make_star_topology(n_qubits),
+                lambda n_qubits: self._make_hex_topology(n_qubits),
+            ]
+        )
 
     @abstractmethod
     def _get_counts(self, circuit, opt_level, circuit_num) -> Dict[Any, int]:
@@ -62,6 +70,15 @@ class Base(ABC):
     @abstractmethod
     def _get_statevector(self, circuit, opt_level):
         raise NotImplementedError("`_get_statevector` func not implemented")
+
+    def _make_line_topology(self, n_qubits: int):
+        raise NotImplementedError(f"{__name__} is not implemented")
+
+    def _make_star_topology(self, n_qubits: int):
+        raise NotImplementedError(f"{__name__} is not implemented")
+
+    def _make_hex_topology(self, n_qubits: int):
+        raise NotImplementedError(f"{__name__} is not implemented")
 
     def _preprocess_counts(self, counts: Dict[Any, int]) -> Dict[Any, int]:
         """
@@ -149,6 +166,10 @@ class Base(ABC):
         for i in range(3):
             counts2 = self._get_counts(circuit, opt_level=i + 1, circuit_num=circuit_number)
             ks_value = self._ks_test(counts1, counts2)
+
+            if self.plot:
+                self._plot_ecdf(counts1, counts2, f"opt_0 vs opt_{i + 1}", circuit_number)
+
             print(f"Optimisation level {i + 1} ks-test p-value: {ks_value}")
 
     def _plot_ecdf(

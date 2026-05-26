@@ -212,7 +212,7 @@ pytket_testing =
 # if unitaries, subroutines and control flow are not supported by the cirq_to_tk function
 compiler_call = 
     [
-        if (HAS_NODE(unitary_1q_def) || HAS_NODE(unitary_2q_def) || HAS_NODE(sub_circuit) || HAS_NODE(cond_application)){
+        if (AST_HAS_NODE(unitary_1q_def) || AST_HAS_NODE(unitary_2q_def) || AST_HAS_NODE(sub_circuit) || AST_HAS_NODE(cond_application)){
             cirq_testing
         } else {
             pytket_testing

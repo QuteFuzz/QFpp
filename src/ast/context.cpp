@@ -115,7 +115,7 @@ Expr_type Context::resolve_var(const Token_kind name, const std::vector<Arg_type
         std::holds_alternative<int>(args[0]) && std::holds_alternative<int>(args[1])
     ){
         return get_current_circuit()->get_val_at(std::get<int>(args[0]), std::get<int>(args[1]));
-    } else if ((name == HAS_NODE) && (args.size() == 1) && std::holds_alternative<std::string>(args[0])){
+    } else if ((name == AST_HAS_NODE) && (args.size() == 1) && std::holds_alternative<std::string>(args[0])){
         std::string node_name = std::get<std::string>(args[0]);
 
         for (const std::shared_ptr<Circuit> circ : circuits){

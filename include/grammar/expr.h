@@ -187,11 +187,7 @@ class ForExpr : public Expr {
             iter_var(var),
             iterable(iter),
             body(std::move(b)) 
-        {
-            if (iter != "ALL_QUBITS" && iter != "ALL_BITS" && iter != "ALL_QUBIT_DEFS" && iter != "ALL_BIT_DEFS"){
-                ERROR("Unknown iterable " + iter);
-            }
-        }
+        {}
 
         Expr_type eval(Context& context) const override;
 

@@ -208,7 +208,7 @@ program_footer = compiler_call;
 
 compiler_call =
     [
-        if (HAS_NODE(cond_application)){
+        if (AST_HAS_NODE(cond_application)){
             call1 = 
                 GET_CIRCUIT_NAME ".measure_all()" NL "pt = pytketTesting() " NL opt_ks_test;
             call1

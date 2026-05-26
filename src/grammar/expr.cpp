@@ -74,6 +74,8 @@ Expr_type PropertyAccessExpr::eval(Context& context) const {
             return resource->from_reg();
         } else if (prop_name == "from_sing"){
             return !resource->from_reg();
+        } else if (prop_name == "is_used_at_least_once") {
+            return resource->is_used_at_least_once();
         } else if (prop_name == "in_ext_scope") {
             return resource->get_scope() == Scope::EXT;
         } else if (prop_name == "in_int_scope") {
@@ -219,13 +221,21 @@ Expr_type ForExpr::eval(Context& context) const {
         }
     };
 
-    if (iterable == "ALL_QUBITS" || iterable == "ALL_BITS"){
-        Resource_kind rk = iterable == "ALL_QUBITS" ? Resource_kind::QUBIT : Resource_kind::BIT;
+    if (iterable == "ALL_QUBITS" || iterable == "ALL_BITS" || iterable == "ALL_PARAMS"){
+        Resource_kind rk = 
+            iterable == "ALL_QUBITS" ? Resource_kind::QUBIT :
+            iterable == "ALL_BITS" ? Resource_kind::BIT :
+            Resource_kind::PARAM;
+
         auto items = context.get_current_coll<Resource>(rk);
         get_rules(items);
 
-    } else if (iterable == "ALL_QUBIT_DEFS" || iterable == "ALL_BIT_DEFS") {
-        Resource_kind rk = iterable == "ALL_QUBIT_DEFS" ? Resource_kind::QUBIT : Resource_kind::BIT;
+    } else if (iterable == "ALL_QUBIT_DEFS" || iterable == "ALL_BIT_DEFS" || iterable == "ALL_PARAM_DEFS") {
+        Resource_kind rk =
+            iterable == "ALL_QUBIT_DEFS" ? Resource_kind::QUBIT :
+            iterable == "ALL_BIT_DEFS" ? Resource_kind::BIT :
+            Resource_kind::PARAM;
+
         auto items = context.get_current_coll<Resource_def>(rk);
         get_rules(items);
 
