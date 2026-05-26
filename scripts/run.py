@@ -15,7 +15,7 @@ from typing import List, Tuple
 
 import numpy as np
 
-from params import BUILD_DIR, OUTPUT_DIR
+from params import BUILD_DIR, CPU_COUNT, OUTPUT_DIR
 from utils import Color, log, modify_env, pipe_to_process
 
 NIGHTLY_DIR = Path("nightly_results")
@@ -24,7 +24,6 @@ ENTRY_POINT = "program"
 ALPHA = 0.01
 TIMEOUT = 20000
 DEFAULT_NUM_TESTS = 1
-CPU_COUNT = os.cpu_count()
 
 SIMULATION_CAP = {"pytket": 64, "qiskit": 64, "cirq": 8, "pennylane": 64, "cudaq": 64, "qasm2": 64}
 

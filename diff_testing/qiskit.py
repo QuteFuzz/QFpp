@@ -49,9 +49,6 @@ class qiskitTesting(Base):
                 basis_gates=basis_gates,
             )
             circ_prime = pm.run(circuit)
-            # circ_prime = transpile(
-            #    circuit, backend=backend, coupling_map=cmap, optimization_level=opt_level
-            # )
         else:
             circ_prime = transpile(circuit, backend=backend, optimization_level=opt_level)
 
