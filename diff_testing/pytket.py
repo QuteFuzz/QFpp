@@ -1,3 +1,4 @@
+import random
 from typing import List, Tuple
 
 import numpy as np
@@ -5,14 +6,70 @@ from pytket._tket.circuit import Circuit, OpType
 from pytket.architecture import Architecture
 from pytket.extensions.qiskit.backends.aer import AerBackend, AerStateBackend
 from pytket.passes import (
+    AutoRebase,
+    AutoSquash,
+    CliffordResynthesis,
+    CliffordSimp,
+    CnXPairwiseDecomposition,
+    CommuteThroughMultis,
+    ComposePhasePolyBoxes,
+    ContextSimp,
+    DecomposeArbitrarilyControlledGates,
     DecomposeBoxes,
     DecomposeMultiQubitsCX,
+    DecomposeSingleQubitsTK1,
+    DecomposeTK2,
     DefaultMappingPass,
+    EulerAngleReduction,
+    FlattenRegisters,
+    FullPeepholeOptimise,
+    KAKDecomposition,
+    NormaliseTK2,
+    OptimisePhaseGadgets,
+    PauliSimp,
     RemoveImplicitQubitPermutation,
+    RemoveRedundancies,
+    SequencePass,
+    SquashRzPhasedX,
+    SquashTK1,
+    SynthesiseTK,
+    SynthesiseTket,
+    ThreeQubitSquash,
+    ZXGraphlikeOptimisation,
+    ZZPhaseToRz,
 )
+from pytket.predicates import CompilationUnit
 from tket.passes import badger_pass
 
 from .lib import Base
+
+PASSES = [
+    (AutoRebase.__name__, AutoRebase({OpType.TK1, OpType.TK2})),
+    (AutoSquash.__name__, AutoSquash({OpType.TK1})),
+    (CliffordResynthesis.__name__, CliffordResynthesis()),
+    (CnXPairwiseDecomposition.__name__, CnXPairwiseDecomposition()),
+    (CommuteThroughMultis.__name__, CommuteThroughMultis()),
+    (CliffordSimp.__name__, CliffordSimp()),
+    (ComposePhasePolyBoxes.__name__, ComposePhasePolyBoxes()),
+    (ContextSimp.__name__, ContextSimp()),
+    (DecomposeArbitrarilyControlledGates.__name__, DecomposeArbitrarilyControlledGates()),
+    (DecomposeMultiQubitsCX.__name__, DecomposeMultiQubitsCX()),
+    (DecomposeSingleQubitsTK1.__name__, DecomposeSingleQubitsTK1()),
+    (DecomposeTK2.__name__, SequencePass([NormaliseTK2(), DecomposeTK2()])),
+    (EulerAngleReduction.__name__, EulerAngleReduction(OpType.Rx, OpType.Ry)),
+    (FullPeepholeOptimise.__name__, FullPeepholeOptimise()),
+    (KAKDecomposition.__name__, KAKDecomposition()),
+    (OptimisePhaseGadgets.__name__, OptimisePhaseGadgets()),
+    (PauliSimp.__name__, PauliSimp()),
+    (RemoveRedundancies.__name__, RemoveRedundancies()),
+    (SquashRzPhasedX.__name__, SquashRzPhasedX()),
+    (SquashTK1.__name__, SquashTK1()),
+    (SynthesiseTket.__name__, SynthesiseTket()),
+    (SynthesiseTK.__name__, SynthesiseTK()),
+    (ThreeQubitSquash.__name__, ThreeQubitSquash()),
+    (ZXGraphlikeOptimisation.__name__, ZXGraphlikeOptimisation()),
+    (ZZPhaseToRz.__name__, ZZPhaseToRz()),
+]
 
 
 def _apply_tket2_opt_level_3(circuit: Circuit) -> Circuit:
@@ -123,6 +180,29 @@ class pytketTesting(Base):
             return backend.get_compiled_circuit(
                 circuit, optimisation_level=opt_level
             ).get_statevector()
+
+    def pytket_pass_test(self, circuit):
+        circ = circuit.copy()
+        no_pass_statevector = circ.get_statevector()
+
+        FlattenRegisters().apply(circ)
+        DecomposeBoxes().apply(circ)
+
+        safe_choices = [
+            pair
+            for pair in PASSES
+            if CompilationUnit(circ, pair[1].get_preconditions()).check_all_predicates()
+        ]
+
+        if safe_choices != []:
+            _pass = random.choice(safe_choices)
+            print(f"{_pass[0]}")
+            _pass[1].apply(circ)
+
+        pass_statevector = circ.get_statevector()
+
+        dot_prod = self.compare_statevectors(no_pass_statevector, pass_statevector, 6)
+        print("Dot product: ", dot_prod)
 
     def pytket_qiskit_conv_test(self, pytket_circ, circuit_num):
         from pytket.extensions.qiskit.qiskit_convert import tk_to_qiskit
