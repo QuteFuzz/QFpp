@@ -2,6 +2,8 @@ import numpy as np
 from qiskit import QuantumCircuit, transpile
 from qiskit.transpiler import CouplingMap
 from qiskit_aer import AerSimulator
+from qiskit.transpiler.passes.synthesis.unitary_synthesis import UnitarySynthesis
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 
 from .lib import Base
 
@@ -40,10 +42,17 @@ class qiskitTesting(Base):
         cmap = self.topo_maker(circuit.num_qubits) if circuit.num_qubits >= 2 else None
 
         if cmap is not None and opt_level >= 1:
-            basis_gates = ["u1", "u2", "u3", "cx"]
-            circ_prime = transpile(
-                circuit, basis_gates=basis_gates, coupling_map=cmap, optimization_level=opt_level
+            basis_gates = ["rz", "sx", "x", "cx"]
+            pm = generate_preset_pass_manager(
+                optimization_level=opt_level,
+                backend=backend,
+                coupling_map=cmap,
+                basis_gates=basis_gates,
             )
+            circ_prime = pm.run(circuit)
+            #circ_prime = transpile(
+            #    circuit, backend=backend, coupling_map=cmap, optimization_level=opt_level
+            #)
         else:
             circ_prime = transpile(circuit, backend=backend, optimization_level=opt_level)
 
