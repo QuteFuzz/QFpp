@@ -6,7 +6,7 @@ from typing import Any, Dict
 
 from diff_testing.lib import Base
 from params import CUDAQ_DIR, OUTPUT_DIR
-from utils import Color, log, modify_env
+from utils import Color, modify_env
 
 
 class cudaqTesting(Base):
@@ -51,8 +51,10 @@ class cudaqTesting(Base):
             result = subprocess.run(compile_cmd, capture_output=True, env=env, cwd=tmpdir)
 
             if result.returncode != 0:
-                raise Exception(f"[ERROR] {compile_cmd} failed \n" \
-                f"STDERR: \n{result.stderr} \n STDOUT: \n {result.stdout}\n")
+                raise Exception(
+                    f"[ERROR] {compile_cmd} failed \n"
+                    f"STDERR: \n{result.stderr} \n STDOUT: \n {result.stdout}\n"
+                )
 
             result = subprocess.run(
                 [temp_exe, str(self.num_shots)], capture_output=True, env=env, cwd=tmpdir

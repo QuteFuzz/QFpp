@@ -238,12 +238,14 @@ class Check_grammar:
                 if result_kind == Result_kind.KS_TEST:
                     min_ks = min(run_info.values)
                     if min_ks < ALPHA:
+                        log(f"  INTERESTING (LOW p-val): {circuit_path}", Color.YELLOW)
                         run_info.interesting = True
                         run_info.logs = f"Low KS value: {min_ks:.4f} < {ALPHA}; "
 
                 elif result_kind == Result_kind.DOT_PROD:
                     dp = run_info.values[0]
                     if dp != 1:
+                        log(f"  INTERESTING (DP != 1): {circuit_path}", Color.YELLOW)
                         run_info.interesting = True
                         run_info.logs = f"Dot product is not 1, got {dp}"
 
