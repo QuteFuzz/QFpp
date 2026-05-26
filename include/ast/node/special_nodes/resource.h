@@ -35,8 +35,13 @@ class Resource : public Cloneable<Resource> {
             return used;
         }
 
+        bool is_used_at_least_once(){
+            return used_at_least_once;
+        }
+
         void set_used(){
             used = true;
+            used_at_least_once = true;
         }
 
         bool from_reg(){
@@ -73,6 +78,7 @@ class Resource : public Cloneable<Resource> {
         Resource_kind resource_kind;
         bool _from_reg;
         bool used = false;
+        bool used_at_least_once = false;
 
 };
 

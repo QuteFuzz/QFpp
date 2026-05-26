@@ -1,53 +1,13 @@
-from diff_testing.qasm import qasmTesting
+from pytket import Circuit, Qubit
 
-qasm_str = """
-OPENQASM 2.0;
-include "qelib1.inc";
+from diff_testing.pytket import pytketTesting
 
-gate sub_0(sing_22,sing_28) sing_35,sing_42,sing_49 {
-	tdg sing_42;
-	cx sing_42, sing_49;
-	tdg sing_35;
-	s sing_49;
-	t sing_35;
-	sdg sing_35;
-	cx sing_35, sing_42;
-	sdg sing_49;
-	y sing_35;
-	u3 ((pi/4.0), pi, pi) sing_35;
-	sdg sing_49;
-	ry ((pi/4.0)) sing_49;
-}
+main_circuit = Circuit()
+sing_2496 = Qubit("sing_2496", 0)
+main_circuit.add_qubit(sing_2496)
 
-qreg reg_230[1];
-qreg reg_240[3];
-qreg reg_254[1];
-qreg reg_264[2];
-creg reg_277[2];
-creg reg_289[1];
-creg reg_299[2];
+main_circuit.H(sing_2496)
+main_circuit.measure_all()
 
-
-// measure reg_240[0] -> reg_299[0];
-// if(reg_299==1) t reg_230[0];
-cy reg_230[0], reg_264[1];
-sub_0((pi/2.0), 0.960876) reg_264[0], reg_240[0], reg_264[1];
-rz (4.247478) reg_240[2];
-// measure reg_230[0] -> reg_299[0];
-// if(reg_299==1) cz reg_264[0], reg_230[0];
-u2 (6.307099, 6.435542) reg_230[0];
-
-creg temp_reg_230[1];
-measure reg_230-> temp_reg_230;
-creg temp_reg_240[3];
-measure reg_240-> temp_reg_240;
-creg temp_reg_254[1];
-measure reg_254-> temp_reg_254;
-creg temp_reg_264[2];
-measure reg_264-> temp_reg_264;
-"""
-
-qt = qasmTesting()
-# qt.counts_agreement_test(qasm_str, 0)
-qt.opt_ks_test(qasm_str, 0)
-# qt._counts_agreement_at_level_test(qasm_str, 0, 0)
+pt = pytketTesting()
+pt.opt_ks_test(main_circuit, 0)

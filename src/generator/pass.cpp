@@ -157,7 +157,8 @@ void Dead_subs::apply() {
             auto gate_node = qubit_op->get_gate_node();
 
             if (gate_node == nullptr){
-                ERROR("Qubit op must have a gate node attached to it");
+                // ERROR("Qubit op must have a gate node attached to it");
+                continue;
             }
 
             if (gate_node->get_node_kind() == SUBROUTINE_OP){

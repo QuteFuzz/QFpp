@@ -113,3 +113,12 @@ qubit = singular_qubit | register_qubit;
 bit = singular_bit | register_bit;
 
 param = singular_param | register_param;
+
+math_expr = "(" math_expr " + " term ")"
+    | "(" math_expr " - " term ")"
+    | term ;
+
+term = "(" term " * " factor ")"
+    | "(" term " / " factor ")"
+    | factor ;
+

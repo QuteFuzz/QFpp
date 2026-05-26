@@ -1,107 +1,176 @@
-# pennylane.qf
+# guppy.qf
+# QuteFuzz grammar tailored for Quantinuum's Guppy language
 
 EXTENSION = ".py";
-MAX_REG_SIZE = 1;  # PennyLane uses integer wire labels, not registers
+MAX_REG_SIZE = 2;
+NESTED_MAX_DEPTH = 2;
+
+pi = "pi";
+pi_multiples = pi | "(" pi "/2.0)" | "(" pi "/4.0)";
+
+# Map QuteFuzz primitives to guppylang.std.quantum functions
+# Guppy uses `toffoli` instead of `ccx` natively
+primitive_gate = 
+    h | x | y | z | cx | cy | cz | rx | ry | rz | s | sdg | t | tdg | toffoli | ch;
+
+ccx = "toffoli";
 
 # ============================================================================
-# GATE NAMES
-# PennyLane uses full names: Hadamard, PauliX, CNOT, RX, etc.
-# ============================================================================
-
-x    = "PauliX";
-y    = "PauliY";
-z    = "PauliZ";
-h    = "Hadamard";
-s    = "S";
-t    = "T";
-rx   = "RX";
-ry   = "RY";
-rz   = "RZ";
-cx   = "CNOT";
-cy   = "CY";
-cz   = "CZ";
-ch   = "CH";
-ccx  = "Toffoli";
-swap = "SWAP";
-crx  = "CRX";
-cry  = "CRY";
-crz  = "CRZ";
-
-primitive_gate += s | t | swap | ch | crx | cry | crz;
-
-# ============================================================================
-# QUBIT DEFINITIONS
-# Wires are integers — defs are just name = index assignments
-# These live inside the function body and are still tracked by the AST
+# INTERNAL / EXTERNAL DEFINITIONS
 # ============================================================================
 
 INTERNAL {
-    qubit_defs = (qubit_def COMMA)[UNIFORM(3, 4)];
-    qubit_def  = singular_qubit_def;
-    singular_qubit_def = "'"GET_DEF_NAME"'";
+    float_no_param = MAKE_FLOAT | GLOB::pi_multiples;
+
+    qubit_defs = (qubit_def NL)[UNIFORM(3,4)];
+    param_defs = (param_def NL)[UNIFORM(0,2)];
+
+    singular_qubit_def = GET_DEF_NAME " = qubit()";
+    register_qubit_def = GET_DEF_NAME " = array(qubit() for _ in range(" GET_SIZE "))";
+
+    singular_param_def = GET_DEF_NAME " = " float_no_param;
+    register_param_def = GET_DEF_NAME " = array(" float_no_param " for _ in range(" GET_SIZE "))";
 }
 
-singular_qubit = "'"GET_DECL_NAME"'";
-register_qubit = "'"GET_DECL_NAME"'";  # unused with MAX_REG_SIZE=1, required by meta-grammar
+EXTERNAL {
+    # Dynamically generates a comma-separated list of subroutine arguments based on the AST
+    sub_circuit_args = ""[
+        first = 1;
+        for q in ALL_QUBIT_DEFS {
+            if (q.in_ext_scope) {
+                if (!first) { ", " }
+                if (q.is_singular) { ""[q.name] ": qubit" } 
+                else { ""[q.name] ": array[qubit, " ""[q.size] "]" }
+                first = 0;
+            }
+        }
+        for p in ALL_PARAM_DEFS {
+            if (p.in_ext_scope) {
+                if (!first) { ", " }
+                if (p.is_singular) { ""[p.name] ": float" } 
+                else { ""[p.name] ": array[float, " ""[p.size] "]" }
+                first = 0;
+            }
+        }
+    ];
+}
 
-# No bit_defs: PennyLane has no classical registers
+singular_qubit = GET_DECL_NAME;
+register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
+
+singular_param = GET_DECL_NAME;
+register_param = GET_DECL_NAME "[" GET_INDEX "]";
+
+float = MAKE_FLOAT | param | pi_multiples;
+param = singular_param | register_param;
+qubit = singular_qubit | register_qubit;
+
+# Guppy expects parametrized gates as: rx(qubit, angle)
+qubit_list = qubit (", " qubit)[GET_GATE_QUBITS - 1];
+float_list = float (", " float)[GET_GATE_PARAMS - 1];
+
+gate_op_args = qubit_list (", " float_list)[GET_GATE_PARAMS > 0];
+subroutine_op_args = qubit_list (", " float_list)[GET_GATE_PARAMS > 0];
+
+gate_op = primitive_gate "(" gate_op_args ")";
+subroutine_op = GET_GATE_NAME "(" subroutine_op_args ")";
+
+# Exclude if_stmt to guarantee linear type safety during fuzzing
+qubit_op = gate_op | subroutine_op;
+compound_stmt = qubit_op;
+compound_stmts = (compound_stmt NL)[UNIFORM(6, 15)];
 
 # ============================================================================
-# GATE OPERATIONS
-# PennyLane syntax: qml.GateName(param1, ..., wires=[w0, w1])
-# No GET_CIRCUIT_NAME prefix — gate ops are standalone inside the function
+# SUBROUTINES & UNITARIES
 # ============================================================================
 
-gate_op      = "qml." primitive_gate "(" gate_op_args ")";
-gate_op_args = (float ", ")[GET_GATE_PARAMS] "wires=[" qubit_list "]";
-float = MAKE_FLOAT | pi_multiples;
-pi = "math.pi";
+# Because Guppy defaults to borrowing qubits, subroutines don't need to return them
+sub_circuit = "@guppy" NL "def " GET_CIRCUIT_NAME "(" EXTERNAL::sub_circuit_args ") -> None:" NL 
+    ci<compound_stmts>;
 
-qubit_list   = qubit (", " qubit)[GET_GATE_QUBITS - 1];
-qubit        = singular_qubit;
+# The Selene emulator cannot run opaque Box operations. 
+# We compile them to native gates using PyTKET AutoRebase before converting to Guppy.
+unitary_1q_def = 
+    "from pytket import Circuit as tk_Circuit" NL
+    "from pytket.circuit import Unitary1qBox, OpType" NL
+    "from pytket.passes import AutoRebase" NL
+    "import numpy as np" NL
+    "raw = ["  NL
+    "(" ""[GET_MAT_POS(0, 0)] "),(" ""[GET_MAT_POS(0, 1)] ")," NL
+    "(" ""[GET_MAT_POS(1, 0)] "),(" ""[GET_MAT_POS(1, 1)] ")," NL
+    "]"                            NL
+    "U = np.array([complex(r, i) for r, i in raw], dtype=complex).reshape(2, 2)" NL
+    "tk_circ = tk_Circuit(1)" NL
+    "tk_circ.add_unitary1qbox(Unitary1qBox(U), [0])" NL
+    "AutoRebase({OpType.CX, OpType.H, OpType.Rz, OpType.Rx, OpType.Ry}).apply(tk_circ)" NL
+    GET_CIRCUIT_NAME " = guppy.load_pytket('" GET_CIRCUIT_NAME "', tk_circ)" NL
+;
 
-# ============================================================================
-# COMPOUND STATEMENTS
-# ============================================================================
+unitary_2q_def = 
+    "from pytket import Circuit as tk_Circuit" NL
+    "from pytket.circuit import Unitary2qBox, OpType" NL
+    "from pytket.passes import AutoRebase" NL
+    "import numpy as np" NL
+    "raw = ["  NL
+    "(" ""[GET_MAT_POS(0, 0)] "),(" ""[GET_MAT_POS(0, 1)] "),(" ""[GET_MAT_POS(0, 2)] "),(" ""[GET_MAT_POS(0, 3)] ")," NL
+    "(" ""[GET_MAT_POS(1, 0)] "),(" ""[GET_MAT_POS(1, 1)] "),(" ""[GET_MAT_POS(1, 2)] "),(" ""[GET_MAT_POS(1, 3)] ")," NL
+    "(" ""[GET_MAT_POS(2, 0)] "),(" ""[GET_MAT_POS(2, 1)] "),(" ""[GET_MAT_POS(2, 2)] "),(" ""[GET_MAT_POS(2, 3)] ")," NL
+    "(" ""[GET_MAT_POS(3, 0)] "),(" ""[GET_MAT_POS(3, 1)] "),(" ""[GET_MAT_POS(3, 2)] "),(" ""[GET_MAT_POS(3, 3)] ")," NL
+    "]"                            NL
+    "U = np.array([complex(r, i) for r, i in raw], dtype=complex).reshape(4, 4)" NL
+    "tk_circ = tk_Circuit(2)" NL
+    "tk_circ.add_unitary2qbox(Unitary2qBox(U), [0, 1])" NL
+    "AutoRebase({OpType.CX, OpType.H, OpType.Rz, OpType.Rx, OpType.Ry}).apply(tk_circ)" NL
+    GET_CIRCUIT_NAME " = guppy.load_pytket('" GET_CIRCUIT_NAME "', tk_circ)" NL
+;
 
-compound_stmt  = qubit_op;
-qubit_op       = gate_op;
+subroutine_defs = ((sub_circuit | unitary_1q_def | unitary_2q_def) NL)+;
 
 # ============================================================================
 # PROGRAM STRUCTURE
 # ============================================================================
 
-program = imports NL NL circuit NL program_footer;
+# Measure all active qubits and pack them into a classical bitstring metric
+measures = 
+    "packed_result = 0" NL
+    "bit_offset = 0" NL
+    ""[
+    for def in ALL_QUBIT_DEFS {
+        if (def.in_int_scope) {
+            if (def.is_singular){
+                "if measure(" ""[def.name] "):" NL
+                "    packed_result |= (1 << bit_offset)" NL
+                "bit_offset += 1" NL
+            } else {
+                "for i in range(" ""[def.size] "):" NL
+                "    if measure(" ""[def.name] "[i]):" NL
+                "        packed_result |= (1 << bit_offset)" NL
+                "    bit_offset += 1" NL
+            }
+        }
+    }
+    ]
+    "result(\"counts\", packed_result)" NL
+    ;
 
-circuit = circuit_def_header NL body NL;
-
-circuit_def_header =
-    "dev = qml.device('default.qubit', wires=[" INTERNAL::qubit_defs "])" NL
-    NL
-    "@qml.qnode(dev)" NL
-    "def " GET_CIRCUIT_NAME "():";
-
-body = ci<compound_stmts NL return_stmt>;
-
-return_stmt = "return qml.counts()";
-
-# ============================================================================
-# IMPORTS
-# ============================================================================
+circuit = "@guppy" NL "def " GET_CIRCUIT_NAME "() -> None:" NL 
+    ci<INTERNAL::qubit_defs> NL
+    ci<INTERNAL::param_defs> NL
+    ci<compound_stmts> NL
+    ci<measures> NL
+    ;
 
 imports =
     "import math" NL
-    "import pennylane as qml" NL
-    "from diff_testing.pennylane import pennylaneTesting";
+    "from guppylang import guppy" NL
+    "from guppylang.std.quantum import qubit, h, x, y, z, cx, cy, cz, rx, ry, rz, s, sdg, t, tdg, toffoli, ch, measure" NL
+    "from guppylang.std.builtins import result" NL
+    "from guppylang.std.array import array" NL
+    "from guppylang.std.angles import angle, pi" NL
+    "from diff_testing.guppy import guppyTesting" NL
+    ;
 
-# ============================================================================
-# COMPILER CALL
-# GET_CIRCUIT_NAME here refers to the function name (the QNode callable), not
-# a circuit object — consistent with how PennyLane calls the circuit.
-# ============================================================================
+# Pass the compiled Guppy function to the testing library
+compiler_call = "gt = guppyTesting()" NL "gt.opt_ks_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN NL;
 
-program_footer = "pt = pennylaneTesting()" NL testing_method;
-
-testing_method = opt_ks_test;
-
-opt_ks_test = "pt.opt_ks_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN NL;
+program = imports NL[2] subroutine_defs NL circuit NL[2] compiler_call;

@@ -4,7 +4,6 @@ EXTENSION = ".py";
 MAX_REG_SIZE = 3;
 NESTED_MAX_DEPTH = 3;
 
-# ── Gate names ──────────────────────────────────────────────
 primitive_gate += phased_x | measure_and_reset | crz | t | s | v | vdg | tdg | sdg;
 
 x = "x";
@@ -29,7 +28,6 @@ measure_and_reset = "measure_and_reset";
 phased_x = "phased_x";
 crz = "crz";
 
-# ── Resource definitions ─────────────────────────────────────
 INTERNAL {
     qubit_defs = (qubit_def NL)[UNIFORM(3, 4)];
     singular_qubit_def = GET_DEF_NAME " = qubit()";
@@ -65,7 +63,6 @@ EXTERNAL {
     register_param_def = "";
 }
 
-# ── Resource references ──────────────────────────────────────
 singular_qubit = GET_DECL_NAME;
 register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
 
@@ -75,12 +72,40 @@ register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 singular_param = GET_DECL_NAME;
 register_param = GET_DECL_NAME "[" GET_INDEX "]";
 
-# ── Program structure ─────────────────────────────────────────
-program = imports NL NL subroutine_defs NL circuit NL program_footer;
-
-subroutine_defs = (sub_circuit NL)[UNIFORM(2, 6)];
+program = imports NL[2] subroutine_defs NL circuit NL program_footer;
 
 circuit = circuit_def_header NL body NL;
+
+subroutine_defs = ((sub_circuit | unitary_1q_def | unitary_2q_def) NL)[UNIFORM(2, 6)];
+
+# The Selene emulator cannot run opaque Box operations. 
+# We compile them to native gates using PyTKET AutoRebase before converting to Guppy.
+unitary_1q_def = 
+    "raw = ["  NL
+    "(" ""[GET_MAT_POS(0, 0)] "),(" ""[GET_MAT_POS(0, 1)] ")," NL
+    "(" ""[GET_MAT_POS(1, 0)] "),(" ""[GET_MAT_POS(1, 1)] ")," NL
+    "]"                            NL
+    "U = np.array([complex(r, i) for r, i in raw], dtype=complex).reshape(2, 2)" NL
+    "tk_circ = tk_Circuit(1)" NL
+    "tk_circ.add_unitary1qbox(Unitary1qBox(U), 0)" NL
+    "AutoRebase({OpType.CX, OpType.H, OpType.Rz, OpType.Rx, OpType.Ry}).apply(tk_circ)" NL
+    GET_CIRCUIT_NAME " = guppy.load_pytket('" GET_CIRCUIT_NAME "', tk_circ)" NL
+;
+
+unitary_2q_def = 
+    "raw = ["  NL
+    "(" ""[GET_MAT_POS(0, 0)] "),(" ""[GET_MAT_POS(0, 1)] "),(" ""[GET_MAT_POS(0, 2)] "),(" ""[GET_MAT_POS(0, 3)] ")," NL
+    "(" ""[GET_MAT_POS(1, 0)] "),(" ""[GET_MAT_POS(1, 1)] "),(" ""[GET_MAT_POS(1, 2)] "),(" ""[GET_MAT_POS(1, 3)] ")," NL
+    "(" ""[GET_MAT_POS(2, 0)] "),(" ""[GET_MAT_POS(2, 1)] "),(" ""[GET_MAT_POS(2, 2)] "),(" ""[GET_MAT_POS(2, 3)] ")," NL
+    "(" ""[GET_MAT_POS(3, 0)] "),(" ""[GET_MAT_POS(3, 1)] "),(" ""[GET_MAT_POS(3, 2)] "),(" ""[GET_MAT_POS(3, 3)] ")," NL
+    "]"                            NL
+    "U = np.array([complex(r, i) for r, i in raw], dtype=complex).reshape(4, 4)" NL
+    "tk_circ = tk_Circuit(2)" NL
+    "tk_circ.add_unitary2qbox(Unitary2qBox(U), 0, 1)" NL
+    "AutoRebase({OpType.CX, OpType.H, OpType.Rz, OpType.Rx, OpType.Ry}).apply(tk_circ)" NL
+    GET_CIRCUIT_NAME " = guppy.load_pytket('" GET_CIRCUIT_NAME "', tk_circ)" NL
+;
+
 sub_circuit = sub_circuit_header NL sub_circuit_body NL;
 
 circuit_def_header = "@guppy.comptime" NL "def " GET_CIRCUIT_NAME "() -> None:";
@@ -94,7 +119,8 @@ sub_circuit_compound_stmts = (compound_stmt NL)[UNIFORM(3, 10)];
 
 compound_stmt = qubit_op; # | if_stmt
 
-# ── Gate operation ────────────────────────────────────────────
+qubit_op  = gate_op | subroutine_op;
+
 gate_op = primitive_gate "(" gate_op_args ")";
 
 float = "angle(" MAKE_FLOAT ")";
@@ -105,14 +131,18 @@ subroutine_op_args = qubit_list ("," bit)[GET_GATE_BITS];
 
 qubit_list = qubit (", " qubit)[GET_GATE_QUBITS - 1];
 
-# ── Imports & Footer ──────────────────────────────────────────
 imports = 
+    "import numpy as np" NL
+    "from pytket import Circuit as tk_Circuit" NL
+    "from pytket.circuit import Unitary1qBox, Unitary2qBox, OpType" NL
+    "from pytket.passes import AutoRebase" NL
     "from guppylang.decorator import guppy" NL
     "from guppylang.std.angles import angle, pi" NL
     "from guppylang.std.builtins import array, py, comptime, result, owned, barrier" NL
     "from guppylang.std.quantum import *" NL
     "from guppylang.std.qsystem import *" NL
-    "from diff_testing.guppy import guppyTesting";
+    # "from diff_testing.guppy import guppyTesting" NL
+    ;
 
 program_footer = "gt = guppyTesting()" NL testing_method;
 

@@ -387,7 +387,7 @@ std::unique_ptr<Expr> Grammar::factor() {
 
         return std::make_unique<VarExpr>(var_token, std::vector<Arg_type>{row, col});
 
-    } else if (curr_token.kind == HAS_NODE){
+    } else if (curr_token.kind == AST_HAS_NODE){
         Token_kind var_token = curr_token.kind;
 
         consume();
