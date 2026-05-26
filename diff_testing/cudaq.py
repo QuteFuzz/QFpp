@@ -49,10 +49,20 @@ class cudaqTesting(Base):
                 }
             )
 
-            subprocess.run(compile_cmd, capture_output=True, env=env, cwd=tmpdir)
+            result = subprocess.run(compile_cmd, capture_output=True, env=env, cwd=tmpdir)
+
+            if result.returncode != 0:
+                log(f"[ERROR] {compile_cmd} failed")
+                print(f"STDERR: \n{result.stderr} \n STDOUT: \n {result.stdout}\n")
+                return {}
+
             result = subprocess.run(
                 [temp_exe, str(self.num_shots)], capture_output=True, env=env, cwd=tmpdir
             )
+
+            if result.returncode != 0:
+                print(f"STDERR: \n{result.stderr} \n STDOUT: \n {result.stdout}\n")
+                return {}
 
             raw_counts = json.loads(result.stdout)
 
