@@ -1,13 +1,15 @@
 from pytket import Circuit, Qubit
-
-from diff_testing.pytket import pytketTesting
+from pytket.passes import ComposePhasePolyBoxes, DecomposeBoxes, FlattenRegisters
 
 main_circuit = Circuit()
-sing_2496 = Qubit("sing_2496", 0)
-main_circuit.add_qubit(sing_2496)
+sing_573 = Qubit("sing_573", 0)
+main_circuit.add_qubit(sing_573)
+reg_586 = main_circuit.add_q_register("reg_586", 3)
+reg_602 = main_circuit.add_q_register("reg_602", 1)
+reg_614 = main_circuit.add_q_register("reg_614", 3)
 
-main_circuit.H(sing_2496)
-main_circuit.measure_all()
+main_circuit.X(reg_614[1])
 
-pt = pytketTesting()
-pt.opt_ks_test(main_circuit, 0)
+FlattenRegisters().apply(main_circuit)
+DecomposeBoxes().apply(main_circuit)
+ComposePhasePolyBoxes().apply(main_circuit)
