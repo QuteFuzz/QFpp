@@ -7,7 +7,7 @@ from .lib import Base
 
 
 class qiskitTesting(Base):
-    def __init__(self, main_circ_bindings: dict) -> None:
+    def __init__(self, main_circ_bindings: dict = {}) -> None:
         super().__init__("qiskit", endianess="big")
         self.bindings = main_circ_bindings
 
