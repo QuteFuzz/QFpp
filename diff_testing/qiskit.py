@@ -39,7 +39,7 @@ class qiskitTesting(Base):
 
         cmap = self.topo_maker(circuit.num_qubits) if circuit.num_qubits >= 2 else None
 
-        if cmap is not None:
+        if cmap is not None and opt_level >= 1:
             basis_gates = ["cx", "id", "rz", "sx", "x", "y", "z", "h", "s", "t"]
             circ_prime = transpile(
                 circuit, basis_gates=basis_gates, coupling_map=cmap, optimization_level=opt_level
