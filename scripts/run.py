@@ -21,7 +21,7 @@ from utils import Color, log, modify_env, pipe_to_process
 NIGHTLY_DIR = Path("nightly_results")
 ENTRY_POINT = "program"
 
-ALPHA = 0.01
+ALPHA = 0.000001
 TIMEOUT = 20000
 DEFAULT_NUM_TESTS = 1
 
