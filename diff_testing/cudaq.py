@@ -20,11 +20,10 @@ class cudaqTesting(Base):
         nvq_binary = CUDAQ_DIR / "build" / "bin" / "nvq++"
 
         if not nvq_binary.exists():
-            log(
+            raise Exception(
                 "[cudaqTesting] Fatal Error: nvq++ binary not found. Did you run setup.py?",
                 Color.RED,
             )
-            return {}
 
         compile_cmd = [str(nvq_binary), f"-O{opt_level}"]
 
@@ -52,17 +51,15 @@ class cudaqTesting(Base):
             result = subprocess.run(compile_cmd, capture_output=True, env=env, cwd=tmpdir)
 
             if result.returncode != 0:
-                log(f"[ERROR] {compile_cmd} failed")
-                print(f"STDERR: \n{result.stderr} \n STDOUT: \n {result.stdout}\n")
-                return {}
+                raise Exception(f"[ERROR] {compile_cmd} failed \n" \
+                f"STDERR: \n{result.stderr} \n STDOUT: \n {result.stdout}\n")
 
             result = subprocess.run(
                 [temp_exe, str(self.num_shots)], capture_output=True, env=env, cwd=tmpdir
             )
 
             if result.returncode != 0:
-                print(f"STDERR: \n{result.stderr} \n STDOUT: \n {result.stdout}\n")
-                return {}
+                raise Exception(f"STDERR: \n{result.stderr} \n STDOUT: \n {result.stdout}\n")
 
             raw_counts = json.loads(result.stdout)
 
