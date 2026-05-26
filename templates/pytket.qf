@@ -148,9 +148,8 @@ cond_application =
     ]
     ;
 
-# cond_application = RESET (", condition=" classical_condition)?;
-
 gate_op = GET_CIRCUIT_NAME "." primitive_gate "(" gate_op_args cond_application ")";
+# gate_op = GET_CIRCUIT_NAME "." primitive_gate "(" gate_op_args ")";
 
 subroutine_op = 
     ""[
@@ -215,11 +214,14 @@ compiler_call =
 
         } else {
             call2 = "pt = pytketTesting() " NL opt_statevector_test | "pt = pytketTesting(tket2=True) " NL opt_statevector_test;
+            # call2 = "pt = pytketTesting() " NL pass_statevector_test;
             call2
         }
     ]
     ;
 
-opt_ks_test = "pt.opt_ks_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN;
+opt_ks_test = "pt.opt_ks_test(" GET_CIRCUIT_NAME "," circuit_id ")";
 
-opt_statevector_test = "pt.opt_statevector_test(" GET_CIRCUIT_NAME RPAREN;
+opt_statevector_test = "pt.opt_statevector_test(" GET_CIRCUIT_NAME ")";
+
+# pass_statevector_test = "pt.pytket_pass_test("GET_CIRCUIT_NAME")";
