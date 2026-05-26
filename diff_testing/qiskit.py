@@ -1,9 +1,8 @@
 import numpy as np
 from qiskit import QuantumCircuit, transpile
 from qiskit.transpiler import CouplingMap
-from qiskit_aer import AerSimulator
-from qiskit.transpiler.passes.synthesis.unitary_synthesis import UnitarySynthesis
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
+from qiskit_aer import AerSimulator
 
 from .lib import Base
 
@@ -50,9 +49,9 @@ class qiskitTesting(Base):
                 basis_gates=basis_gates,
             )
             circ_prime = pm.run(circuit)
-            #circ_prime = transpile(
+            # circ_prime = transpile(
             #    circuit, backend=backend, coupling_map=cmap, optimization_level=opt_level
-            #)
+            # )
         else:
             circ_prime = transpile(circuit, backend=backend, optimization_level=opt_level)
 
