@@ -42,13 +42,15 @@ class qiskitTesting(Base):
 
         if cmap is not None and opt_level >= 1:
             basis_gates = ["rz", "sx", "x", "cx"]
+
+            circ_decomposed = transpile(circuit, basis_gates=basis_gates, optimization_level=0)
+
             pm = generate_preset_pass_manager(
                 optimization_level=opt_level,
-                backend=backend,
                 coupling_map=cmap,
                 basis_gates=basis_gates,
             )
-            circ_prime = pm.run(circuit)
+            circ_prime = pm.run(circ_decomposed)
         else:
             circ_prime = transpile(circuit, backend=backend, optimization_level=opt_level)
 

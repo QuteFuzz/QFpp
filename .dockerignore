@@ -49,4 +49,11 @@ tests/
 .DS_Store
 Thumbs.db
 
+# external libs
 external/
+
+# caches
+.cache/
+.cargo/
+.rustup/
+

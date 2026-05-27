@@ -33,6 +33,7 @@ REQUIRED_PACKAGES = [
     "libopenblas-dev",
     "libedit-dev",
     "libcurl4-openssl-dev",
+    "libssl-dev",
     "zlib1g-dev",
     "libxml2-dev",
     "libncurses-dev",
@@ -322,9 +323,6 @@ def build_bundled_llvm():
 def build_nvq(with_coverage: bool):
     log("Building nvq++ with coverage", Color.BLUE)
     build_dir = CUDAQ_DIR / "build"
-
-    if build_dir.exists():
-        shutil.rmtree(build_dir)
 
     build_dir.mkdir(exist_ok=True)
 

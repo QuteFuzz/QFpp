@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y wget && \
     default-jre clang cmake graphviz git build-essential \
     gdb lld ninja-build libopenblas-dev libedit-dev \
     libcurl4-openssl-dev zlib1g-dev libzstd-dev libxml2-dev \
-    libncurses-dev libffi-dev gcovr pkg-config \
+    libssl-dev libncurses-dev libffi-dev gcovr pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
