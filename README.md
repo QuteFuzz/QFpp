@@ -28,7 +28,7 @@ uv run -m scripts.run --nightly --num-tests 1200 --grammars pytket qiskit
 
 To run inside a separate environment, pull the docker image using
 ```sh
-docker pull ghcr.io/ilaniwumbwe/qutefuzz-env:latest
+docker pull ghcr.io/qutefuzz/qutefuzz-env:latest
 ```
  
 If you prefer to build the image from sratch, run 
