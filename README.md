@@ -96,8 +96,8 @@ and tries to sync everything to match the lockfile. As a result, it reinstalls t
 | CUDA-Q | [parser](https://github.com/NVIDIA/cuda-quantum/issues/4562) | ack |
 | CUDA-Q | [parser](https://github.com/NVIDIA/cuda-quantum/issues/4600) |  |
 | Qiskit | [basis translator](https://github.com/Qiskit/qiskit/issues/16251) | ack, duplicate |
-| Pytket | [parser](https://github.com/Quantinuum/tket/issues/2179) |  |
-| Pytket | [routing pass](https://github.com/Quantinuum/tket/issues/2180) |  |
+| Pytket | [parser](https://github.com/Quantinuum/tket/issues/2179) | ack |
+| Pytket | [routing pass](https://github.com/Quantinuum/tket/issues/2180) | ack |
 
 ## Acknowledgements
 
