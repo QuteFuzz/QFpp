@@ -222,7 +222,8 @@ compiler_call =
 
 measurement = 
     "all_qubits = sorted(" GET_CIRCUIT_NAME ".all_qubits())" NL
-    GET_CIRCUIT_NAME ".append(cirq.measure(*all_qubits, key='GLOBAL_TERMINAL_MEASURE'))" NL
+    # GET_CIRCUIT_NAME ".append(cirq.measure(*all_qubits, key='GLOBAL_TERMINAL_MEASURE'))" NL
+    GET_CIRCUIT_NAME ".append(cirq.measure_each(*all_qubits))" NL
     ;
 
 program_footer = measurement NL compiler_call;

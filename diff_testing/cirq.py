@@ -91,14 +91,11 @@ class cirqTesting(Base):
 
         result = simulator.run(circ_prime, repetitions=self.num_shots)
 
-        if self.from_qasm:
-            # `all_measurement_key_names` returns frozenset which is ordered randomly
-            # pass to sorted to ensure measurement order is alphabetical, which means it's ordered
-            # as defined
-            ordered_keys = sorted(circ_prime.all_measurement_key_names())
-            histogram = result.multi_measurement_histogram(keys=ordered_keys)
-        else:
-            histogram = result.histogram(key="GLOBAL_TERMINAL_MEASURE")
+        # `all_measurement_key_names` returns frozenset which is ordered randomly
+        # pass to sorted to ensure measurement order is alphabetical, which means it's ordered
+        # as defined
+        ordered_keys = sorted(circ_prime.all_measurement_key_names())
+        histogram = result.multi_measurement_histogram(keys=ordered_keys)
 
         counts = self._preprocess_counts(histogram)
 
