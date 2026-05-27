@@ -56,3 +56,7 @@ unsigned int Gate::get_num_external_resource_defs(Resource_kind kind) const {
 Token_kind Gate::get_gate_source() const {
     return info.gate_source;
 }
+
+Ptr_coll<Resource_def> Gate::get_resource_defs() const {
+    return resource_defs;
+}

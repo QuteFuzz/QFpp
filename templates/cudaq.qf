@@ -168,9 +168,9 @@ imports =
 
 namespaces = "using namespace std::complex_literals;";
 
-program_footer = "ct = cudaqTesting()" NL testing_method;
+program_footer = "ct = cudaqTesting(source_code," circuit_id ")" NL testing_method;
 
-testing_method = "ct.opt_ks_test(source_code, " circuit_id ")" NL;
+testing_method = "ct.opt_ks_test()" NL;
 
 
 subroutine_defs = ((sub_circuit | unitary_1q_def | unitary_2q_def) NL)+;

@@ -1,6 +1,7 @@
 #include <context.h>
 #include <expr.h>
 #include <resource.h>
+#include <coll.h>
 
 Expr_type IntExpr::eval(Context&) const {
     return value;
@@ -127,7 +128,7 @@ Expr_type BinExpr::eval(Context& context) const {
         } else if (std::holds_alternative<bool>(eval)){
             return std::get<bool>(eval) ? 1 : 0;
         } else {
-            ERROR("Binop operand expected to be int or token!");
+            ERROR("Binop operand expected to be int, token, or bool!");
         }
     };
 
@@ -239,6 +240,13 @@ Expr_type ForExpr::eval(Context& context) const {
         auto items = context.get_current_coll<Resource_def>(rk);
         get_rules(items);
 
+    } else if (iterable == "ALL_GATE_QUBIT_DEFS" || iterable == "ALL_GATE_BIT_DEFS"){
+        auto resource_defs = context.get_current_node<Gate>()->get_resource_defs();
+        Resource_kind rk = iterable == "ALL_GATE_QUBIT_DEFS" ? Resource_kind::QUBIT : Resource_kind::BIT;
+        auto pred = [rk](const auto& elem){ return elem->get_resource_kind() == rk; };
+        auto items = filter<Resource_def>(resource_defs, pred);
+        get_rules(items);
+
     } else {
         ERROR("Unknown iterable " + iterable);
     }
@@ -271,4 +279,30 @@ Expr_type AssignExpr::eval(Context& context) const {
 
 void AssignExpr::print(std::ostream& stream) const {
     stream << *rule << std::endl;
+}
+
+Expr_type ModExpr::eval(Context& context) const {
+    Expr_type expr_eval = expr->eval(context);
+    
+    if (modifier == "int"){
+        if (std::holds_alternative<std::string>(expr_eval)){
+            return safe_stoi(std::get<std::string>(expr_eval), 0);
+        } else {
+            ERROR("int cast only supported for expressions that evals to string");
+        }
+
+    } else if (modifier == "str"){
+        if (std::holds_alternative<int>(expr_eval)){
+            return std::to_string(std::get<int>(expr_eval));
+        } else {
+            ERROR("str cast only supported for expressions that evals to int");
+        }
+
+    } else {
+        ERROR("Modifier " + modifier + " is not supported");
+    }
+}
+
+void ModExpr::print(std::ostream& stream) const {
+    stream << modifier << "(" << *expr << ")" << std::endl;
 }

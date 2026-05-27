@@ -150,13 +150,13 @@ u2 = "u2";
 u3 = "u3";
 
 counts_agreement_test =
-    "qt = qasmTesting()" NL
-    "qt.counts_agreement_test(qasm_str, " circuit_id ")" NL
+    "qt = qasmTesting(qasm_str, " circuit_id ")" NL
+    "qt.counts_agreement_test()" NL
     ;
 
 opt_ks_test =
-    "qt = qasmTesting()" NL
-    "qt.opt_ks_test(qasm_str, " circuit_id ")" NL
+    "qt = qasmTesting(qasm_str, " circuit_id ")" NL
+    "qt.opt_ks_test()" NL
     ;
 
 testing = counts_agreement_test | opt_ks_test;

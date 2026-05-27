@@ -1,8 +1,5 @@
-from collections.abc import Callable
-from dataclasses import dataclass
 from typing import Any, Dict, List
 
-import numpy as np
 import pennylane as qml
 import pytket.qasm.qasm
 import qiskit.qasm2
@@ -12,12 +9,6 @@ from diff_testing.cirq import cirqTesting
 from diff_testing.lib import Base
 from diff_testing.pytket import pytketTesting
 from diff_testing.qiskit import qiskitTesting
-
-
-@dataclass
-class Backend:
-    testing_obj: Base
-    qasm_convertor: Callable
 
 
 def _pennylane_conv(qasm_str: str):
@@ -32,22 +23,19 @@ def _pennylane_conv(qasm_str: str):
 
 
 class qasmTesting(Base):
-    def __init__(self) -> None:
-        super().__init__("qasm")
-        self._backends: List[Backend] = [
-            Backend(qiskitTesting(), qiskit.qasm2.loads),
-            Backend(pytketTesting(), pytket.qasm.qasm.circuit_from_qasm_str),
-            Backend(cirqTesting(from_qasm=True), circuit_from_qasm),
-            # Backend(pennylaneTesting(), _pennylane_conv), # TODO: hangs
+    def __init__(self, circuit, circuit_id: int) -> None:
+        super().__init__(circuit, "qasm", circuit_id)
+        self._testers: List[Base] = [
+            qiskitTesting(qiskit.qasm2.loads(circuit), circuit_id),
+            pytketTesting(pytket.qasm.qasm.circuit_from_qasm_str(circuit), circuit_id),
+            cirqTesting(circuit_from_qasm(circuit), circuit_id, from_qasm=True),
+            # pennylaneTesting(_pennylane_conv(circuit), circuit_id), # TODO: hangs
         ]
 
-    def _get_counts(self, circuit, opt_level, circuit_num) -> Dict[Any, int]:
+    def _get_counts(self, opt_level) -> Dict[Any, int]:
         raise NotImplementedError(
             "`_get_counts` not implemented for qasm testing. Use `cross_frontend_ks_test` instead."
         )
-
-    def _get_statevector(self, circuit, opt_level) -> np.ndarray:
-        raise NotImplementedError("`_get_statevector` not implemented for qasm testing.")
 
     @staticmethod
     def _majority_vote(per_backend_counts: List[Dict[Any, int]]) -> Dict[Any, int]:
@@ -65,7 +53,7 @@ class qasmTesting(Base):
             result[key] = vals[len(vals) // 2]
         return dict(sorted(result.items()))
 
-    def opt_ks_test(self, qasm_str: str, circuit_num: int) -> None:
+    def opt_ks_test(self) -> None:
         """
         Optimisation level KS test reimplementation.
 
@@ -80,12 +68,8 @@ class qasmTesting(Base):
         for opt_level in range(4):
             per_backend = []
 
-            for backend in self._backends:
-                circuit = backend.qasm_convertor(qasm_str)
-                if circuit is None:
-                    continue
-
-                counts = backend.testing_obj._get_counts(circuit, opt_level, circuit_num)
+            for obj in self._testers:
+                counts = obj._get_counts(opt_level)
                 per_backend.append(counts)
 
             if per_backend:
@@ -101,22 +85,14 @@ class qasmTesting(Base):
             p_val = self._ks_test(baseline, counts)
             print(f"Optimisation level {i} ks-test p-value: {p_val}")
 
-    def _counts_agreement_at_level_test(
-        self, qasm_str: str, circuit_num: int, opt_level: int
-    ) -> None:
+    def _counts_agreement_at_level_test(self, opt_level: int) -> None:
         """
         Check how well the counts data generated at a particular opt level aligns
         """
         results = []
-        for backend in self._backends:
-            name = type(backend.testing_obj).__name__
-
-            circuit = backend.qasm_convertor(qasm_str)
-
-            if circuit is None:
-                continue
-
-            counts = backend.testing_obj._get_counts(circuit, opt_level, circuit_num)
+        for obj in self._testers:
+            name = type(obj).__name__
+            counts = obj._get_counts(opt_level)
             results.append((name, counts))
 
         print(f"Opt {opt_level}")
@@ -128,12 +104,12 @@ class qasmTesting(Base):
                 print(f"{name_a} vs {name_b} p-value: {p_val}")
 
                 if self.plot:
-                    self._plot_ecdf(counts_a, counts_b, f"{name_a}_{name_b}", circuit_num)
+                    self._plot_ecdf(counts_a, counts_b, f"{name_a}_{name_b}")
 
-    def counts_agreement_test(self, qasm_str: str, circuit_num: int) -> None:
+    def counts_agreement_test(self) -> None:
         """
         Check how well the counts data agrees at all levels
         """
 
         for level in range(4):
-            self._counts_agreement_at_level_test(qasm_str, circuit_num, level)
+            self._counts_agreement_at_level_test(level)

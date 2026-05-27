@@ -205,22 +205,25 @@ register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 
 program_footer = compiler_call;
 
+tket_class = "pt = pytketTesting(" GET_CIRCUIT_NAME "," circuit_id ") ";
+tket2_class = "pt = pytketTesting(" GET_CIRCUIT_NAME "," circuit_id ", tket2=True) ";
+
 compiler_call =
     [
         if (AST_HAS_NODE(cond_application)){
             call1 = 
-                GET_CIRCUIT_NAME ".measure_all()" NL "pt = pytketTesting() " NL opt_ks_test;
+                GET_CIRCUIT_NAME ".measure_all()" NL tket_class NL opt_ks_test;
             call1
 
         } else {
-            call2 = "pt = pytketTesting() " NL opt_statevector_test | "pt = pytketTesting(tket2=True) " NL opt_statevector_test;
-            # call2 = "pt = pytketTesting() " NL pass_statevector_test;
+            call2 = tket_class NL opt_statevector_test | tket2_class NL opt_statevector_test;
+            # call2 = tket_class NL pass_statevector_test;
             call2
         }
     ]
     ;
 
-opt_ks_test = "pt.opt_ks_test(" GET_CIRCUIT_NAME "," circuit_id ")";
+opt_ks_test = "pt.opt_ks_test()";
 
 opt_statevector_test = "pt.opt_statevector_test(" GET_CIRCUIT_NAME ")";
 

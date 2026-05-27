@@ -4,14 +4,11 @@ from .lib import Base
 
 
 class pennylaneTesting(Base):
-    def __init__(self):
-        super().__init__("pennylane")
+    def __init__(self, circuit, circuit_id: int):
+        super().__init__(circuit, "pennylane", circuit_id)
 
-    def _get_statevector(self, circuit, opt_level):
-        raise NotImplementedError("`_get_statevector` not implemented for pennylane")
-
-    def _get_counts(self, circuit, opt_level: int, circuit_num: int):
-        circuit = qml.set_shots(circuit, self.num_shots)
+    def _get_counts(self, opt_level: int):
+        circuit = qml.set_shots(self.circuit, self.num_shots)
 
         if opt_level == 0:
             result = circuit()

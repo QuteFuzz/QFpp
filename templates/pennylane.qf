@@ -100,8 +100,8 @@ imports =
 # a circuit object — consistent with how PennyLane calls the circuit.
 # ============================================================================
 
-program_footer = "pt = pennylaneTesting()" NL testing_method;
+program_footer = "pt = pennylaneTesting(" GET_CIRCUIT_NAME "," circuit_id ")" NL testing_method;
 
 testing_method = opt_ks_test;
 
-opt_ks_test = "pt.opt_ks_test(" GET_CIRCUIT_NAME COMMA circuit_id RPAREN NL;
+opt_ks_test = "pt.opt_ks_test()" NL;

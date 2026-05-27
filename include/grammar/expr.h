@@ -216,4 +216,22 @@ class AssignExpr : public Expr {
 
 };
 
+class ModExpr : public Expr {
+
+    public:
+        ModExpr(std::unique_ptr<Expr> _expr, std::string _modifier):
+            expr(std::move(_expr)),
+            modifier(_modifier)
+        {}
+
+        Expr_type eval(Context& context) const override;
+
+        void print(std::ostream& stream) const override;
+
+    private:
+        std::unique_ptr<Expr> expr;
+        std::string modifier;
+
+};
+
 #endif

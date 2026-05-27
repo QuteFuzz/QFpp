@@ -32,6 +32,7 @@ dependencies = [
     "ply>=3.11",
     "pytket-pennylane>=0.20.0",
     "pennylane-qiskit>=0.38.0",
+    "tket>=0.12.16",
 ]
 
 [tool.uv]

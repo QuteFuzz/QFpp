@@ -361,8 +361,7 @@ std::unique_ptr<Expr> Grammar::term() {
 std::unique_ptr<Expr> Grammar::factor() {
     if (curr_token.value == "(") {
         consume(); // advance to the first token inside parens
-        auto expr_res = expr(); 
-        consume(); // advance to ')'
+        auto expr_res = expr(); consume(); // advance to ')'
         check(")"); // ensure it is ')', check does not consume so ) remains as curr_token
         expr_res->paren = true;
         
@@ -412,6 +411,13 @@ std::unique_ptr<Expr> Grammar::factor() {
         consume(2);
         std::string prop = curr_token.value;
         return std::make_unique<PropertyAccessExpr>(obj_name, prop);
+
+    } else if (next_token.value == "("){
+        std::string cast_to = curr_token.value;
+        consume(2);
+        auto _expr = expr(); consume();
+        check(")");
+        return std::make_unique<ModExpr>(std::move(_expr), cast_to);
 
     } else {
         auto rule = get_rule_pointer_if_exists(curr_token.value, rule_def_scope);

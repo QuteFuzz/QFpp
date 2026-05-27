@@ -68,13 +68,13 @@ def transpile(circuit: cirq.Circuit, opt_level: int):
 
 
 class cirqTesting(Base):
-    def __init__(self, from_qasm: bool = False) -> None:
-        super().__init__("cirq")
+    def __init__(self, circuit, circuit_id: int, from_qasm: bool = False) -> None:
+        super().__init__(circuit, "cirq", circuit_id)
         self.from_qasm = from_qasm
 
-    def _get_statevector(self, circuit, opt_level: int) -> np.ndarray:
+    def _get_statevector(self, opt_level: int) -> np.ndarray:
         simulator = cirq.Simulator()
-        opt_circ = circuit.copy()
+        opt_circ = self.circuit.copy()
         circ_prime = transpile(opt_circ, opt_level)
 
         ordered_qubits = sorted(circ_prime.all_qubits())
@@ -84,9 +84,9 @@ class cirqTesting(Base):
         sv = result.final_state_vector
         return np.asarray(sv)
 
-    def _get_counts(self, circuit, opt_level, circuit_num):
+    def _get_counts(self, opt_level):
         simulator = cirq.Simulator()
-        opt_circ = circuit.copy()
+        opt_circ = self.circuit.copy()
         circ_prime = transpile(opt_circ, opt_level)
 
         result = simulator.run(circ_prime, repetitions=self.num_shots)
@@ -100,10 +100,6 @@ class cirqTesting(Base):
         counts = self._preprocess_counts(histogram)
 
         if self.plot:
-            self._plot_histogram(
-                res=counts,
-                title=f"cirq_opt{opt_level}",
-                circuit_number=circuit_num,
-            )
+            self._plot_histogram(res=counts, title=f"cirq_opt{opt_level}")
 
         return counts
