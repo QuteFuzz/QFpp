@@ -25,7 +25,15 @@ ALPHA = 0.000001
 TIMEOUT = 20000
 DEFAULT_NUM_TESTS = 1
 
-SIMULATION_CAP = {"pytket": 64, "qiskit": 64, "cirq": 8, "pennylane": 64, "cudaq": 64, "qasm2": 64}
+SIMULATION_CAP = {
+    "pytket": 64,
+    "qiskit": 64,
+    "cirq": 8,
+    "pennylane": 64,
+    "cudaq": 64,
+    "qasm2": 64,
+    "guppy": 64,
+}
 
 FUZZER_EXECUTABLE = "./qf"
 

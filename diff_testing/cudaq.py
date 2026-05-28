@@ -10,13 +10,11 @@ from utils import Color, modify_env
 
 
 class cudaqTesting(Base):
-    def __init__(self) -> None:
-        super().__init__("cudaq")
+    def __init__(self, circuit, circuit_id: int) -> None:
+        super().__init__(circuit, "cudaq", circuit_id)
 
-    def _get_statevector(self, circuit, opt_level):
-        raise NotImplementedError("`_get_statevector` not implemented for cudaq")
-
-    def _get_counts(self, circuit_source_code, opt_level: int, circuit_num: int) -> Dict[Any, int]:
+    def _get_counts(self, opt_level: int) -> Dict[Any, int]:
+        circuit_source_code = self.circuit
         nvq_binary = CUDAQ_DIR / "build" / "bin" / "nvq++"
 
         if not nvq_binary.exists():
@@ -31,8 +29,8 @@ class cudaqTesting(Base):
             compile_cmd.extend(["--target=qci", "--emulate"])
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            temp_cpp = os.path.join(tmpdir, f"circuit{circuit_num}.cpp")
-            temp_exe = os.path.join(tmpdir, f"circuit{circuit_num}.x")
+            temp_cpp = os.path.join(tmpdir, f"circuit{self.circuit_id}.cpp")
+            temp_exe = os.path.join(tmpdir, f"circuit{self.circuit_id}.x")
 
             with open(temp_cpp, "w") as f:
                 f.write(circuit_source_code)
@@ -69,7 +67,6 @@ class cudaqTesting(Base):
                 self._plot_histogram(
                     res=self._preprocess_counts(raw_counts),
                     title=f"cudaq_opt{opt_level}",
-                    circuit_number=circuit_num,
                 )
 
             return self._preprocess_counts(raw_counts)

@@ -27,7 +27,6 @@ from pytket.passes import (
     NormaliseTK2,
     OptimisePhaseGadgets,
     PauliSimp,
-    RemoveImplicitQubitPermutation,
     RemoveRedundancies,
     SequencePass,
     SquashRzPhasedX,
@@ -39,7 +38,6 @@ from pytket.passes import (
     ZZPhaseToRz,
 )
 from pytket.predicates import CompilationUnit
-from tket.passes import badger_pass
 
 from .lib import Base
 
@@ -72,46 +70,6 @@ PASSES = [
 ]
 
 
-def _apply_tket2_opt_level_3(circuit: Circuit) -> Circuit:
-    circ = circuit.copy()
-    DecomposeBoxes().apply(circ)
-
-    opt_circ = Circuit()
-    for q in circ.qubits:
-        opt_circ.add_qubit(q)
-    for c in circ.bits:
-        opt_circ.add_bit(c)
-
-    measurements = []
-    barriers = []
-
-    # need to remove measures to prevent quiet HUGR graph tolopogy reordering as badger pass
-    # is strictly unitary
-    for cmd in circ.get_commands():
-        if cmd.op.type == OpType.Measure:
-            measurements.append((cmd.qubits[0], cmd.bits[0]))
-
-        elif cmd.op.type == OpType.Barrier:
-            barriers.append(cmd.qubits)
-
-        else:
-            if cmd.op.params:
-                opt_circ.add_gate(cmd.op.type, cmd.op.params, cmd.args)
-            else:
-                opt_circ.add_gate(cmd.op.type, cmd.args)
-
-    badger_pass().apply(opt_circ)
-    RemoveImplicitQubitPermutation().apply(opt_circ)
-
-    for q, c in measurements:
-        opt_circ.Measure(q, c)
-
-    for q in barriers:
-        opt_circ.add_barrier(q)
-
-    return opt_circ
-
-
 def _route_circuit(circuit: Circuit, topo: List[Tuple[int, int]]) -> None:
     if circuit.n_qubits < 2:
         return
@@ -123,9 +81,8 @@ def _route_circuit(circuit: Circuit, topo: List[Tuple[int, int]]) -> None:
 
 
 class pytketTesting(Base):
-    def __init__(self, tket2: bool = False) -> None:
-        super().__init__("pytket")
-        self.tket2 = tket2  # only on statevector
+    def __init__(self, circuit, circuit_id: int) -> None:
+        super().__init__(circuit, "pytket", circuit_id)
 
     def _make_line_topology(self, n_qubits: int):
         return [(i, i + 1) for i in range(n_qubits - 1)]
@@ -146,13 +103,13 @@ class pytketTesting(Base):
         else:
             return self._make_line_topology(n_qubits)
 
-    def _get_counts(self, circuit: Circuit, opt_level: int, circuit_num: int):
-        circuit_copy = circuit.copy()
+    def _get_counts(self, opt_level: int):
+        circuit_copy = self.circuit.copy()
 
         DecomposeBoxes().apply(circuit_copy)
 
         if opt_level >= 1:
-            _route_circuit(circuit_copy, self.topo_maker(circuit.n_qubits))
+            _route_circuit(circuit_copy, self.topo_maker(self.circuit.n_qubits))
 
         backend = AerBackend()
         circ_prime = backend.get_compiled_circuit(circuit_copy, optimisation_level=opt_level)
@@ -165,24 +122,17 @@ class pytketTesting(Base):
             self._plot_histogram(
                 res=counts,
                 title=f"pytket_opt{opt_level}",
-                circuit_number=circuit_num,
             )
 
         return counts
 
-    def _get_statevector(self, circuit, opt_level) -> np.ndarray:
+    def _get_statevector(self, opt_level) -> np.ndarray:
         backend = AerStateBackend()
+        circuit = self.circuit.copy()
+        return backend.get_compiled_circuit(circuit, optimisation_level=opt_level).get_statevector()
 
-        if self.tket2 and opt_level == 3:
-            opt_circ = _apply_tket2_opt_level_3(circuit)
-            return backend.get_compiled_circuit(opt_circ, optimisation_level=0).get_statevector()
-        else:
-            return backend.get_compiled_circuit(
-                circuit, optimisation_level=opt_level
-            ).get_statevector()
-
-    def pytket_pass_test(self, circuit):
-        circ = circuit.copy()
+    def pytket_pass_test(self):
+        circ = self.circuit.copy()
         no_pass_statevector = circ.get_statevector()
 
         FlattenRegisters().apply(circ)
@@ -204,14 +154,14 @@ class pytketTesting(Base):
         dot_prod = self.compare_statevectors(no_pass_statevector, pass_statevector, 6)
         print("Dot product: ", dot_prod)
 
-    def pytket_qiskit_conv_test(self, pytket_circ, circuit_num):
+    def pytket_qiskit_conv_test(self):
         from pytket.extensions.qiskit.qiskit_convert import tk_to_qiskit
 
         from diff_testing.qiskit import qiskitTesting
 
-        qiskit_circ = tk_to_qiskit(pytket_circ)
-        qiskit_counts = qiskitTesting()._get_counts(qiskit_circ, 0, circuit_num)
-        pytket_counts = self._get_counts(pytket_circ, 0, circuit_num)
+        qiskit_circ = tk_to_qiskit(self.circuit)
+        qiskit_counts = qiskitTesting(qiskit_circ, self.circuit_id)._get_counts(0)
+        pytket_counts = self._get_counts(0)
 
         p_val = self._ks_test(qiskit_counts, pytket_counts)
 

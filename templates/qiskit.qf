@@ -243,8 +243,8 @@ branch_condition = 1 | 0;
 compiler_call = 
     make_param_dict NL
     GET_CIRCUIT_NAME ".measure_all()" NL
-    "qt = qiskitTesting(param_dict)" NL testing_method;
+    "qt = qiskitTesting(" GET_CIRCUIT_NAME "," circuit_id ", param_dict)" NL testing_method;
 
 testing_method = opt_ks_test;
 
-opt_ks_test = "qt.opt_ks_test(main_circuit," circuit_id RPAREN NL;
+opt_ks_test = "qt.opt_ks_test()" NL;

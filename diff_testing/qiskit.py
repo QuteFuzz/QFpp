@@ -1,5 +1,5 @@
 import numpy as np
-from qiskit import QuantumCircuit, transpile
+from qiskit import transpile
 from qiskit.transpiler import CouplingMap
 from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_aer import AerSimulator
@@ -8,8 +8,8 @@ from .lib import Base
 
 
 class qiskitTesting(Base):
-    def __init__(self, main_circ_bindings: dict = {}) -> None:
-        super().__init__("qiskit", endianess="big")
+    def __init__(self, circuit, circuit_id: int, main_circ_bindings: dict = {}) -> None:
+        super().__init__(circuit, "qiskit", circuit_id, endianess="big")
         self.bindings = main_circ_bindings
 
     def _make_line_topology(self, n_qubits: int):
@@ -26,17 +26,18 @@ class qiskitTesting(Base):
         else:
             return CouplingMap.from_heavy_hex(7)
 
-    def _get_statevector(self, circuit, opt_level) -> np.ndarray:
+    def _get_statevector(self, opt_level) -> np.ndarray:
         backend = AerSimulator(method="statevector")
-        circ_prime = transpile(circuit, backend, optimization_level=opt_level)
+        circ_prime = transpile(self.circuit.copy(), backend, optimization_level=opt_level)
         circ_prime.save_statevector()
         result = backend.run(circ_prime).result()
 
         sv = result.get_statevector()
         return np.asarray(sv)
 
-    def _get_counts(self, circuit: QuantumCircuit, opt_level: int, circuit_num: int):
+    def _get_counts(self, opt_level: int):
         backend = AerSimulator()
+        circuit = self.circuit.copy()
 
         cmap = self.topo_maker(circuit.num_qubits) if circuit.num_qubits >= 2 else None
 
@@ -64,7 +65,6 @@ class qiskitTesting(Base):
             self._plot_histogram(
                 res=counts,
                 title=f"qiskit_opt{opt_level}",
-                circuit_number=circuit_num,
             )
 
         return counts

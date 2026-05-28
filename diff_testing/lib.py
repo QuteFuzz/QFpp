@@ -44,14 +44,17 @@ class Base(ABC):
     OUTPUT_DIR = (Path(__file__).parent.parent / "outputs").resolve()
     TIMEOUT_SECONDS = 30
 
-    def __init__(self, qss_name, endianess="little") -> None:
+    def __init__(self, circuit, qss_name: str, circuit_id: int, endianess: str = "little") -> None:
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument(
             "--plot", action="store_true", help="Plot results after running circuit"
         )
         self.args = self.parser.parse_args()
         self.plot: bool = self.args.plot
+
+        self.circuit = circuit
         self.qss_name = qss_name
+        self.circuit_id = circuit_id
         self.endianess = endianess
 
         self.num_shots = 10 if os.environ.get("RUN_MODE") == "CI" else 1000
@@ -63,12 +66,14 @@ class Base(ABC):
             ]
         )
 
-    @abstractmethod
-    def _get_counts(self, circuit, opt_level, circuit_num) -> Dict[Any, int]:
-        raise NotImplementedError("`_get_counts` func not implemented")
+        if self.circuit is None:
+            raise Exception("Circuit must not be None")
 
     @abstractmethod
-    def _get_statevector(self, circuit, opt_level):
+    def _get_counts(self, opt_level) -> Dict[Any, int]:
+        raise NotImplementedError("`_get_counts` func not implemented")
+
+    def _get_statevector(self, opt_level):
         raise NotImplementedError("`_get_statevector` func not implemented")
 
     def _make_line_topology(self, n_qubits: int):
@@ -140,15 +145,15 @@ class Base(ABC):
     ) -> float:
         return float(np.round(abs(np.vdot(sv1, sv2)), precision))
 
-    def opt_statevector_test(self, circuit) -> None:
+    def opt_statevector_test(self) -> None:
         """
         Runs circuit and compares statevectors
         """
         try:
-            no_pass_statevector = self._get_statevector(circuit, 0)
+            no_pass_statevector = self._get_statevector(0)
 
             for i in range(3):
-                pass_statevector = self._get_statevector(circuit.copy(), i + 1)
+                pass_statevector = self._get_statevector(i + 1)
 
                 dot_prod = self.compare_statevectors(no_pass_statevector, pass_statevector, 6)
                 print("Dot product: ", dot_prod)
@@ -156,30 +161,28 @@ class Base(ABC):
         except Exception:
             print("Exception :", traceback.format_exc())
 
-    def opt_ks_test(self, circuit, circuit_number: int) -> None:
+    def opt_ks_test(self) -> None:
         """
         Runs circuit and compares distributions
         """
 
-        counts1 = self._get_counts(circuit, opt_level=0, circuit_num=circuit_number)
+        counts1 = self._get_counts(opt_level=0)
 
         for i in range(3):
-            counts2 = self._get_counts(circuit, opt_level=i + 1, circuit_num=circuit_number)
+            counts2 = self._get_counts(opt_level=i + 1)
             ks_value = self._ks_test(counts1, counts2)
 
             if self.plot:
-                self._plot_ecdf(counts1, counts2, f"opt_0 vs opt_{i + 1}", circuit_number)
+                self._plot_ecdf(counts1, counts2, f"opt_0 vs opt_{i + 1}")
 
             print(f"Optimisation level {i + 1} ks-test p-value: {ks_value}")
 
-    def _plot_ecdf(
-        self, counts1: Dict[Any, int], counts2: Dict[Any, int], title: str, circuit_number: int = 0
-    ) -> None:
+    def _plot_ecdf(self, counts1: Dict[Any, int], counts2: Dict[Any, int], title: str) -> None:
         """
         Plots the Empirical Cumulative Distribution Function (eCDF) for two sets of counts
         to visually demonstrate the KS Test.eCDF for
         """
-        plots_dir = self.OUTPUT_DIR / self.qss_name / f"circuit{circuit_number}"
+        plots_dir = self.OUTPUT_DIR / self.qss_name / f"circuit{self.circuit_id}"
         if not plots_dir.exists():
             plots_dir.mkdir(parents=True, exist_ok=True)
 
@@ -216,8 +219,8 @@ class Base(ABC):
         plt.savefig(plots_path)
         plt.close()
 
-    def _plot_histogram(self, res: Dict[Any, int], title: str, circuit_number: int = 0) -> None:
-        plots_dir = self.OUTPUT_DIR / self.qss_name / f"circuit{circuit_number}"
+    def _plot_histogram(self, res: Dict[Any, int], title: str) -> None:
+        plots_dir = self.OUTPUT_DIR / self.qss_name / f"circuit{self.circuit_id}"
         if not plots_dir.exists():
             plots_dir.mkdir(parents=True, exist_ok=True)
 

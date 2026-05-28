@@ -2,22 +2,22 @@ import collections
 import json
 
 import hugr
-from guppylang.decorator import guppy
 from guppylang.emulator import EmulatorBuilder
-from guppylang.std.builtins import array, result
-from guppylang.std.quantum import h, measure_array, qubit
-from pytket.circuit import OpType
+from pytket import OpType
 from pytket.passes import AutoRebase, FullPeepholeOptimise, SequencePass
 from tket._tket.passes import greedy_depth_reduce, normalize_guppy, tket1_pass
 from tket.circuit import Tk2Circuit
 from tket.optimiser import BadgerOptimiser
 from tket.rewrite import default_ecc_rewriter
 
+from diff_testing.lib import Base
 
-class guppyTesting:
-    def __init__(self, circuit, circuit_name: str, _n_qubits: int) -> None:
+
+class guppyTesting(Base):
+    def __init__(self, circuit, circuit_name: str, circuit_id: int, _n_qubits: int) -> None:
+        super().__init__(circuit, "guppy", circuit_id)
         self.n_qubits = _n_qubits
-        self.pkg = circuit.compile()
+        self.pkg = self.circuit.compile()
         self.hugr_envelope = self.pkg.modules[0].to_bytes()
         self.circuit_name = circuit_name
 
@@ -25,8 +25,11 @@ class guppyTesting:
         tk2_circuit = Tk2Circuit.from_bytes(
             self.hugr_envelope, function_name=f"__main__.{self.circuit_name}"
         )
+        print("before normalize:", tk2_circuit.to_tket1_json())
 
         tk2_circuit = normalize_guppy(tk2_circuit)
+
+        print("after normalize:", tk2_circuit.to_tket1_json())
 
         if opt_level == 1:
             opt_circ, _ = greedy_depth_reduce(tk2_circuit)
@@ -38,7 +41,6 @@ class guppyTesting:
                     AutoRebase({OpType.CX, OpType.H, OpType.Rz, OpType.Rx, OpType.Ry}),
                 ]
             )
-            # opt_circ = tket1_pass(tk2_circuit, json.dumps(FullPeepholeOptimise().to_dict()))
             opt_circ = tket1_pass(tk2_circuit, json.dumps(combined.to_dict()))
             opt_circ, _ = greedy_depth_reduce(opt_circ)
 
@@ -54,7 +56,7 @@ class guppyTesting:
 
         builder = EmulatorBuilder()
         instance = builder.build(self.pkg, self.n_qubits)
-        run_job = instance.with_shots(100).run()
+        run_job = instance.with_shots(self.num_shots).run()
 
         counts = collections.Counter()
 
@@ -70,18 +72,12 @@ class guppyTesting:
 
             counts[binary_string] += 1
 
-        print(counts)
+        final_counts = self._preprocess_counts(dict(counts))
 
+        if self.plot:
+            self._plot_histogram(
+                res=final_counts,
+                title=f"guppy_opt{opt_level}",
+            )
 
-@guppy
-def main_circuit() -> None:
-    reg_236 = array(qubit() for _ in range(1))
-    h(
-        reg_236[0],
-    )
-    mz = measure_array(reg_236)
-    result("res", mz[0])
-
-
-gt = guppyTesting(main_circuit, "main_circuit", 1)
-print(gt._get_counts(3))
+        return final_counts
