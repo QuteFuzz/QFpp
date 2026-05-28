@@ -206,7 +206,6 @@ register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 program_footer = compiler_call;
 
 tket_class = "pt = pytketTesting(" GET_CIRCUIT_NAME "," circuit_id ") ";
-tket2_class = "pt = pytketTesting(" GET_CIRCUIT_NAME "," circuit_id ", tket2=True) ";
 
 compiler_call =
     [
@@ -216,7 +215,7 @@ compiler_call =
             call1
 
         } else {
-            call2 = tket_class NL opt_statevector_test | tket2_class NL opt_statevector_test;
+            call2 = tket_class NL opt_statevector_test;
             # call2 = tket_class NL pass_statevector_test;
             call2
         }

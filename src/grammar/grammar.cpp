@@ -185,8 +185,10 @@ void Grammar::add_branch_to_current_rule(){
     Branch& current_branch = stack_top.branch;
 
     if (stack_top.rule != nullptr){
-        stack_top.rule->add(current_branch);
-        stack_top.branch.clear();
+        if (!stack_top.branch.is_empty()){
+            stack_top.rule->add(current_branch);
+            stack_top.branch.clear();
+        }
     } else {
         grammar_error("Rule at stack top is null");
     }

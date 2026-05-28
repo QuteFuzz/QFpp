@@ -27,7 +27,6 @@ from pytket.passes import (
     NormaliseTK2,
     OptimisePhaseGadgets,
     PauliSimp,
-    RemoveImplicitQubitPermutation,
     RemoveRedundancies,
     SequencePass,
     SquashRzPhasedX,
@@ -39,7 +38,6 @@ from pytket.passes import (
     ZZPhaseToRz,
 )
 from pytket.predicates import CompilationUnit
-from tket.passes import badger_pass
 
 from .lib import Base
 
@@ -72,46 +70,6 @@ PASSES = [
 ]
 
 
-def _apply_tket2_opt_level_3(circuit: Circuit) -> Circuit:
-    circ = circuit.copy()
-    DecomposeBoxes().apply(circ)
-
-    opt_circ = Circuit()
-    for q in circ.qubits:
-        opt_circ.add_qubit(q)
-    for c in circ.bits:
-        opt_circ.add_bit(c)
-
-    measurements = []
-    barriers = []
-
-    # need to remove measures to prevent quiet HUGR graph tolopogy reordering as badger pass
-    # is strictly unitary
-    for cmd in circ.get_commands():
-        if cmd.op.type == OpType.Measure:
-            measurements.append((cmd.qubits[0], cmd.bits[0]))
-
-        elif cmd.op.type == OpType.Barrier:
-            barriers.append(cmd.qubits)
-
-        else:
-            if cmd.op.params:
-                opt_circ.add_gate(cmd.op.type, cmd.op.params, cmd.args)
-            else:
-                opt_circ.add_gate(cmd.op.type, cmd.args)
-
-    badger_pass().apply(opt_circ)
-    RemoveImplicitQubitPermutation().apply(opt_circ)
-
-    for q, c in measurements:
-        opt_circ.Measure(q, c)
-
-    for q in barriers:
-        opt_circ.add_barrier(q)
-
-    return opt_circ
-
-
 def _route_circuit(circuit: Circuit, topo: List[Tuple[int, int]]) -> None:
     if circuit.n_qubits < 2:
         return
@@ -123,9 +81,8 @@ def _route_circuit(circuit: Circuit, topo: List[Tuple[int, int]]) -> None:
 
 
 class pytketTesting(Base):
-    def __init__(self, circuit, circuit_id: int, tket2: bool = False) -> None:
+    def __init__(self, circuit, circuit_id: int) -> None:
         super().__init__(circuit, "pytket", circuit_id)
-        self.tket2 = tket2  # only on statevector
 
     def _make_line_topology(self, n_qubits: int):
         return [(i, i + 1) for i in range(n_qubits - 1)]
@@ -172,14 +129,7 @@ class pytketTesting(Base):
     def _get_statevector(self, opt_level) -> np.ndarray:
         backend = AerStateBackend()
         circuit = self.circuit.copy()
-
-        if self.tket2 and opt_level == 3:
-            opt_circ = _apply_tket2_opt_level_3(circuit)
-            return backend.get_compiled_circuit(opt_circ, optimisation_level=0).get_statevector()
-        else:
-            return backend.get_compiled_circuit(
-                circuit, optimisation_level=opt_level
-            ).get_statevector()
+        return backend.get_compiled_circuit(circuit, optimisation_level=opt_level).get_statevector()
 
     def pytket_pass_test(self):
         circ = self.circuit.copy()
