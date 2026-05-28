@@ -25,4 +25,4 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ghcr.io/ilaniwumbwe/qutefuzz-env:latest
+          tags: ghcr.io/qutefuzz/qutefuzz-env:latest

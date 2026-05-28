@@ -10,7 +10,7 @@ jobs:
       RUN_MODE: CI
 
     container:
-      image: ghcr.io/ilaniwumbwe/qutefuzz-env:latest
+      image: ghcr.io/qutefuzz/qutefuzz-env:latest
 
     steps:
       - name: Checkout Code
