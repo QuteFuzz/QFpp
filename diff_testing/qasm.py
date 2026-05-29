@@ -1,4 +1,3 @@
-import re
 from typing import Any, Dict, List
 
 import pennylane as qml
@@ -21,6 +20,7 @@ def _pennylane_conv(qasm_str: str):
         return qml.counts()
 
     return qml.QNode(wrapper, dev)
+
 
 class qasmTesting(Base):
     def __init__(self, circuit, circuit_id: int) -> None:
