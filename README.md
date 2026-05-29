@@ -78,14 +78,7 @@ and tries to sync everything to match the lockfile. As a result, it reinstalls t
 
 ## Supported quantum frameworks
 
-| Grammar file | Framework | Test method |
-|---|---|---|
-| `pytket.qf` | Pytket (TKET compiler) | KS test across optimisation levels 0–3 |
-| `qiskit.qf` | Qiskit + Aer | KS test across optimisation levels 0–3 |
-| `cirq.qf` | Cirq | KS test across 3 custom transpile levels |
-| `pennylane.qf` | PennyLane Lightning | KS test across 4 transform pipelines |
-| `cudaq.qf` | CUDA-Q | KS test across optimisation levels 0-3 |
-
+Templates written in `templates` directory. Corresponding testing harnesses written in `diff_testing`.
 
 ## Bugs found
 
