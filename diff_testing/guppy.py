@@ -25,11 +25,8 @@ class guppyTesting(Base):
         tk2_circuit = Tk2Circuit.from_bytes(
             self.hugr_envelope, function_name=f"__main__.{self.circuit_name}"
         )
-        print("before normalize:", tk2_circuit.to_tket1_json())
 
         tk2_circuit = normalize_guppy(tk2_circuit)
-
-        print("after normalize:", tk2_circuit.to_tket1_json())
 
         if opt_level == 1:
             opt_circ, _ = greedy_depth_reduce(tk2_circuit)
