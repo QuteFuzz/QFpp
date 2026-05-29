@@ -224,6 +224,6 @@ compiler_call =
 
 opt_ks_test = "pt.opt_ks_test()";
 
-opt_statevector_test = "pt.opt_statevector_test(" GET_CIRCUIT_NAME ")";
+opt_statevector_test = "pt.opt_statevector_test()";
 
 # pass_statevector_test = "pt.pytket_pass_test("GET_CIRCUIT_NAME")";
