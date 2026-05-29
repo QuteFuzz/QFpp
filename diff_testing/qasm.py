@@ -1,3 +1,4 @@
+import re
 from typing import Any, Dict, List
 
 import pennylane as qml
@@ -22,14 +23,33 @@ def _pennylane_conv(qasm_str: str):
     return qml.QNode(wrapper, dev)
 
 
+def _strip_unused_cregs(qasm_str: str) -> str:
+    """
+    remove creg declarations that are never assigned to (measure ... -> creg),
+    so qiskit doesn't pad result keys with their zero bits.
+    """
+    # Find all cregs that appear on the RHS of a measure statement
+    used_cregs = set(re.findall(r"measure\s+\S+\s+->\s+(\w+)", qasm_str))
+
+    # Remove creg declarations not in used_cregs
+    def keep_line(line: str) -> bool:
+        m = re.match(r"\s*creg\s+(\w+)\s*\[", line)
+        if m:
+            return m.group(1) in used_cregs
+        return True
+
+    return "\n".join(line for line in qasm_str.splitlines() if keep_line(line))
+
+
 class qasmTesting(Base):
     def __init__(self, circuit, circuit_id: int) -> None:
         super().__init__(circuit, "qasm", circuit_id)
+        self.qasm_str = _strip_unused_cregs(circuit)
         self._testers: List[Base] = [
-            qiskitTesting(qiskit.qasm2.loads(circuit), circuit_id),
-            pytketTesting(pytket.qasm.qasm.circuit_from_qasm_str(circuit), circuit_id),
-            cirqTesting(circuit_from_qasm(circuit), circuit_id, from_qasm=True),
-            # pennylaneTesting(_pennylane_conv(circuit), circuit_id), # TODO: hangs
+            qiskitTesting(qiskit.qasm2.loads(self.qasm_str), circuit_id),
+            pytketTesting(pytket.qasm.qasm.circuit_from_qasm_str(self.qasm_str), circuit_id),
+            cirqTesting(circuit_from_qasm(self.qasm_str), circuit_id, from_qasm=True),
+            # pennylaneTesting(_pennylane_conv(self.qasm_str), circuit_id), # TODO: hangs
         ]
 
     def _get_counts(self, opt_level) -> Dict[Any, int]:
