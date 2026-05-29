@@ -73,7 +73,10 @@ measures =
 
 subroutine_defs = (sub_circuit NL)[UNIFORM(1, 3)];
 
-circuit = INTERNAL::qubit_defs INTERNAL::bit_defs NL[2] body;
+# remove internal bit defs as control flow is not used
+# circuit = INTERNAL::qubit_defs INTERNAL::bit_defs NL[2] body;
+
+circuit = INTERNAL::qubit_defs NL[2] body;
 
 body = compound_stmts;
 
