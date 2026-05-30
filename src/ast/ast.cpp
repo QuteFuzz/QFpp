@@ -10,13 +10,11 @@
 */
 #include <circuit.h>
 #include <gate.h>
-#include <float_literal.h>
 #include <qubit_op.h>
 #include <compound_stmt.h>
 #include <resource.h>
 #include <compare_op_bitwise_or_pair_child.h>
 #include <primitive_gate.h>
-#include <variable.h>
 
 #include <info.h>
 
@@ -43,40 +41,13 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 	auto factory = [&]() -> std::variant<std::shared_ptr<Node>, Term> {
 
 		switch(kind){
-			case STRING: case NUMBER:
+			case STRING: case INTEGER: case FLOAT:
 				return std::make_shared<Node>(str, kind);
-
-			case GET_GATE_NAME:
-				return context.get_current_node<Gate>()->get_var_name();
-
-			case GET_DEF_NAME:
-				return context.get_current_node<Resource_def>()->get_var_name();
-
-			case GET_DECL_NAME:
-				return context.get_current_node<Resource>()->get_var_name();
-
-			case GET_SIZE:
-				return context.get_current_node<Resource_def>()->get_size();
-
-			case GET_INDEX:
-				return context.get_current_node<Resource>()->get_index();
-
-			case MAKE_FLOAT:
-				return std::make_shared<Float>();
-
-			case MAKE_VAR:
-				return std::make_shared<Variable>(uniform_str(5));
-
-			case MAKE_INTEGER:
-				return std::make_shared<UInt>();
 
 			case RESET:
 				context.reset(RL_QUBITS);
 				context.reset(RL_BITS);
 				return std::make_shared<Node>(str, kind);
-
-			case GET_CIRCUIT_NAME:
-				return std::make_shared<Variable>(context.get_current_circuit()->get_name());
 
 			case CIRCUIT:
 				return context.nn_circuit();
@@ -89,9 +60,6 @@ std::variant<std::shared_ptr<Node>, Term> Ast::make_child(const std::shared_ptr<
 
 			case UNITARY_2Q_DEF:
 				return context.nn_unitary(2);
-
-			case CIRCUIT_ID:
-				return context.nn_circuit_id();
 
 			case SUBROUTINE_DEFS:
 				return context.nn_subroutine_defs();

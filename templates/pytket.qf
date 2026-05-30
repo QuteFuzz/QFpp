@@ -48,9 +48,9 @@ sub_circuit_body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL compound_stmts;
 
 circuit = circuit_def_header NL body NL;
 
-circuit_def_header = GET_CIRCUIT_NAME " = Circuit()";
+circuit_def_header = ""[GET_CIRCUIT_NAME] " = Circuit()";
 
-sub_circuit_footer = GET_CIRCUIT_NAME " = CircBox(" GET_CIRCUIT_NAME ")" NL;
+sub_circuit_footer = ""[GET_CIRCUIT_NAME] " = CircBox(" ""[GET_CIRCUIT_NAME] ")" NL;
 
 body = EXTERNAL::qubit_defs EXTERNAL::bit_defs NL compound_stmts;
 
@@ -60,7 +60,7 @@ unitary_1q_def =
     "(" ""[GET_MAT_POS(1, 0)] "),(" ""[GET_MAT_POS(1, 1)] ")," NL
     "]"                            NL
     "U = np.array([complex(r, i) for r, i in raw], dtype=complex).reshape(2, 2)" NL
-    GET_CIRCUIT_NAME " = Unitary1qBox(U)"                                        NL
+    ""[GET_CIRCUIT_NAME] " = Unitary1qBox(U)"                                        NL
 ;
 
 unitary_2q_def = 
@@ -71,13 +71,13 @@ unitary_2q_def =
     "(" ""[GET_MAT_POS(3, 0)] "),(" ""[GET_MAT_POS(3, 1)] "),(" ""[GET_MAT_POS(3, 2)] "),(" ""[GET_MAT_POS(3, 3)] ")," NL
     "]"                            NL
     "U = np.array([complex(r, i) for r, i in raw], dtype=complex).reshape(4, 4)" NL
-    GET_CIRCUIT_NAME " = Unitary2qBox(U)"                                        NL
+    ""[GET_CIRCUIT_NAME] " = Unitary2qBox(U)"                                        NL
 ;
 
 
 INTERNAL {
-    singular_param_def = GET_DEF_NAME " = Symbol('" GET_DEF_NAME "')" NL;
-    register_param_def = GET_DEF_NAME " = [Symbol('" GET_DEF_NAME "_' + str(i)) for i in range(" GET_SIZE ")]" NL;
+    singular_param_def = ""[GET_DEF_NAME] " = Symbol('" ""[GET_DEF_NAME] "')" NL;
+    register_param_def = ""[GET_DEF_NAME] " = [Symbol('" ""[GET_DEF_NAME] "_' + str(i)) for i in range(" ""[str(GET_SIZE)] ")]" NL;
 }
 
 EXTERNAL {
@@ -86,16 +86,16 @@ EXTERNAL {
     bit_defs = (bit_def NL)[UNIFORM(3,4)];
 
     singular_qubit_def =
-        GET_DEF_NAME ' = Qubit("'  GET_DEF_NAME '",0)' NL GET_CIRCUIT_NAME ".add_qubit(" GET_DEF_NAME ")";
+        ""[GET_DEF_NAME] ' = Qubit("'  ""[GET_DEF_NAME] '",0)' NL ""[GET_CIRCUIT_NAME] ".add_qubit(" ""[GET_DEF_NAME] ")";
 
     register_qubit_def =
-        GET_DEF_NAME " = " GET_CIRCUIT_NAME '.add_q_register("' GET_DEF_NAME '", ' GET_SIZE ")";
+        ""[GET_DEF_NAME] " = " ""[GET_CIRCUIT_NAME] '.add_q_register("' ""[GET_DEF_NAME] '", ' ""[str(GET_SIZE)] ")";
 
     singular_bit_def =
-        GET_DEF_NAME ' = Bit("' GET_DEF_NAME '", 0)' NL GET_CIRCUIT_NAME ".add_bit(" GET_DEF_NAME ")";
+        ""[GET_DEF_NAME] ' = Bit("' ""[GET_DEF_NAME] '", 0)' NL ""[GET_CIRCUIT_NAME] ".add_bit(" ""[GET_DEF_NAME] ")";
 
     register_bit_def =
-        GET_DEF_NAME " = " GET_CIRCUIT_NAME '.add_c_register("' GET_DEF_NAME '", ' GET_SIZE ")";
+        ""[GET_DEF_NAME] " = " ""[GET_CIRCUIT_NAME] '.add_c_register("' ""[GET_DEF_NAME] '", ' ""[str(GET_SIZE)] ")";
 
     param_def = singular_param_def;
 }
@@ -121,12 +121,12 @@ classical_condition = "if_bit(" bit ")" | "if_not_bit(" bit ")";
 # Pytket is flat — no nested blocks — so compound conditions must be
 # pre-computed into a scratch bit before they can be used.
 bit_expr =
-      GET_CIRCUIT_NAME ".add_clexpr_from_logicexp(" bit " & " bit ", [" bit "])" NL
-    | GET_CIRCUIT_NAME ".add_clexpr_from_logicexp(" bit " | " bit ", [" bit "])" NL
-    | GET_CIRCUIT_NAME ".add_clexpr_from_logicexp(" bit " ^ " bit ", [" bit "])" NL
+      ""[GET_CIRCUIT_NAME] ".add_clexpr_from_logicexp(" bit " & " bit ", [" bit "])" NL
+    | ""[GET_CIRCUIT_NAME] ".add_clexpr_from_logicexp(" bit " | " bit ", [" bit "])" NL
+    | ""[GET_CIRCUIT_NAME] ".add_clexpr_from_logicexp(" bit " ^ " bit ", [" bit "])" NL
     ;
 
-# mid_circuit_measure = GET_CIRCUIT_NAME ".Measure(" qubit COMMA bit ")";
+# mid_circuit_measure = ""[GET_CIRCUIT_NAME] ".Measure(" qubit COMMA bit ")";
 
 compound_stmts = (compound_stmt NL)[UNIFORM(10,30)];
 
@@ -148,21 +148,21 @@ cond_application =
     ]
     ;
 
-gate_op = GET_CIRCUIT_NAME "." primitive_gate "(" gate_op_args cond_application ")";
-# gate_op = GET_CIRCUIT_NAME "." primitive_gate "(" gate_op_args ")";
+gate_op = ""[GET_CIRCUIT_NAME] "." primitive_gate "(" gate_op_args cond_application ")";
+# gate_op = ""[GET_CIRCUIT_NAME] "." primitive_gate "(" gate_op_args ")";
 
 subroutine_op = 
     ""[
-        if (GET_GATE_SOURCE == sub_circuit) {
-            op_1 = GET_CIRCUIT_NAME ".add_gate(" GET_GATE_NAME ",[" subroutine_op_args "]";
+        if (GET_GATE_SOURCE == kind(sub_circuit)) {
+            op_1 = ""[GET_CIRCUIT_NAME] ".add_gate(" ""[GET_GATE_NAME] ",[" subroutine_op_args "]";
             op_1
 
-        } else if (GET_GATE_SOURCE == unitary_1q_def) {
-            op_2 = GET_CIRCUIT_NAME ".add_unitary1qbox(" GET_GATE_NAME "," subroutine_op_args ;
+        } else if (GET_GATE_SOURCE == kind(unitary_1q_def)) {
+            op_2 = ""[GET_CIRCUIT_NAME] ".add_unitary1qbox(" ""[GET_GATE_NAME] "," subroutine_op_args ;
             op_2
 
-        } else if (GET_GATE_SOURCE == unitary_2q_def) {
-            op_3 = GET_CIRCUIT_NAME ".add_unitary2qbox(" GET_GATE_NAME "," subroutine_op_args ;
+        } else if (GET_GATE_SOURCE == kind(unitary_2q_def)) {
+            op_3 = ""[GET_CIRCUIT_NAME] ".add_unitary2qbox(" ""[GET_GATE_NAME] "," subroutine_op_args ;
             op_3
 
         }
@@ -171,7 +171,7 @@ subroutine_op =
     ")"
     ;
 
-float = MAKE_FLOAT | pi_multiples;
+float = ""[str(MAKE_FLOAT)] | pi_multiples;
 
 pi = "math.pi";
 
@@ -182,22 +182,22 @@ pi = "math.pi";
 # between 1-3 qubits, we could have at least 3 qubit defs, each of which could be singular, so 3 qubits upper bound to prevent errors
 barrier_op_qubits = qubit ("," qubit)[UNIFORM(0, 2)];
 
-barrier_op = GET_CIRCUIT_NAME ".add_barrier([" barrier_op_qubits "])";
+barrier_op = ""[GET_CIRCUIT_NAME] ".add_barrier([" barrier_op_qubits "])";
 
 # Reset operation (reset qubit to |0⟩)
-reset_op = GET_CIRCUIT_NAME ".Reset(" qubit ")";
+reset_op = ""[GET_CIRCUIT_NAME] ".Reset(" qubit ")";
 
 # ============================================================================
 # QUBIT AND BIT REFERENCES
 # ============================================================================
 
-singular_qubit = GET_DECL_NAME;
+singular_qubit = ""[GET_DECL_NAME];
 
-register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
+register_qubit = ""[GET_DECL_NAME] "[" ""[str(GET_INDEX)] "]";
 
-singular_bit = GET_DECL_NAME;
+singular_bit = ""[GET_DECL_NAME];
 
-register_bit = GET_DECL_NAME "[" GET_INDEX "]";
+register_bit = ""[GET_DECL_NAME] "[" ""[str(GET_INDEX)] "]";
 
 # ============================================================================
 # COMPILER CALL
@@ -205,13 +205,13 @@ register_bit = GET_DECL_NAME "[" GET_INDEX "]";
 
 program_footer = compiler_call;
 
-tket_class = "pt = pytketTesting(" GET_CIRCUIT_NAME "," circuit_id ") ";
+tket_class = "pt = pytketTesting(" ""[GET_CIRCUIT_NAME] "," ""[str(GET_CIRCUIT_ID)] ") ";
 
 compiler_call =
     [
         if (AST_HAS_NODE(cond_application)){
             call1 = 
-                GET_CIRCUIT_NAME ".measure_all()" NL tket_class NL opt_ks_test;
+                ""[GET_CIRCUIT_NAME] ".measure_all()" NL tket_class NL opt_ks_test;
             call1
 
         } else {
@@ -226,4 +226,4 @@ opt_ks_test = "pt.opt_ks_test()";
 
 opt_statevector_test = "pt.opt_statevector_test()";
 
-# pass_statevector_test = "pt.pytket_pass_test("GET_CIRCUIT_NAME")";
+# pass_statevector_test = "pt.pytket_pass_test(" ""[GET_CIRCUIT_NAME] ")";

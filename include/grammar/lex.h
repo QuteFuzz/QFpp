@@ -80,7 +80,6 @@ enum Token_kind {
     EXPR,
     SUBROUTINE_OP,
     PRIMITIVE_GATE,
-    CIRCUIT_ID,
     COMPARE_OP_BITWISE_OR_PAIR,
     COMPOUND_STMT,
     CF_STMT,
@@ -99,10 +98,12 @@ enum Token_kind {
     GET_TOTAL_BITS,
     GET_MAT_POS,
     AST_HAS_NODE,
-    GET_INDENT_LEVEL,
+    INDENT_LEVEL,
+    GET_CIRCUIT_ID,
     MAKE_INTEGER,
     MAKE_FLOAT,
     MAKE_VAR,
+    UNIFORM,
     GET_DEF_NAME,
     GET_DECL_NAME,
     GET_SIZE,
@@ -110,12 +111,34 @@ enum Token_kind {
     RESET,
     META_FUNC_BOTTOM,                            /// ADD META FUNCS ABOVE!
 
+    ALL_QUBITS,
+    ALL_BITS,
+    ALL_PARAMS,
+    ALL_QUBIT_DEFS,
+    ALL_BIT_DEFS,
+    ALL_PARAM_DEFS,
+    ALL_GATE_QUBIT_DEFS,
+    ALL_GATE_BIT_DEFS,
+    INT_CAST,
+    STR_CAST,
+    KIND_CAST,
+    FROM_REG,
+    FROM_SING,
+    USED_AT_LEAST_ONCE,
+    IN_EXT,
+    IN_INT,
+    NAME,
+    INDEX,
+    IS_REG,
+    IS_SING,
+    SIZE,
     SEPARATOR,
     RULE_START,
     RULE_APPEND,
     RULE_END,
     STRING,
-    NUMBER,
+    INTEGER,
+    FLOAT,
     LPAREN,
     LBRACK,
     LBRACE,
@@ -211,7 +234,6 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("register_qubit", REGISTER_QUBIT),
     Token_matcher("singular_bit", SINGULAR_BIT),
     Token_matcher("register_bit", REGISTER_BIT),
-    Token_matcher("circuit_id", CIRCUIT_ID),
     Token_matcher("compare_op_bitwise_or_pair", COMPARE_OP_BITWISE_OR_PAIR),
     Token_matcher("compound_stmt", COMPOUND_STMT),
     Token_matcher("if_stmt", CF_STMT),
@@ -264,7 +286,8 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("MAKE_FLOAT", MAKE_FLOAT),
     Token_matcher("MAKE_INTEGER", MAKE_INTEGER),
     Token_matcher("MAKE_VAR", MAKE_VAR),
-    Token_matcher("GET_INDENT_LEVEL", GET_INDENT_LEVEL),
+    Token_matcher("UNIFORM", UNIFORM),
+    Token_matcher("INDENT_LEVEL", INDENT_LEVEL),
     Token_matcher("GET_DEF_NAME", GET_DEF_NAME),
     Token_matcher("GET_DECL_NAME", GET_DECL_NAME),
     Token_matcher("GET_INDEX", GET_INDEX),
@@ -278,6 +301,7 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("GET_GATE_PARAMS", GET_GATE_PARAMS),
     Token_matcher("GET_TOTAL_QUBITS", GET_TOTAL_QUBITS),
     Token_matcher("GET_TOTAL_BITS", GET_TOTAL_BITS),
+    Token_matcher("GET_CIRCUIT_ID", GET_CIRCUIT_ID),
     Token_matcher("GET_MAT_POS", GET_MAT_POS),
     Token_matcher("AST_HAS_NODE", AST_HAS_NODE),
 
@@ -296,9 +320,30 @@ const std::vector<Token_matcher> TOKEN_RULES = {
     Token_matcher("EQUALS", STRING, "="),
     Token_matcher("NL", STRING, "\n"),
 
+    Token_matcher("ALL_QUBITS", ALL_QUBITS),
+    Token_matcher("ALL_BITS", ALL_BITS),
+    Token_matcher("ALL_PARAMS", ALL_PARAMS),
+    Token_matcher("ALL_QUBIT_DEFS", ALL_QUBIT_DEFS),
+    Token_matcher("ALL_BIT_DEFS", ALL_BIT_DEFS),
+    Token_matcher("ALL_PARAM_DEFS", ALL_PARAM_DEFS),
+    Token_matcher("ALL_GATE_QUBIT_DEFS", ALL_GATE_QUBIT_DEFS),
+    Token_matcher("ALL_GATE_BIT_DEFS", ALL_GATE_BIT_DEFS),
     Token_matcher("EXTERNAL", EXTERNAL),
     Token_matcher("INTERNAL", INTERNAL),
     Token_matcher("GLOB", GLOB),
+    Token_matcher("int", INT_CAST),
+    Token_matcher("str", STR_CAST),
+    Token_matcher("kind", KIND_CAST),
+    Token_matcher("is_register", IS_REG),
+    Token_matcher("is_singular", IS_SING),
+    Token_matcher("from_reg", FROM_REG),
+    Token_matcher("from_sing", FROM_SING),
+    Token_matcher("is_used_at_least_once", USED_AT_LEAST_ONCE),
+    Token_matcher("in_ext_scope", IN_EXT),
+    Token_matcher("in_int_scope", IN_INT),
+    Token_matcher("name", NAME),
+    Token_matcher("index", INDEX),
+    Token_matcher("size", SIZE),
     Token_matcher("ci", CHILD_INDENT),
     Token_matcher("si", SELF_INDENT),
     Token_matcher("::", SCOPE_RES),
@@ -409,7 +454,11 @@ class Lexer{
                         tokens.push_back(Token{text, RULE});
 
                     } else if (isdigit(text[0]) || ((text[0] == '-') && (text.size() > 1) && isdigit(text[1]))) {
-                        tokens.push_back(Token{text, NUMBER});
+                        if (text.find('.') != std::string::npos) {
+                            tokens.push_back(Token{text, FLOAT});
+                        } else {
+                            tokens.push_back(Token{text, INTEGER});
+                        }
 
                     } else {
                         tokens.push_back(Token{remove_outer_quotes(text), STRING});
@@ -462,8 +511,10 @@ inline bool is_quiet(const Token_kind& kind){
 inline std::string kind_as_str(const Token_kind& kind) {    
     if (kind == STRING){
         return CYAN("STRING");
-    } else if (kind == NUMBER){
-        return CYAN("NUMBER");
+    } else if (kind == INTEGER){
+        return CYAN("INTEGER");
+    } else if (kind == FLOAT){
+        return CYAN("FLOAT");
     }
     
     std::string str = std::to_string(kind);

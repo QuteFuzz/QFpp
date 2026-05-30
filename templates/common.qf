@@ -1,20 +1,5 @@
 
 # Gets imported by all other templates
-(*
-    Rules:
-    - use `subroutines` node to encapsulate GET_GATE_NAME circuits
-    - `qubit_def` rule MUST be defined in at least INTERNAL or EXTERNAL scope (defining in both is fine)
-    - (qu)bit def must be defined using at least one of singular (qu)bit or register (qu)bit def
-    Notes:
-    - all rules have scope GLOBAL by default
-    - must define a gate_op
-    - must use `sub_circuit_compound_stmts` or `compound_stmts` accordingly. This is a requirement because the
-        `compound_stmts` node is needed as a way for the mutation passes to tell statement boundaries, so it doesn't
-        mutate across them
-*)
-
-# TODO: extend term constraints to allow passing GET_GATE_NAME op args properly in qiskit
-# for now i limit all external qubit and bit defs to singular definitions
 
 # default config
 EXTENSION = ".py";
@@ -77,9 +62,9 @@ compound_stmt = qubit_op;
 
 qubit_op = gate_op | subroutine_op;
 
-gate_op = GET_CIRCUIT_NAME "(" gate_op_args ")";
+gate_op = ""[GET_CIRCUIT_NAME] "(" gate_op_args ")";
 
-subroutine_op = GET_CIRCUIT_NAME ".add_gate(" GET_GATE_NAME ",[" subroutine_op_args "])";
+subroutine_op = ""[GET_CIRCUIT_NAME] ".add_gate(" ""[GET_GATE_NAME] ",[" subroutine_op_args "])";
 
 toffoli = ccx;
 
@@ -106,7 +91,7 @@ qubit_list = qubit (", " qubit)[GET_GATE_QUBITS - 1];
 
 float_list = float  (", " float)[GET_GATE_PARAMS - 1];
 
-float = MAKE_FLOAT | param | pi_multiples;
+float = ""[str(MAKE_FLOAT)] | param | pi_multiples;
 
 qubit = singular_qubit | register_qubit;
 

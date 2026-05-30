@@ -2,8 +2,6 @@
 #define RESOURCE_H
 
 #include <gate.h>
-#include <variable.h>
-#include <uint.h>
 #include <resource_kind.h>
 
 class Resource : public Cloneable<Resource> {
@@ -17,7 +15,7 @@ class Resource : public Cloneable<Resource> {
             add_branch_constraint(SINGULAR_QUBIT, 1);
         }
 
-        Resource(const Variable& _name, const UInt& _index, const Scope& _scope, Resource_kind rk, bool is_reg);
+        Resource(const std::string& _name, const unsigned int& _index, const Scope& _scope, Resource_kind rk, bool is_reg);
 
         Scope get_scope() const {
             return scope;
@@ -48,21 +46,17 @@ class Resource : public Cloneable<Resource> {
             return _from_reg;
         }
 
-        inline std::shared_ptr<Variable> get_var_name() const override {
-            return std::make_shared<Variable>(name);
-        }
+        inline std::string get_var_name() const { return name; }
 
-        inline std::shared_ptr<UInt> get_index() const override {
-            return std::make_shared<UInt>(index);
-        }
+        inline unsigned int get_index() const { return index; }
 
         inline std::string resolved_name() const override {
-            return name.get_str() + "[" + index.get_str() + "]";
+            return name + "[" + std::to_string(index) + "]";
         }
 
         bool operator==(const Resource& other) const {
-            bool name_matches = (*get_var_name() == *other.get_var_name());
-            bool index_matches = (*get_index() == *other.get_index());
+            bool name_matches = name == other.get_var_name();
+            bool index_matches = get_index() == other.get_index();
 
             return name_matches && index_matches;
         }
@@ -72,8 +66,8 @@ class Resource : public Cloneable<Resource> {
         }
 
     private:
-        Variable name;
-        UInt index;
+        std::string name;
+        unsigned int index;
         Scope scope = Scope::GLOB;
         Resource_kind resource_kind;
         bool _from_reg;

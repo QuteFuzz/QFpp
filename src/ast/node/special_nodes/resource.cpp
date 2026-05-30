@@ -1,6 +1,6 @@
 #include <resource.h>
 
-Resource::Resource(const Variable& _name, const UInt& _index, const Scope& _scope, Resource_kind rk, bool is_reg) :
+Resource::Resource(const std::string& _name, const unsigned int& _index, const Scope& _scope, Resource_kind rk, bool is_reg) :
     Cloneable<Resource>("register_resource", RESOURCE_TOKEN_KIND(rk)),
     name(_name),
     index(_index),

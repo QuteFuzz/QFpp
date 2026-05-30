@@ -2,7 +2,6 @@
 #include <resource_def.h>
 #include "assert.h"
 #include <coll.h>
-#include <variable.h>
 
 Gate::Gate(const std::string& str, const Token_kind& kind) :
     Cloneable<Gate>(str, kind)
@@ -31,7 +30,7 @@ Gate::Gate(const std::string& str, const Ptr_coll<Resource_def>& _resource_defs)
 
     for(const auto& def : resource_defs){
         if(scope_matches(def->get_scope(), Scope::EXT)){
-            info.resource_counts[def->get_resource_kind()] += def->get_size()->get_num();
+            info.resource_counts[def->get_resource_kind()] += def->get_size();
         }
     }
 }
@@ -42,8 +41,6 @@ Gate::Gate(const std::string& str, unsigned int n_matrix_qubits) :
     info.gate_source = n_matrix_qubits == 1 ? UNITARY_1Q_DEF : UNITARY_2Q_DEF;
     info.resource_counts[Resource_kind::QUBIT] = n_matrix_qubits;
 }
-
-std::shared_ptr<Variable> Gate::get_var_name() const { return std::make_shared<Variable>(str);}
 
 /// Info filters for external scope
 unsigned int Gate::get_num_external_resources(Resource_kind rk) const {return info.resource_counts.at(rk);}

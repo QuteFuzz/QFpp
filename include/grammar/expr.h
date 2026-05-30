@@ -4,48 +4,11 @@
 #include <utils.h>
 #include <lex.h>
 
-/*
-    expr = for_expr 
-        | if_expr 
-        | rule_def
-        | logic_expr ;
-
-    rule_def = rule = .....; 
-
-    for_expr = "for" IDENTIFIER "in" iterable_token ":" expr;
-
-    if_expr = "if" logic_expr ":" expr "else" ":" expr ;
-
-    logic_expr = logic_expr "==" math_expr 
-            | logic_expr ">" math_expr 
-            | math_expr ;
-
-    math_expr = math_expr "+" term 
-            | math_expr "-" term
-            | UNIFORM(math_expr, term)
-            | term ;
-
-    term = term "*" factor 
-        | term "/" factor
-        | factor ;
-
-    factor = "(" expr ")" 
-        | IDENTIFIER
-        | property_access 
-        | METAFUNC           # e.g., ALL_QUBITS
-        | NUMBER ;
-
-    property_access = IDENTIFIER "." IDENTIFIER ;
-
-    iterable_token = "ALL_QUBITS" | "INTERNAL_QUBITS" | "EXTERNAL_QUBITS" | ... ;
-*/
-
 class Context;
 class Rule;
 
 using Rule_list = std::vector<std::shared_ptr<Rule>>;
-using Expr_type = std::variant<int, bool, std::string, std::shared_ptr<Rule>, Rule_list>;
-using Arg_type = std::variant<int, std::string>;
+using Expr_type = std::variant<int, bool, float, std::string, std::shared_ptr<Rule>, Rule_list>;
 
 class Expr {
     public:
@@ -80,9 +43,23 @@ class IntExpr : public Expr {
 
 };
 
+class FloatExpr : public Expr {
+    public:
+        FloatExpr(float _value):
+            value(_value)
+        {}
+
+        Expr_type eval(Context&) const override;
+
+        void print(std::ostream& stream) const override;
+
+    private:
+        float value;
+};
+
 class VarExpr : public Expr {
     public:
-        VarExpr(Token_kind _name, std::vector<Arg_type> _args = {}):
+        VarExpr(Token_kind _name, std::vector<std::unique_ptr<Expr>> _args = {}):
             name(_name),
             args(std::move(_args))
         {}
@@ -93,7 +70,7 @@ class VarExpr : public Expr {
 
     private:
         Token_kind name;
-        std::vector<Arg_type> args;
+        std::vector<std::unique_ptr<Expr>> args;
 };
 
 class RuleExpr : public Expr {
@@ -129,7 +106,7 @@ class BlockExpr : public Expr {
 
 class PropertyAccessExpr : public Expr {
     public:
-        PropertyAccessExpr(std::string obj, std::string prop) :
+        PropertyAccessExpr(std::string obj, Token_kind prop) :
             obj_name(std::move(obj)), 
             prop_name(std::move(prop))
         {}
@@ -140,7 +117,7 @@ class PropertyAccessExpr : public Expr {
 
     private:
         std::string obj_name;
-        std::string prop_name;
+        Token_kind prop_name;
 };
 
 class BinExpr : public Expr {
@@ -183,7 +160,7 @@ class IfExpr : public Expr {
 
 class ForExpr : public Expr {
     public:
-        ForExpr(const std::string& var, const std::string& iter, std::unique_ptr<Expr> b):
+        ForExpr(const std::string& var, const Token_kind& iter, std::unique_ptr<Expr> b):
             iter_var(var),
             iterable(iter),
             body(std::move(b)) 
@@ -195,7 +172,7 @@ class ForExpr : public Expr {
 
     private:
         std::string iter_var;
-        std::string iterable; 
+        Token_kind iterable; 
         std::unique_ptr<Expr> body;
 
 };
@@ -219,7 +196,7 @@ class AssignExpr : public Expr {
 class ModExpr : public Expr {
 
     public:
-        ModExpr(std::unique_ptr<Expr> _expr, std::string _modifier):
+        ModExpr(std::unique_ptr<Expr> _expr, const Token_kind& _modifier):
             expr(std::move(_expr)),
             modifier(_modifier)
         {}
@@ -230,7 +207,7 @@ class ModExpr : public Expr {
 
     private:
         std::unique_ptr<Expr> expr;
-        std::string modifier;
+        Token_kind modifier;
 
 };
 

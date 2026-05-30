@@ -1,7 +1,6 @@
 #include <context.h>
 #include <generator.h>
 #include <params.h>
-#include <variable.h>
 
 int Context::ast_counter = -1;
 
@@ -93,43 +92,115 @@ bool Context::current_circuit_uses_subroutines(){
     return false;
 }
 
-
-Expr_type Context::resolve_var(const Token_kind name, const std::vector<Arg_type>& args) const {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wswitch-enum"
+#pragma GCC diagnostic ignored "-Wswitch"
+Expr_type Context::resolve_var(const Token_kind name, const std::vector<Expr_type>& args) const {
     auto gate = get_current_node<Gate>();
 
-    if (name == GET_GATE_SOURCE){
-        return gate->get_gate_source();
-    } else if (name == GET_GATE_QUBITS) {
-        return (int)gate->get_num_external_resources(Resource_kind::QUBIT);
-    } else if (name == GET_GATE_BITS) {
-        return (int)gate->get_num_external_resources(Resource_kind::BIT);
-    } else if (name == GET_GATE_PARAMS) {
-        return (int)gate->get_num_external_resources(Resource_kind::PARAM);
-    } else if (name == GET_TOTAL_QUBITS) {
-        auto qubits = get_current_circuit()->get_coll<Resource>(Resource_kind::QUBIT);
-        return (int)qubits.size();
-    } else if (name == GET_TOTAL_BITS) {
-        auto bits = get_current_circuit()->get_coll<Resource>(Resource_kind::BIT);
-        return (int)bits.size();
-    } else if ((name == GET_MAT_POS) && (args.size() == 2) && 
-        std::holds_alternative<int>(args[0]) && std::holds_alternative<int>(args[1])
-    ){
-        return get_current_circuit()->get_val_at(std::get<int>(args[0]), std::get<int>(args[1]));
-    } else if ((name == AST_HAS_NODE) && (args.size() == 1) && std::holds_alternative<std::string>(args[0])){
-        std::string node_name = std::get<std::string>(args[0]);
+    switch(name){
+        case MAKE_FLOAT:
+            return uniform_float(10.0, 0.0);
 
-        for (const std::shared_ptr<Circuit> circ : circuits){
-            if (circ->find(node_name) != nullptr){
-                return true;
-            }
+        case MAKE_VAR:
+            return uniform_str(5);
+
+        case MAKE_INTEGER:
+            return (int)uniform_uint(10, 0);
+
+        case GET_CIRCUIT_NAME:
+            return get_current_circuit()->get_name();
+
+        case GET_GATE_NAME:
+            return gate->get_str();
+
+        case GET_DEF_NAME:
+            return get_current_node<Resource_def>()->get_var_name();
+
+        case GET_SIZE:
+            return (int)get_current_node<Resource_def>()->get_size();
+
+        case GET_DECL_NAME:
+            return get_current_node<Resource>()->get_var_name();
+
+        case GET_INDEX:
+            return (int)get_current_node<Resource>()->get_index();
+
+        case GET_GATE_SOURCE:
+            return gate->get_gate_source();
+
+        case GET_GATE_QUBITS:
+            return (int)gate->get_num_external_resources(Resource_kind::QUBIT);
+
+        case GET_GATE_BITS:
+            return (int)gate->get_num_external_resources(Resource_kind::BIT);
+
+        case GET_GATE_PARAMS:
+            return (int)gate->get_num_external_resources(Resource_kind::PARAM);
+
+        case GET_TOTAL_QUBITS: {
+            auto qubits = get_current_circuit()->get_coll<Resource>(Resource_kind::QUBIT);
+            return (int)qubits.size();
         }
 
-        return false;
+        case GET_TOTAL_BITS: {
+            auto bits = get_current_circuit()->get_coll<Resource>(Resource_kind::BIT);
+            return (int)bits.size();
+        }
+
+        case GET_MAT_POS:
+            if ((args.size() == 2) && 
+                std::holds_alternative<int>(args[0]) && std::holds_alternative<int>(args[1])) {
+                return get_current_circuit()->get_val_at(std::get<int>(args[0]), std::get<int>(args[1]));
+            }
+            break;
+
+        case UNIFORM:
+            if ((args.size() == 2)) {
+                if (std::holds_alternative<int>(args[0]) && std::holds_alternative<int>(args[1])){
+                    auto arg0 = std::get<int>(args[0]);
+                    auto arg1 = std::get<int>(args[1]);
+                    return (int)uniform_uint(std::max(arg0, arg1), std::min(arg0, arg1));
+
+                } else if (std::holds_alternative<float>(args[0]) && std::holds_alternative<float>(args[1])){
+                    auto arg0 = std::get<float>(args[0]);
+                    auto arg1 = std::get<float>(args[1]);
+                    return uniform_float(std::max(arg0, arg1), std::min(arg0, arg1));
+
+                } else {
+                    ERROR("ARGS to UNIFORM must resolve to int or float");
+                }
+            }
+            break;
+
+        case AST_HAS_NODE:
+            if (args.size() == 1) {
+                if (std::holds_alternative<std::shared_ptr<Rule>>(args[0])){
+                    std::string node_name = std::get<std::shared_ptr<Rule>>(args[0])->get_name();
+
+                    for (const std::shared_ptr<Circuit>& circ : circuits){
+                        if (circ->find(node_name) != nullptr){
+                            return true;
+                        }
+                    }
+
+                    return false;
+                } else {
+                    ERROR("AST_HAS_NODE expected argument to evaluate to ptr<Rule>");
+                }
+     
+            } else {
+                ERROR("AST_HAS_NODE expected 1 argument, got " + std::to_string(args.size()));
+            }
+            break;
+
+        case GET_CIRCUIT_ID:
+            return ast_counter;
     }
 
     return 0;
 }
-
+#pragma GCC diagnostic pop
 
 /// In normal cases, current circuit is the last added circuit into the circuits vector. The exception is if we are no longer under the `subroutines`
 /// node in the AST, but the last added circuit is a subroutine. This implies that after the `subroutines` node, there's no `circuit` node to generate
@@ -280,10 +351,6 @@ std::shared_ptr<Gate> Context::nn_subroutine_op(){
     current.get<Qubit_op>()->set_gate_node(gate);
 
     return gate;
-}
-
-std::shared_ptr<UInt> Context::nn_circuit_id() {
-    return std::make_shared<UInt>(ast_counter);
 }
 
 std::shared_ptr<Compound_stmt> Context::nn_compound_stmt(){

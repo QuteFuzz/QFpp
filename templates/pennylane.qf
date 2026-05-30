@@ -38,23 +38,23 @@ primitive_gate += s | t | swap | ch | crx | cry | crz;
 INTERNAL {
     qubit_defs = (qubit_def COMMA)[UNIFORM(3, 4)];
     qubit_def  = singular_qubit_def;
-    singular_qubit_def = "'"GET_DEF_NAME"'";
+    singular_qubit_def = "'"""[GET_DEF_NAME]"'";
 }
 
-singular_qubit = "'"GET_DECL_NAME"'";
-register_qubit = "'"GET_DECL_NAME"'";  # unused with MAX_REG_SIZE=1, required by meta-grammar
+singular_qubit = "'"""[GET_DECL_NAME]"'";
+register_qubit = "'"""[GET_DECL_NAME]"'";  # unused with MAX_REG_SIZE=1, required by meta-grammar
 
 # No bit_defs: PennyLane has no classical registers
 
 # ============================================================================
 # GATE OPERATIONS
 # PennyLane syntax: qml.GateName(param1, ..., wires=[w0, w1])
-# No GET_CIRCUIT_NAME prefix — gate ops are standalone inside the function
+# No ""[GET_CIRCUIT_NAME] prefix — gate ops are standalone inside the function
 # ============================================================================
 
 gate_op      = "qml." primitive_gate "(" gate_op_args ")";
 gate_op_args = (float ", ")[GET_GATE_PARAMS] "wires=[" qubit_list "]";
-float = MAKE_FLOAT | pi_multiples;
+float = ""[str(MAKE_FLOAT)] | pi_multiples;
 pi = "math.pi";
 
 qubit_list   = qubit (", " qubit)[GET_GATE_QUBITS - 1];
@@ -79,7 +79,7 @@ circuit_def_header =
     "dev = qml.device('default.qubit', wires=[" INTERNAL::qubit_defs "])" NL
     NL
     "@qml.qnode(dev)" NL
-    "def " GET_CIRCUIT_NAME "():";
+    "def " ""[GET_CIRCUIT_NAME] "():";
 
 body = ci<compound_stmts NL return_stmt>;
 
@@ -96,11 +96,11 @@ imports =
 
 # ============================================================================
 # COMPILER CALL
-# GET_CIRCUIT_NAME here refers to the function name (the QNode callable), not
+# ""[GET_CIRCUIT_NAME] here refers to the function name (the QNode callable), not
 # a circuit object — consistent with how PennyLane calls the circuit.
 # ============================================================================
 
-program_footer = "pt = pennylaneTesting(" GET_CIRCUIT_NAME "," circuit_id ")" NL testing_method;
+program_footer = "pt = pennylaneTesting(" ""[GET_CIRCUIT_NAME] "," ""[str(GET_CIRCUIT_ID)] ")" NL testing_method;
 
 testing_method = opt_ks_test;
 

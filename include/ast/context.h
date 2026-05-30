@@ -3,7 +3,6 @@
 
 #include <circuit.h>
 #include <resource_def.h>
-#include <variable.h>
 #include <qubit_op.h>
 #include <compound_stmt.h>
 #include <gate.h>
@@ -99,7 +98,7 @@ struct Context {
 
 		const Control& get_control() const { return control; }
 
-		Expr_type resolve_var(const Token_kind name, const std::vector<Arg_type>& args) const;
+		Expr_type resolve_var(const Token_kind name, const std::vector<Expr_type>& args) const;
 
 		std::shared_ptr<Circuit> get_current_circuit() const;
 
@@ -122,8 +121,6 @@ struct Context {
 		std::shared_ptr<Node> nn_subroutine_defs();
 
 		std::shared_ptr<Qubit_op> nn_qubit_op();
-
-		std::shared_ptr<UInt> nn_circuit_id();
 
 		std::shared_ptr<Gate> nn_subroutine_op();
 

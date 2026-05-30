@@ -99,9 +99,9 @@ class Grammar{
 
         std::unique_ptr<Expr> logic_expr();
 
-        std::unique_ptr<Expr> math_expr();
+        std::unique_ptr<Expr> additive_expr();
 
-        std::unique_ptr<Expr> term();
+        std::unique_ptr<Expr> multiplicative_expr();
 
         std::unique_ptr<Expr> factor();
 
