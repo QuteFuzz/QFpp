@@ -29,8 +29,8 @@ crz = "crz";
 
 INTERNAL {
     qubit_defs = (qubit_def NL)[UNIFORM(3, 4)];
-    singular_qubit_def = GET_DEF_NAME " = qubit()";
-    register_qubit_def = GET_DEF_NAME " = array(qubit() for _ in range(" GET_SIZE "))";
+    singular_qubit_def = ""[GET_DEF_NAME] " = qubit()";
+    register_qubit_def = ""[GET_DEF_NAME] " = array(qubit() for _ in range(" ""[str(GET_SIZE)] "))";
     # register_qubit_def = ;
 
     # Required: If no bit or param support, define them as empty strings
@@ -66,8 +66,8 @@ INTERNAL {
 
 EXTERNAL {
     qubit_defs = (qubit_def ", ")[UNIFORM(3, 4)];
-    singular_qubit_def = GET_DEF_NAME ": qubit";
-    # register_qubit_def = GET_DEF_NAME ": array[qubit, " GET_SIZE "]";
+    singular_qubit_def = ""[GET_DEF_NAME] ": qubit";
+    # register_qubit_def = ""[GET_DEF_NAME] ": array[qubit, " ""[str(GET_SIZE)] "]";
     register_qubit_def = ;  # disable register qubit defs for subroutine args as that is an experimental feature
 
     singular_bit_def = "";
@@ -76,14 +76,14 @@ EXTERNAL {
     register_param_def = "";
 }
 
-singular_qubit = GET_DECL_NAME;
-register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
+singular_qubit = ""[GET_DECL_NAME];
+register_qubit = ""[GET_DECL_NAME] "[" ""[str(GET_INDEX)] "]";
 
-singular_bit = GET_DECL_NAME;
-register_bit = GET_DECL_NAME "[" GET_INDEX "]";
+singular_bit = ""[GET_DECL_NAME];
+register_bit = ""[GET_DECL_NAME] "[" ""[str(GET_INDEX)] "]";
 
-singular_param = GET_DECL_NAME;
-register_param = GET_DECL_NAME "[" GET_INDEX "]";
+singular_param = ""[GET_DECL_NAME];
+register_param = ""[GET_DECL_NAME] "[" ""[str(GET_INDEX)] "]";
 
 program = imports NL[2] subroutine_defs NL circuit NL program_footer;
 
@@ -105,7 +105,7 @@ unitary_1q_def =
     "tk_circ.add_unitary1qbox(Unitary1qBox(U), 0)" NL
     "DecomposeBoxes().apply(tk_circ)" NL
     "AutoRebase({OpType.CX, OpType.H, OpType.Rz, OpType.Rx, OpType.Ry}).apply(tk_circ)" NL
-    GET_CIRCUIT_NAME " = guppy.load_pytket('" GET_CIRCUIT_NAME "', tk_circ, use_arrays=False)" NL
+    ""[GET_CIRCUIT_NAME] " = guppy.load_pytket('" ""[GET_CIRCUIT_NAME] "', tk_circ, use_arrays=False)" NL
 ;
 
 unitary_2q_def = 
@@ -120,13 +120,13 @@ unitary_2q_def =
     "tk_circ.add_unitary2qbox(Unitary2qBox(U), 0, 1)" NL
     "DecomposeBoxes().apply(tk_circ)" NL
     "AutoRebase({OpType.CX, OpType.H, OpType.Rz, OpType.Rx, OpType.Ry}).apply(tk_circ)" NL
-    GET_CIRCUIT_NAME " = guppy.load_pytket('" GET_CIRCUIT_NAME "', tk_circ, use_arrays=False)" NL
+    ""[GET_CIRCUIT_NAME] " = guppy.load_pytket('" ""[GET_CIRCUIT_NAME] "', tk_circ, use_arrays=False)" NL
 ;
 
 sub_circuit = sub_circuit_header NL sub_circuit_body NL;
 
-circuit_def_header = "@guppy" NL "def " GET_CIRCUIT_NAME "() -> None:";
-sub_circuit_header = "@guppy" NL "def " GET_CIRCUIT_NAME "(" EXTERNAL::qubit_defs ") -> None:";
+circuit_def_header = "@guppy" NL "def " ""[GET_CIRCUIT_NAME] "() -> None:";
+sub_circuit_header = "@guppy" NL "def " ""[GET_CIRCUIT_NAME] "(" EXTERNAL::qubit_defs ") -> None:";
 
 body = ci<INTERNAL::qubit_defs> NL ci<compound_stmts> ci<INTERNAL::qubit_defs_measure>;
 sub_circuit_body = ci<sub_circuit_compound_stmts> ci<INTERNAL::qubit_defs_discard>;
@@ -142,16 +142,16 @@ gate_op = primitive_gate "(" gate_op_args ")";
 
 gate_op_args = qubit_list ", " float_list[GET_GATE_PARAMS > 0] ("," bit)[GET_GATE_BITS];
 
-float = "angle(" MAKE_FLOAT ")";
+float = "angle(" ""[str(MAKE_FLOAT)] ")";
 
-subroutine_op = GET_GATE_NAME "(" subroutine_op_args ")";
+subroutine_op = ""[GET_GATE_NAME] "(" subroutine_op_args ")";
 
 subroutine_op_args = qubit_list;
 
 # Lists in guppy are experimental features, so i restrict internal defs to be singular only
 # subroutine_op_args = 
 #     [
-#         if (GET_GATE_SOURCE == sub_circuit) {
+#         if (GET_GATE_SOURCE == kind(sub_circuit)) {
 #             for def in ALL_GATE_QUBIT_DEFS {
 #                 if (def.is_register){
 #                     reg_qubit_borrow = "[" (qubit ", ")[int(def.size)] "], ";
@@ -183,7 +183,7 @@ imports =
     ;
 
 
-program_footer = "gt = guppyTesting(" GET_CIRCUIT_NAME ", '" GET_CIRCUIT_NAME "', " circuit_id ", " ""[str(GET_TOTAL_QUBITS)] ")" NL testing_method;
+program_footer = "gt = guppyTesting(" ""[GET_CIRCUIT_NAME] ", '" ""[GET_CIRCUIT_NAME] "', " ""[str(GET_CIRCUIT_ID)] ", " ""[str(GET_TOTAL_QUBITS)] ")" NL testing_method;
 
 testing_method = "gt.opt_ks_test()" NL;
 

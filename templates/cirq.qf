@@ -32,7 +32,7 @@ unitary_1q_def =
     "(" ""[GET_MAT_POS(1, 0)] "),(" ""[GET_MAT_POS(1, 1)] ")," NL
     "]"                            NL
     "U = np.array([complex(r, i) for r, i in raw], dtype=complex).reshape(2, 2)" NL
-    GET_CIRCUIT_NAME " = cirq.MatrixGate(U)"           NL
+    ""[GET_CIRCUIT_NAME] " = cirq.MatrixGate(U)"           NL
 ;
 
 unitary_2q_def = 
@@ -43,7 +43,7 @@ unitary_2q_def =
     "(" ""[GET_MAT_POS(3, 0)] "),(" ""[GET_MAT_POS(3, 1)] "),(" ""[GET_MAT_POS(3, 2)] "),(" ""[GET_MAT_POS(3, 3)] ")," NL
     "]"                            NL
     "U = np.array([complex(r, i) for r, i in raw], dtype=complex).reshape(4, 4)" NL
-    GET_CIRCUIT_NAME " = cirq.MatrixGate(U)"           NL
+    ""[GET_CIRCUIT_NAME] " = cirq.MatrixGate(U)"           NL
 ;
 
 sub_circuit = circuit_def_header NL  sub_circuit_body NL sub_circuit_footer;
@@ -57,7 +57,7 @@ sub_circuit_body = EXTERNAL::qubit_defs NL compound_stmts NL identities;
 #     [
 #         for qb in ALL_QUBITS {
 #             id = 
-#                 GET_CIRCUIT_NAME ".append([" NL
+#                 ""[GET_CIRCUIT_NAME] ".append([" NL
 #                 "cirq.I(" ""[qb.name] ("[" ""[qb.index] "]")[qb.from_reg] ")," NL
 #                 "])" NL
 #                 ;
@@ -71,14 +71,14 @@ identities =
         for qb in ALL_QUBITS {
             if (qb.from_reg){
                 id1 = 
-                    GET_CIRCUIT_NAME ".append([" NL
+                    ""[GET_CIRCUIT_NAME] ".append([" NL
                     "cirq.I(" ""[qb.name] "[" ""[qb.index] "]" ")," NL
                     "])" NL
                     ;
                 id1
             } else {
                 id2 = 
-                    GET_CIRCUIT_NAME ".append([" NL
+                    ""[GET_CIRCUIT_NAME] ".append([" NL
                     "cirq.I(" ""[qb.name] ")," NL
                     "])" NL
                     ;
@@ -88,7 +88,7 @@ identities =
     ]
     ;
 
-sub_circuit_footer = GET_CIRCUIT_NAME " = cirq.CircuitOperation(" GET_CIRCUIT_NAME ".freeze())" NL;
+sub_circuit_footer = ""[GET_CIRCUIT_NAME] " = cirq.CircuitOperation(" ""[GET_CIRCUIT_NAME] ".freeze())" NL;
 
 circuit = circuit_def_header NL body NL;
 
@@ -98,10 +98,10 @@ EXTERNAL {
     qubit_defs = (qubit_def NL)[UNIFORM(3, 4)];
 
     singular_qubit_def =
-        GET_DEF_NAME " = cirq.NamedQubit('" GET_DEF_NAME "')";
+        ""[GET_DEF_NAME] " = cirq.NamedQubit('" ""[GET_DEF_NAME] "')";
 
     register_qubit_def =
-        GET_DEF_NAME " = cirq.NamedQubit.range(" GET_SIZE ", prefix='" GET_DEF_NAME "')";
+        ""[GET_DEF_NAME] " = cirq.NamedQubit.range(" ""[str(GET_SIZE)] ", prefix='" ""[GET_DEF_NAME] "')";
 }
 
 imports =
@@ -115,7 +115,7 @@ imports =
     ;
 
 
-circuit_def_header = GET_CIRCUIT_NAME " = cirq.Circuit()";
+circuit_def_header = ""[GET_CIRCUIT_NAME] " = cirq.Circuit()";
 
 compound_stmts = (compound_stmt NL)[15];
 
@@ -125,11 +125,11 @@ qubit_op = gate_op | subroutine_op;
 
 subroutine_op = 
     [
-        if (GET_GATE_SOURCE == sub_circuit) {
-            op1 = GET_CIRCUIT_NAME ".append(" GET_GATE_NAME ".with_qubits(" qubit_list ")" strategy_kwarg ")";
+        if (GET_GATE_SOURCE == kind(sub_circuit)) {
+            op1 = ""[GET_CIRCUIT_NAME] ".append(" ""[GET_GATE_NAME] ".with_qubits(" qubit_list ")" strategy_kwarg ")";
             op1
-        } else if ((GET_GATE_SOURCE == unitary_1q_def) || (GET_GATE_SOURCE == unitary_2q_def)) {
-            op2 = GET_CIRCUIT_NAME ".append(" GET_GATE_NAME "(" qubit_list ")" strategy_kwarg ")";
+        } else if ((GET_GATE_SOURCE == kind(unitary_1q_def)) || (GET_GATE_SOURCE == kind(unitary_2q_def))) {
+            op2 = ""[GET_CIRCUIT_NAME] ".append(" ""[GET_GATE_NAME] "(" qubit_list ")" strategy_kwarg ")";
             op2
         }
     ]
@@ -144,9 +144,9 @@ strategy_kwarg = ", "
     | ", strategy=" insert_strategy;
 
 
-m_key = "m_key = cirq.MeasurementKey('" MAKE_VAR "')";
+m_key = "m_key = cirq.MeasurementKey('" ""[MAKE_VAR] "')";
 
-apply_measure = GET_CIRCUIT_NAME ".append(cirq.measure(" qubit ", key=m_key))" RESET;
+apply_measure = ""[GET_CIRCUIT_NAME] ".append(cirq.measure(" qubit ", key=m_key))" RESET;
 
 cond_application = ".with_classical_controls(cirq.KeyCondition(m_key))";
 
@@ -155,11 +155,11 @@ gate_op =
         if (UNIFORM(0, 1)){
             op1 =
                 m_key NL apply_measure NL
-                GET_CIRCUIT_NAME ".append(" primitive_gate gate_op_args cond_application strategy_kwarg ")"
+                ""[GET_CIRCUIT_NAME] ".append(" primitive_gate gate_op_args cond_application strategy_kwarg ")"
             ;
             op1
         } else {
-            op2 = GET_CIRCUIT_NAME ".append(" primitive_gate gate_op_args strategy_kwarg ")";
+            op2 = ""[GET_CIRCUIT_NAME] ".append(" primitive_gate gate_op_args strategy_kwarg ")";
             op2
         }
     ]
@@ -167,7 +167,7 @@ gate_op =
 
 gate_op_args = ("(" (float ", ") ")")[GET_GATE_PARAMS] "(" qubit_list ")";
 
-float = MAKE_FLOAT | pi_multiples;
+float = ""[str(MAKE_FLOAT)] | pi_multiples;
 
 pi = "math.pi";
 
@@ -193,19 +193,19 @@ primitive_gate =
     | zz
     ;
 
-singular_qubit = GET_DECL_NAME;
+singular_qubit = ""[GET_DECL_NAME];
 
-register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
+register_qubit = ""[GET_DECL_NAME] "[" ""[str(GET_INDEX)] "]";
 
 cirq_testing = 
-    "ct = cirqTesting(" GET_CIRCUIT_NAME "," circuit_id ")" NL
+    "ct = cirqTesting(" ""[GET_CIRCUIT_NAME] "," ""[str(GET_CIRCUIT_ID)] ")" NL
     "ct.opt_ks_test()" NL
     ;
 
 pytket_testing = 
-    "tk = cirq_to_tk(" GET_CIRCUIT_NAME ")" NL
+    "tk = cirq_to_tk(" ""[GET_CIRCUIT_NAME] ")" NL
     "FlattenRegisters().apply(tk)" NL    
-    "ct = pytketTesting(tk, " circuit_id ")" NL 
+    "ct = pytketTesting(tk, " ""[str(GET_CIRCUIT_ID)] ")" NL 
     "ct.opt_ks_test()" NL
     ;
 
@@ -221,9 +221,9 @@ compiler_call =
     ;
 
 measurement = 
-    "all_qubits = sorted(" GET_CIRCUIT_NAME ".all_qubits())" NL
-    # GET_CIRCUIT_NAME ".append(cirq.measure(*all_qubits, key='GLOBAL_TERMINAL_MEASURE'))" NL
-    GET_CIRCUIT_NAME ".append(cirq.measure_each(*all_qubits))" NL
+    "all_qubits = sorted(" ""[GET_CIRCUIT_NAME] ".all_qubits())" NL
+    # ""[GET_CIRCUIT_NAME] ".append(cirq.measure(*all_qubits, key='GLOBAL_TERMINAL_MEASURE'))" NL
+    ""[GET_CIRCUIT_NAME] ".append(cirq.measure_each(*all_qubits))" NL
     ;
 
 program_footer = measurement NL compiler_call;

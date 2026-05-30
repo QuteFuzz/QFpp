@@ -47,13 +47,12 @@ class Circuit : public Cloneable<Circuit> {
         }
 
         void store_resource_def(std::shared_ptr<Resource_def> def){
-            auto name = def->get_var_name();
-            auto scope = def->get_scope();
-            auto rk = def->get_resource_kind();
-            auto size = def->get_size();
+            std::string name = def->get_var_name();
+            Scope scope = def->get_scope();
+            Resource_kind rk = def->get_resource_kind();
 
-            for(size_t i = 0; i < (size_t)size->get_num(); i++){
-                resources.push_back(std::make_shared<Resource>(*name, UInt(i), scope, rk, def->is_reg()));
+            for(size_t i = 0; i < def->get_size(); i++){
+                resources.push_back(std::make_shared<Resource>(name, i, scope, rk, def->is_reg()));
             }
 
             resource_defs.push_back(def);

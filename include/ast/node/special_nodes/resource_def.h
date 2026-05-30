@@ -3,8 +3,6 @@
 
 #include <lex.h>
 #include <node.h>
-#include <variable.h>
-#include <uint.h>
 #include <resource.h>
 
 enum class Resource_kind;
@@ -25,18 +23,16 @@ class Resource_def : public Cloneable<Resource_def> {
 
         Resource_kind get_resource_kind() const { return kind; }
 
-        inline std::shared_ptr<Variable> get_var_name() const override { return std::make_shared<Variable>(name);}
+        inline std::string get_var_name() const { return name;}
 
-        inline std::shared_ptr<UInt> get_size() const override {
-            return std::make_shared<UInt>(size);
-        }
+        inline unsigned int get_size() const { return size; }
 
         inline bool defines(const Resource& resource) const {
-            return get_var_name()->get_str() == resource.get_var_name()->get_str();
+            return name == resource.get_var_name();
         }
 
         inline std::string resolved_name() const override {
-            return get_var_name()->get_str() + " GET_SIZE(" + get_size()->get_str() + ")";
+            return name + " GET_SIZE(" + std::to_string(size) + ")";
         }
 
         void reset(){
@@ -60,8 +56,8 @@ class Resource_def : public Cloneable<Resource_def> {
         }
 
     private:
-        Variable name;
-        UInt size;
+        std::string name;
+        unsigned int size;
         bool used = false;
         bool reg = false;
         Scope scope = Scope::GLOB;

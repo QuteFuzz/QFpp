@@ -3,7 +3,7 @@
 
 Resource_def::Resource_def(const Scope& _scope, Resource_kind rk, bool is_reg, unsigned int reg_size) :
     Cloneable<Resource_def>("resource_def", RESOURCE_DEF_TOKEN_KIND(rk)),
-    name(is_reg ? "reg" : "sing", true),
+    name(is_reg ? "reg_" + std::to_string(id) : "sing_" + std::to_string(id)),
     size(is_reg ? reg_size : 1),
     reg(is_reg),
     scope(_scope),

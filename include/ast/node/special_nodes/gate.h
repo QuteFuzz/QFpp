@@ -38,7 +38,7 @@ class Gate : public Cloneable<Gate> {
             return std::to_string(id);
         }
 
-        std::shared_ptr<Variable> get_var_name() const override;
+        // std::shared_ptr<Variable> get_var_name() const override;
 
         unsigned int get_num_external_resources(Resource_kind rk) const;
 

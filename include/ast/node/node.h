@@ -6,8 +6,8 @@
 #include <branch_constraint.h>
 #include <rule.h>
 
-class UInt;
-class Variable;
+// class UInt;
+// class Variable;
 class Branch;
 
 class Node;
@@ -33,7 +33,7 @@ class Node : public std::enable_shared_from_this<Node> {
 
         Node(unsigned int _val):
             str(std::to_string(_val)),
-            kind(NUMBER)
+            kind(INTEGER)
         {
             id = node_counter++;
         }
@@ -145,11 +145,11 @@ class Node : public std::enable_shared_from_this<Node> {
 
         virtual unsigned int get_n_ports() const;
 
-        virtual std::shared_ptr<Variable> get_var_name() const;
+        // virtual std::shared_ptr<Variable> get_var_name() const;
 
-        virtual std::shared_ptr<UInt> get_size() const;
+        // virtual std::shared_ptr<UInt> get_size() const;
 
-        virtual std::shared_ptr<UInt> get_index() const;
+        // virtual std::shared_ptr<UInt> get_index() const;
 
         virtual std::shared_ptr<Node> clone(const Clone_type& ct) const;
 

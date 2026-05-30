@@ -164,13 +164,13 @@ void Grammar::add_term_to_current_branch(const Token& token){
 
     assert(current_rule != nullptr);
 
-    if(token.kind == STRING || token.kind == NUMBER){
+    if(token.kind == STRING || token.kind == INTEGER || token.kind == FLOAT){
         term = Term(token.value, token.kind);
 
     } else if (is_kind_of_rule(token.kind) || is_meta(token.kind)){
         // if scope has been explicitly set, override the current rule's scope
         Scope scope = (prev_token.kind == SCOPE_RES) ? rule_decl_scope : current_rule->get_scope();
-        Print_mode current_rule_print_mode = token.kind == GET_INDENT_LEVEL ? Print_mode::INDENT_LEVEL : current().print_mode;
+        Print_mode current_rule_print_mode = token.kind == INDENT_LEVEL ? Print_mode::INDENT_LEVEL : current().print_mode;
         term = Term(get_rule_pointer(token, scope), token.kind, current_rule_print_mode);
 
     } else {
@@ -292,17 +292,17 @@ std::unique_ptr<Expr> Grammar::expr() {
 
 std::unique_ptr<Expr> Grammar::for_expr(){
     consume("for");
-    std::string identifier = curr_token.value;
+    std::string iterator = curr_token.value;
     consume();
 
     consume("in");
 
-    std::string iter = curr_token.value;
+    Token_kind iterable = curr_token.kind;
     consume();
 
     auto expr_res = parse_block();
 
-    return std::make_unique<ForExpr>(identifier, iter, std::move(expr_res));
+    return std::make_unique<ForExpr>(iterator, iterable, std::move(expr_res));
 }
 
 std::unique_ptr<Expr> Grammar::if_expr() {
@@ -331,31 +331,14 @@ std::unique_ptr<Expr> Grammar::if_expr() {
 }
 
 std::unique_ptr<Expr> Grammar::logic_expr() {
-    return parse_binary_op([this](){ return math_expr(); }, {">", "<", ">=", "<=", "==", "&&", "||", "!="});
+    return parse_binary_op([this](){ return additive_expr(); }, {">", "<", ">=", "<=", "==", "&&", "||", "!="});
 }
 
-std::unique_ptr<Expr> Grammar::math_expr() {
-    if (curr_token.value == "UNIFORM"){
-        consume(); // consume UNIFORM
-        consume("("); // checks and consumes '('
-        
-        auto left = term(); // curr_token lands on last token of left expr
-        
-        consume(); // advance to ','
-        consume(","); // checks and consumes ','
-
-        auto right = term(); // curr_token lands on last token of right expr
-
-        consume(); // advance to ')'
-        check(")"); // ensure it is ')'
-        return std::make_unique<BinExpr>("UNIFORM", std::move(left), std::move(right));
-    
-    } else {
-        return parse_binary_op([this](){ return term(); }, {"+", "-"});
-    }
+std::unique_ptr<Expr> Grammar::additive_expr() {
+    return parse_binary_op([this](){ return multiplicative_expr(); }, {"+", "-"});
 }
 
-std::unique_ptr<Expr> Grammar::term() {
+std::unique_ptr<Expr> Grammar::multiplicative_expr() {
     return parse_binary_op([this](){ return factor(); }, {"/", "*"});
 }
 
@@ -369,57 +352,62 @@ std::unique_ptr<Expr> Grammar::factor() {
         
         return expr_res;
 
-    } else if (curr_token.kind == NUMBER){
+    } else if (curr_token.kind == INTEGER){
         return std::make_unique<IntExpr>(safe_stoi(curr_token.value, 0));
 
-    } else if (curr_token.kind == GET_MAT_POS){
-        Token_kind var_token = curr_token.kind;
-
-        consume();
-        consume("(");
-        
-        int row = safe_stoi(curr_token.value, 0); consume();
-
-        consume(",");
-
-        int col = safe_stoi(curr_token.value, 0); consume();
-
-        check(")");
-
-        return std::make_unique<VarExpr>(var_token, std::vector<Arg_type>{row, col});
-
-    } else if (curr_token.kind == AST_HAS_NODE){
-        Token_kind var_token = curr_token.kind;
-
-        consume();
-        consume("(");
-        
-        std::string node_name = curr_token.value; consume();
-
-        check(")");
-
-        return std::make_unique<VarExpr>(var_token, std::vector<Arg_type>{node_name});
+    } else if (curr_token.kind == FLOAT){
+        return std::make_unique<FloatExpr>(std::stof(curr_token.value));
 
     } else if (is_meta(curr_token.kind)) {
-        return std::make_unique<VarExpr>(curr_token.kind);
 
-    } else if ((curr_token.kind == SUB_CIRCUIT) || (curr_token.kind == UNITARY_1Q_DEF) ||
-            (curr_token.kind == UNITARY_2Q_DEF) || (find_gate_info(curr_token.kind) != nullptr))
-    {
-        return std::make_unique<IntExpr>(curr_token.kind);
+        if (curr_token.kind == GET_MAT_POS || curr_token.kind == UNIFORM){
+            Token_kind var_token = curr_token.kind; consume();
+
+            std::vector<std::unique_ptr<Expr>> args;
+            args.reserve(2);
+
+            consume("("); // checks and consumes '('
+            
+            args.push_back(additive_expr()); consume();
+            
+            consume(","); // checks and consumes ','
+
+            args.push_back(additive_expr()); consume();
+
+            check(")"); // check it is ')'
+
+            return std::make_unique<VarExpr>(var_token, std::move(args));
+
+        } else if (curr_token.kind == AST_HAS_NODE){
+            Token_kind var_token = curr_token.kind; consume();
+
+            std::vector<std::unique_ptr<Expr>> args;
+            args.reserve(1);
+
+            consume("(");
+            
+            args.push_back(factor()); consume();
+
+            check(")");
+
+            return std::make_unique<VarExpr>(var_token, std::move(args));
+
+        } else {
+            return std::make_unique<VarExpr>(curr_token.kind);
+        } 
 
     } else if (next_token.value == ".") {
         std::string obj_name = curr_token.value;
         consume(2);
-        std::string prop = curr_token.value;
+        Token_kind prop = curr_token.kind;
         return std::make_unique<PropertyAccessExpr>(obj_name, prop);
 
     } else if (next_token.value == "("){
-        std::string cast_to = curr_token.value;
+        Token_kind modifier = curr_token.kind;
         consume(2);
         auto _expr = expr(); consume();
         check(")");
-        return std::make_unique<ModExpr>(std::move(_expr), cast_to);
+        return std::make_unique<ModExpr>(std::move(_expr), modifier);
 
     } else {
         auto rule = get_rule_pointer_if_exists(curr_token.value, rule_def_scope);
@@ -445,7 +433,7 @@ Token_kind Grammar::parse_token(){
         stack.push(Current(get_rule_pointer(prev_token, rule_def_scope)));
         current().rule->clear();
 
-    } else if(is_kind_of_rule(curr_token.kind) || is_meta(curr_token.kind) || curr_token.kind == STRING || curr_token.kind == NUMBER){
+    } else if(is_kind_of_rule(curr_token.kind) || is_meta(curr_token.kind) || curr_token.kind == STRING || curr_token.kind == INTEGER || curr_token.kind == FLOAT){
         // rules that are within branches, rules before `RULE_START` and `RULE_APPEND` are handled at `RULE_START` and `RULE_APPEND`
         // only proceed with additions if stack is not empty
         if (!stack.empty()){
@@ -479,15 +467,30 @@ Token_kind Grammar::parse_token(){
         add_branch_to_current_rule();
 
     } else if (curr_token.kind == OPTIONAL){
-        curr_expr = std::make_shared<BinExpr>("UNIFORM", std::make_unique<IntExpr>(0), std::make_unique<IntExpr>(1));
+        std::vector<std::unique_ptr<Expr>> args;
+        args.reserve(2);
+        args.push_back(std::make_unique<IntExpr>(0));
+        args.push_back(std::make_unique<IntExpr>(1));
+
+        curr_expr = std::make_shared<VarExpr>(UNIFORM, std::move(args));
         add_expr_to_last_term();
 
     } else if (curr_token.kind == ONE_OR_MORE){
-        curr_expr = std::make_shared<BinExpr>("UNIFORM", std::make_unique<IntExpr>(1), std::make_unique<IntExpr>(QuteFuzz::WILDCARD_MAX));
+        std::vector<std::unique_ptr<Expr>> args;
+        args.reserve(2);
+        args.push_back(std::make_unique<IntExpr>(1));
+        args.push_back(std::make_unique<IntExpr>(QuteFuzz::WILDCARD_MAX));
+
+        curr_expr = std::make_shared<VarExpr>(UNIFORM, std::move(args));
         add_expr_to_last_term();
 
     } else if (curr_token.kind == ZERO_OR_MORE){
-        curr_expr = std::make_shared<BinExpr>("UNIFORM", std::make_unique<IntExpr>(0), std::make_unique<IntExpr>(QuteFuzz::WILDCARD_MAX));
+        std::vector<std::unique_ptr<Expr>> args;
+        args.reserve(2);
+        args.push_back(std::make_unique<IntExpr>(0));
+        args.push_back(std::make_unique<IntExpr>(QuteFuzz::WILDCARD_MAX));
+
+        curr_expr = std::make_shared<VarExpr>(UNIFORM, std::move(args));
         add_expr_to_last_term();
 
     } else if (curr_token.kind == LBRACE){

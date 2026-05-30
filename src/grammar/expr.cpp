@@ -11,8 +11,22 @@ void IntExpr::print(std::ostream& stream) const {
     stream << value;
 };
 
+Expr_type FloatExpr::eval(Context&) const {
+    return value;
+}
+
+void FloatExpr::print(std::ostream& stream) const {
+    stream << value;
+};
+
 Expr_type VarExpr::eval(Context& context) const {
-    return context.resolve_var(name, args);
+    std::vector<Expr_type> eval_args;
+
+    for (const auto& arg : args){
+        eval_args.push_back(arg->eval(context));
+    }
+
+    return context.resolve_var(name, eval_args);
 }
 
 void VarExpr::print(std::ostream& stream) const {
@@ -21,11 +35,7 @@ void VarExpr::print(std::ostream& stream) const {
     if (args.size()){
         stream << "{";
         for (const auto& arg : args){
-            if (std::holds_alternative<int>(arg)){
-                stream << std::get<int>(arg) << ", ";
-            } else if (std::holds_alternative<std::string>(arg)){
-                stream << std::get<std::string>(arg) << ", ";
-            }
+            stream << *arg << ", ";
         }
         stream << "}";
     }
@@ -71,39 +81,39 @@ void BlockExpr::print(std::ostream& stream) const {
 Expr_type PropertyAccessExpr::eval(Context& context) const {
 
     if (auto resource = context.get_value_bound_to<Resource>(obj_name)){
-        if (prop_name == "from_reg") {
+        if (prop_name == FROM_REG) {
             return resource->from_reg();
-        } else if (prop_name == "from_sing"){
+        } else if (prop_name == FROM_SING){
             return !resource->from_reg();
-        } else if (prop_name == "is_used_at_least_once") {
+        } else if (prop_name == USED_AT_LEAST_ONCE) {
             return resource->is_used_at_least_once();
-        } else if (prop_name == "in_ext_scope") {
+        } else if (prop_name == IN_EXT) {
             return resource->get_scope() == Scope::EXT;
-        } else if (prop_name == "in_int_scope") {
+        } else if (prop_name == IN_INT) {
             return resource->get_scope() == Scope::INT;
-        } else if (prop_name == "name") {
-            return resource->get_var_name()->get_str();
-        } else if (prop_name == "index") {
-            return resource->get_index()->get_str();
+        } else if (prop_name == NAME) {
+            return resource->get_var_name();
+        } else if (prop_name == INDEX) {
+            return (int)resource->get_index();
         } else {
-            ERROR("Unknown resource property " + prop_name);
+            ERROR("Unknown resource property " + kind_as_str(prop_name));
         }
 
     } else if (auto resource_def = context.get_value_bound_to<Resource_def>(obj_name)) {
-        if (prop_name == "is_singular") {
-            return !resource_def->is_reg();
-        } else if (prop_name == "is_register"){
+        if (prop_name == IS_REG) {
             return resource_def->is_reg();
-        } else if (prop_name == "in_ext_scope") {
+        } else if (prop_name == IS_SING){
+            return !resource_def->is_reg();
+        } else if (prop_name == IN_EXT) {
             return resource_def->get_scope() == Scope::EXT;
-        } else if (prop_name == "in_int_scope") {
+        } else if (prop_name == IN_INT) {
             return resource_def->get_scope() == Scope::INT;
-        } else if (prop_name == "name") {
-            return resource_def->get_var_name()->get_str();
-        } else if (prop_name == "size") {
-            return resource_def->get_size()->get_str();
+        } else if (prop_name == NAME) {
+            return resource_def->get_var_name();
+        } else if (prop_name == SIZE) {
+            return (int)resource_def->get_size();
         } else {
-            ERROR("Unknown resource def property " + prop_name);
+            ERROR("Unknown resource def property " + kind_as_str(prop_name));
         }
 
     } else {
@@ -135,9 +145,7 @@ Expr_type BinExpr::eval(Context& context) const {
     int left = resolve_operand(left_eval);
     int right = resolve_operand(right_eval);
 
-    if (op == "UNIFORM"){
-        return (int)uniform_uint(std::max(right, left), std::min(right, left));
-    } else if (op == "+") {
+    if (op == "+") {
         return left + right;
     } else if (op == "-"){
         return left - right;
@@ -222,27 +230,27 @@ Expr_type ForExpr::eval(Context& context) const {
         }
     };
 
-    if (iterable == "ALL_QUBITS" || iterable == "ALL_BITS" || iterable == "ALL_PARAMS"){
+    if (iterable == ALL_QUBITS || iterable == ALL_BITS || iterable == ALL_PARAMS){
         Resource_kind rk = 
-            iterable == "ALL_QUBITS" ? Resource_kind::QUBIT :
-            iterable == "ALL_BITS" ? Resource_kind::BIT :
+            iterable == ALL_QUBITS ? Resource_kind::QUBIT :
+            iterable == ALL_BITS ? Resource_kind::BIT :
             Resource_kind::PARAM;
 
         auto items = context.get_current_coll<Resource>(rk);
         get_rules(items);
 
-    } else if (iterable == "ALL_QUBIT_DEFS" || iterable == "ALL_BIT_DEFS" || iterable == "ALL_PARAM_DEFS") {
+    } else if (iterable == ALL_QUBIT_DEFS || iterable == ALL_BIT_DEFS || iterable == ALL_PARAM_DEFS) {
         Resource_kind rk =
-            iterable == "ALL_QUBIT_DEFS" ? Resource_kind::QUBIT :
-            iterable == "ALL_BIT_DEFS" ? Resource_kind::BIT :
+            iterable == ALL_QUBIT_DEFS ? Resource_kind::QUBIT :
+            iterable == ALL_BIT_DEFS ? Resource_kind::BIT :
             Resource_kind::PARAM;
 
         auto items = context.get_current_coll<Resource_def>(rk);
         get_rules(items);
 
-    } else if (iterable == "ALL_GATE_QUBIT_DEFS" || iterable == "ALL_GATE_BIT_DEFS"){
+    } else if (iterable == ALL_GATE_QUBIT_DEFS || iterable == ALL_GATE_BIT_DEFS){
         auto resource_defs = context.get_current_node<Gate>()->get_resource_defs();
-        Resource_kind rk = iterable == "ALL_GATE_QUBIT_DEFS" ? Resource_kind::QUBIT : Resource_kind::BIT;
+        Resource_kind rk = iterable == ALL_GATE_QUBIT_DEFS ? Resource_kind::QUBIT : Resource_kind::BIT;
         auto pred = [rk](const auto& elem){ return elem->get_resource_kind() == rk; };
         auto items = filter<Resource_def>(resource_defs, pred);
         get_rules(items);
@@ -284,22 +292,33 @@ void AssignExpr::print(std::ostream& stream) const {
 Expr_type ModExpr::eval(Context& context) const {
     Expr_type expr_eval = expr->eval(context);
     
-    if (modifier == "int"){
+    if (modifier == INT_CAST){
         if (std::holds_alternative<std::string>(expr_eval)){
             return safe_stoi(std::get<std::string>(expr_eval), 0);
         } else {
             ERROR("int cast only supported for expressions that evals to string");
         }
 
-    } else if (modifier == "str"){
+    } else if (modifier == STR_CAST){
         if (std::holds_alternative<int>(expr_eval)){
             return std::to_string(std::get<int>(expr_eval));
+        
+        } else if (std::holds_alternative<float>(expr_eval)){
+            return std::to_string(std::get<float>(expr_eval));
+
         } else {
-            ERROR("str cast only supported for expressions that evals to int");
+            ERROR("str cast only supported for expressions that evals to int or float");
+        }
+
+    } else if (modifier == KIND_CAST){
+        if (std::holds_alternative<std::shared_ptr<Rule>>(expr_eval)){
+            return std::get<std::shared_ptr<Rule>>(expr_eval)->get_token().kind;
+        } else {
+            ERROR("kind cast only supported for expressions that eval to ptr<Rule>");
         }
 
     } else {
-        ERROR("Modifier " + modifier + " is not supported");
+        ERROR("Modifier " + kind_as_str(modifier) + " is not supported");
     }
 }
 

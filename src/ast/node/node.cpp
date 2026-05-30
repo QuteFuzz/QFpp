@@ -1,6 +1,4 @@
 #include <node.h>
-#include <uint.h>
-#include <variable.h>
 
 int Node::node_counter = 0;
 
@@ -42,7 +40,7 @@ void Node::print_program(std::ostream& stream, unsigned int indent_level) const 
             return;
         }
         case Print_mode::DEFAULT: {
-            if(kind == STRING || kind == NUMBER) stream << str;
+            if(kind == STRING || kind == INTEGER || kind == FLOAT) stream << str;
             else for(const auto& child : children)
                 child->print_program(stream, indent_level);
             return;
@@ -127,7 +125,7 @@ void Node::print_ast(std::string indent) const {
 void Node::extend_dot_string(std::ostringstream& ss) const {
 
     for(const std::shared_ptr<Node>& child : children){
-        if((child->get_node_kind() != STRING) && (child->get_node_kind() != NUMBER)){
+        if((child->get_node_kind() != STRING) && (child->get_node_kind() != INTEGER) && (child->get_node_kind() != FLOAT)){
             int child_id = child->get_id();
 
             ss << "  " << id << " [label=\"" << get_str() << "\"];" << std::endl;
@@ -211,17 +209,17 @@ unsigned int Node::get_n_ports() const {
     return 1;
 }
 
-std::shared_ptr<Variable> Node::get_var_name() const {
-    return std::make_shared<Variable>();
-}
+// std::shared_ptr<Variable> Node::get_var_name() const {
+//     return std::make_shared<Variable>();
+// }
 
-std::shared_ptr<UInt> Node::get_size() const {
-    return std::make_shared<UInt>();
-}
+// std::shared_ptr<UInt> Node::get_size() const {
+//     return std::make_shared<UInt>();
+// }
 
-std::shared_ptr<UInt> Node::get_index() const {
-    return std::make_shared<UInt>();
-}
+// std::shared_ptr<UInt> Node::get_index() const {
+//     return std::make_shared<UInt>();
+// }
 
 Slot_type Node::get_compilation_unit(){
     auto program = find(PROGRAM);

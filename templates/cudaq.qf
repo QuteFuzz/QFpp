@@ -6,7 +6,7 @@ NESTED_MAX_DEPTH = 2;
 
 pi = "M_PI";
 pi_multiples = pi | "("pi"/2.0)" | "("pi"/4.0)";
-float = MAKE_FLOAT | param | pi_multiples;
+float = ""[str(MAKE_FLOAT)] | param | pi_multiples;
 
 x    = "x";
 y    = "y";
@@ -34,21 +34,21 @@ u3   = "u3";
 primitive_gate += s | t | sdg | tdg | swap | ch | crx | cry | crz | u1 | u3;
 
 INTERNAL {
-    float_no_param = MAKE_FLOAT | GLOB::pi_multiples;
+    float_no_param = ""[str(MAKE_FLOAT)] | GLOB::pi_multiples;
 
     qubit_defs = (qubit_def NL)[UNIFORM(3, 4)];
     param_defs = (param_def NL)[UNIFORM(3, 4)];
 
-    singular_qubit_def = "cudaq::qubit " GET_DEF_NAME ";";
-    register_qubit_def = "cudaq::qarray<" GET_SIZE ">" GET_DEF_NAME ";";
+    singular_qubit_def = "cudaq::qubit " ""[GET_DEF_NAME] ";";
+    register_qubit_def = "cudaq::qarray<" ""[str(GET_SIZE)] ">" ""[GET_DEF_NAME] ";";
 
-    singular_param_def = "double " GET_DEF_NAME " = " float_no_param ";";
+    singular_param_def = "double " ""[GET_DEF_NAME] " = " float_no_param ";";
 
     # after initing the array, use a for loop to assign floats to the array
     register_param_def =
-        "double " GET_DEF_NAME "[" GET_SIZE "];" NL[2]
-        "for(int i = 0; i < " GET_SIZE "; i++){" NL
-        GET_DEF_NAME"[i] = " float_no_param";" NL
+        "double " ""[GET_DEF_NAME] "[" ""[str(GET_SIZE)] "];" NL[2]
+        "for(int i = 0; i < " ""[str(GET_SIZE)] "; i++){" NL
+        ""[GET_DEF_NAME]"[i] = " float_no_param";" NL
         "}" NL
     ;
 }
@@ -57,9 +57,9 @@ EXTERNAL {
     qubit_defs = qubit_def COMMA qubit_def COMMA qubit_def COMMA qubit_def; # TODO: resolve param that stores num of defs
     param_defs = param_def | param_def COMMA param_def;
 
-    singular_qubit_def = "cudaq::qubit& " GET_DEF_NAME;
+    singular_qubit_def = "cudaq::qubit& " ""[GET_DEF_NAME];
 
-    singular_param_def = "double " GET_DEF_NAME;
+    singular_param_def = "double " ""[GET_DEF_NAME];
 
     # some defs restricted to singular to make passing of arguments easier (do not have to check for types and register length to match)    
     qubit_def = singular_qubit_def;
@@ -70,14 +70,14 @@ EXTERNAL {
 # RESOURCE REFERENCES
 # ============================================================================
 
-singular_qubit = GET_DECL_NAME;
-register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
+singular_qubit = ""[GET_DECL_NAME];
+register_qubit = ""[GET_DECL_NAME] "[" ""[str(GET_INDEX)] "]";
 
-singular_bit = GET_DECL_NAME;
-register_bit = GET_DECL_NAME "[" GET_INDEX "]";
+singular_bit = ""[GET_DECL_NAME];
+register_bit = ""[GET_DECL_NAME] "[" ""[str(GET_INDEX)] "]";
 
-singular_param = GET_DECL_NAME;
-register_param = GET_DECL_NAME "[" GET_INDEX "]";
+singular_param = ""[GET_DECL_NAME];
+register_param = ""[GET_DECL_NAME] "[" ""[str(GET_INDEX)] "]";
 
 # ============================================================================
 # GATE OPERATIONS AND SUBROUTINES
@@ -88,7 +88,7 @@ gate_op_args = (float ", ")[GET_GATE_PARAMS] qubit_list;
 
 qubit_list   = qubit (", " qubit)[GET_GATE_QUBITS - 1];
 
-subroutine_op = GET_GATE_NAME "{}"[GET_GATE_SOURCE == sub_circuit] "(" subroutine_op_args ")";
+subroutine_op = ""[GET_GATE_NAME] "{}"[GET_GATE_SOURCE == kind(sub_circuit)] "(" subroutine_op_args ")";
 subroutine_op_args = qubit_list (", " float)[GET_GATE_PARAMS];
 
 # ============================================================================
@@ -145,7 +145,7 @@ run_and_postprocess =
 main = 
     "int main(int argc, char* argv[]) {" NL
     ci<(
-        ("auto kernel = " GET_CIRCUIT_NAME "{};") NL[2]
+        ("auto kernel = " ""[GET_CIRCUIT_NAME] "{};") NL[2]
     
         "int num_shots = std::stoi(argv[1]);" NL
         "try {" NL
@@ -168,14 +168,14 @@ imports =
 
 namespaces = "using namespace std::complex_literals;";
 
-program_footer = "ct = cudaqTesting(source_code," circuit_id ")" NL testing_method;
+program_footer = "ct = cudaqTesting(source_code," ""[str(GET_CIRCUIT_ID)] ")" NL testing_method;
 
 testing_method = "ct.opt_ks_test()" NL;
 
 
 subroutine_defs = ((sub_circuit | unitary_1q_def | unitary_2q_def) NL)+;
 
-sub_circuit = "struct " GET_CIRCUIT_NAME " { " NL
+sub_circuit = "struct " ""[GET_CIRCUIT_NAME] " { " NL
     "void operator()(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs ") __qpu__ {" NL 
     # ci<INTERNAL::qubit_defs> NL
     ci<compound_stmts> NL
@@ -200,7 +200,7 @@ sub_circuit = "struct " GET_CIRCUIT_NAME " { " NL
 
 unitary_1q_def = 
     "CUDAQ_REGISTER_OPERATION("                                 NL
-    GET_CIRCUIT_NAME ", "                                       NL
+    ""[GET_CIRCUIT_NAME] ", "                                       NL
     "    1,    // Number of qubits"                             NL
     "    0,    // Number of params"                             NL
     "    (std::vector<std::complex<double>>{"      NL
@@ -212,7 +212,7 @@ unitary_1q_def =
 
 unitary_2q_def = 
     "CUDAQ_REGISTER_OPERATION("                                 NL
-    GET_CIRCUIT_NAME ", "                                       NL
+    ""[GET_CIRCUIT_NAME] ", "                                       NL
     "    2,    // Number of qubits"                             NL
     "    0,    // Number of params"                             NL
     "    (std::vector<std::complex<double>>{"      NL
@@ -225,7 +225,7 @@ unitary_2q_def =
     ;
 
 # return type is bitpacked results
-circuit = "struct " GET_CIRCUIT_NAME " { " NL
+circuit = "struct " ""[GET_CIRCUIT_NAME] " { " NL
     "uint64_t operator()() __qpu__ {" NL 
     ci<INTERNAL::qubit_defs> NL
     ci<INTERNAL::param_defs> NL

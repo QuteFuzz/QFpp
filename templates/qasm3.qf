@@ -16,11 +16,11 @@ EXTERNAL {
 
     bit_def = singular_bit_def;
 
-    singular_param_def = GET_DEF_NAME;
+    singular_param_def = ""[GET_DEF_NAME];
 
-    singular_qubit_def = GET_DEF_NAME;
+    singular_qubit_def = ""[GET_DEF_NAME];
 
-    singular_bit_def = GET_DEF_NAME;
+    singular_bit_def = ""[GET_DEF_NAME];
 }
 
 # param defs removed because qiskit doesn't support them, all floats inlined
@@ -37,11 +37,11 @@ INTERNAL {
 
     # param_def = singular_param_def;
 
-    register_qubit_def = "qubit[" GET_SIZE "] "  GET_DEF_NAME ";";
+    register_qubit_def = "qubit[" ""[str(GET_SIZE)] "] "  ""[GET_DEF_NAME] ";";
 
-    register_bit_def = "bit[" GET_SIZE "] "  GET_DEF_NAME ";";
+    register_bit_def = "bit[" ""[str(GET_SIZE)] "] "  ""[GET_DEF_NAME] ";";
 
-    # singular_param_def = "angle " GET_DEF_NAME " = " MAKE_FLOAT ";";
+    # singular_param_def = "angle " ""[GET_DEF_NAME] " = " ""[str(MAKE_FLOAT)] ";";
 }
 
 
@@ -71,35 +71,35 @@ if_stmt = measurement_stmt NL "if (" bit " == " if_cond ") {" NL ci<compound_stm
 
 sub_circuit = gate_sub_circ;
 
-gate_sub_circ = "gate " GET_CIRCUIT_NAME "(" EXTERNAL::param_defs ") " EXTERNAL::qubit_defs " {" NL (ci<(qubit_op NL)>)[UNIFORM(5, 12)] "}";
+gate_sub_circ = "gate " ""[GET_CIRCUIT_NAME] "(" EXTERNAL::param_defs ") " EXTERNAL::qubit_defs " {" NL (ci<(qubit_op NL)>)[UNIFORM(5, 12)] "}";
 
-# def_sub_circ = "def " GET_CIRCUIT_NAME "(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs "){" NL sub_circuit_body "}";
+# def_sub_circ = "def " ""[GET_CIRCUIT_NAME] "(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs "){" NL sub_circuit_body "}";
 
 sub_circuit_body = ci<INTERNAL::bit_defs> NL (ci<(compound_stmt)> NL)[UNIFORM(4, 5)];
 
-subroutine_op = GET_GATE_NAME subroutine_op_args ";";
+subroutine_op = ""[GET_GATE_NAME] subroutine_op_args ";";
 
 subroutine_op_args = ("(" float_list ") ")[GET_GATE_PARAMS > 0] qubit_list;
 
 pi = "pi";
 
-singular_qubit = GET_DECL_NAME;
+singular_qubit = ""[GET_DECL_NAME];
 
-register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
+register_qubit = ""[GET_DECL_NAME] "[" ""[str(GET_INDEX)] "]";
 
-singular_bit = GET_DECL_NAME;
+singular_bit = ""[GET_DECL_NAME];
 
-register_bit = GET_DECL_NAME "[" GET_INDEX "]";
+register_bit = ""[GET_DECL_NAME] "[" ""[str(GET_INDEX)] "]";
 
-singular_param = GET_DECL_NAME;
+singular_param = ""[GET_DECL_NAME];
 
-register_param = GET_DECL_NAME "[" GET_INDEX "]";
+register_param = ""[GET_DECL_NAME] "[" ""[str(GET_INDEX)] "]";
 
 gate_op = primitive_gate " " gate_op_args ";";
 
 gate_op_args = ("(" float_list ") ")[GET_GATE_PARAMS > 0] qubit_list;
 
-float = MAKE_FLOAT | pi_multiples;
+float = ""[str(MAKE_FLOAT)] | pi_multiples;
 
 primitive_gate = h | x | y | z | s | sdg | t | tdg | cx | cy | cz | ch |
     ccx | rx | ry | rz | u1 | u2 | u3;

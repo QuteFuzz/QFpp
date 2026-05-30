@@ -17,11 +17,11 @@ EXTERNAL {
 
     bit_def = singular_bit_def;
 
-    singular_qubit_def = GET_DEF_NAME;
+    singular_qubit_def = ""[GET_DEF_NAME];
 
-    singular_bit_def = GET_DEF_NAME;
+    singular_bit_def = ""[GET_DEF_NAME];
 
-    singular_param_def = GET_DEF_NAME;
+    singular_param_def = ""[GET_DEF_NAME];
 }
 
 (*
@@ -46,9 +46,9 @@ INTERNAL {
 
     bit_def = register_bit_def;
 
-    register_qubit_def = "qreg " GET_DEF_NAME "[" GET_SIZE "];";
+    register_qubit_def = "qreg " ""[GET_DEF_NAME] "[" ""[str(GET_SIZE)] "];";
 
-    register_bit_def = "creg " GET_DEF_NAME "[" GET_SIZE "];";
+    register_bit_def = "creg " ""[GET_DEF_NAME] "[" ""[str(GET_SIZE)] "];";
 }
 
 imports = "from diff_testing.qasm import qasmTesting";
@@ -62,7 +62,7 @@ measures =
         for def in ALL_QUBIT_DEFS {
             # all defs in the main circuit are registers
             creg_and_measure = 
-                "creg creg_" ""[def.name] "[" ""[def.size] "];" NL
+                "creg creg_" ""[def.name] "[" ""[str(def.size)] "];" NL
                 "measure " ""[def.name] " -> creg_" ""[def.name] ";" NL
                 ;
             
@@ -96,38 +96,38 @@ measurement_stmt = "measure " qubit " -> " bit ";";
 
 if_cond = "0" | "1";
 
-# QASM 2 if: no block body, single gate only; condition is on whole creg (GET_DECL_NAME
+# QASM 2 if: no block body, single gate only; condition is on whole creg (""[GET_DECL_NAME]
 # gives register name without index, which is set by the preceding `bit` in measurement_stmt)
-if_stmt = measurement_stmt NL "if(" GET_DECL_NAME "==" if_cond ") " qubit_op;
+if_stmt = measurement_stmt NL "if(" ""[GET_DECL_NAME] "==" if_cond ") " qubit_op;
 
 sub_circuit = gate_sub_circ;
 
 # QASM 2 gate definition: params and qubits are plain identifiers, body is primitive gates only
-gate_sub_circ = "gate " GET_CIRCUIT_NAME "(" EXTERNAL::param_defs ") " EXTERNAL::qubit_defs " {" NL (ci<(gate_op NL)>)[UNIFORM(5, 12)] "}";
+gate_sub_circ = "gate " ""[GET_CIRCUIT_NAME] "(" EXTERNAL::param_defs ") " EXTERNAL::qubit_defs " {" NL (ci<(gate_op NL)>)[UNIFORM(5, 12)] "}";
 
-subroutine_op = GET_GATE_NAME subroutine_op_args ";";
+subroutine_op = ""[GET_GATE_NAME] subroutine_op_args ";";
 
 subroutine_op_args = ("(" float_list ") ")[GET_GATE_PARAMS > 0] qubit_list;
 
 pi = "pi";
 
-singular_qubit = GET_DECL_NAME;
+singular_qubit = ""[GET_DECL_NAME];
 
-register_qubit = GET_DECL_NAME "[" GET_INDEX "]";
+register_qubit = ""[GET_DECL_NAME] "[" ""[str(GET_INDEX)] "]";
 
-singular_bit = GET_DECL_NAME;
+singular_bit = ""[GET_DECL_NAME];
 
-register_bit = GET_DECL_NAME "[" GET_INDEX "]";
+register_bit = ""[GET_DECL_NAME] "[" ""[str(GET_INDEX)] "]";
 
-singular_param = GET_DECL_NAME;
+singular_param = ""[GET_DECL_NAME];
 
-register_param = GET_DECL_NAME "[" GET_INDEX "]";
+register_param = ""[GET_DECL_NAME] "[" ""[str(GET_INDEX)] "]";
 
 gate_op = primitive_gate " " gate_op_args ";";
 
 gate_op_args = ("(" float_list ") ")[GET_GATE_PARAMS > 0] qubit_list;
 
-float = MAKE_FLOAT | pi_multiples;
+float = ""[str(MAKE_FLOAT)] | pi_multiples;
 
 primitive_gate = h | x | y | z | s | sdg | t | tdg | cx | cy | cz | ch |
     ccx | rx | ry | rz | u1 | u2 | u3;
@@ -153,12 +153,12 @@ u2 = "u2";
 u3 = "u3";
 
 counts_agreement_test =
-    "qt = qasmTesting(qasm_str, " circuit_id ")" NL
+    "qt = qasmTesting(qasm_str, " ""[str(GET_CIRCUIT_ID)] ")" NL
     "qt.counts_agreement_test()" NL
     ;
 
 opt_ks_test =
-    "qt = qasmTesting(qasm_str, " circuit_id ")" NL
+    "qt = qasmTesting(qasm_str, " ""[str(GET_CIRCUIT_ID)] ")" NL
     "qt.opt_ks_test()" NL
     ;
 
