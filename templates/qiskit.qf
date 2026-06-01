@@ -82,10 +82,10 @@ make_param_dict =
         for p in ALL_PARAMS {
             if (p.is_used_at_least_once) {
                 if (p.from_reg){
-                    binding1 = ""[p.name] "[" ""[str(p.index)] "]" ":" ""[str(MAKE_FLOAT)] "," NL;
+                    binding1 = ""[p.name] "[" ""[str(p.index)] "]" ":" ""[str(UNIFORM(1.0,10.0))] "," NL;
                     binding1
                 } else {
-                    binding2 = ""[p.name] ":" ""[str(MAKE_FLOAT)] "," NL;
+                    binding2 = ""[p.name] ":" ""[str(UNIFORM(1.0,10.0))] "," NL;
                     binding2
                 }
             }
