@@ -364,7 +364,7 @@ class Check_grammar:
 
                 with open(report_txt, "a") as f:
                     f.write("==============================================\n\n")
-                    f.write(f"Circuit: {run_info.circuit_path}\n")
+                    f.write(f"Circuit: {dst_dir}\n")
                     f.write("==============================================\n")
                     f.write(f"Logs: {run_info.logs}\n")
                     f.write(f"Values (KS or dot product): {run_info.values}\n")

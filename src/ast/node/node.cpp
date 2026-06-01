@@ -138,88 +138,9 @@ void Node::extend_dot_string(std::ostringstream& ss) const {
     }
 }
 
-int Node::get_next_child_target(){
-    size_t partition_size = child_partition.size();
-
-    if(partition_counter < partition_size){
-        return child_partition[partition_counter++];
-    } else {
-        WARNING("Node " + str + " qubit node target partition info: Counter: " + std::to_string(partition_counter) + ", Size: " + std::to_string(partition_size));
-        return 1;
-    }
-}
-
-/// @brief Create a random partition of `target` over `n_children`. Final result contains +ve ints
-/// @param target
-/// @param n_children
-void Node::make_partition(int target, int n_children){
-
-    if((n_children == 1) || (target == 1)){
-        child_partition = {target};
-
-    } else if (target == n_children){
-        child_partition = std::vector<int>(n_children, 1);
-
-    } else {
-
-        /*
-            make N-1 random cuts between 1 and T-1
-            ex:
-                T = 10, N = 4
-                {2, 9, 4}
-        */
-        std::vector<int> cuts;
-
-        for(int i = 0; i < n_children-1; i++){
-            int val = uniform_uint(target-1, 1);
-
-            while(std::find(cuts.begin(), cuts.end(), val) != cuts.end()){
-                val = uniform_uint(target-1, 1);
-            }
-
-            cuts.push_back(val);
-        }
-
-        /*
-            sort the cuts
-            ex:
-                {2, 4, 9}
-        */
-        std::sort(cuts.begin(), cuts.end());
-
-        /*
-            add 0 and T boundaries, then calculate diffs
-            ex:
-                {0, 2, 4, 9, 10}
-                {2, 2, 5, 1} <- result
-        */
-        child_partition.push_back(cuts[0]);
-
-        for(int i = 1; i < n_children-1; i++){
-            child_partition.push_back(cuts[i] - cuts[i-1]);
-        }
-
-        child_partition.push_back(target - cuts[n_children-2]);
-
-    }
-
-}
-
 unsigned int Node::get_n_ports() const {
     return 1;
 }
-
-// std::shared_ptr<Variable> Node::get_var_name() const {
-//     return std::make_shared<Variable>();
-// }
-
-// std::shared_ptr<UInt> Node::get_size() const {
-//     return std::make_shared<UInt>();
-// }
-
-// std::shared_ptr<UInt> Node::get_index() const {
-//     return std::make_shared<UInt>();
-// }
 
 Slot_type Node::get_compilation_unit(){
     auto program = find(PROGRAM);
