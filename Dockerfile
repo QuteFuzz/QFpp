@@ -21,6 +21,6 @@ WORKDIR /app
 
 COPY . .
 
-ENV PATH="/root/.cargo/bin:/root/.local/bin:${PATH}"
+ENV PATH="/root/.cargo/bin:/root/.local/bin:/usr/local/cuda/bin:${PATH}"
 
 CMD ["/bin/bash"]

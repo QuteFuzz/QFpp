@@ -330,6 +330,8 @@ def build_nvq(with_coverage: bool):
     clang = llvm_build / "bin" / "clang"
     clang_pp = llvm_build / "bin" / "clang++"
 
+    nvcc = USR / "local" / "cuda" / "bin" / "nvcc"
+
     cmd = [
         "cmake",
         "..",
@@ -345,6 +347,9 @@ def build_nvq(with_coverage: bool):
         f"-DZLIB_LIBRARY={USR / 'lib' / 'x86_64-linux-gnu' / 'libz.so'}",
         "-DZLIB_USE_STATIC_LIBS=OFF",
         "-DCMAKE_COMPILE_WARNING_AS_ERROR=OFF",
+        f"-DCMAKE_CUDA_COMPILER={nvcc}",
+        f"-DCMAKE_CUDA_HOST_COMPILER={clang_pp}",
+        "-DCMAKE_CUDA_FLAGS=-allow-unsupported-compiler",
     ]
 
     if with_coverage:
@@ -358,8 +363,13 @@ def build_nvq(with_coverage: bool):
             ]
         )
 
-    subprocess.run(cmd, cwd=str(build_dir))
+    env = os.environ.copy()
+    env["CC"] = str(clang)
+    env["CXX"] = str(clang_pp)
+    env["CUDACXX"] = str(nvcc)
+    env["CUDAHOSTCXX"] = str(clang_pp)
 
+    subprocess.run(cmd, cwd=str(build_dir), env=env)
     subprocess.run(["ninja"], cwd=str(build_dir))
 
 
