@@ -145,12 +145,6 @@ class Node : public std::enable_shared_from_this<Node> {
 
         virtual unsigned int get_n_ports() const;
 
-        // virtual std::shared_ptr<Variable> get_var_name() const;
-
-        // virtual std::shared_ptr<UInt> get_size() const;
-
-        // virtual std::shared_ptr<UInt> get_index() const;
-
         virtual std::shared_ptr<Node> clone(const Clone_type& ct) const;
 
         virtual void print_program(std::ostream& stream, unsigned int indent_level = 0) const;
@@ -169,14 +163,6 @@ class Node : public std::enable_shared_from_this<Node> {
 
         void extend_dot_string(std::ostringstream& ss) const;
 
-        int get_next_child_target();
-
-        void make_partition(int target, int n_children);
-
-        void make_control_flow_partition(int target, int n_children);
-
-        Slot_type get_compilation_unit();
-
         bool operator==(const Token_kind& other_kind) const {
             return kind == other_kind;
         }
@@ -192,9 +178,6 @@ class Node : public std::enable_shared_from_this<Node> {
 
         std::vector<std::shared_ptr<Node>> children;
         Node_build_state state = NB_BUILD;
-
-        std::vector<int> child_partition;
-        unsigned int partition_counter = 0;
 
     private:
         std::optional<Branch_constraint> branch_constraint;

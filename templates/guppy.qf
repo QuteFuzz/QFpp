@@ -55,7 +55,7 @@ INTERNAL {
         ""[
         for qb in ALL_QUBITS {
             if (qb.in_int_scope && qb.from_reg) {
-                register_qubit_result = "result('res_" ""[qb.name] "_" ""[qb.index] "', mz_" ""[qb.name] "[" ""[qb.index] "])" NL;
+                register_qubit_result = "result('res_" ""[qb.name] "_" ""[str(qb.index)] "', mz_" ""[qb.name] "[" ""[str(qb.index)] "])" NL;
                 register_qubit_result
             }
         }

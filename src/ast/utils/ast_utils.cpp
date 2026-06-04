@@ -202,3 +202,23 @@ bool is_commutative_pair(Token_kind a, Token_kind b){
 
     return false;
 }
+
+std::shared_ptr<Node> get_compilation_unit(std::shared_ptr<Node> root){
+    std::shared_ptr<Node> comp_unit = nullptr;
+    
+    for(const auto& slot : Node_gen(*root, CIRCUIT)){
+        comp_unit = slot;
+    }
+
+    if (comp_unit == nullptr){
+        for(const auto& slot : Node_gen(*root, BODY)){
+            comp_unit = slot;
+        }
+    }
+
+    if (comp_unit == nullptr){
+        ERROR("Could not find compilation unit for program. Make `circuit` or `body` the \"main_circuit\" of the program");
+    } else {
+        return comp_unit;
+    }
+}

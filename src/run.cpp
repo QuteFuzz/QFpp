@@ -12,6 +12,8 @@
 const fs::path Run::OUTPUT_DIR = ".." / fs::path(QuteFuzz::OUTPUTS_FOLDER_NAME);
 
 const std::unordered_map<std::string, std::string> COMMANDS = {
+    {"grammar-name entry-point", "Generate program from template given by grammar-name starting from entry-point"},
+    {"<ENTER>", "Enter on your keyboard to write the program to a file"},
     {"render", "Render AST(s) for program(s) generated"}, 
     {"step", "Step through program generation node by node in the AST"},
     {"info", "Print circuit info"},
@@ -171,9 +173,6 @@ void Run::remove_all_in_dir(const fs::path& dir){
 }
 
 void Run::help(){
-    std::cout << "Type enter to write to a file" << std::endl;
-    std::cout << "- use " + CYAN("grammar_name") + " " + GREY("entry point") + " to set grammar " << std::endl;
-
     for(const auto&[cmd, descr] : COMMANDS){
         std::cout << "- " << BOLD(CYAN(cmd)) << ": " << BOLD(GREY(descr)) << std::endl;
     }

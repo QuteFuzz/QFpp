@@ -57,4 +57,6 @@ bool is_inverse_pair(Token_kind a, Token_kind b);
 
 bool is_commutative_pair(Token_kind a, Token_kind b);
 
+std::shared_ptr<Node> get_compilation_unit(std::shared_ptr<Node> root);
+
 #endif

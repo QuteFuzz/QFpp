@@ -33,6 +33,7 @@ dependencies = [
     "pytket-pennylane>=0.20.0",
     "pennylane-qiskit>=0.38.0",
     "tket>=0.12.16",
+    "wisq>=0.2.7",
 ]
 
 [tool.uv]
@@ -48,6 +49,9 @@ dev = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+extend-exclude = [
+    "test.py"
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]  # Enable Pyflakes, pycodestyle, Isort, and Warnings

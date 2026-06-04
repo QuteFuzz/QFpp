@@ -8,6 +8,7 @@
 #include <node.h>
 #include <context.h>
 #include <supported_gates.h>
+#include <ast_utils.h>
 
 class Ast{
     public:
@@ -63,7 +64,7 @@ struct Ast_entry {
                 ERROR("Cannot pass NULL as AST to entry");
             }
 
-            comp_unit = ast->get_compilation_unit();
+            comp_unit = get_compilation_unit(ast);
 
             auto find_qubit_ops = [](Node& root, std::vector<std::shared_ptr<Qubit_op>>& out){
                 for (const auto& node : Node_gen(root, QUBIT_OP)){                
@@ -84,7 +85,7 @@ struct Ast_entry {
             };
 
             find_qubit_ops(*ast, ast_qubit_ops);
-            find_qubit_ops(**comp_unit, comp_unit_qubit_ops);
+            find_qubit_ops(*comp_unit, comp_unit_qubit_ops);
         }
 
         /// return a clone of this ast entry, by deep cloning the AST, effectively creating a new one, then getting the new compilation unit ptr from that
@@ -102,7 +103,7 @@ struct Ast_entry {
 
         // Get compilation unit root, or AST root
         std::shared_ptr<Node> get_root(bool consider_entire_ast) const {
-            return consider_entire_ast ? ast : *comp_unit;
+            return consider_entire_ast ? ast : comp_unit;
         }
 
         // Qubit ops of entire AST or compilation unit
@@ -116,7 +117,7 @@ struct Ast_entry {
 
     private:
         std::shared_ptr<Node> ast = nullptr;
-        Slot_type comp_unit;
+        std::shared_ptr<Node> comp_unit;
         std::shared_ptr<Context> context;
 
         std::vector<std::shared_ptr<Qubit_op>> comp_unit_qubit_ops;

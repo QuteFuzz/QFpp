@@ -33,6 +33,7 @@ def collect():
         f"--instr-profile={profdata_file}",
         "--format=html",
         f"--output-dir={cudaq_output_dir / 'coverage_report'}",
+        "--coverage-watermark=75,50",
     ]
 
     objs = ["cudaq-quake", "cudaq-opt", "cudaq-translate"]
