@@ -1,5 +1,6 @@
 # qasm.qf
 
+EXTENSION = ".qasm";
 MAX_REG_SIZE = 3;
 NESTED_MAX_DEPTH = 3;
 

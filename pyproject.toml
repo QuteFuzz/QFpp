@@ -33,6 +33,7 @@ dependencies = [
     "pytket-pennylane>=0.20.0",
     "pennylane-qiskit>=0.38.0",
     "tket>=0.12.16",
+    "wisq>=0.2.7",
 ]
 
 [tool.uv]

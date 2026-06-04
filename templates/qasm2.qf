@@ -55,7 +55,9 @@ imports = "from diff_testing.qasm import qasmTesting";
 
 header = 'OPENQASM 2.0;' NL 'include "qelib1.inc";';
 
-program = imports NL "qasm_str = '''" NL header NL[2] subroutine_defs NL circuit NL measures "'''" NL[2] testing;
+qasm_code = header NL[2] subroutine_defs NL circuit NL measures;
+
+program = imports NL "qasm_str = '''" NL qasm_code "'''" NL[2] testing;
 
 measures = 
     [
