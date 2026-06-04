@@ -163,8 +163,6 @@ class Node : public std::enable_shared_from_this<Node> {
 
         void extend_dot_string(std::ostringstream& ss) const;
 
-        Slot_type get_compilation_unit();
-
         bool operator==(const Token_kind& other_kind) const {
             return kind == other_kind;
         }

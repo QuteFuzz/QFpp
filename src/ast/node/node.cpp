@@ -1,4 +1,5 @@
 #include <node.h>
+#include <ast_utils.h>
 
 int Node::node_counter = 0;
 
@@ -140,17 +141,5 @@ void Node::extend_dot_string(std::ostringstream& ss) const {
 
 unsigned int Node::get_n_ports() const {
     return 1;
-}
-
-Slot_type Node::get_compilation_unit(){
-    auto program = find(PROGRAM);
-
-    for(auto& child : program->get_children()){
-        if(*child == CIRCUIT || *child == BODY){
-            return &child;
-        }
-    }
-
-    ERROR("Could not find compilation unit for program. Make `circuit` or `body` rule as a child of `program`");
 }
 
