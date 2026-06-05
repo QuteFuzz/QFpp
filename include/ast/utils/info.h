@@ -89,7 +89,15 @@ class Info {
         float quality();
 
         unsigned int interesting_pair_count(std::function<bool(Token_kind, Token_kind)> func);
+
+        float non_clifford_density();
+
+        float entanglement_density();
+
+        float interaction_graph_diversity();
         
+        float reducibles_density();
+
     private:
         std::vector<std::shared_ptr<Qubit_op>> qubit_ops;
 

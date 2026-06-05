@@ -22,6 +22,8 @@ extern const std::vector<Token_kind> X_FAMILY;
 
 extern const std::vector<Token_kind> Y_FAMILY;
 
+extern const std::vector<Token_kind> CLIFFORDS;
+
 Slot_type find_slot_for(const std::shared_ptr<Node>& search_root, const std::shared_ptr<Node>& target);
 
 std::shared_ptr<Node> build_ast_from_rule(
@@ -53,10 +55,14 @@ std::pair<bool, std::shared_ptr<Qubit_op>> qubit_op_is_interesting(
     std::unordered_map<std::string, std::shared_ptr<Qubit_op>>& last_qubit_op_map
 );
 
+bool gate_in_set(const std::vector<Token_kind>& set, Token_kind gate_kind);
+
 bool is_inverse_pair(Token_kind a, Token_kind b);
 
 bool is_commutative_pair(Token_kind a, Token_kind b);
 
 std::shared_ptr<Node> get_compilation_unit(std::shared_ptr<Node> root);
+
+std::unordered_map<Token_kind, Branch_constraint> branch_constraints_for_gate(const Token_kind& gate_kind);
 
 #endif

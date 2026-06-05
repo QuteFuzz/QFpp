@@ -25,13 +25,14 @@ cz   = "z<cudaq::ctrl>";
 ch   = "h<cudaq::ctrl>";
 ccx  = "x<cudaq::ctrl>";
 swap = "swap";
+cswap = "swap<cudaq::ctrl>";
 crx  = "rx<cudaq::ctrl>";
 cry  = "ry<cudaq::ctrl>";
 crz  = "rz<cudaq::ctrl>";
 u1   = "r1";
 u3   = "u3";
 
-primitive_gate += s | t | sdg | tdg | swap | ch | crx | cry | crz | u1 | u3;
+primitive_gate += s | t | sdg | tdg | swap | ch | crx | cry | crz | u1 | u3 | cswap;
 
 INTERNAL {
     float_no_param = ""[str(MAKE_FLOAT)] | GLOB::pi_multiples;
@@ -95,7 +96,7 @@ subroutine_op_args = qubit_list (", " float)[GET_GATE_PARAMS];
 # COMPOUND STATEMENTS
 # ============================================================================
 
-# TODO: figure out why bigger circuits are so slow
+# limit circuit size to increase execution speed
 # compound_stmts = (compound_stmt NL)[UNIFORM(15, 20)];
 compound_stmts = (compound_stmt NL)[UNIFORM(6, 10)];
 compound_stmt  = qubit_op ";" | if_stmt;

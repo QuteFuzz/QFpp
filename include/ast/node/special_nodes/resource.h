@@ -33,13 +33,13 @@ class Resource : public Cloneable<Resource> {
             return used;
         }
 
-        bool is_used_at_least_once(){
-            return used_at_least_once;
+        unsigned int n_times_used(){
+            return _n_times_used;
         }
 
         void set_used(){
             used = true;
-            used_at_least_once = true;
+            _n_times_used += 1;
         }
 
         bool from_reg(){
@@ -72,7 +72,7 @@ class Resource : public Cloneable<Resource> {
         Resource_kind resource_kind;
         bool _from_reg;
         bool used = false;
-        bool used_at_least_once = false;
+        unsigned int _n_times_used = 0;
 
 };
 

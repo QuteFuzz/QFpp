@@ -80,7 +80,7 @@ make_param_dict =
     "param_dict = {" NL
     ""[
         for p in ALL_PARAMS {
-            if (p.is_used_at_least_once) {
+            if (p.n_times_used >= 1) {
                 if (p.from_reg){
                     binding1 = ""[p.name] "[" ""[str(p.index)] "]" ":" ""[str(UNIFORM(1.0,10.0))] "," NL;
                     binding1

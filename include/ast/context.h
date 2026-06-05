@@ -213,6 +213,8 @@ struct Context {
 		std::vector<std::shared_ptr<Circuit>> circuits;
 		std::shared_ptr<Circuit> dummy_circuit = std::make_shared<Circuit>();
 
+        std::unordered_map<Resource_kind, unsigned int> total_times_used;
+
 		unsigned int subroutine_counter = 0;
 		unsigned int current_port = 0;
 		unsigned int nested_depth;
