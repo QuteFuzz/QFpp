@@ -16,7 +16,6 @@ const std::vector<Gate_info> SUPPORTED_GATES = []{
     // lambda helper to add group of gates to the supported gateset list
     auto add_group = [&](const std::vector<Token_kind>& kinds, unsigned int q, unsigned int b, unsigned int p) {
         for (const auto& kind : kinds) {
-            // Emplace automatically picks the matching constructor based on arguments
             gates.emplace_back(kind, q, b, p);
         }
     };

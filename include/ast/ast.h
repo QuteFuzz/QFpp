@@ -68,18 +68,7 @@ struct Ast_entry {
 
             auto find_qubit_ops = [](Node& root, std::vector<std::shared_ptr<Qubit_op>>& out){
                 for (const auto& node : Node_gen(root, QUBIT_OP)){                
-                    auto qubit_op = std::dynamic_pointer_cast<Qubit_op>(node);
-
-                    if (qubit_op == nullptr){
-                        node->print_program(std::cout);
-                        std::cout << std::endl;
-                        
-                        node->print_ast("");
-                        std::cout << std::endl;
-
-                        ERROR("Nodes of kind `QUBIT_OP` must be of `Qubit_op` type");
-                    }
-
+                    auto qubit_op = static_pointer_cast<Qubit_op>(node);
                     out.push_back(qubit_op);
                 }
             };

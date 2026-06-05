@@ -85,8 +85,8 @@ Expr_type PropertyAccessExpr::eval(Context& context) const {
             return resource->from_reg();
         } else if (prop_name == FROM_SING){
             return !resource->from_reg();
-        } else if (prop_name == USED_AT_LEAST_ONCE) {
-            return resource->is_used_at_least_once();
+        } else if (prop_name == N_TIMES_USED) {
+            return (int)resource->n_times_used();
         } else if (prop_name == IN_EXT) {
             return resource->get_scope() == Scope::EXT;
         } else if (prop_name == IN_INT) {

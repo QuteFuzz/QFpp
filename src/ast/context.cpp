@@ -21,6 +21,11 @@ void Context::reset(Reset_level l){
 
         case RL_CIRCUIT:
             nested_depth = control.get_value("NESTED_MAX_DEPTH");
+            total_times_used = {
+                {Resource_kind::QUBIT, 0},
+                {Resource_kind::BIT, 0},
+                {Resource_kind::PARAM, 0},
+            };
             [[fallthrough]];
 
         case RL_QUBITS:
@@ -247,7 +252,8 @@ std::shared_ptr<Resource> Context::get_random_resource(Resource_kind rk, Scope s
         dummy_circuit->get_coll<Resource>(rk) :
         get_current_circuit()->get_coll<Resource>(rk);
 
-    auto random_resource = get_random_from_coll<Resource>(filtered_coll, pred);
+    // auto random_resource = get_random_from_coll<Resource>(filtered_coll, pred);
+    auto random_resource = get_biased_random_from_coll(filtered_coll, pred, total_times_used[rk]++);
     random_resource->set_used();
 
     current.set<Resource>(random_resource);

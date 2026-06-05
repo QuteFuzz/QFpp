@@ -18,14 +18,6 @@ static std::shared_ptr<Rule> rule_from_name(const std::string& rule_name, std::s
     return rule_ptr;
 }
 
-static std::unordered_map<Token_kind, Branch_constraint> branch_constraints_for_gate(const Token_kind& gate_kind) {
-    return {
-        {COMPOUND_STMT, Branch_constraint(QUBIT_OP, 1)},
-        {QUBIT_OP, Branch_constraint(GATE_OP, 1)},
-        {PRIMITIVE_GATE, Branch_constraint(gate_kind, 1)}
-    };
-}
-
 void Pass::apply(){
     // apply blockwise on collected blocks
     for (auto& block : block_nodes){
@@ -123,9 +115,11 @@ void Remove_gate_chain::apply_blockwise(Slot_type block) const {
         if (is_interesting){
             auto prev_qubit_op_slot = find_slot_for(*block, prev_qubit_op);
 
-            // remove current qubit op and previous qubit op
-            *qubit_ops_it = std::make_shared<Node>();
-            *prev_qubit_op_slot = std::make_shared<Node>();
+            if (prev_qubit_op_slot != nullptr){
+                // remove current qubit op and previous qubit op
+                *qubit_ops_it = std::make_shared<Node>();
+                *prev_qubit_op_slot = std::make_shared<Node>();
+            }
         }
 
         qubit_ops_it++;

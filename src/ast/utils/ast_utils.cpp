@@ -20,6 +20,9 @@ const std::vector<Token_kind> X_FAMILY = {X, RX};  // SX, SXDG
 
 const std::vector<Token_kind> Y_FAMILY = {Y, RY};
 
+const std::vector<Token_kind> CLIFFORDS = {
+    H, X, Y, Z, S, SDG, CX, CY, CZ, SWAP, CCX
+};
 
 Slot_type find_slot_for(const std::shared_ptr<Node>& search_root, const std::shared_ptr<Node>& target) {
     for (auto& child : search_root->get_children()) {
@@ -54,22 +57,22 @@ Slot_type build_ast_children(
 }
 
 std::shared_ptr<Gate> gate_from_anscestor(std::shared_ptr<Node> anscestor) {
-    std::shared_ptr<Gate> gate;
-
     if (anscestor->get_node_kind() == QUBIT_OP){
         // qubit ops store their gates at AST build time
         return static_pointer_cast<Qubit_op>(anscestor)->get_gate_node();
     }
 
-    std::shared_ptr<Node> gate_name_primitive = anscestor->find(PRIMITIVE_GATE);
-    std::shared_ptr<Node> gate_subroutine = anscestor->find(SUBROUTINE_OP);
+    std::shared_ptr<Node> gate;
 
-    std::shared_ptr<Gate> primitive_gate = 
-        (gate_name_primitive == nullptr) ? 
-            nullptr : 
-            std::dynamic_pointer_cast<Gate>(gate_name_primitive->child_at(0));
+    for (const Gate_info& info : SUPPORTED_GATES){
+        gate = anscestor->find(info.gate_source);
 
-    gate = (primitive_gate == nullptr) ? std::dynamic_pointer_cast<Gate>(gate_subroutine) : primitive_gate;
+        if (gate != nullptr){
+            return static_pointer_cast<Gate>(gate);
+        }
+    }
+
+    gate = anscestor->find(SUBROUTINE_OP);
 
     if (gate == nullptr){
         std::cout << "========================" << std::endl;
@@ -79,7 +82,7 @@ std::shared_ptr<Gate> gate_from_anscestor(std::shared_ptr<Node> anscestor) {
         ERROR("`Gate` node not found anywhere under this anscestor");
     }
 
-    return gate;
+    return static_pointer_cast<Gate>(gate);
 }
 
 /// Move qubits from source to dest anscenstor. Assumed both have the same number of qubits
@@ -173,7 +176,7 @@ std::pair<bool, std::shared_ptr<Qubit_op>> qubit_op_is_interesting(
     return std::make_pair(is_intersting, prev_qubit_op);
 }
 
-static bool gate_in_set(const std::vector<Token_kind>& set, Token_kind gate_kind){
+bool gate_in_set(const std::vector<Token_kind>& set, Token_kind gate_kind){
     return std::find(set.begin(), set.end(), gate_kind) != set.end();
 }
 
@@ -221,4 +224,12 @@ std::shared_ptr<Node> get_compilation_unit(std::shared_ptr<Node> root){
     } else {
         return comp_unit;
     }
+}
+
+std::unordered_map<Token_kind, Branch_constraint> branch_constraints_for_gate(const Token_kind& gate_kind) {
+    return {
+        {COMPOUND_STMT, Branch_constraint(QUBIT_OP, 1)},
+        {QUBIT_OP, Branch_constraint(GATE_OP, 1)},
+        {PRIMITIVE_GATE, Branch_constraint(gate_kind, 1)}
+    };
 }

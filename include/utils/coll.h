@@ -4,6 +4,9 @@
 #include <utils.h>
 #include <rule_utils.h>
 
+class Resource;
+class Resource_def;
+
 template<typename T>
 using Ptr_coll = std::vector<std::shared_ptr<T>>;
 template<typename T>
@@ -59,14 +62,6 @@ inline std::shared_ptr<T> get_random_from_coll(const Ptr_coll<T>& collection, Pt
     return elem;
 }
 
-template<typename T>
-inline std::shared_ptr<T> get_next_from_coll(const Ptr_coll<T>& collection, Ptr_pred_type<T> pred) {
-    for (auto& elem : collection){
-        if(pred(elem)) return elem;
-    }
-
-    WARNING("[GET_NEXT_FROM_COLL]: No elements satisfying predicate! Returning dummy");
-    return std::make_shared<T>();
-}
+std::shared_ptr<Resource> get_biased_random_from_coll(const Ptr_coll<Resource>& collection, Ptr_pred_type<Resource> pred, unsigned int total_times_used);
 
 #endif

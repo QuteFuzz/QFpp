@@ -139,12 +139,6 @@ static void register_passes_to_arbiter(Arbiter& arbiter) {
     add_family_pairs(arbiter, Y_FAMILY, interesting_gate_pairs);
     add_family_pairs(arbiter, Z_FAMILY, interesting_gate_pairs);
     
-    arbiter.add("Prune",
-        [](Ast_entry& e, std::shared_ptr<Grammar>, float r) {
-            return std::make_unique<Erase_child>(e, COMPOUND_STMTS, r);
-        }
-    );
-
     arbiter.add("remove inverse pairs",
         [](Ast_entry& e, std::shared_ptr<Grammar>, float r) {
             return std::make_unique<Remove_gate_chain>(e, r, is_inverse_pair);
@@ -170,6 +164,76 @@ static void register_passes_to_arbiter(Arbiter& arbiter) {
             return std::make_unique<Combine>(e, r, std::move(rules));
         }
     );
+
+    arbiter.add("Prune",
+        [](Ast_entry& e, std::shared_ptr<Grammar>, float r) {
+            return std::make_unique<Erase_child>(e, COMPOUND_STMTS, r);
+        }
+    );
+
+    arbiter.add("Replace single qubit gates with cx",
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            auto replace_with_cx = std::make_shared<Replace_block>(e, g, QUBIT_OP, "qubit_op", r, branch_constraints_for_gate(CX));
+            auto condition = [](std::shared_ptr<Node> node){
+                std::shared_ptr<Gate> gate = gate_from_anscestor(node);
+                return gate->get_num_external_resources(Resource_kind::QUBIT) == 1;
+            };
+
+            return std::make_unique<Mutate_on_condition>(replace_with_cx, condition);
+        }
+    );
+
+    arbiter.add("Replace single qubit gates with ccx",
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            auto replace_with_ccx = std::make_shared<Replace_block>(e, g, QUBIT_OP, "qubit_op", r, branch_constraints_for_gate(CCX));
+            auto condition = [](std::shared_ptr<Node> node){
+                std::shared_ptr<Gate> gate = gate_from_anscestor(node);
+                return gate->get_num_external_resources(Resource_kind::QUBIT) == 1;
+            };
+
+            return std::make_unique<Mutate_on_condition>(replace_with_ccx, condition);
+        }
+    );
+
+    arbiter.add("Replace multi qubit gates with h",
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            auto replace_with_h = std::make_shared<Replace_block>(e, g, QUBIT_OP, "qubit_op", r, branch_constraints_for_gate(H));
+            auto condition = [](std::shared_ptr<Node> node){
+                std::shared_ptr<Gate> gate = gate_from_anscestor(node);
+                return gate->get_num_external_resources(Resource_kind::QUBIT) > 1;
+            };
+
+            return std::make_unique<Mutate_on_condition>(replace_with_h, condition);
+        }
+    );
+
+    arbiter.add("Replace clifford with non-clifford (t)",
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            auto replace_with_t = std::make_shared<Replace_block>(e, g, QUBIT_OP, "qubit_op", r, branch_constraints_for_gate(T));
+            auto condition = [](std::shared_ptr<Node> node){
+                std::shared_ptr<Gate> gate = gate_from_anscestor(node);
+                return gate_in_set(CLIFFORDS, gate->get_node_kind());
+            };
+
+            return std::make_unique<Mutate_on_condition>(replace_with_t, condition);
+        }
+    );
+
+    arbiter.add("Replace non-clifford with clifford",
+        [](Ast_entry& e, std::shared_ptr<Grammar> g, float r) {
+            Token_kind clifford_replacement = CLIFFORDS[uniform_uint(CLIFFORDS.size() - 1, 0)];
+
+            auto replace_with_clifford = std::make_shared<Replace_block>(e, g, QUBIT_OP, "qubit_op", r, branch_constraints_for_gate(clifford_replacement));
+            auto condition = [](std::shared_ptr<Node> node){
+                std::shared_ptr<Gate> gate = gate_from_anscestor(node);
+                return !gate_in_set(CLIFFORDS, gate->get_node_kind());
+            };
+
+            return std::make_unique<Mutate_on_condition>(replace_with_clifford, condition);
+        }
+    );
+
+
 }
 
 void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
@@ -197,16 +261,13 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
             std::cout << "\n================" << std::endl;
             getchar();
 
-            Add_gate_chain(genome, grammar, 1.0, std::vector<Token_kind>{CX, CX}).apply();
-            Add_gate_chain(genome, grammar, 1.0, std::vector<Token_kind>{CCX, CCX}).apply();
-            Remove_gate_chain(genome, 1.0, is_inverse_pair).apply();
+            auto replace_with_h = std::make_shared<Replace_block>(genome, grammar, QUBIT_OP, "qubit_op", 1.0, branch_constraints_for_gate(H));
+            auto condition = [](std::shared_ptr<Node> node){
+                std::shared_ptr<Gate> gate = gate_from_anscestor(node);
+                return gate->get_num_external_resources(Resource_kind::QUBIT) > 1;
+            };
 
-            std::vector<std::unique_ptr<Pass>> rules;
-
-            rules.push_back(std::make_unique<Add_gate_chain>(genome, grammar, 1.0, std::vector<Token_kind>{CX, CX}));
-            rules.push_back(std::make_unique<Add_gate_chain>(genome, grammar, 1.0, std::vector<Token_kind>{CCX, CCX}));
-
-            Combine(genome, 1.0, std::move(rules)).apply();
+            Mutate_on_condition(replace_with_h, condition).apply();
 
             genome.get_ast()->print_program(std::cout);
             std::cout << "\n================" << std::endl;
