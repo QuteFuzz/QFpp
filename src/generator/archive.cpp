@@ -309,7 +309,11 @@ std::vector<Ast_entry> Archive::get_best_genomes(){
 
     for(const Cell& cell : archive){
         if (!cell.empty()){
-            out.push_back(cell.get_genome());
+            Ast_entry entry = cell.get_genome();
+            // need to call dead subs again here in case any mutations removed some subroutine calls
+            Dead_subs(entry).apply();
+
+            out.push_back(entry);
         }
     }
 
