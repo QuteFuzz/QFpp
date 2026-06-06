@@ -295,14 +295,14 @@ void Archive::fill_archive(std::shared_ptr<Grammar> grammar){
     }
 
     std::cout << std::endl;
-
+                                                                                                                
     INFO("Final archive average quality " + std::to_string(archive_av_quality()));
     INFO("Final archive fill ratio " + std::to_string(archive_fill_ratio()));
 
     dump(output_dir / "final_archive.json");
 
     arbiter.print_stats(std::cout);
-}
+}                                                                                                                                                                                                                               
 
 std::vector<Ast_entry> Archive::get_best_genomes(){
     std::vector<Ast_entry> out;
@@ -310,9 +310,8 @@ std::vector<Ast_entry> Archive::get_best_genomes(){
     for(const Cell& cell : archive){
         if (!cell.empty()){
             Ast_entry entry = cell.get_genome();
-            // need to call dead subs again here in case any mutations removed some subroutine calls
-            Dead_subs(entry).apply();
-
+            // update `Ast_entry` internal state because mutations may have added / removed some qubit ops
+            entry.find_qubit_ops();
             out.push_back(entry);
         }
     }

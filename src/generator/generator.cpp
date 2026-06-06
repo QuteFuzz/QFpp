@@ -51,10 +51,7 @@ std::vector<Ast_entry> Generator::generate_n_asts(unsigned int n, const Control&
             context->print_circuit_info();
         }
 
-        Ast_entry entry{ast_root, context};
-        Dead_subs(entry).apply();
-
-        entries.push_back(std::move(entry));
+        entries.emplace_back(ast_root, context);
     }
 
     return entries;

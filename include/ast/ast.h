@@ -65,16 +65,19 @@ struct Ast_entry {
             }
 
             comp_unit = get_compilation_unit(ast);
+            find_qubit_ops();
+        }
 
-            auto find_qubit_ops = [](Node& root, std::vector<std::shared_ptr<Qubit_op>>& out){
+        void find_qubit_ops(){
+            auto _find_qubit_ops = [](Node& root, std::vector<std::shared_ptr<Qubit_op>>& out){
                 for (const auto& node : Node_gen(root, QUBIT_OP)){                
                     auto qubit_op = static_pointer_cast<Qubit_op>(node);
                     out.push_back(qubit_op);
                 }
             };
 
-            find_qubit_ops(*ast, ast_qubit_ops);
-            find_qubit_ops(*comp_unit, comp_unit_qubit_ops);
+            _find_qubit_ops(*ast, ast_qubit_ops);
+            _find_qubit_ops(*comp_unit, comp_unit_qubit_ops);
         }
 
         /// return a clone of this ast entry, by deep cloning the AST, effectively creating a new one, then getting the new compilation unit ptr from that
