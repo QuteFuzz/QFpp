@@ -90,27 +90,55 @@ gate_op_args = (float ", ")[GET_GATE_PARAMS] qubit_list;
 qubit_list   = qubit (", " qubit)[GET_GATE_QUBITS - 1];
 
 subroutine_op = ""[GET_GATE_NAME] "{}"[GET_GATE_SOURCE == kind(sub_circuit)] "(" subroutine_op_args ")";
-subroutine_op_args = qubit_list (", " float)[GET_GATE_PARAMS];
+subroutine_op_args = qubit_list (", " float)[GET_GATE_PARAMS]
+    (", " ""[str(UNIFORM(5, 10))])[        
+        (GET_GATE_SOURCE == kind(sub_circuit)) || (GET_GATE_SOURCE == kind(circuit))
+    ];
 
 # ============================================================================
 # COMPOUND STATEMENTS
 # ============================================================================
 
 # limit circuit size to increase execution speed
-# compound_stmts = (compound_stmt NL)[UNIFORM(15, 20)];
-compound_stmts = (compound_stmt NL)[UNIFORM(6, 10)];
-compound_stmt  = qubit_op ";" | if_stmt;
+compound_stmts = (compound_stmt NL)[UNIFORM(3, 6)];
+compound_stmt  = qubit_op ";" | if_stmt | for_stmt | do_while_stmt;
+
+# compound_stmts = (compound_stmt NL)[6];
+# compound_stmt  = qubit_op ";" | if_stmt;
 
 qubit_op       = gate_op | subroutine_op;
 
 if_stmt =
     'if (' '!'? 'mz(' qubit ')){' NL ci<compound_stmts> "}" si<(else_stmt)?>;
-else_stmt =
+else_stmt = 
     'else {' NL ci<compound_stmts> "}";
 
-# for_loop = "for (int i = 0; i < " GET_REG_NAME ".size(); ++i) {" NL
-    # ci<(primitive_gate "(" GET_REG_NAME "[i]);")> NL 
-# "}";
+for_stmt =
+    "stride = " ""[str(UNIFORM(2, 4))] ";" NL
+    "for (int i = 1; i < " loop_bound "; i += stride) {" NL
+    si<compound_stmt> NL
+    "}";
+
+# wrapped in {} block scope so nested loops don't have naming collisions for 'loop_ctr'
+do_while_stmt =
+    "{" NL
+    ("int loop_ctr = 0;" NL)
+    ("do {" NL)
+    (ci<compound_stmts>)
+    ("loop_ctr++;" NL)
+    ("} while (" '!'? "mz(" RESET qubit ") && loop_ctr < " ""[str(UNIFORM(2, 3))] ");" NL)
+    "}";
+
+loop_bound = 
+    ""[
+    if (GET_CIRCUIT_KIND == kind(sub_circuit)){
+        var_lp = "loop_bound";
+        var_lp
+    } else {
+        rand_lp = ""[str(UNIFORM(5, 10))];
+        rand_lp
+    }
+    ];
 
 # ============================================================================
 # PROGRAM STRUCTURE
@@ -118,8 +146,10 @@ else_stmt =
 
 testing_import = "from diff_testing.cudaq import cudaqTesting";
 
+cudaq_program = imports NL namespaces NL subroutine_defs NL circuit NL[2] main;
+
 program = testing_import NL[2] 
-    "source_code = r'''" NL imports NL namespaces NL subroutine_defs NL circuit NL[2] main "'''" 
+    "source_code = r'''" NL cudaq_program "'''" 
     NL[2] program_footer;
 
 run_and_postprocess = 
@@ -176,9 +206,12 @@ testing_method = "ct.opt_ks_test()" NL;
 
 subroutine_defs = ((sub_circuit | unitary_1q_def | unitary_2q_def) NL)+;
 
+resued_cpp_params = "int stride = 0;";
+
 sub_circuit = "struct " ""[GET_CIRCUIT_NAME] " { " NL
-    "void operator()(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs ") __qpu__ {" NL 
+    "void operator()(" EXTERNAL::qubit_defs ", " EXTERNAL::param_defs ", int loop_bound) __qpu__ {" NL 
     # ci<INTERNAL::qubit_defs> NL
+    ci<resued_cpp_params> NL
     ci<compound_stmts> NL
     NL "}};"
     ;
@@ -230,6 +263,7 @@ circuit = "struct " ""[GET_CIRCUIT_NAME] " { " NL
     "uint64_t operator()() __qpu__ {" NL 
     ci<INTERNAL::qubit_defs> NL
     ci<INTERNAL::param_defs> NL
+    ci<resued_cpp_params> NL
     compound_stmts NL
     measures NL "}};"
     ;

@@ -275,13 +275,17 @@ void Run::loop(){
 
             } else if ((n_programs = safe_stoul(current_command, 1))){
                 remove_all_in_dir(current_output_dir);
+
+                std::vector<Ast_entry> entries = qf_control.map_elites ?
+                    current_generator->map_elites(n_programs, qf_control, current_output_dir) :
+                    current_generator->generate_n_asts(n_programs, qf_control);
                 
+                for (Ast_entry& entry : entries){
+                    Dead_subs(entry).apply();
+                }                
+
                 current_generator->ast_parse(
-                    (
-                        qf_control.map_elites ?
-                        current_generator->map_elites(n_programs, qf_control, current_output_dir) :
-                        current_generator->generate_n_asts(n_programs, qf_control)
-                    ),
+                    entries,
                     current_output_dir,
                     qf_control
                 );

@@ -9,6 +9,17 @@ from params import CUDAQ_DIR, OUTPUT_DIR
 from utils import Color, modify_env
 
 
+def _check_result(result):
+    if result.returncode != 0:
+        stdout = (
+            result.stdout.decode("utf-8") if isinstance(result.stdout, bytes) else result.stdout
+        )
+        stderr = (
+            result.stderr.decode("utf-8") if isinstance(result.stderr, bytes) else result.stderr
+        )
+        raise Exception(f"STDERR: \n{stderr} \n STDOUT: \n {stdout}\n")
+
+
 class cudaqTesting(Base):
     def __init__(self, circuit, circuit_id: int) -> None:
         super().__init__(circuit, "cudaq", circuit_id)
@@ -25,8 +36,37 @@ class cudaqTesting(Base):
 
         compile_cmd = [str(nvq_binary), f"-O{opt_level}"]
 
-        if opt_level > 0:
-            compile_cmd.extend(["--target=qci", "--emulate"])
+        if opt_level == 0:
+            compile_cmd.extend(
+                [
+                    "-fno-aggressive-inline",
+                    # "-fno-array-conversion",
+                    # "-fno-apply-specialization",
+                    "-fno-variable-coalesce",
+                    "-fno-lambda-lifting",
+                ]
+            )
+        elif opt_level == 1:
+            compile_cmd.extend(
+                [
+                    "-fno-aggressive-inline",
+                    # "-fno-array-conversion"
+                ]
+            )
+        elif opt_level == 2:
+            pass
+        elif opt_level >= 3:
+            compile_cmd.extend(
+                [
+                    "--opt-pass",
+                    "cc-loop-unroll",
+                    "--opt-pass",
+                    "cc-loop-peeling",
+                ]
+            )
+
+        compile_cmd.append(f"-O{opt_level if opt_level <= 3 else 3}")
+        compile_cmd.extend(["--target=qci", "--emulate"])
 
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_cpp = os.path.join(tmpdir, f"circuit{self.circuit_id}.cpp")
@@ -48,18 +88,13 @@ class cudaqTesting(Base):
 
             result = subprocess.run(compile_cmd, capture_output=True, env=env, cwd=tmpdir)
 
-            if result.returncode != 0:
-                raise Exception(
-                    f"[ERROR] {compile_cmd} failed \n"
-                    f"STDERR: \n{result.stderr} \n STDOUT: \n {result.stdout}\n"
-                )
+            _check_result(result)
 
             result = subprocess.run(
                 [temp_exe, str(self.num_shots)], capture_output=True, env=env, cwd=tmpdir
             )
 
-            if result.returncode != 0:
-                raise Exception(f"STDERR: \n{result.stderr} \n STDOUT: \n {result.stdout}\n")
+            _check_result(result)
 
             raw_counts = json.loads(result.stdout)
 
