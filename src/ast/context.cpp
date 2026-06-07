@@ -116,6 +116,9 @@ Expr_type Context::resolve_var(const Token_kind name, const std::vector<Expr_typ
         case GET_CIRCUIT_NAME:
             return get_current_circuit()->get_name();
 
+        case GET_CIRCUIT_KIND:
+            return get_current_circuit()->get_node_kind();
+
         case GET_GATE_NAME:
             return gate->get_str();
 
