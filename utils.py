@@ -1,7 +1,18 @@
 import os
 import subprocess
+from abc import ABC
+from enum import Enum
 from pathlib import Path
 from typing import Dict, List
+
+from params import (
+    BUILD_DIR,
+    ENTRY_POINT,
+    FUZZER_EXECUTABLE,
+    NIGHTLY_DIR,
+    OUTPUT_DIR,
+    SIMULATION_CAP,
+)
 
 
 class Color:
@@ -58,3 +69,52 @@ def modify_env(vars: Dict[str, List[Path] | str]):
                 env[var] = f"{joined_new_vals}{os.pathsep}{old_vals}"
 
     return env
+
+
+class Run_mode(Enum):
+    CI = 0
+    NIGHTLY = 1
+
+
+class Run(ABC):
+    def __init__(
+        self,
+        timestamp: str,
+        name: str,
+        nproc: int,
+        map_elites: bool,
+        seed: (int | None) = None,
+        mode: Run_mode = Run_mode.CI,
+        plot: bool = False,
+    ) -> None:
+        self.name = name
+        self.map_elites = map_elites
+        self.seed = seed
+        self.mode = mode
+        self.plot = plot
+        self.current_output_dir = OUTPUT_DIR / self.name
+        self.regression_seed_src = self.current_output_dir / "regression_seed.txt"
+
+        self.nightly_run_dir = NIGHTLY_DIR / timestamp / self.name
+        self.regression_seed_dst = self.nightly_run_dir / "regression_seed.txt"
+
+        self.coverage_dir = OUTPUT_DIR / self.name / "coverage_data"
+        self.coverage_dir.mkdir(parents=True, exist_ok=True)
+
+        self.sim_proc = min(nproc, SIMULATION_CAP[name])
+
+    def generate_tests(self, num_tests):
+        """
+        Feeds fuzzer CLI to produce tests for given grammar
+        """
+        setup_grammar_str = f"{self.name} {ENTRY_POINT}\n"
+        seed_str = f"seed {self.seed}\n" if (self.seed is not None) else ""
+        map_elites_str = "map-elites\n" if self.map_elites else ""
+
+        input_str = setup_grammar_str + seed_str + map_elites_str
+
+        # must always come last, as entering after setting grammar and number of tests sets off
+        # the generator
+        input_str += f"{num_tests}\nquit\n"
+
+        pipe_to_process(FUZZER_EXECUTABLE, BUILD_DIR, input_str)

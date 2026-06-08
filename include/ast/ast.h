@@ -3,12 +3,12 @@
 
 #include <optional>
 #include <algorithm>
-#include <qf_term.h>
-#include <grammar.h>
-#include <node.h>
-#include <context.h>
-#include <supported_gates.h>
-#include <ast_utils.h>
+#include "qf_term.h"
+#include "grammar.h"
+#include "node.h"
+#include "context.h"
+#include "supported_gates.h"
+#include "ast_utils.h"
 
 class Ast{
     public:

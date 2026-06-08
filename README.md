@@ -14,10 +14,10 @@ qf++ is a framework for quantum compilers. It generates structurally valid quant
 python3 -m scripts.setup
 
 # 2. Run CI pipeline (10 circuits per grammar)
-uv run -m scripts.run --num-tests 10
+uv run -m scripts.qf --num-tests 10
 
 # 3. Run nightly (1200 circuits, saves interesting ones)
-uv run -m scripts.run --nightly --num-tests 1200 --grammars pytket qiskit
+uv run -m scripts.qf --nightly --num-tests 1200 --grammars pytket qiskit
 
 # 4. Use the interactive fuzzer REPL directly
 ./build/qf
