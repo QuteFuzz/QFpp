@@ -100,7 +100,10 @@ subroutine_op_args = qubit_list (", " float)[GET_GATE_PARAMS]
 # ============================================================================
 
 # limit circuit size to increase execution speed
-compound_stmts = (compound_stmt NL)[UNIFORM(3, 6)];
+# compound_stmts = (compound_stmt NL)[UNIFORM(3, 6)];
+# compound_stmts = (compound_stmt NL)[3];
+compound_stmts = (compound_stmt NL)[6];
+# compound_stmts = (compound_stmt NL)[9];
 compound_stmt  = qubit_op ";" | if_stmt | for_stmt | do_while_stmt;
 
 # compound_stmts = (compound_stmt NL)[6];

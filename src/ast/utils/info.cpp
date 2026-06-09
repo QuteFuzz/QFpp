@@ -16,7 +16,7 @@ Info::Info(const Ast_entry& entry) :
     feature_vecs = {
         Feature("entanglement_density",   entanglement_density(),  10),
         Feature("non_clifford_density",   non_clifford_density(),  10),
-        Feature("inverse_pair_count", interesting_pair_count(is_inverse_pair), 20),
+        // Feature("inverse_pair_count", interesting_pair_count(is_inverse_pair), 20),
         // Feature("commuatative_pair_density", interesting_pair_count(is_commutative_pair), 20),
     };
 

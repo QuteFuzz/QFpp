@@ -4,60 +4,23 @@ import re
 import shutil
 import subprocess
 import sys
-import time
-from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import List, Tuple
 
-import numpy as np
-
-from params import BUILD_DIR, CPU_COUNT, OUTPUT_DIR
-from utils import Color, log, modify_env, pipe_to_process
-
-NIGHTLY_DIR = Path("nightly_results")
-ENTRY_POINT = "program"
+from params import BUILD_DIR, CPU_COUNT, OUTPUT_DIR, SIMULATION_CAP
+from utils import Color, Run, Run_mode, log, modify_env, time_it
 
 ALPHA = 0.000001
 TIMEOUT = 20000
-DEFAULT_NUM_TESTS = 1
-
-SIMULATION_CAP = {
-    "pytket": 64,
-    "qiskit": 64,
-    "cirq": 8,
-    "pennylane": 64,
-    "cudaq": 64,
-    "qasm2": 64,
-    "guppy": 64,
-}
-
-FUZZER_EXECUTABLE = "./qf"
-
-
-class Run_mode(Enum):
-    CI = 0
-    NIGHTLY = 1
+NUM_TESTS = 1
 
 
 class Result_kind(Enum):
     DOT_PROD = (0,)
     KS_TEST = (1,)
-
-
-@dataclass
-class CircuitRunInfo:
-    """Tracks the result of running a single circuit"""
-
-    circuit_path: Path
-    grammar: str
-    values: List[float] = field(default_factory=list)
-    logs: str = ""
-    interesting: bool = False
-    skipped: bool = False
 
 
 def _parse_for_testing_values(
@@ -95,28 +58,6 @@ def _clean_and_build():
         raise e
 
 
-def _parse():
-    parser = argparse.ArgumentParser(description="qf++ runner")
-    parser.add_argument(
-        "--nightly",
-        action="store_true",
-        help="Run in nightly mode (collect interesting circuits instead of failing fast)",
-    )
-    parser.add_argument("--num-tests", type=int, help="Override number of tests to generate")
-    parser.add_argument(
-        "--grammars",
-        nargs="+",
-        default=SIMULATION_CAP.keys(),
-        help="Grammars to test (default: all)",
-    )
-    parser.add_argument("--map-elites", help="Run with MAP elites algorithm", action="store_true")
-    parser.add_argument("--seed", type=int, help="Seed for random number generator", default=None)
-    parser.add_argument("--plot", action="store_true", help="Plot results after running circuit")
-    parser.add_argument("--nproc", type=int, default=CPU_COUNT, help="Num workers")
-
-    return parser.parse_args()
-
-
 def _print_progress(current: int, total: int):
     """
     Call in a loop to create a terminal progress bar.
@@ -135,108 +76,68 @@ def _print_progress(current: int, total: int):
         print()
 
 
-def _record_time(process_name: str, num_tests: int, process: Callable[[], None]):
-    start = time.time()
-    process()
-    end = time.time()
-    dur = end - start
+def _run_circuit(script_path: Path, plot: bool) -> subprocess.CompletedProcess:
+    """
+    Run a single circuit and records result
+    """
 
-    rate = np.inf if dur == 0 else num_tests / dur
+    cmd = [sys.executable, str(script_path)]
+    env = modify_env({"RUN_MODE": os.environ.get("RUN_MODE", ""), "PYTHONPATH": "."})
 
-    print(f" {process_name} took {dur} seconds. Rate: {rate} programs / sec")
+    if plot:
+        cmd.append("--plot")
+
+    result = subprocess.run(cmd, cwd=None, capture_output=True, timeout=TIMEOUT, env=env, text=True)
+
+    return result
 
 
-class Check_grammar:
+def _get_ciruit_dirs(grammar_name) -> List[Path]:
+    """Get list of generated circuit directories"""
+    current_output_dir = OUTPUT_DIR / grammar_name
+
+    if not current_output_dir.exists():
+        return []
+
+    return sorted(
+        [d for d in current_output_dir.iterdir() if d.is_dir() and d.name.startswith("circuit")]
+    )
+
+
+@dataclass
+class ValidationInfo:
+    """Tracks the result of running a single circuit"""
+
+    circuit_path: Path
+    grammar: str
+    values: List[float] = field(default_factory=list)
+    logs: str = ""
+    interesting: bool = False
+    skipped: bool = False
+
+
+class Fuzz(Run):
     def __init__(
         self,
-        timestamp: str,
-        num_tests: int | None,
         name: str,
         nproc: int,
         map_elites: bool,
-        seed: (int | None) = None,
+        seed: int | None = None,
         mode: Run_mode = Run_mode.CI,
         plot: bool = False,
     ) -> None:
-        self.num_tests = DEFAULT_NUM_TESTS if num_tests is None else num_tests
-        self.name = name
-        self.map_elites = map_elites
-        self.seed = seed
-        self.mode = mode
-        self.plot = plot
-        self.current_output_dir = OUTPUT_DIR / self.name
-        self.regression_seed_src = self.current_output_dir / "regression_seed.txt"
+        super().__init__(name, nproc, map_elites, seed, mode, plot)
 
-        self.nightly_run_dir = NIGHTLY_DIR / timestamp / self.name
-        self.regression_seed_dst = self.nightly_run_dir / "regression_seed.txt"
-
-        self.coverage_dir = OUTPUT_DIR / self.name / "coverage_data"
-        self.coverage_dir.mkdir(parents=True, exist_ok=True)
-
-        self.sim_proc = min(nproc, SIMULATION_CAP[name])
-
-        log(f"Using {self.sim_proc} parallel workers for simulation", Color.BLUE)
-
-    def generate_tests(self):
-        """
-        Feeds fuzzer CLI to produce tests for given grammar
-        """
-
-        if self.map_elites:
-            log("Map elites mode activated", Color.GREEN)
-
-        setup_grammar_str = f"{self.name} {ENTRY_POINT}\n"
-        seed_str = f"seed {self.seed}\n" if (self.seed is not None) else ""
-        map_elites_str = "map-elites\n" if self.map_elites else ""
-
-        input_str = setup_grammar_str + seed_str + map_elites_str
-
-        # must always come last, as entering after setting grammar and number of tests sets off
-        # the generator
-        input_str += f"{self.num_tests}\nquit\n"
-
-        pipe_to_process(FUZZER_EXECUTABLE, BUILD_DIR, input_str)
-
-        log(f"Generated tests for grammar: {self.name}", Color.YELLOW)
-
-    def get_ciruit_dirs(self) -> List[Path]:
-        """Get list of generated circuit directories"""
-        current_output_dir = OUTPUT_DIR / self.name
-
-        if not current_output_dir.exists():
-            return []
-
-        return sorted(
-            [d for d in current_output_dir.iterdir() if d.is_dir() and d.name.startswith("circuit")]
-        )
-
-    def run_circuit(self, script_path: Path) -> subprocess.CompletedProcess:
-        """
-        Run a single circuit and records result
-        """
-
-        cmd = [sys.executable, str(script_path)]
-        env = modify_env({"RUN_MODE": os.environ.get("RUN_MODE", ""), "PYTHONPATH": "."})
-
-        if self.plot:
-            cmd.append("--plot")
-
-        result = subprocess.run(
-            cmd, cwd=None, capture_output=True, timeout=TIMEOUT, env=env, text=True
-        )
-
-        return result
-
-    def validate_generated_circuit(self, circuit_path: Path) -> CircuitRunInfo:
+    def validate_generated_circuit(self, circuit_path: Path) -> ValidationInfo:
 
         if not circuit_path.exists():
             log("Circuit not found at" + str(circuit_path))
             sys.exit(0)
 
-        run_info = CircuitRunInfo(circuit_path, self.name)
+        run_info = ValidationInfo(circuit_path, self.name)
 
         try:
-            result: subprocess.CompletedProcess = self.run_circuit(circuit_path)
+            result: subprocess.CompletedProcess = _run_circuit(circuit_path, self.plot)
 
             # circuit run successfully
             if result.returncode == 0:
@@ -301,9 +202,9 @@ class Check_grammar:
 
         return run_info
 
+    @time_it
     def validate_generated_circuits(self):
-        circuit_dirs = self.get_ciruit_dirs()
-
+        circuit_dirs = _get_ciruit_dirs(self.name)
         num_circuits = len(circuit_dirs)
 
         interesting_results = []
@@ -325,7 +226,7 @@ class Check_grammar:
             for future in as_completed(future_to_circuit):
                 circuit_dir = future_to_circuit[future]
                 try:
-                    run_info: CircuitRunInfo = future.result()
+                    run_info: ValidationInfo = future.result()
 
                     if run_info.interesting:
                         interesting_results.append(run_info)
@@ -376,16 +277,42 @@ class Check_grammar:
         self.regression_seed_dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(self.regression_seed_src, self.regression_seed_dst)
 
-    def check(self):
-        _record_time("Generation", self.num_tests, self.generate_tests)
-        _record_time("Validation", self.num_tests, self.validate_generated_circuits)
+    def validate(self, num_tests: int):
+        log("\n " + "=" * 60, Color.BLUE)
+        log(f"  Grammar      : {self.name}", Color.BLUE)
+        log(f"  Num tests    : {num_tests}", Color.BLUE)
+        log("=" * 60 + "\n", Color.BLUE)
+
+        self.generate_tests(num_tests)
+        self.validate_generated_circuits()
 
 
 def main():
-    args = _parse()
-    _clean_and_build()
+    parser = argparse.ArgumentParser(description="qf++ runner")
+    parser.add_argument(
+        "--nightly",
+        action="store_true",
+        help="Run in nightly mode (collect interesting circuits instead of failing fast)",
+    )
+    parser.add_argument(
+        "--num-tests",
+        type=int,
+        help="number of tests to generate",
+        default=NUM_TESTS,
+    )
+    parser.add_argument(
+        "--grammars",
+        nargs="+",
+        default=SIMULATION_CAP.keys(),
+        help="Grammars to test (default: all)",
+    )
+    parser.add_argument("--map-elites", help="Run with MAP elites algorithm", action="store_true")
+    parser.add_argument("--seed", type=int, help="Seed for random number generator", default=None)
+    parser.add_argument("--plot", action="store_true", help="Plot results after running circuit")
+    parser.add_argument("--nproc", type=int, default=CPU_COUNT, help="Num workers")
+    args = parser.parse_args()
 
-    run_timestamp = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
+    _clean_and_build()
 
     mode = Run_mode.NIGHTLY if args.nightly else Run_mode.CI
 
@@ -393,17 +320,17 @@ def main():
     log("                       QuteFuzz runner", Color.BLUE)
     log(f"{'=' * 60}", Color.BLUE)
 
-    for grammar in args.grammars:
-        Check_grammar(
-            run_timestamp,
-            args.num_tests,
-            grammar,
+    log(f"Using {args.nproc} parallel workers", Color.BLUE)
+
+    for g_name in args.grammars:
+        Fuzz(
+            g_name,
             args.nproc,
             args.map_elites,
             args.seed,
             mode,
             args.plot,
-        ).check()
+        ).validate(args.num_tests)
 
 
 if __name__ == "__main__":
