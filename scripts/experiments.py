@@ -4,7 +4,6 @@ import json
 import statistics
 from collections import defaultdict
 from dataclasses import dataclass
-from datetime import datetime
 from itertools import zip_longest
 from pathlib import Path
 from typing import Dict, List
@@ -12,8 +11,11 @@ from typing import Dict, List
 from params import CPU_COUNT, SIMULATION_CAP
 from utils import Color, Run, Run_mode, log
 
+from .qf import Fuzz
+
 N_REPEATS = 10
 ARCHIVE_FILES = ("init_archive.json", "final_archive.json")
+EXPERIMENTS = ["map-elites-scaling", "gen-timing", "val-timing", "feature-space-vis"]
 
 
 def _make_latex_fig(name: str, y_label: str, x_max: int, y_max: float, coords: str, n_repeats: int):
@@ -135,6 +137,50 @@ def _make_latex_violin_fig(name: str, y_label: str, y_max: float, csv_filename: 
     )
 
 
+def _make_latex_scatter_fig(name: str, data_table: str):
+    """Create latex axis template for a 2D feature space scatter plot"""
+    return f"""\\begin{{figure}}[h!]
+    \\centering
+    \\begin{{tikzpicture}}
+        \\begin{{axis}}[
+            width=12cm,
+            height=9cm,
+            xlabel={{Feature 1 (Columns)}},
+            ylabel={{Feature 2 (Rows)}},
+            title={{Feature Space Coverage}},
+            grid=both,
+            grid style={{line width=0.3pt, draw=gray!30}},
+            minor grid style={{line width=0.15pt, draw=gray!15}},
+            minor tick num=1,
+            tick label style={{font=\\small}},
+            label style={{font=\\small}},
+            title style={{font=\\small\\bfseries}},
+            colorbar,
+            colorbar style={{ylabel={{Cell Quality}}}},
+            colormap/viridis,
+            enlargelimits=0.05,
+        ]
+
+        \\addplot[
+            scatter,
+            only marks,
+            mark=*,
+            mark size=3.5pt,
+            scatter src=explicit,
+            fill opacity=0.85,
+            draw=black!70, % Slight dark outline for readability
+            line width=0.5pt
+        ] table [meta=quality] {{
+            x y quality
+{data_table}
+        }};
+
+        \\end{{axis}}
+    \\end{{tikzpicture}}
+    \\label{{fig:{name}}}
+\\end{{figure}}"""
+
+
 @dataclass
 class MapElitesData:
     n_occupied_cells: int
@@ -164,18 +210,14 @@ class MapElitesScalingRes:
 class Experiment(Run):
     def __init__(
         self,
-        timestamp: str,
         name: str,
         nproc: int,
-        map_elites_json_file: str | None,
         seed: int | None = None,
     ) -> None:
-        super().__init__(timestamp, name, nproc, True, seed, Run_mode.CI, False)
-        self.json_path = self.current_output_dir / (
-            "me_exp.json" if map_elites_json_file is None else map_elites_json_file
-        )
+        super().__init__(name, nproc, False, seed, Run_mode.CI, False)
+        self.json_path = self.current_output_dir / "map_elites_scaling.json"
 
-    def get_res_json(self, results_per_archive: dict[str, list[MapElitesScalingRes]]):
+    def _get_res_json(self, results_per_archive: dict[str, list[MapElitesScalingRes]]):
         out = defaultdict(dict)
 
         for archive_file, results in results_per_archive.items():
@@ -190,7 +232,7 @@ class Experiment(Run):
                 }
         return out
 
-    def to_latex_plot(self, res_json: Dict, n_repeats: int):
+    def _map_elites_scaling_plot(self, res_json: Dict, n_repeats: int):
         for element in ["occupied", "qualities"]:
             mean_key = element + "_mean"
             stdev_key = element + "_stdev"
@@ -228,7 +270,7 @@ class Experiment(Run):
                 with open(path, "w") as f:
                     f.write(latex_fig)
 
-    def to_latex_violin_plot(self, res_json: Dict, n_genomes_sweep: List[int]):
+    def _map_elites_violin_plot(self, res_json: Dict, n_genomes_sweep: List[int]):
         for target_n_genomes in n_genomes_sweep:
             csv_filename = f"violin_data_{target_n_genomes}_genomes.csv"
             csv_path = self.current_output_dir / csv_filename
@@ -254,7 +296,38 @@ class Experiment(Run):
             with open(tex_path, "w") as f:
                 f.write(latex_fig)
 
-    def get_map_elites_data(self, json_path: Path) -> MapElitesData:
+    def _feature_space_scatter_plot(self, json_path_str: str):
+        json_path = Path(json_path_str)
+        if not json_path.exists():
+            print(f"Archive not found at {json_path}")
+            return
+
+        with open(json_path, "r") as f:
+            data = json.load(f)
+
+        table_rows = []
+        for cell in data.get("cells", []):
+            if cell.get("occupied"):
+                x = cell.get("x", 0)
+                y = cell.get("y", 0)
+                q = cell.get("quality", 0)
+
+                table_rows.append(f"            {x} {y} {q:.4f}")
+
+        if not table_rows:
+            print("No occupied cells found to plot")
+            return
+
+        data_table = "\n".join(table_rows)
+
+        archive_name = json_path_str.replace(".json", "")
+        latex_fig = _make_latex_scatter_fig(f"feature_space_{archive_name}", data_table)
+
+        out_path = self.current_output_dir / f"{archive_name}_feature_space.tex"
+        with open(out_path, "w") as f:
+            f.write(latex_fig)
+
+    def _get_map_elites_data(self, json_path: Path) -> MapElitesData:
         if not json_path.exists():
             raise FileNotFoundError(f"Archive not found at {json_path}")
 
@@ -268,7 +341,7 @@ class Experiment(Run):
 
         return MapElitesData(n_occupied, qualities)
 
-    def map_elites_scaling(self, n_genomes_sweep: List[int], n_repeats: int) -> None:
+    def _map_elites_scaling(self, n_genomes_sweep: List[int], n_repeats: int) -> None:
         log("\n " + "=" * 60, Color.BLUE)
         log("  MAP Elites scaling experiment", Color.BLUE)
         log(f"  Grammar      : {self.name}", Color.BLUE)
@@ -279,8 +352,8 @@ class Experiment(Run):
         if self.json_path.exists():
             with open(self.json_path, "r") as f:
                 res_json = json.load(f)
-                self.to_latex_plot(res_json, n_repeats)
-                self.to_latex_violin_plot(res_json, n_genomes_sweep)
+                self._map_elites_scaling_plot(res_json, n_repeats)
+                self._map_elites_violin_plot(res_json, n_genomes_sweep)
 
         else:
             res: Dict[str, List[MapElitesScalingRes]] = defaultdict(list)
@@ -296,7 +369,7 @@ class Experiment(Run):
 
                     for json_file in ARCHIVE_FILES:
                         json_path = self.current_output_dir / json_file
-                        data = self.get_map_elites_data(json_path)
+                        data = self._get_map_elites_data(json_path)
 
                         n_occupied_per_archive[json_file].append(data.n_occupied_cells)
                         qualities_per_archive[json_file].extend(data.qualities)
@@ -312,10 +385,82 @@ class Experiment(Run):
                     )
 
             with open(self.json_path, "w") as f:
-                res_json = self.get_res_json(res)
+                res_json = self._get_res_json(res)
                 json.dump(res_json, f, indent=4)
-                self.to_latex_plot(res_json, n_repeats)
-                self.to_latex_violin_plot(res_json, n_genomes_sweep)
+                self._map_elites_scaling_plot(res_json, n_repeats)
+                self._map_elites_violin_plot(res_json, n_genomes_sweep)
+
+    def _gen_timing(self, num_genomes_sweep: List[int]):
+        log("\n " + "=" * 60, Color.BLUE)
+        log("  Generation timing experiment", Color.BLUE)
+        log(f"  Grammar      : {self.name}", Color.BLUE)
+        log(f"  Genome counts: {num_genomes_sweep}", Color.BLUE)
+        log("=" * 60 + "\n", Color.BLUE)
+
+        coords = ""
+        max_y = 0
+        y_label = "Total Time (s)"
+
+        for num_tests in num_genomes_sweep:
+            print("num tests:", num_tests)
+
+            _, total_time = self.generate_tests(num_tests)
+
+            # y_val = total_time
+
+            y_val = num_tests / total_time
+
+            coords += f"({num_tests}, {y_val:.4f})"
+            if y_val > max_y:
+                max_y = y_val
+
+        latex_fig = _make_latex_fig("gen-times", y_label, max(num_genomes_sweep), max_y, coords, 1)
+
+        path = self.current_output_dir / "gen_timing.tex"
+        with open(path, "w") as f:
+            f.write(latex_fig)
+
+    def _val_timing(self, num_genomes_sweep: List[int]):
+        log("\n " + "=" * 60, Color.BLUE)
+        log("  Validation (compilation and executiion) timing experiment", Color.BLUE)
+        log(f"  Grammar      : {self.name}", Color.BLUE)
+        log(f"  Genome counts: {num_genomes_sweep}", Color.BLUE)
+        log("=" * 60 + "\n", Color.BLUE)
+
+        coords = ""
+        max_y = 0
+        y_label = "Total Time (s)"
+
+        fuzz = Fuzz(self.name, self.sim_proc, False, self.seed, Run_mode.CI, False)
+
+        for num_tests in num_genomes_sweep:
+            print("num tests:", num_tests)
+
+            self.generate_tests(num_tests)
+            _, total_time = fuzz.validate_generated_circuits()
+
+            y_val = total_time
+
+            coords += f"({num_tests}, {y_val:.4f})"
+            if y_val > max_y:
+                max_y = y_val
+
+        latex_fig = _make_latex_fig("val-times", y_label, max(num_genomes_sweep), max_y, coords, 1)
+
+        path = self.current_output_dir / "val_timing.tex"
+        with open(path, "w") as f:
+            f.write(latex_fig)
+
+    def run(self, args):
+        if args.exp == "map-elites-scaling":
+            self.map_elites = True
+            self._map_elites_scaling(args.num_tests, args.n_repeats)
+        elif args.exp == "gen-timing":
+            self._gen_timing(args.num_tests)
+        elif args.exp == "val-timing":
+            self._val_timing(args.num_tests)
+        elif args.exp == "feature-space-vis":
+            self._feature_space_scatter_plot(args.json)
 
 
 if __name__ == "__main__":
@@ -334,7 +479,7 @@ if __name__ == "__main__":
         help="Grammars to test (default: all)",
     )
     parser.add_argument(
-        "--map-elites-json", help="Raw map elites data from previous run", type=str, default=None
+        "--json", help="JSON file representing MAP Elites feature space", type=str, default=None
     )
     parser.add_argument("--seed", type=int, help="Seed for random number generator", default=None)
     parser.add_argument("--nproc", type=int, default=CPU_COUNT, help="Num workers")
@@ -344,12 +489,15 @@ if __name__ == "__main__":
         help="Number of times to repeat each experiment iteration",
         default=N_REPEATS,
     )
+    parser.add_argument(
+        "--exp",
+        type=str,
+        help="Type of experiment to run",
+        choices=EXPERIMENTS,
+        default=EXPERIMENTS[0],
+    )
 
     args = parser.parse_args()
 
-    run_timestamp = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
-
     for g_name in args.grammars:
-        Experiment(
-            run_timestamp, g_name, args.nproc, args.seed, args.map_elites_json
-        ).map_elites_scaling(args.num_tests, args.n_repeats)
+        Experiment(g_name, args.nproc, args.seed).run(args)

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
-from params import CPU_COUNT, CUDAQ_DIR, EXTERNAL_DIR, HOME, LINENOISE_DIR, TKET_DIR, USR
+from params import CUDAQ_DIR, EXTERNAL_DIR, HOME, LINENOISE_DIR, TKET_DIR, USR
 from utils import Color, log, modify_env
 
 CARGO_BIN = HOME / ".cargo" / "bin"
@@ -298,8 +298,6 @@ def build_bundled_llvm():
             str(llvm_src / "llvm"),
             "-G",
             "Ninja",
-            "-j",
-            f"{CPU_COUNT}",
             f"-DCMAKE_C_COMPILER={USR / 'bin' / 'clang'}",
             f"-DCMAKE_CXX_COMPILER={USR / 'bin' / 'clang++'}",
             "-DCMAKE_BUILD_TYPE=Release",
@@ -316,8 +314,12 @@ def build_bundled_llvm():
         cwd=str(llvm_build),
     )
 
-    subprocess.run(["ninja"], cwd=str(llvm_build))
-    log("Bundled LLVM build complete.", Color.GREEN)
+    result = subprocess.run(["ninja"], cwd=str(llvm_build))
+
+    if result.returncode == 0:
+        log("Bundled LLVM build complete.", Color.GREEN)
+    else:
+        print(result.stderr)
 
 
 def build_nvq(with_coverage: bool):

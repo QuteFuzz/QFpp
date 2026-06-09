@@ -4,19 +4,14 @@ import re
 import shutil
 import subprocess
 import sys
-import time
-from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import List, Tuple
 
-import numpy as np
-
 from params import BUILD_DIR, CPU_COUNT, OUTPUT_DIR, SIMULATION_CAP
-from utils import Color, Run, Run_mode, log, modify_env
+from utils import Color, Run, Run_mode, log, modify_env, time_it
 
 ALPHA = 0.000001
 TIMEOUT = 20000
@@ -81,17 +76,6 @@ def _print_progress(current: int, total: int):
         print()
 
 
-def _record_time(process_name: str, num_tests: int, process: Callable[[], None]):
-    start = time.time()
-    process()
-    end = time.time()
-    dur = end - start
-
-    rate = np.inf if dur == 0 else num_tests / dur
-
-    print(f" {process_name} took {dur} seconds. Rate: {rate} programs / sec")
-
-
 def _run_circuit(script_path: Path, plot: bool) -> subprocess.CompletedProcess:
     """
     Run a single circuit and records result
@@ -135,7 +119,6 @@ class ValidationInfo:
 class Fuzz(Run):
     def __init__(
         self,
-        timestamp: str,
         name: str,
         nproc: int,
         map_elites: bool,
@@ -143,7 +126,7 @@ class Fuzz(Run):
         mode: Run_mode = Run_mode.CI,
         plot: bool = False,
     ) -> None:
-        super().__init__(timestamp, name, nproc, map_elites, seed, mode, plot)
+        super().__init__(name, nproc, map_elites, seed, mode, plot)
 
     def validate_generated_circuit(self, circuit_path: Path) -> ValidationInfo:
 
@@ -219,6 +202,7 @@ class Fuzz(Run):
 
         return run_info
 
+    @time_it
     def validate_generated_circuits(self):
         circuit_dirs = _get_ciruit_dirs(self.name)
         num_circuits = len(circuit_dirs)
@@ -330,8 +314,6 @@ def main():
 
     _clean_and_build()
 
-    run_timestamp = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
-
     mode = Run_mode.NIGHTLY if args.nightly else Run_mode.CI
 
     log(f"\n {'=' * 60}", Color.BLUE)
@@ -342,7 +324,6 @@ def main():
 
     for g_name in args.grammars:
         Fuzz(
-            run_timestamp,
             g_name,
             args.nproc,
             args.map_elites,

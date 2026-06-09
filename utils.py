@@ -1,9 +1,12 @@
 import os
 import subprocess
+import time
 from abc import ABC
+from datetime import datetime
 from enum import Enum
+from functools import wraps
 from pathlib import Path
-from typing import Dict, List
+from typing import Callable, Dict, List, ParamSpec, Tuple, TypeVar
 
 from params import (
     BUILD_DIR,
@@ -25,6 +28,23 @@ class Color:
 
 def log(msg, color=Color.RESET):
     print(f"{color} {msg}{Color.RESET}")
+
+
+P = ParamSpec("P")
+T = TypeVar("T")
+
+
+def time_it(func: Callable[P, T]) -> Callable[P, Tuple[T, float]]:
+    @wraps(func)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> Tuple[T, float]:
+        start_time = time.perf_counter()
+        result = func(*args, **kwargs)
+        end_time = time.perf_counter()
+        execution_time = end_time - start_time
+
+        return (result, execution_time)
+
+    return wrapper
 
 
 def pipe_to_process(cmd, cwd, cmd_to_process):
@@ -79,7 +99,6 @@ class Run_mode(Enum):
 class Run(ABC):
     def __init__(
         self,
-        timestamp: str,
         name: str,
         nproc: int,
         map_elites: bool,
@@ -94,8 +113,9 @@ class Run(ABC):
         self.plot = plot
         self.current_output_dir = OUTPUT_DIR / self.name
         self.regression_seed_src = self.current_output_dir / "regression_seed.txt"
+        self.timestamp = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
 
-        self.nightly_run_dir = NIGHTLY_DIR / timestamp / self.name
+        self.nightly_run_dir = NIGHTLY_DIR / self.timestamp / self.name
         self.regression_seed_dst = self.nightly_run_dir / "regression_seed.txt"
 
         self.coverage_dir = OUTPUT_DIR / self.name / "coverage_data"
@@ -103,6 +123,7 @@ class Run(ABC):
 
         self.sim_proc = min(nproc, SIMULATION_CAP[name])
 
+    @time_it
     def generate_tests(self, num_tests):
         """
         Feeds fuzzer CLI to produce tests for given grammar
