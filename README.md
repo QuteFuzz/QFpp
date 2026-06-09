@@ -87,7 +87,7 @@ Templates written in `templates` directory. Corresponding testing harnesses writ
 | Pytket | [optimiser](https://github.com/Quantinuum/tket/issues/2109) | fixed |
 | Pytket | [optimiser](https://github.com/Quantinuum/tket2/issues/1417) | ack |
 | CUDA-Q | [parser](https://github.com/NVIDIA/cuda-quantum/issues/4562) | ack |
-| CUDA-Q | [parser](https://github.com/NVIDIA/cuda-quantum/issues/4600) | ack |
+| CUDA-Q | [parser](https://github.com/NVIDIA/cuda-quantum/issues/4600) | fixed |
 | CUDA-Q | [parser](https://github.com/NVIDIA/cuda-quantum/issues/4689) |  |
 | CUDA-Q | [MLIR to LLVM translator](https://github.com/NVIDIA/cuda-quantum/issues/4694) |  |
 | Qiskit | [basis translator](https://github.com/Qiskit/qiskit/issues/16251) | ack, duplicate |
