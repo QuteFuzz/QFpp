@@ -137,7 +137,7 @@ def _make_latex_violin_fig(name: str, y_label: str, y_max: float, csv_filename: 
     )
 
 
-def _make_latex_scatter_fig(name: str, data_table: str):
+def _make_latex_scatter_fig(name: str, x_label: str, y_label: str, data_table: str):
     """Create latex axis template for a 2D feature space scatter plot"""
     return f"""\\begin{{figure}}[h!]
     \\centering
@@ -145,8 +145,8 @@ def _make_latex_scatter_fig(name: str, data_table: str):
         \\begin{{axis}}[
             width=12cm,
             height=9cm,
-            xlabel={{Feature 1 (Columns)}},
-            ylabel={{Feature 2 (Rows)}},
+            xlabel={{{x_label}}},
+            ylabel={{{y_label}}},
             title={{Feature Space Coverage}},
             grid=both,
             grid style={{line width=0.3pt, draw=gray!30}},
@@ -168,7 +168,7 @@ def _make_latex_scatter_fig(name: str, data_table: str):
             mark size=3.5pt,
             scatter src=explicit,
             fill opacity=0.85,
-            draw=black!70, % Slight dark outline for readability
+            draw=black!70,
             line width=0.5pt
         ] table [meta=quality] {{
             x y quality
@@ -296,36 +296,51 @@ class Experiment(Run):
             with open(tex_path, "w") as f:
                 f.write(latex_fig)
 
-    def _feature_space_scatter_plot(self, json_path_str: str):
-        json_path = Path(json_path_str)
-        if not json_path.exists():
-            print(f"Archive not found at {json_path}")
-            return
+    def _feature_space_scatter_plot(self):
+        for archive_name in ["final_archive.json", "init_archive.json"]:
+            json_path = self.current_output_dir / archive_name
+            if not json_path.exists():
+                print(f"Archive not found at {json_path}")
+                return
 
-        with open(json_path, "r") as f:
-            data = json.load(f)
+            with open(json_path, "r") as f:
+                data = json.load(f)
 
-        table_rows = []
-        for cell in data.get("cells", []):
-            if cell.get("occupied"):
-                x = cell.get("x", 0)
-                y = cell.get("y", 0)
-                q = cell.get("quality", 0)
+            dims = data.get("dims")
 
-                table_rows.append(f"            {x} {y} {q:.4f}")
+            assert len(dims) == 2
 
-        if not table_rows:
-            print("No occupied cells found to plot")
-            return
+            x, y = dims[0], dims[1]
 
-        data_table = "\n".join(table_rows)
+            x_label = x.get("name", "x_label")
+            y_label = y.get("name", "y_label")
 
-        archive_name = json_path_str.replace(".json", "")
-        latex_fig = _make_latex_scatter_fig(f"feature_space_{archive_name}", data_table)
+            assert x.get("bin_width", 0) == 1 and y.get("bin_width", 0) == 1
 
-        out_path = self.current_output_dir / f"{archive_name}_feature_space.tex"
-        with open(out_path, "w") as f:
-            f.write(latex_fig)
+            n_columns = x.get("n_bins", 0) + 1
+
+            table_rows = []
+            for cell in data.get("cells", []):
+                if cell.get("occupied"):
+                    x = cell.get("index", 0) % n_columns
+                    y = cell.get("index", 0) // n_columns
+                    q = cell.get("quality", 0)
+
+                    table_rows.append(f"            {x} {y} {q:.4f}")
+
+            if not table_rows:
+                print("No occupied cells found to plot")
+                return
+
+            data_table = "\n".join(table_rows)
+
+            latex_fig = _make_latex_scatter_fig(
+                f"{archive_name.replace('.json', '')}", x_label, y_label, data_table
+            )
+
+            out_path = self.current_output_dir / f"{archive_name}_feature_space.tex"
+            with open(out_path, "w") as f:
+                f.write(latex_fig)
 
     def _get_map_elites_data(self, json_path: Path) -> MapElitesData:
         if not json_path.exists():
@@ -460,7 +475,7 @@ class Experiment(Run):
         elif args.exp == "val-timing":
             self._val_timing(args.num_tests)
         elif args.exp == "feature-space-vis":
-            self._feature_space_scatter_plot(args.json)
+            self._feature_space_scatter_plot()
 
 
 if __name__ == "__main__":
@@ -477,9 +492,6 @@ if __name__ == "__main__":
         nargs="+",
         default=SIMULATION_CAP.keys(),
         help="Grammars to test (default: all)",
-    )
-    parser.add_argument(
-        "--json", help="JSON file representing MAP Elites feature space", type=str, default=None
     )
     parser.add_argument("--seed", type=int, help="Seed for random number generator", default=None)
     parser.add_argument("--nproc", type=int, default=CPU_COUNT, help="Num workers")
